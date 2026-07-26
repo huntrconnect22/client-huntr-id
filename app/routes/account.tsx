@@ -83,7 +83,6 @@ export default function AccountSettings() {
     setLoading(true);
     setError(null);
     try {
-      await getCsrfCookie();
       await enable2FA();
       const qrRes = await get2FAQRCode();
       setQrCode(qrRes.svg);
@@ -100,7 +99,6 @@ export default function AccountSettings() {
     setLoading(true);
     setError(null);
     try {
-      await getCsrfCookie();
       await confirm2FA(twoFactorCode);
       const codesRes = await get2FARecoveryCodes();
       setRecoveryCodes(codesRes);
@@ -127,7 +125,6 @@ export default function AccountSettings() {
     setLoading(true);
     setError(null);
     try {
-      await getCsrfCookie();
       await disable2FA();
       setTwoFactorEnabled(false);
       setRecoveryCodes([]);

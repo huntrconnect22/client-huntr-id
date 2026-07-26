@@ -20,11 +20,11 @@ export const getSessions = () => apiGet("/api/account/sessions");
 
 export const logoutSession = (id: string) => apiDelete(`/api/account/sessions/${id}`);
 
-// --- 2FA (Fortify) ---
-export const enable2FA = () => apiPost("/user/two-factor-authentication", {});
-export const disable2FA = () => apiDelete("/user/two-factor-authentication");
-export const get2FAQRCode = () => apiGet("/user/two-factor-qr-code");
-export const get2FARecoveryCodes = () => apiGet("/user/two-factor-recovery-codes");
-export const confirm2FA = (code: string) => apiPost("/user/confirmed-two-factor-authentication", { code });
+// --- 2FA (API-native, CSRF-free via Bearer token) ---
+export const enable2FA = () => apiPost("/api/account/two-factor-authentication", {});
+export const disable2FA = () => apiDelete("/api/account/two-factor-authentication");
+export const get2FAQRCode = () => apiGet("/api/account/two-factor-qr-code");
+export const get2FARecoveryCodes = () => apiGet("/api/account/two-factor-recovery-codes");
+export const confirm2FA = (code: string) => apiPost("/api/account/two-factor-authentication/confirm", { code });
 export const verify2FACode = (code: string) => apiPost("/two-factor-challenge", { code });
 export const verify2FARecovery = (recovery_code: string) => apiPost("/two-factor-challenge", { recovery_code });
