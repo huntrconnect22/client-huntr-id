@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { 
   Building2, MapPin, CreditCard, FileText, UploadCloud, 
-  LogIn, ChevronRight, ChevronLeft, Loader2, AlertCircle 
+  LogIn, ChevronRight, ChevronLeft, Loader2, AlertCircle, ScrollText
 } from "lucide-react";
 
 // --- MVVM: ViewModel ---
@@ -14,14 +14,15 @@ import { SlideContent } from "../features/onboarding/components/SlideContent";
 import ThemeToggle from "../components/ThemeToggle";
 
 // --- Config: Metadata ---
-const TOTAL_SLIDES = 6;
+const TOTAL_SLIDES = 7;
 const STEP_META = [
-  { id: 1, icon: Building2, label: "Profil", color: "#f97316" },
-  { id: 2, icon: MapPin,     label: "Lokasi", color: "#f59e0b" },
-  { id: 3, icon: CreditCard, label: "Bank",   color: "#fbbf24" },
-  { id: 4, icon: FileText,   label: "Documents", color: "#f59e0b" },
-  { id: 5, icon: UploadCloud,label: "Data",   color: "#10b981" },
-  { id: 6, icon: LogIn,      label: "Finish", color: "#fb923c" },
+  { id: 1, icon: Building2,   label: "Profil",    color: "#f97316" },
+  { id: 2, icon: MapPin,      label: "Lokasi",    color: "#f59e0b" },
+  { id: 3, icon: CreditCard,  label: "Bank",      color: "#fbbf24" },
+  { id: 4, icon: FileText,    label: "Documents", color: "#f59e0b" },
+  { id: 5, icon: UploadCloud, label: "Data",      color: "#10b981" },
+  { id: 6, icon: ScrollText,  label: "Ketentuan", color: "#8b5cf6" },
+  { id: 7, icon: LogIn,       label: "Finish",    color: "#fb923c" },
 ];
 
 /**
@@ -72,6 +73,9 @@ export default function Onboarding() {
     if (vm.slide === 5 && !vm.selectedFile) {
       return "Pilih file CSV atau Excel untuk diimport.";
     }
+    if (vm.slide === 6 && !vm.termsAccepted) {
+      return "Anda harus menyetujui Ketentuan Penggunaan Platform HUNTR untuk melanjutkan.";
+    }
     return null;
   };
 
@@ -86,7 +90,7 @@ export default function Onboarding() {
     }
     
     vm.setError(null);
-    if (vm.slide === 5) {
+    if (vm.slide === 6) {
       try {
         await vm.handleCompanySubmit();
       } catch (err: any) {
@@ -146,7 +150,7 @@ export default function Onboarding() {
           <div 
             className="h-1 transition-all duration-500" 
             style={{ 
-              background: `linear-gradient(90deg, ${STEP_META[Math.min(vm.slide - 1, 5)].color}, ${STEP_META[Math.min(vm.slide - 1, 5)].color}80)`,
+              background: `linear-gradient(90deg, ${STEP_META[Math.min(vm.slide - 1, 6)].color}, ${STEP_META[Math.min(vm.slide - 1, 6)].color}80)`,
               width: `${(vm.slide / TOTAL_SLIDES) * 100}%` 
             }} 
           />
@@ -170,7 +174,7 @@ export default function Onboarding() {
 
             {/* Navigation Buttons */}
             <footer className="mt-8 md:mt-12 flex items-center justify-between gap-4">
-              {vm.slide > 1 && vm.slide < 6 && (
+              {vm.slide > 1 && vm.slide < 7 && (
                 <button 
                   onClick={() => vm.setSlide((p: any) => p - 1)} 
                   className="flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--ui-border)] text-[var(--ui-text-muted)] font-bold text-sm hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)] transition-all"
@@ -179,13 +183,13 @@ export default function Onboarding() {
                 </button>
               )}
               <div className="flex-1" />
-              {vm.slide < 6 && (
+              {vm.slide < 7 && (
                 <button 
                   onClick={nextSlide} 
                   disabled={vm.isLoading} 
                   className="flex items-center gap-2 px-8 py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-lg shadow-orange-500/25"
                 >
-                  {vm.isLoading ? <Loader2 className="animate-spin" size={18} /> : vm.slide === 5 ? "Finish" : "Next"} 
+                  {vm.isLoading ? <Loader2 className="animate-spin" size={18} /> : vm.slide === 6 ? "Setuju" : "Next"} 
                   {!vm.isLoading && <ChevronRight size={18} />}
                 </button>
               )}

@@ -2,7 +2,7 @@ import React from "react";
 import { 
   Building2, MapPin, CreditCard, UploadCloud, FileText, 
   LogIn, AlertCircle, Loader2, CheckCircle2, X, Plus, 
-  FileSpreadsheet, MapPinPlus
+  FileSpreadsheet, MapPinPlus, ScrollText
 } from "lucide-react";
 import { SlideSection, Field, FormLabel } from "./OnboardingUI";
 import { AddressAutocomplete } from "./AddressAutocomplete";
@@ -15,7 +15,7 @@ import { LocationStep } from "./LocationStep";
  * Memisahkan logika render yang panjang dari file route utama.
  */
 export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLoginAsCompany }: any) => {
-  const { slide, formData, updateField, isVerifyingNpwp, npwpVerifiedData, handleVerifyNpwp, uploadedDocs, setUploadedDocs, isUploadingDoc, handleDocUpload, selectedFile, setSelectedFile, companies, selectedCompany, setSelectedCompany } = vm;
+  const { slide, formData, updateField, isVerifyingNpwp, npwpVerifiedData, handleVerifyNpwp, uploadedDocs, setUploadedDocs, isUploadingDoc, handleDocUpload, selectedFile, setSelectedFile, companies, selectedCompany, setSelectedCompany, termsAccepted, setTermsAccepted } = vm;
 
   /**
    * Check if country is Indonesia
@@ -323,6 +323,100 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
       );
 
     case 6:
+      return (
+        <SlideSection title="Ketentuan Penggunaan" subtitle="Syarat & Ketentuan Platform HUNTR" icon={<ScrollText size={22} className="text-violet-500" />} accentColor="#8b5cf6">
+          {/* Scrollable T&C Content */}
+          <div className="max-h-[420px] overflow-y-auto pr-2 flex flex-col gap-5 text-sm text-[var(--ui-text-secondary)] leading-relaxed scrollbar-thin scrollbar-thumb-[var(--ui-border-input)] scrollbar-track-transparent">
+            
+            <div>
+              <h3 className="text-base font-black text-[var(--ui-text-primary)] mb-3 uppercase tracking-wide">
+                KETENTUAN PENGGUNAAN PLATFORM HUNTR
+              </h3>
+            </div>
+
+            {/* Ayat 1 */}
+            <div className="p-4 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)]">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-full bg-violet-500/15 text-violet-400 text-xs font-black flex items-center justify-center shrink-0">1</span>
+                <h4 className="font-bold text-[var(--ui-text-primary)]">Masa Uji Coba Gratis (Free Trial)</h4>
+              </div>
+              <p>
+                Masa Uji Coba Gratis berlaku selama <strong className="text-[var(--ui-text-primary)]">14 (empat belas) hari kalender</strong> terhitung sejak proses pendaftaran akun Pelanggan dinyatakan berhasil (<em>complete</em>). Setelah masa uji coba berakhir, Pelanggan akan dikenakan Biaya Layanan sesuai dengan ketentuan pada ayat (2) pada ketentuan di bawah ini.
+              </p>
+            </div>
+
+            {/* Ayat 2 */}
+            <div className="p-4 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)]">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-6 h-6 rounded-full bg-violet-500/15 text-violet-400 text-xs font-black flex items-center justify-center shrink-0">2</span>
+                <h4 className="font-bold text-[var(--ui-text-primary)]">Besaran Biaya Layanan (Platform Fee)</h4>
+              </div>
+              <p className="mb-3">
+                Biaya Layanan yang dikenakan kepada Pelanggan dihitung berdasarkan nilai transaksi dengan ketentuan sebagai berikut:
+              </p>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-violet-500/5 border border-violet-500/10">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 mt-1.5 shrink-0" />
+                  <div>
+                    <span className="font-bold text-[var(--ui-text-primary)]">Nilai Transaksi Rp0,- s.d. Rp100.000.000,-</span>
+                    <span className="text-[var(--ui-text-muted)]"> — dikenakan Biaya Layanan sebesar </span>
+                    <span className="font-black text-violet-400">5% (lima persen)</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-violet-500/5 border border-violet-500/10">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 mt-1.5 shrink-0" />
+                  <div>
+                    <span className="font-bold text-[var(--ui-text-primary)]">Nilai Transaksi Rp100.000.001,- s.d. Rp250.000.000,-</span>
+                    <span className="text-[var(--ui-text-muted)]"> — dikenakan Biaya Layanan sebesar </span>
+                    <span className="font-black text-violet-400">3% (tiga persen)</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-violet-500/5 border border-violet-500/10">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 mt-1.5 shrink-0" />
+                  <div>
+                    <span className="font-bold text-[var(--ui-text-primary)]">Nilai Transaksi di atas Rp250.000.000,-</span>
+                    <span className="text-[var(--ui-text-muted)]"> — dikenakan Biaya Layanan sebesar </span>
+                    <span className="font-black text-violet-400">2% (dua persen)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ayat 3 */}
+            <div className="p-4 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)]">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-full bg-violet-500/15 text-violet-400 text-xs font-black flex items-center justify-center shrink-0">3</span>
+                <h4 className="font-bold text-[var(--ui-text-primary)]">Ketentuan Pengenaan Biaya</h4>
+              </div>
+              <p>
+                Biaya Layanan sebagaimana dimaksud pada ketentuan nomor (2) di atas hanya dikenakan atas transaksi yang dinyatakan <strong className="text-[var(--ui-text-primary)]">berhasil (<em>successful transaction</em>)</strong>. Pelanggan yang tidak memiliki transaksi tidak akan dikenakan biaya apa pun, hingga terdapat perubahan ketentuan lebih lanjut yang diberitahukan secara resmi oleh Penyedia Platform HUNTR.
+              </p>
+            </div>
+
+            {/* CTA Info */}
+            <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/15 text-xs text-[var(--ui-text-muted)]">
+              <span className="font-bold text-orange-400">Klik Setuju</span> jika anda sudah mengetahui tentang syarat dan ketentuan penggunaan Platform HUNTR dan untuk melanjutkan proses.{" "}
+              <span className="font-bold text-[var(--ui-text-secondary)]">Klik Cancel</span> untuk membatalkan proses.
+            </div>
+          </div>
+
+          {/* Checkbox Agreement */}
+          <div className="mt-6">
+            <label className={`flex items-start gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${termsAccepted ? "bg-violet-500/8 border-violet-500/40" : "bg-[var(--ui-bg-input)] border-[var(--ui-border-input)] hover:border-violet-500/30"}`}>
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${termsAccepted ? "bg-violet-500 border-violet-500" : "bg-transparent border-[var(--ui-border-input)]"}`}
+                onClick={() => setTermsAccepted(!termsAccepted)}
+              >
+                {termsAccepted && <CheckCircle2 size={13} className="text-white" />}
+              </div>
+              <span className="text-sm text-[var(--ui-text-secondary)] select-none" onClick={() => setTermsAccepted(!termsAccepted)}>
+                Saya telah membaca, memahami, dan <strong className="text-[var(--ui-text-primary)]">menyetujui</strong> seluruh Ketentuan Penggunaan Platform HUNTR di atas.
+              </span>
+            </label>
+          </div>
+        </SlideSection>
+      );
+
+    case 7:
       return (
         <SlideSection title="Success" subtitle="Your workspace is ready" icon={<LogIn size={22} className="text-pink-500" />} accentColor="#ec4899">
           <div className="flex flex-col gap-3">

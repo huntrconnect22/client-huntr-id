@@ -37,6 +37,9 @@ export const useOnboardingViewModel = () => {
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // --- State: Terms & Conditions ---
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   // --- State: Hasil Akhir ---
   const [companies, setCompanies] = useState<any[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
@@ -176,7 +179,7 @@ export const useOnboardingViewModel = () => {
 
       setCompanies(allCompanies);
       setSelectedCompany(allCompanies[0] || company);
-      setSlide(6); // Pindah ke slide sukses
+      setSlide(7); // Pindah ke slide sukses
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -195,6 +198,7 @@ export const useOnboardingViewModel = () => {
     isUploadingDoc,
     selectedFile, setSelectedFile,
     companies, selectedCompany, setSelectedCompany,
+    termsAccepted, setTermsAccepted,
     user,
 
     // Actions
