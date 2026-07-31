@@ -265,7 +265,7 @@ const getImageUrl = (path: string | undefined | null) => {
 };
 
 function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () => void }) {
-  const [activeTab, setActiveTab] = useState<"companies" | "catalogue" | "transactions" | "admins">("companies");
+  const [activeTab, setActiveTab] = useState<"companies" | "catalogue" | "transactions" | "users" | "admins">("companies");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -313,7 +313,7 @@ function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () =>
           display: "flex", gap: 8, flex: 1, justifyContent: "center",
           flexDirection: "row", overflowX: "auto", paddingBottom: "4px",
         }} className={mobileMenuOpen ? "flex-col w-full order-3" : "hidden md:flex"}>
-          {(["companies", "catalogue", "transactions", "admins"] as const).map(tab => (
+          {(["companies", "catalogue", "transactions", "users", "admins"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
@@ -353,6 +353,7 @@ function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () =>
         {activeTab === "companies" && <AdminCompaniesTab />}
         {activeTab === "catalogue" && <AdminCatalogueTab />}
         {activeTab === "transactions" && <AdminTransactionsTab />}
+        {activeTab === "users" && <AdminUsersTab />}
         {activeTab === "admins" && <AdminAdminsTab />}
       </main>
     </div>
@@ -1081,6 +1082,249 @@ function AdminTransactionsTab() {
 }
 
 /* ─────────────────────────────────────────────────────────────────── */
+/*  Admin Users Tab                                                    */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function AdminUsersTab() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+
+  const fetchUsers = async (page = currentPage, s = search, pp = perPage) => {
+    setIsLoading(true);
+    try {
+      const res = await adminGetUsers({ page, per_page: pp, search: s });
+      setUsers(res.users?.data || []);
+      setCurrentPage(res.users?.current_page || 1);
+      setTotalPages(res.users?.last_page || 1);
+      setTotal(res.total ?? res.users?.total ?? 0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchUsers(1, search, perPage), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    fetchUsers(1, search, perPage);
+  }, [perPage]);
+
+  const buildPages = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "…")[] = [1];
+    if (currentPage > 3) pages.push("…");
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push("…");
+    pages.push(totalPages);
+    return pages;
+  };
+
+  const thStyle: React.CSSProperties = {
+    padding: "11px 16px", textAlign: "left", fontSize: 11,
+    fontWeight: 700, color: "var(--ui-text-muted)", borderBottom: "1px solid var(--ui-border)",
+    background: "rgba(0,0,0,0.03)", whiteSpace: "nowrap",
+  };
+  const tdStyle: React.CSSProperties = {
+    padding: "12px 16px", fontSize: 13, borderBottom: "1px solid var(--ui-border)",
+    color: "var(--ui-text-primary)", verticalAlign: "middle",
+  };
+
+  return (
+    <div>
+      {/* Header + stat card */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 28 }}>
+        <div style={{
+          background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
+          borderRadius: 20, padding: 24,
+          display: "flex", alignItems: "center", gap: 18,
+          boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+        }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+            background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 6px 20px rgba(99,102,241,0.35)",
+          }}>
+            <Users size={22} color="#fff" />
+          </div>
+          <div>
+            <div style={{ fontSize: 30, fontWeight: 900 }}>{total.toLocaleString()}</div>
+            <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>Total Users</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ flex: 1, minWidth: 260, display: "flex", alignItems: "center", gap: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 10, padding: "9px 14px" }}>
+          <Search size={15} color="var(--ui-text-muted)" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Cari nama, email, WhatsApp, atau perusahaan…"
+            style={{ background: "none", border: "none", outline: "none", color: "var(--ui-text-primary)", width: "100%", fontSize: 13 }}
+          />
+          {search && (
+            <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", display: "flex", padding: 0 }}>
+              <X size={13} />
+            </button>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>Tampilkan</span>
+          <div style={{ display: "flex", gap: 4 }}>
+            {[10, 20, 50].map(n => (
+              <button
+                key={n}
+                onClick={() => setPerPage(n)}
+                style={{
+                  padding: "6px 11px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                  cursor: "pointer", transition: "all 0.15s",
+                  background: perPage === n ? "var(--ui-primary)" : "var(--ui-bg-card)",
+                  color: perPage === n ? "#fff" : "var(--ui-text-muted)",
+                  border: perPage === n ? "none" : "1px solid var(--ui-border)",
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 14, overflow: "hidden" }}>
+        {isLoading ? (
+          <div style={{ padding: 60, textAlign: "center" }}>
+            <Loader2 className="animate-spin" style={{ margin: "0 auto", color: "#6366f1" }} size={32} />
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>NAMA</th>
+                  <th style={thStyle}>EMAIL</th>
+                  <th style={thStyle}>WHATSAPP</th>
+                  <th style={thStyle}>PERUSAHAAN</th>
+                  <th style={thStyle}>ROLE</th>
+                  <th style={thStyle}>BERGABUNG</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: 48, color: "var(--ui-text-muted)" }}>
+                      Tidak ada user ditemukan
+                    </td>
+                  </tr>
+                ) : users.map(user => (
+                  <tr key={user.id} style={{ transition: "background 0.1s" }}>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                          background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 12, fontWeight: 800, color: "#fff",
+                        }}>
+                          {user.name?.[0]?.toUpperCase() || "?"}
+                        </div>
+                        {user.name || "—"}
+                      </div>
+                    </td>
+                    <td style={{ ...tdStyle, color: "var(--ui-text-muted)" }}>{user.email || "—"}</td>
+                    <td style={{ ...tdStyle, color: "var(--ui-text-muted)", fontFamily: "monospace", fontSize: 12 }}>{user.whatsapp || "—"}</td>
+                    <td style={{ ...tdStyle, color: "var(--ui-text-muted)", fontSize: 12 }}>
+                      {user.company?.name
+                        ? <span style={{ background: "rgba(249,115,22,0.1)", color: "#f97316", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{user.company.name}</span>
+                        : "—"}
+                    </td>
+                    <td style={tdStyle}>
+                      {user.roles?.[0]?.slug
+                        ? <span style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, textTransform: "capitalize" }}>{user.roles[0].slug}</span>
+                        : <span style={{ color: "var(--ui-text-muted)", fontSize: 12 }}>—</span>}
+                    </td>
+                    <td style={{ ...tdStyle, color: "var(--ui-text-muted)", fontSize: 12, whiteSpace: "nowrap" }}>
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 20, flexWrap: "wrap", gap: 12 }}>
+          <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>
+            Halaman {currentPage} dari {totalPages} · {total.toLocaleString()} user
+          </div>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            <button
+              onClick={() => fetchUsers(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                background: currentPage === 1 ? "var(--ui-bg-input)" : "rgba(99,102,241,0.12)",
+                color: currentPage === 1 ? "var(--ui-text-muted)" : "#818cf8",
+                border: "none", cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              }}
+            >
+              ← Prev
+            </button>
+
+            {buildPages().map((p, i) =>
+              p === "…"
+                ? <span key={`dots-${i}`} style={{ padding: "0 4px", color: "var(--ui-text-muted)", fontSize: 12 }}>…</span>
+                : (
+                  <button
+                    key={p}
+                    onClick={() => fetchUsers(p as number)}
+                    style={{
+                      width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      background: currentPage === p ? "#6366f1" : "var(--ui-bg-card)",
+                      color: currentPage === p ? "#fff" : "var(--ui-text-muted)",
+                      border: currentPage === p ? "none" : "1px solid var(--ui-border)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {p}
+                  </button>
+                )
+            )}
+
+            <button
+              onClick={() => fetchUsers(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                background: currentPage === totalPages ? "var(--ui-bg-input)" : "rgba(99,102,241,0.12)",
+                color: currentPage === totalPages ? "var(--ui-text-muted)" : "#818cf8",
+                border: "none", cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+              }}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
 /*  Audit Modal                                                        */
 /* ─────────────────────────────────────────────────────────────────── */
 
@@ -1264,6 +1508,7 @@ const inp: React.CSSProperties = {
   minHeight: 48,
 };
 import { adminGetAdmins, adminCreateAdmin } from "../lib/api";
+import { adminGetUsers } from "../lib/api";
 
 function AdminAdminsTab() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);

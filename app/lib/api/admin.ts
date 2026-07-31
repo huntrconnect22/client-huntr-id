@@ -59,3 +59,14 @@ export const adminGetTransactions = (params?: { page?: number; per_page?: number
 
 export const adminGetEscrowSummary = () =>
   apiGet("/api/admin/transactions/escrow-summary");
+
+// Users
+export const adminGetUsers = (params?: { page?: number; per_page?: number; search?: string }) => {
+  const query = new URLSearchParams();
+  if (params?.page) query.append("page", params.page.toString());
+  if (params?.per_page) query.append("per_page", params.per_page.toString());
+  if (params?.search) query.append("search", params.search);
+
+  const queryString = query.toString();
+  return apiGet(`/api/admin/users${queryString ? `?${queryString}` : ""}`);
+};
