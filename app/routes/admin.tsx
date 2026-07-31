@@ -3,7 +3,19 @@ import {
   Building2, ShieldCheck, LogOut, CheckCircle2, XCircle,
   Clock, Eye, FileText, ChevronDown, ChevronUp, Search,
   Loader2, AlertCircle, Users, TrendingUp, X, ExternalLink, Trash2, Pencil, Package,
+  Menu,
 } from "lucide-react";
+
+/* ─── tiny responsive hook ─── */
+function useIsMobile(bp = 640) {
+  const [mob, setMob] = useState(() => typeof window !== "undefined" ? window.innerWidth < bp : false);
+  useEffect(() => {
+    const fn = () => setMob(window.innerWidth < bp);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, [bp]);
+  return mob;
+}
 import {
   adminLogin,
   adminGetCompanies,
@@ -266,7 +278,16 @@ const getImageUrl = (path: string | undefined | null) => {
 
 function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<"companies" | "catalogue" | "transactions" | "users" | "admins">("companies");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const tabs = [
+    { id: "companies",    label: "Companies" },
+    { id: "catalogue",    label: "Catalogue" },
+    { id: "transactions", label: "Transactions" },
+    { id: "users",        label: "Users" },
+    { id: "admins",       label: "Admins" },
+  ] as const;
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -276,80 +297,137 @@ function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () =>
         position: "sticky", top: 0, zIndex: 100,
         background: "var(--ui-bg-header)", backdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--ui-border)",
-        padding: "0 clamp(16px, 4vw, 32px)", minHeight: "clamp(56px, 10vw, 64px)",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        flexWrap: "wrap", gap: 16,
+        padding: "0 clamp(12px, 4vw, 28px)",
+        minHeight: 56,
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 0" }}>
-          <img src="/assets/img/logo/sidebar.png" alt="Huntr.id" style={{ height: 32, objectFit: "contain" }} />
-          <div>
-            <div style={{ fontWeight: 800, fontSize: "clamp(13px, 2vw, 15px)", color: "var(--ui-text-primary)", letterSpacing: "-0.3px" }}>
-              Admin Portal
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <img src="/assets/img/logo/sidebar.png" alt="Huntr.id" style={{ height: 28, objectFit: "contain" }} />
+          {!isMobile && (
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 14, color: "var(--ui-text-primary)", letterSpacing: "-0.3px" }}>Admin Portal</div>
+              <div style={{ fontSize: 9, color: "#f59e0b", letterSpacing: "0.1em", fontWeight: 700 }}>GLOBAL OPERATIONS</div>
             </div>
-            <div style={{ fontSize: 10, color: "#f59e0b", letterSpacing: "0.1em", fontWeight: 700 }}>
-              GLOBAL OPERATIONS
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Mobile menu toggle */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          style={{
-            background: "transparent", border: "1px solid var(--ui-border)", borderRadius: 8, padding: 8,
-            color: "var(--ui-text-primary)", cursor: "pointer", display: "flex"
-          }}
-        >
-          {mobileMenuOpen ? <X size={20} /> : <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 20 }}>
-            <div style={{ height: 2, background: "currentColor", width: "100%" }} />
-            <div style={{ height: 2, background: "currentColor", width: "100%" }} />
-            <div style={{ height: 2, background: "currentColor", width: "100%" }} />
-          </div>}
-        </button>
-
-        {/* Navigation Tabs (Desktop & Mobile) */}
-        <div style={{
-          display: "flex", gap: 8, flex: 1, justifyContent: "center",
-          flexDirection: "row", overflowX: "auto", paddingBottom: "4px",
-        }} className={mobileMenuOpen ? "flex-col w-full order-3" : "hidden md:flex"}>
-          {(["companies", "catalogue", "transactions", "users", "admins"] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
-              style={{
-                padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-                background: activeTab === tab ? "rgba(249,115,22,0.15)" : "transparent",
-                color: activeTab === tab ? "#f97316" : "var(--ui-text-muted)",
+        {/* Desktop tabs — center */}
+        {!isMobile && (
+          <nav style={{ display: "flex", gap: 4, flex: 1, justifyContent: "center", overflowX: "auto" }}>
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+                padding: "7px 14px", borderRadius: 9, fontSize: 13, fontWeight: 700, whiteSpace: "nowrap",
+                background: activeTab === t.id ? "rgba(249,115,22,0.15)" : "transparent",
+                color: activeTab === t.id ? "#f97316" : "var(--ui-text-muted)",
                 border: "none", cursor: "pointer", transition: "all 0.2s",
-                textTransform: "capitalize", whiteSpace: "nowrap"
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+              }}>{t.label}</button>
+            ))}
+          </nav>
+        )}
 
-        <div className={mobileMenuOpen ? "flex w-full order-4 justify-between items-center py-4 border-t border-[var(--ui-border)]" : "hidden md:flex"} style={{ alignItems: "center", gap: 16 }}>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)" }}>{admin.name}</div>
-            <div style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>{admin.email}</div>
-          </div>
-          <button
-            onClick={onLogout}
-            style={{
-              display: "flex", alignItems: "center", gap: 7,
-              padding: "8px 16px", borderRadius: 10,
-              background: "var(--ui-logout-bg)", border: "1px solid var(--ui-logout-border)",
-              color: "var(--ui-logout-text)", fontSize: 12, fontWeight: 700, cursor: "pointer",
-            }}
-          >
-            <LogOut size={14} /> Sign Out
+        {/* Right side */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          {!isMobile && (
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)" }}>{admin.name}</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)" }}>{admin.email}</div>
+            </div>
+          )}
+          <button onClick={onLogout} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "7px 12px", borderRadius: 9,
+            background: "var(--ui-logout-bg)", border: "1px solid var(--ui-logout-border)",
+            color: "var(--ui-logout-text)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+          }}>
+            <LogOut size={13} />{!isMobile && " Sign Out"}
           </button>
+          {isMobile && (
+            <button onClick={() => setDrawerOpen(true)} style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 36, height: 36, borderRadius: 9,
+              background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)",
+              color: "var(--ui-text-primary)", cursor: "pointer",
+            }}>
+              <Menu size={18} />
+            </button>
+          )}
         </div>
       </header>
 
-      <main style={{ flex: 1, padding: "clamp(16px, 4vw, 32px)", maxWidth: 1280, margin: "0 auto", width: "100%" }}>
+      {/* Mobile drawer */}
+      {isMobile && drawerOpen && (
+        <div
+          onClick={() => setDrawerOpen(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: "absolute", top: 0, right: 0, bottom: 0, width: "72vw", maxWidth: 280,
+              background: "var(--ui-bg-card)", borderLeft: "1px solid var(--ui-border)",
+              display: "flex", flexDirection: "column", padding: 24, gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 14 }}>{admin.name}</div>
+                <div style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>{admin.email}</div>
+              </div>
+              <button onClick={() => setDrawerOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 4 }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ height: 1, background: "var(--ui-border)", marginBottom: 8 }} />
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => { setActiveTab(t.id); setDrawerOpen(false); }} style={{
+                padding: "12px 16px", borderRadius: 10, fontSize: 14, fontWeight: 700, textAlign: "left",
+                background: activeTab === t.id ? "rgba(249,115,22,0.12)" : "transparent",
+                color: activeTab === t.id ? "#f97316" : "var(--ui-text-primary)",
+                border: activeTab === t.id ? "1px solid rgba(249,115,22,0.25)" : "1px solid transparent",
+                cursor: "pointer",
+              }}>{t.label}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile bottom tab bar */}
+      {isMobile && (
+        <nav style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90,
+          background: "var(--ui-bg-header)", backdropFilter: "blur(20px)",
+          borderTop: "1px solid var(--ui-border)",
+          display: "flex",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+              flex: 1, padding: "10px 4px 8px", border: "none", background: "transparent",
+              color: activeTab === t.id ? "#f97316" : "var(--ui-text-muted)",
+              fontSize: 9, fontWeight: 700, cursor: "pointer",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+              borderTop: activeTab === t.id ? "2px solid #f97316" : "2px solid transparent",
+              transition: "all 0.15s",
+            }}>
+              <span style={{ fontSize: 16 }}>
+                {t.id === "companies" ? "🏢" : t.id === "catalogue" ? "📦" : t.id === "transactions" ? "💳" : t.id === "users" ? "👥" : "🛡️"}
+              </span>
+              {t.label.slice(0, 5)}
+            </button>
+          ))}
+        </nav>
+      )}
+
+      <main style={{
+        flex: 1,
+        padding: "clamp(12px, 3vw, 28px)",
+        maxWidth: 1280, margin: "0 auto", width: "100%",
+        paddingBottom: isMobile ? "calc(env(safe-area-inset-bottom) + 72px)" : "clamp(12px, 3vw, 28px)",
+      }}>
         {activeTab === "companies" && <AdminCompaniesTab />}
         {activeTab === "catalogue" && <AdminCatalogueTab />}
         {activeTab === "transactions" && <AdminTransactionsTab />}
@@ -368,6 +446,7 @@ function AdminCompaniesTab() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [auditModal, setAuditModal] = useState<{ company: Company; action: "approve" | "decline" } | null>(null);
+  const isMobile = useIsMobile();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -409,46 +488,52 @@ function AdminCompaniesTab() {
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 24 }}>
         {[
-          { label: "Total Companies", value: total, icon: <Building2 size={22} />, color: "#f59e0b", gradient: "linear-gradient(135deg,#f59e0b,#ea580c)" },
-          { label: "Pending Review",  value: stats.pending,  icon: <Clock size={22} />,       color: "#f59e0b", gradient: "linear-gradient(135deg,#f59e0b,#d97706)" },
-          { label: "Approved",        value: stats.approved, icon: <CheckCircle2 size={22} />, color: "#10b981", gradient: "linear-gradient(135deg,#10b981,#059669)" },
-          { label: "Rejected",        value: stats.rejected, icon: <XCircle size={22} />,      color: "#ef4444", gradient: "linear-gradient(135deg,#ef4444,#dc2626)" },
+          { label: "Total Companies", value: total,         icon: <Building2 size={20} />,    color: "#f59e0b", gradient: "linear-gradient(135deg,#f59e0b,#ea580c)" },
+          { label: "Pending",         value: stats.pending, icon: <Clock size={20} />,         color: "#f59e0b", gradient: "linear-gradient(135deg,#f59e0b,#d97706)" },
+          { label: "Approved",        value: stats.approved,icon: <CheckCircle2 size={20} />,  color: "#10b981", gradient: "linear-gradient(135deg,#10b981,#059669)" },
+          { label: "Rejected",        value: stats.rejected,icon: <XCircle size={20} />,       color: "#ef4444", gradient: "linear-gradient(135deg,#ef4444,#dc2626)" },
         ].map(stat => (
           <div key={stat.label} style={{
-            background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, padding: 24,
-            display: "flex", alignItems: "center", gap: 18, boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+            background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
+            borderRadius: 16, padding: "16px 18px",
+            display: "flex", alignItems: "center", gap: 14,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
           }}>
             <div style={{
-              width: 52, height: 52, borderRadius: 14, flexShrink: 0, background: stat.gradient,
-              display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 6px 20px ${stat.color}30`,
+              width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: stat.gradient,
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}>
               {React.cloneElement(stat.icon as any, { color: "#fff" })}
             </div>
             <div>
-              <div style={{ fontSize: 30, fontWeight: 900 }}>{stat.value}</div>
-              <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{stat.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1 }}>{stat.value}</div>
+              <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>{stat.label}</div>
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: "10px 16px" }}>
+      {/* Search + filter */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: "10px 14px" }}>
           <Search size={15} color="var(--ui-text-muted)" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search companies…" style={{ background: "none", border: "none", outline: "none", color: "var(--ui-text-primary)", width: "100%" }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search companies…" style={{ background: "none", border: "none", outline: "none", color: "var(--ui-text-primary)", width: "100%", fontSize: 14 }} />
+          {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 0, display: "flex" }}><X size={13} /></button>}
         </div>
-        {(["all", "pending", "approved", "rejected"] as const).map(s => (
-          <button key={s} onClick={() => setFilterStatus(s)} style={{
-            padding: "9px 18px", borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: "pointer",
-            background: filterStatus === s ? "rgba(249,115,22,0.15)" : "var(--ui-bg-input)",
-            border: filterStatus === s ? "1px solid rgba(249,115,22,0.3)" : "1px solid var(--ui-border-input)",
-            color: filterStatus === s ? "#fb923c" : "var(--ui-text-muted)",
-          }}>
-            {s}
-          </button>
-        ))}
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
+          {(["all", "pending", "approved", "rejected"] as const).map(s => (
+            <button key={s} onClick={() => setFilterStatus(s)} style={{
+              padding: "7px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0,
+              background: filterStatus === s ? "rgba(249,115,22,0.15)" : "var(--ui-bg-input)",
+              border: filterStatus === s ? "1px solid rgba(249,115,22,0.3)" : "1px solid var(--ui-border-input)",
+              color: filterStatus === s ? "#fb923c" : "var(--ui-text-muted)",
+            }}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? <Loader2 className="animate-spin" /> : (
@@ -457,27 +542,37 @@ function AdminCompaniesTab() {
             const sm = statusMeta[company.status] || statusMeta.pending;
             const isExpanded = expandedId === company.id;
             return (
-              <div key={company.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, overflow: "hidden" }}>
-                <div onClick={() => setExpandedId(isExpanded ? null : company.id)} style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, cursor: "pointer" }}>
-                  <div style={{ flex: 1, display: "flex", gap: 16, alignItems: "center" }}>
-                    {/* Logo if available */}
+              <div key={company.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, overflow: "hidden" }}>
+                <div onClick={() => setExpandedId(isExpanded ? null : company.id)} style={{ padding: "14px 16px", cursor: "pointer" }}>
+                  {/* Top row: logo + name */}
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                     {company.documents?.find(d => d.type === "logo") ? (
-                      <img src={getImageUrl(company.documents.find(d => d.type === "logo")?.url)} alt="Logo" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", background: "var(--ui-bg-input)" }} />
+                      <img src={getImageUrl(company.documents.find(d => d.type === "logo")?.url)} alt="Logo" style={{ width: 38, height: 38, borderRadius: 8, objectFit: "cover", flexShrink: 0, background: "var(--ui-bg-input)" }} />
                     ) : (
-                      <div style={{ width: 40, height: 40, borderRadius: 8, background: "var(--ui-bg-input)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Building2 size={20} color="var(--ui-text-muted)" />
+                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "var(--ui-bg-input)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Building2 size={18} color="var(--ui-text-muted)" />
                       </div>
                     )}
-                    <div>
-                      <div style={{ fontWeight: 800 }}>{company.name} <span style={{ fontSize: 10, background: "rgba(249,115,22,0.1)", padding: "2px 8px", borderRadius: 10 }}>{company.type}</span></div>
-                      <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{company.email} {company.phone ? `• ${company.phone}` : ''}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {company.name}
+                        <span style={{ fontSize: 10, background: "rgba(249,115,22,0.1)", padding: "2px 7px", borderRadius: 8, marginLeft: 6 }}>{company.type}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>{company.email}{company.phone ? ` · ${company.phone}` : ''}</div>
                     </div>
+                    <div style={{ background: sm.bg, color: sm.color, padding: "4px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{sm.label}</div>
                   </div>
-                  <div style={{ background: sm.bg, color: sm.color, padding: "6px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700 }}>{sm.label}</div>
+                  {/* Approve/Decline row — always full width */}
                   {company.status === 'pending' && (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={e => { e.stopPropagation(); setAuditModal({ company, action: "approve" }); }} style={{ background: "#10b981", color: "#fff", border: "none", padding: "6px 12px", borderRadius: 8 }}>Approve</button>
-                      <button onClick={e => { e.stopPropagation(); setAuditModal({ company, action: "decline" }); }} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "6px 12px", borderRadius: 8 }}>Decline</button>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setAuditModal({ company, action: "approve" }); }}
+                        style={{ flex: 1, background: "#10b981", color: "#fff", border: "none", padding: "8px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                      >Approve</button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setAuditModal({ company, action: "decline" }); }}
+                        style={{ flex: 1, background: "#ef4444", color: "#fff", border: "none", padding: "8px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                      >Decline</button>
                     </div>
                   )}
                 </div>
@@ -886,71 +981,70 @@ function AdminCatalogueTab() {
       )}
 
       {showAddModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "var(--ui-bg-card)", padding: 32, borderRadius: 20, width: "100%", maxWidth: 500 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Add Global Product</div>
-            <form onSubmit={handleAddSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0" }}>
+          <div style={{ background: "var(--ui-bg-card)", padding: "24px 20px", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 560, maxHeight: "92dvh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>Add Global Product</div>
+              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 4 }}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Product Name</label>
-                <input name="name" required style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
-              </div>
-              <div style={{ display: "flex", gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Category (Optional)</label>
-                  <select name="category" style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)", cursor: "pointer", fontWeight: 600 }}>
-                    <option value="">Select Category...</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Raw Materials">Raw Materials</option>
-                    <option value="Equipment">Equipment</option>
-                    <option value="Chemicals">Chemicals</option>
-                    <option value="Machinery">Machinery</option>
-                    <option value="Tools">Tools</option>
-                    <option value="Spare Parts">Spare Parts</option>
-                    <option value="Safety Equipment">Safety Equipment</option>
-                    <option value="Office Supplies">Office Supplies</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Brand (Optional)</label>
-                  <input name="brand" placeholder="e.g. Bosch, Siemens" style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>UOM</label>
-                  <select name="uom" required style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)", cursor: "pointer", fontWeight: 600 }}>
-                    <option value="">Select UOM...</option>
-                    <option value="Pc">Pc (Piece)</option>
-                    <option value="Kg">Kg (Kilogram)</option>
-                    <option value="L">L (Liter)</option>
-                    <option value="M">M (Meter)</option>
-                    <option value="Box">Box</option>
-                    <option value="Pallet">Pallet</option>
-                    <option value="Set">Set</option>
-                    <option value="Unit">Unit</option>
-                    <option value="Ton">Ton</option>
-                    <option value="Pair">Pair</option>
-                    <option value="Drum">Drum</option>
-                    <option value="Container">Container</option>
-                  </select>
-                </div>
+                <label style={lbl}>Product Name</label>
+                <input name="name" required style={{ ...inp, marginTop: 6 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Keywords / Tags (Optional)</label>
-                <textarea name="keywords" rows={3} placeholder="e.g. pump, hydraulic, industrial" style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)", resize: "vertical" }} />
+                <label style={lbl}>Category (Optional)</label>
+                <select name="category" style={{ ...inp, marginTop: 6, cursor: "pointer" }}>
+                  <option value="">Select Category...</option>
+                  <option value="Electronics">Electronics</option>
+                  <option value="Raw Materials">Raw Materials</option>
+                  <option value="Equipment">Equipment</option>
+                  <option value="Chemicals">Chemicals</option>
+                  <option value="Machinery">Machinery</option>
+                  <option value="Tools">Tools</option>
+                  <option value="Spare Parts">Spare Parts</option>
+                  <option value="Safety Equipment">Safety Equipment</option>
+                  <option value="Office Supplies">Office Supplies</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Specifications (Optional)</label>
-                <textarea name="specifications" rows={3} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)", resize: "vertical" }} />
+                <label style={lbl}>Brand (Optional)</label>
+                <input name="brand" placeholder="e.g. Bosch, Siemens" style={{ ...inp, marginTop: 6 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Image (Optional)</label>
-                <input name="image" type="file" accept="image/*" style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
+                <label style={lbl}>UOM</label>
+                <select name="uom" required style={{ ...inp, marginTop: 6, cursor: "pointer" }}>
+                  <option value="">Select UOM...</option>
+                  <option value="Pc">Pc (Piece)</option>
+                  <option value="Kg">Kg (Kilogram)</option>
+                  <option value="L">L (Liter)</option>
+                  <option value="M">M (Meter)</option>
+                  <option value="Box">Box</option>
+                  <option value="Pallet">Pallet</option>
+                  <option value="Set">Set</option>
+                  <option value="Unit">Unit</option>
+                  <option value="Ton">Ton</option>
+                  <option value="Pair">Pair</option>
+                  <option value="Drum">Drum</option>
+                  <option value="Container">Container</option>
+                </select>
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
-                <button type="button" onClick={() => setShowAddModal(false)} style={{ padding: "10px 16px", borderRadius: 10, background: "transparent", border: "none", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700 }}>Cancel</button>
-                <button type="submit" style={{ padding: "10px 16px", borderRadius: 10, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>Add Product</button>
+              <div>
+                <label style={lbl}>Keywords / Tags (Optional)</label>
+                <textarea name="keywords" rows={3} placeholder="e.g. pump, hydraulic, industrial" style={{ ...inp, marginTop: 6, resize: "vertical" }} />
+              </div>
+              <div>
+                <label style={lbl}>Specifications (Optional)</label>
+                <textarea name="specifications" rows={3} style={{ ...inp, marginTop: 6, resize: "vertical" }} />
+              </div>
+              <div>
+                <label style={lbl}>Image (Optional)</label>
+                <input name="image" type="file" accept="image/*" style={{ ...inp, marginTop: 6 }} />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button type="button" onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Cancel</button>
+                <button type="submit" style={{ flex: 2, padding: "12px", borderRadius: 10, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Add Product</button>
               </div>
             </form>
           </div>
@@ -958,49 +1052,48 @@ function AdminCatalogueTab() {
       )}
 
       {editingItem && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "var(--ui-bg-card)", padding: 32, borderRadius: 20, width: "100%", maxWidth: 500 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Edit Product</div>
-            <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div style={{ background: "var(--ui-bg-card)", padding: "24px 20px", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 560, maxHeight: "92dvh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>Edit Product</div>
+              <button onClick={() => setEditingItem(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 4 }}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Product Name</label>
-                <input name="name" required defaultValue={editingItem.name || ""} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
-              </div>
-              <div style={{ display: "flex", gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Item Code</label>
-                  <input name="item_code" defaultValue={editingItem.item_code || ""} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Brand</label>
-                  <input name="brand" defaultValue={editingItem.brand || ""} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Category</label>
-                  <input name="category" defaultValue={editingItem.category || ""} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>UOM</label>
-                  <input name="uom" required defaultValue={editingItem.uom || "Pc"} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
-                </div>
+                <label style={lbl}>Product Name</label>
+                <input name="name" required defaultValue={editingItem.name || ""} style={{ ...inp, marginTop: 6 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Keywords / Tags</label>
-                <textarea name="keywords" defaultValue={Array.isArray(editingItem.keywords) ? editingItem.keywords.join(", ") : (editingItem.keywords || "")} rows={3} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)", resize: "vertical" }} />
+                <label style={lbl}>Item Code</label>
+                <input name="item_code" defaultValue={editingItem.item_code || ""} style={{ ...inp, marginTop: 6 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Specifications</label>
-                <textarea name="specifications" rows={3} defaultValue={editingItem.specifications || ""} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)", resize: "vertical" }} />
+                <label style={lbl}>Brand</label>
+                <input name="brand" defaultValue={editingItem.brand || ""} style={{ ...inp, marginTop: 6 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Replace Image</label>
-                <input name="image" type="file" accept="image/*" style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
+                <label style={lbl}>Category</label>
+                <input name="category" defaultValue={editingItem.category || ""} style={{ ...inp, marginTop: 6 }} />
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
-                <button type="button" onClick={() => setEditingItem(null)} style={{ padding: "10px 16px", borderRadius: 10, background: "transparent", border: "none", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700 }}>Cancel</button>
-                <button type="submit" style={{ padding: "10px 16px", borderRadius: 10, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>Save Changes</button>
+              <div>
+                <label style={lbl}>UOM</label>
+                <input name="uom" required defaultValue={editingItem.uom || "Pc"} style={{ ...inp, marginTop: 6 }} />
+              </div>
+              <div>
+                <label style={lbl}>Keywords / Tags</label>
+                <textarea name="keywords" defaultValue={Array.isArray(editingItem.keywords) ? editingItem.keywords.join(", ") : (editingItem.keywords || "")} rows={3} style={{ ...inp, marginTop: 6, resize: "vertical" }} />
+              </div>
+              <div>
+                <label style={lbl}>Specifications</label>
+                <textarea name="specifications" rows={3} defaultValue={editingItem.specifications || ""} style={{ ...inp, marginTop: 6, resize: "vertical" }} />
+              </div>
+              <div>
+                <label style={lbl}>Replace Image</label>
+                <input name="image" type="file" accept="image/*" style={{ ...inp, marginTop: 6 }} />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button type="button" onClick={() => setEditingItem(null)} style={{ flex: 1, padding: "12px", borderRadius: 10, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Cancel</button>
+                <button type="submit" style={{ flex: 2, padding: "12px", borderRadius: 10, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Save Changes</button>
               </div>
             </form>
           </div>
@@ -1014,16 +1107,24 @@ function AdminTransactionsTab() {
   const [summary, setSummary] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [perPage] = useState(10);
+  const [total, setTotal] = useState(0);
 
-  const fetchData = async () => {
+  const fetchData = async (page = currentPage, s = search) => {
     setIsLoading(true);
     try {
       const [sumRes, txRes] = await Promise.all([
         adminGetEscrowSummary(),
-        adminGetTransactions()
+        adminGetTransactions({ page, per_page: perPage, search: s }),
       ]);
       setSummary(sumRes);
       setTransactions(txRes.data || []);
+      setCurrentPage(txRes.current_page || 1);
+      setTotalPages(txRes.last_page || 1);
+      setTotal(txRes.total || 0);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1032,51 +1133,77 @@ function AdminTransactionsTab() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const t = setTimeout(() => fetchData(1, search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   if (isLoading) return <Loader2 className="animate-spin" style={{ margin: "40px auto", display: "block", color: "#f59e0b" }} />;
 
   return (
     <div>
-      <div style={{ marginBottom: 32 }}>
+      {/* Escrow card */}
+      <div style={{ marginBottom: 24 }}>
         <div style={{
           background: "linear-gradient(135deg, #10b981, #059669)",
-          borderRadius: 20, padding: 32, color: "#fff",
-          boxShadow: "0 10px 30px rgba(16,185,129,0.3)"
+          borderRadius: 16, padding: "clamp(20px,5vw,32px)", color: "#fff",
+          boxShadow: "0 8px 24px rgba(16,185,129,0.3)",
         }}>
-          <div style={{ fontSize: 14, fontWeight: 700, opacity: 0.9, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>Total Escrow Balance</div>
-          <div style={{ fontSize: 48, fontWeight: 900, letterSpacing: "-1px" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.85, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>Total Escrow Balance</div>
+          <div style={{ fontSize: "clamp(28px, 8vw, 48px)", fontWeight: 900, letterSpacing: "-1px", lineHeight: 1 }}>
             Rp {summary?.total_escrow_amount?.toLocaleString() || 0}
           </div>
-          <div style={{ fontSize: 13, opacity: 0.8, marginTop: 8 }}>
+          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 10 }}>
             From {summary?.total_invoices_held || 0} invoices waiting for finance disbursement
           </div>
         </div>
       </div>
 
-      <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Global Transactions</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Search */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: "10px 14px", marginBottom: 16 }}>
+        <Search size={15} color="var(--ui-text-muted)" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari PO number, buyer, vendor…" style={{ background: "none", border: "none", outline: "none", color: "var(--ui-text-primary)", width: "100%", fontSize: 14 }} />
+        {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 0, display: "flex" }}><X size={13} /></button>}
+      </div>
+
+      <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>Global Transactions <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 400 }}>{total.toLocaleString()} total</span></div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {transactions.map(tx => (
-          <div key={tx.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, padding: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 800 }}>{tx.po_number}</div>
+          <div key={tx.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 14, padding: "14px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: 14 }}>{tx.po_number}</div>
+                <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 3 }}>
+                  Buyer: {tx.buyer?.name}
+                </div>
                 <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>
-                  Buyer: {tx.buyer?.name} | Vendor: {tx.vendor?.name}
+                  Vendor: {tx.vendor?.name}
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>Rp {tx.total_amount?.toLocaleString()}</div>
-                <div style={{ fontSize: 11, background: "rgba(249,115,22,0.1)", color: "#f97316", padding: "2px 8px", borderRadius: 10, display: "inline-block", marginTop: 4 }}>
+                <div style={{ fontSize: 11, background: "rgba(249,115,22,0.1)", color: "#f97316", padding: "2px 8px", borderRadius: 8, display: "inline-block", marginTop: 4 }}>
                   {tx.status}
                 </div>
               </div>
             </div>
           </div>
         ))}
-        {transactions.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "var(--ui-text-muted)" }}>No transactions found</div>}
+        {transactions.length === 0 && (
+          <div style={{ textAlign: "center", padding: 40, color: "var(--ui-text-muted)" }}>No transactions found</div>
+        )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 20, flexWrap: "wrap" }}>
+          <button onClick={() => fetchData(Math.max(1, currentPage - 1))} disabled={currentPage === 1}
+            style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "none", cursor: currentPage === 1 ? "not-allowed" : "pointer", background: currentPage === 1 ? "var(--ui-bg-input)" : "rgba(249,115,22,0.12)", color: currentPage === 1 ? "var(--ui-text-muted)" : "#f97316" }}>← Prev</button>
+          <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{currentPage} / {totalPages}</span>
+          <button onClick={() => fetchData(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}
+            style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "none", cursor: currentPage === totalPages ? "not-allowed" : "pointer", background: currentPage === totalPages ? "var(--ui-bg-input)" : "rgba(249,115,22,0.12)", color: currentPage === totalPages ? "var(--ui-text-muted)" : "#f97316" }}>Next →</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1507,8 +1634,7 @@ const inp: React.CSSProperties = {
   transition: "border-color 0.2s, background 0.3s ease, color 0.3s ease",
   minHeight: 48,
 };
-import { adminGetAdmins, adminCreateAdmin } from "../lib/api";
-import { adminGetUsers } from "../lib/api";
+import { adminGetAdmins, adminCreateAdmin, adminGetUsers } from "../lib/api";
 
 function AdminAdminsTab() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
@@ -1597,27 +1723,30 @@ function AdminAdminsTab() {
       {showAddModal && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.5)", zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 16
+          background: "rgba(0,0,0,0.6)", zIndex: 1000,
+          display: "flex", alignItems: "flex-end", justifyContent: "center",
         }}>
-          <div style={{ background: "var(--ui-bg-card)", padding: 32, borderRadius: 20, width: "100%", maxWidth: 400 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Add New Admin</div>
-            <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ background: "var(--ui-bg-card)", padding: "24px 20px", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 440, maxHeight: "92dvh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>Add New Admin</div>
+              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 4 }}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Full Name</label>
-                <input required value={name} onChange={e => setName(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
+                <label style={lbl}>Full Name</label>
+                <input required value={name} onChange={e => setName(e.target.value)} style={{ ...inp, marginTop: 6 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Email Address</label>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
+                <label style={lbl}>Email Address</label>
+                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} style={{ ...inp, marginTop: 6 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Password</label>
-                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} minLength={6} style={{ width: "100%", padding: 12, borderRadius: 10, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", color: "var(--ui-text-primary)" }} />
+                <label style={lbl}>Password</label>
+                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} minLength={6} style={{ ...inp, marginTop: 6 }} />
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
-                <button type="button" onClick={() => setShowAddModal(false)} style={{ padding: "10px 16px", borderRadius: 10, background: "transparent", border: "none", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700 }}>Cancel</button>
-                <button type="submit" disabled={isSubmitting} style={{ padding: "10px 16px", borderRadius: 10, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}>
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button type="button" onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Cancel</button>
+                <button type="submit" disabled={isSubmitting} style={{ flex: 2, padding: "12px", borderRadius: 10, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>
                   {isSubmitting ? "Creating..." : "Create Admin"}
                 </button>
               </div>
