@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import Layout from "../components/Layout";
 import {
   ShoppingCart,
@@ -16,21 +16,39 @@ import {
   updateCartQty,
   clearCart,
   getCartItemCount,
+  addItemToCart,
   type CartItem,
 } from "../lib/cart";
 import { getAssetUrl } from "../lib/assets";
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const refreshCart = () => setCart(loadCart());
 
   useEffect(() => {
+    // Auto-add item from landing page deep-link: /cart?add=<id>&name=&uom=&brand=&image=&category=
+    const addId = searchParams.get("add");
+    if (addId) {
+      addItemToCart({
+        id: addId,
+        name: searchParams.get("name") ?? "Product",
+        uom: searchParams.get("uom") ?? undefined,
+        category: searchParams.get("category") ?? undefined,
+        image_url: searchParams.get("image") ?? undefined,
+        estimated_price: 0,
+      }, 1);
+      // Clean up query params so refreshing doesn't re-add
+      setSearchParams({}, { replace: true });
+    }
+
     refreshCart();
     const handler = () => refreshCart();
     window.addEventListener("huntr-cart-updated", handler);
     return () => window.removeEventListener("huntr-cart-updated", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdateQty = (id: string, delta: number) => {
