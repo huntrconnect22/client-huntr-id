@@ -321,7 +321,7 @@ export default function Orders() {
                 </p>
               </div>
             </div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginLeft:"auto" }}>
               <button onClick={() => setShowImportModal(true)} style={{ background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.2)", borderRadius:8, padding:"7px 12px", display:"flex", alignItems:"center", gap:6, cursor:"pointer", color:"#fb923c", fontWeight:600, fontSize:12 }}>
                 <UploadCloud size={14} /> Import {company.type==="buyer" ? "Historical PO" : "Catalogue"}
               </button>
