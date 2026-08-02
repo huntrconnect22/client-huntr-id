@@ -447,47 +447,78 @@ export default function Orders() {
                     </div>
                   </div>
 
-                  {/* Fee Breakdown Strip */}
+                  {/* Fee Breakdown */}
                   {!po.is_historical && Number(po.total_amount) > 0 && (() => {
                     const base = Number(po.total_amount);
                     const { platFeeRate, platFee, ppnPlatform, adminBank, pph23, biayaLayanan, ppn, grandTotal } = calcFees(base);
+
+                    const rows = [
+                      { label: "Subtotal Barang",                                                  value: base,                  muted: false },
+                      { label: `Platform Fee + PPN (${(platFeeRate*100).toFixed(0)}% + 11%)`,      value: platFee + ppnPlatform, muted: true  },
+                      { label: "Admin Bank",                                                        value: adminBank,             muted: true  },
+                      { label: "PPH 23 (2%)",                                                       value: pph23,                 muted: true  },
+                      { label: "Biaya Layanan",                                                      value: biayaLayanan,          muted: true  },
+                      { label: "PPN (11%)",                                                         value: ppn,                   muted: true  },
+                    ] as Array<{ label: string; value: number; muted: boolean }>;
+
                     return (
                       <div style={{
-                        background: "rgba(253,246,191,0.15)",
-                        border: "1px solid rgba(234,179,8,0.3)",
-                        borderRadius: 10,
-                        padding: "10px 14px",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "0 20px",
-                        alignItems: "center",
+                        background: "var(--ui-bg-input)",
+                        border: "1px solid var(--ui-border-input)",
+                        borderRadius: 12,
+                        overflow: "hidden",
                       }}>
-                        {/* Label */}
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: "0.08em", flexBasis: "100%", marginBottom: 6 }}>
-                          💰 Rincian Biaya
-                        </span>
+                        {/* Header */}
+                        <div style={{
+                          padding: "9px 14px",
+                          borderBottom: "1px solid var(--ui-border-input)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.09em" }}>
+                            Rincian Biaya
+                          </span>
+                        </div>
 
-                        {/* Items */}
-                        {([
-                          { label: "Total Pembelian Barang",                                       value: base,                    color: "#78350f",  bold: true  },
-                          { label: `Platform Fee + PPN (${(platFeeRate*100).toFixed(0)}%+11%)`,    value: platFee + ppnPlatform,   color: "#b45309",  bold: true  },
-                          { label: "Admin Bank",                                                    value: adminBank,               color: "#b45309",  bold: true  },
-                          { label: "PPH 23 (2%)",                                                   value: pph23,                   color: "#b45309",  bold: true  },
-                          { label: "Biaya Layanan",                                                 value: biayaLayanan,            color: "#b45309",  bold: true  },
-                          { label: "PPN (11%)",                                                     value: ppn,                     color: "#b45309",  bold: true  },
-                          { label: "TOTAL",                                                         value: grandTotal,              color: "#92400e",  bold: true  },
-                        ] as Array<{ label: string; value: number; color: string; bold: boolean }>).map((item) => (
-                          <div key={item.label} style={{
-                            display: "flex", flexDirection: "column", gap: 2,
-                            minWidth: 100, paddingRight: 4,
-                            borderRight: item.label === "TOTAL" ? "none" : "1px solid rgba(234,179,8,0.2)",
+                        {/* Rows */}
+                        <div style={{ padding: "8px 14px", display: "flex", flexDirection: "column", gap: 0 }}>
+                          {rows.map((item, idx) => (
+                            <div key={item.label} style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "5px 0",
+                              borderBottom: idx < rows.length - 1 ? "1px solid var(--ui-border-input)" : "none",
+                            }}>
+                              <span style={{ fontSize: 11, color: item.muted ? "var(--ui-text-muted)" : "var(--ui-text-secondary)", fontWeight: 500 }}>
+                                {item.label}
+                              </span>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: item.muted ? "var(--ui-text-muted)" : "var(--ui-text-primary)", fontVariantNumeric: "tabular-nums" }}>
+                                {fmt(Math.round(item.value))}
+                              </span>
+                            </div>
+                          ))}
+
+                          {/* Grand Total row */}
+                          <div style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "8px 10px",
+                            marginTop: 6,
+                            borderRadius: 8,
+                            background: "rgba(249,115,22,0.08)",
+                            border: "1px solid rgba(249,115,22,0.2)",
                           }}>
-                            <span style={{ fontSize: 10, color: "#92400e", fontWeight: 600 }}>{item.label}</span>
-                            <span style={{ fontSize: 13, fontWeight: item.bold ? 700 : 500, color: item.color }}>
-                              {item.label === "TOTAL" ? "IDR " : ""}{fmt(Math.round(item.value))}
+                            <span style={{ fontSize: 11, fontWeight: 800, color: "var(--ui-text-primary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                              Total
+                            </span>
+                            <span style={{ fontSize: 14, fontWeight: 900, color: "#f97316", fontVariantNumeric: "tabular-nums" }}>
+                              IDR {fmt(Math.round(grandTotal))}
                             </span>
                           </div>
-                        ))}
+                        </div>
                       </div>
                     );
                   })()}
