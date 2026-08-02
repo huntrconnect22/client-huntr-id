@@ -4,6 +4,7 @@ import Layout from "../Layout";
 import CurrencyWidget from "../CurrencyWidget";
 import WeatherWidget from "../WeatherWidget";
 import { SummaryWidget, MiniStat } from "./SummaryWidget";
+import { TrendingSearchWidget } from "./TrendingSearchWidget";
 import { apiGet } from "../../lib/api";
 import { ClipboardList, Trophy, Timer } from "lucide-react";
 
@@ -250,6 +251,11 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
             <div style={{ fontSize: 26, fontWeight: 900, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : Math.max(openRfqs.filter((rfq: any) => !isRfqExpired(rfq, now)).length - vendorProposals.length, 0)}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Belum disubmit</div>
           </div>
+        </section>
+
+        {/* Trending Search Indicator */}
+        <section>
+          <TrendingSearchWidget />
         </section>
 
         {/* Tender table — full width */}

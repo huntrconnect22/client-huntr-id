@@ -28,3 +28,11 @@ export const getCatalogues = (params?: { company_id?: string | number; search?: 
 
 export const getCatalogue = (id: string | number) =>
   apiGet(`/api/catalogues/${id}`);
+
+/**
+ * Trending search keywords — dipakai di vendor dashboard.
+ * @param limit jumlah keyword (default 10)
+ * @param days  window waktu dalam hari (default 30)
+ */
+export const getTrendingSearches = (limit = 10, days = 30) =>
+  apiGet(`/api/analytics/trending-searches?limit=${limit}&days=${days}`);
