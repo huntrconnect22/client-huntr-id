@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Eye, EyeOff, ShieldCheck, Key, ArrowLeft } from "lucide-react";
-import { login, getAuthenticatedUser, getCsrfCookie } from "../lib/api/auth";
-import { verify2FACode, verify2FARecovery } from "../lib/api/account";
+import { login, verify2FALogin, getCsrfCookie } from "../lib/api/auth";
 import AuthLayout from "../components/AuthLayout";
 
 export default function Login() {
@@ -18,6 +17,7 @@ export default function Login() {
   const [show2FA, setShow2FA] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [useRecovery, setUseRecovery] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
@@ -42,6 +42,7 @@ export default function Login() {
       const userPayload = await login({ email: form.email, password: form.password, rememberMe });
 
       if (userPayload.two_factor) {
+        setChallengeToken(userPayload.two_factor_challenge_token ?? null);
         setShow2FA(true);
         setLoading(false);
         return;
@@ -77,33 +78,46 @@ export default function Login() {
     setLoading(true);
     setError(null);
     try {
-      if (useRecovery) {
-        await verify2FARecovery(twoFactorCode);
-      } else {
-        await verify2FACode(twoFactorCode);
+      if (!challengeToken) {
+        setError("Session expired. Please log in again.");
+        setShow2FA(false);
+        return;
       }
 
-      const userPayload = await getAuthenticatedUser();
+      const userPayload = await verify2FALogin(
+        useRecovery
+          ? { two_factor_challenge_token: challengeToken, recovery_code: twoFactorCode }
+          : { two_factor_challenge_token: challengeToken, code: twoFactorCode }
+      );
+
       const user = {
         id: userPayload.id,
         name: userPayload.name || "User",
         email: userPayload.email || "",
         whatsapp: userPayload.whatsapp || "",
-        role: userPayload.role || null, // Don't default to 'buyer' - let backend handle proper role assignment
+        role: userPayload.role || null,
         company_id: userPayload.company_id || null,
         two_factor_confirmed_at: userPayload.two_factor_confirmed_at || null,
-        token: userPayload.token || null, // IMPORTANT: Save token!
+        token: userPayload.token || null,
       };
 
       localStorage.setItem("user_session", JSON.stringify(user));
-      
+
       if (returnTo) {
         navigate(returnTo);
       } else {
         navigate("/select-company");
       }
     } catch (err: any) {
-      setError(err.message || "Invalid 2FA code.");
+      // If the challenge token expired, kick user back to login form
+      const msg: string = err.message || "";
+      if (msg.toLowerCase().includes("expired") || msg.toLowerCase().includes("invalid")) {
+        setChallengeToken(null);
+        setShow2FA(false);
+        setError("Session expired. Please log in again.");
+      } else {
+        setError(msg || "Invalid 2FA code.");
+      }
     } finally {
       setLoading(false);
     }

@@ -17,13 +17,44 @@ export const login = async (payload: { email: string; password: string; remember
     device_name: getDeviceIdentity(),
   });
   
-  if (res.two_factor) return { two_factor: true };
+  // 2FA required — return challenge token to the login page
+  if (res.two_factor) {
+    return {
+      two_factor: true,
+      two_factor_challenge_token: res.two_factor_challenge_token as string,
+    };
+  }
   
   const user = res.user || res;
   if (user.token && typeof localStorage !== "undefined") {
     localStorage.setItem("user_session", JSON.stringify(user));
   }
   
+  try {
+    const freshUser = await getAuthenticatedUser();
+    if (user.token) freshUser.token = user.token;
+    return freshUser;
+  } catch {
+    return user;
+  }
+};
+
+/**
+ * Exchange the short-lived 2FA challenge token for a full Sanctum token
+ * after the user provides a valid TOTP code or recovery code.
+ */
+export const verify2FALogin = async (payload: {
+  two_factor_challenge_token: string;
+  code?: string;
+  recovery_code?: string;
+}) => {
+  const res = await apiPost("/api/auth/two-factor/verify", payload);
+
+  const user = res.user || res;
+  if (user.token && typeof localStorage !== "undefined") {
+    localStorage.setItem("user_session", JSON.stringify(user));
+  }
+
   try {
     const freshUser = await getAuthenticatedUser();
     if (user.token) freshUser.token = user.token;
