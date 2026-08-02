@@ -416,7 +416,7 @@ export default function Orders() {
                           {confirmingId===po.id ? <Loader2 size={12} className="animate-spin"/> : <CheckCircle2 size={12}/>} Confirm PO
                         </button>
                       )}
-                      {company.type==='vendor' && ['confirmed', 'paid'].includes(po.status) && (
+                      {company.type==='vendor' && po.status==='paid' && (
                         <button onClick={() => handleUpdateTrackingStatus(po.id,'packing',po.status)} disabled={processingId===po.id}
                           style={{ background:"linear-gradient(135deg,#8b5cf6,#7c3aed)", border:"none", borderRadius:8, padding:"6px 10px", color:"#fff", fontWeight:700, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 4px 12px rgba(139,92,246,0.2)" }}>
                           {processingId===po.id ? <Loader2 size={12} className="animate-spin"/> : <Package size={12}/>} Mark as Packing

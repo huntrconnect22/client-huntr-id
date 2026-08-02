@@ -77,7 +77,6 @@ export const PoExpandedDetails = ({
   });
 
   const nextActions: Record<string, { label: string; status: 'packing' | 'in_transit' | 'delivered'; color: string; description: string }> = {
-    confirmed:  { label: 'Mark as Packing',    status: 'packing',    color: '#8b5cf6', description: 'Confirm that goods are being packed for shipment' },
     paid:       { label: 'Mark as Packing',    status: 'packing',    color: '#8b5cf6', description: 'Confirm that goods are being packed for shipment' },
     packing:    { label: 'Arrange Delivery',   status: 'in_transit', color: '#3b82f6', description: 'Enter tracking/resi number and dispatch goods' },
     in_transit: { label: 'Mark as Delivered',  status: 'delivered',  color: '#22c55e', description: 'Confirm that goods have been delivered to buyer' },
