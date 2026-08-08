@@ -725,8 +725,7 @@ export default function AppShell() {
                 )}
               </button>
             )}
-            {/* Theme Toggle */}
-            {!isMobile && <ThemeToggle />}
+
 
             {/* Notification Bell */}
             <div style={{ position: "relative" }}>

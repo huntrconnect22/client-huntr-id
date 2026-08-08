@@ -13,7 +13,9 @@ import {
   AlertCircle,
   Clock,
   Trash2,
+  Palette,
 } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle";
 import {
   updatePassword,
   updateWhatsapp,
@@ -34,7 +36,7 @@ import Swal from "sweetalert2";
 
 export default function AccountSettings() {
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"security" | "profile" | "sessions">("security");
+  const [activeTab, setActiveTab] = useState<"security" | "profile" | "appearance" | "sessions">("security");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -275,6 +277,7 @@ export default function AccountSettings() {
           {[
             { id: "security", icon: Shield, label: "Security" },
             { id: "profile", icon: Smartphone, label: "Profile" },
+            { id: "appearance", icon: Palette, label: "Appearance" },
             { id: "sessions", icon: Monitor, label: "Sessions" },
           ].map((tab) => (
             <button
@@ -570,6 +573,30 @@ export default function AccountSettings() {
                 </div>
               )}
             </form>
+          )}
+
+          {/* Appearance Tab */}
+          {activeTab === "appearance" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-black text-[var(--ui-text-primary)] mb-2">Theme & Appearance</h2>
+                <p className="text-sm text-[var(--ui-text-muted)] leading-relaxed">
+                  Choose your preferred theme mode for the Huntr platform interface.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm font-bold text-[var(--ui-text-primary)]">Interface Theme</div>
+                  <div className="text-xs text-[var(--ui-text-muted)] mt-1">
+                    Select Light, Auto (matches system settings), or Dark mode.
+                  </div>
+                </div>
+                <div>
+                  <ThemeToggle />
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Sessions Tab */}
