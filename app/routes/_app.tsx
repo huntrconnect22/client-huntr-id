@@ -833,12 +833,28 @@ export default function AppShell() {
             </div>
 
             {activeCompany && (
-              <div className="huntr-header-company-badge">
-                <Building2 size={11} />
-                <span>{activeCompany.name}</span>
-                <span style={{ padding: "1px 6px", borderRadius: 99, background: "rgba(249,115,22,0.2)", fontSize: 10, color: "var(--ui-text-brand)", flexShrink: 0 }}>
-                  {activeCompany.status || "pending"}
+              <div className="huntr-header-company-badge" style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 10, background: "var(--ui-bg-badge)", border: "1px solid var(--ui-border-badge)", fontSize: 12, fontWeight: 600, color: "var(--ui-text-primary)" }}>
+                <Building2 size={13} style={{ flexShrink: 0, color: "#f97316" }} />
+                <span style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {activeCompany.name}
                 </span>
+                {activeCompany.status && (
+                  <span style={{
+                    padding: "2px 6px",
+                    borderRadius: 6,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.02em",
+                    flexShrink: 0,
+                    lineHeight: 1,
+                    background: activeCompany.status === "approved" ? "rgba(16,185,129,0.15)" : "rgba(249,115,22,0.15)",
+                    color: activeCompany.status === "approved" ? "#10b981" : "#f97316",
+                    border: activeCompany.status === "approved" ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(249,115,22,0.3)",
+                  }}>
+                    {activeCompany.status}
+                  </span>
+                )}
               </div>
             )}
           </div>
