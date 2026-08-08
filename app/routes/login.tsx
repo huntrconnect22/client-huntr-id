@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Loader2, Eye, EyeOff, ShieldCheck, Key, ArrowLeft } from "lucide-react";
+import { Loader2, Eye, EyeOff, ShieldCheck, Key, ArrowLeft, Mail, Lock, LogIn } from "lucide-react";
 import { login, verify2FALogin, getCsrfCookie } from "../lib/api/auth";
 import AuthLayout from "../components/AuthLayout";
 
@@ -28,7 +28,6 @@ export default function Login() {
       navigate(company ? "/" : "/select-company", { replace: true });
     }
     
-    // Initialize CSRF cookie on component mount
     getCsrfCookie().catch(err => {
       console.warn("Failed to initialize CSRF cookie:", err);
     });
@@ -53,10 +52,10 @@ export default function Login() {
         name: userPayload.name || "User",
         email: userPayload.email || "",
         whatsapp: userPayload.whatsapp || "",
-        role: userPayload.role || null, // Don't default to 'buyer' - let backend handle proper role assignment
+        role: userPayload.role || null,
         company_id: userPayload.company_id || null,
         two_factor_confirmed_at: userPayload.two_factor_confirmed_at || null,
-        token: userPayload.token || null, // IMPORTANT: Save token!
+        token: userPayload.token || null,
       };
 
       localStorage.setItem("user_session", JSON.stringify(user));
@@ -109,7 +108,6 @@ export default function Login() {
         navigate("/select-company");
       }
     } catch (err: any) {
-      // If the challenge token expired, kick user back to login form
       const msg: string = err.message || "";
       if (msg.toLowerCase().includes("expired") || msg.toLowerCase().includes("invalid")) {
         setChallengeToken(null);
@@ -126,124 +124,153 @@ export default function Login() {
   return (
     <AuthLayout
       variant="login"
-      visualTitle="Enterprise Procurement"
-      visualText="Streamline your business operations with our advanced B2B ecosystem."
-      features={["✓ Verified Vendors", "✓ Automated RFQ", "✓ Secure PO"]}
-      featureVariant="orange"
+      visualTitle="Enterprise B2B Procurement"
+      visualText="Streamline operations, automate RFQ workflows, and connect with verified enterprise vendors."
+      features={["✓ Verified Vendor Network", "✓ Automated RFQ Flow", "✓ Smart PO Matching"]}
     >
       {!show2FA ? (
-        <form onSubmit={handleSubmit} className="auth-form">
-          <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--ui-text-muted)", marginBottom: 24, textDecoration: "none" }}>
-            <ArrowLeft size={16} /> Back to Home
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          {/* Back link */}
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--ui-text-muted)] hover:text-orange-500 transition-colors w-fit"
+          >
+            <ArrowLeft size={14} /> Back to Marketplace
           </Link>
-          <div className="auth-form__header">
-            <h1 className="auth-heading">Welcome back</h1>
-            <p className="auth-subheading">Sign in to access your procurement dashboard</p>
+
+          {/* Heading */}
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[var(--ui-text-primary)] tracking-tight">
+              Selamat Datang Kembali
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--ui-text-muted)] mt-1.5 leading-relaxed">
+              Masuk ke akun Huntr.id Anda untuk mengelola pengadaan perusahaan
+            </p>
           </div>
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="login-email">Email or WhatsApp</label>
-            <input
-              id="login-email"
-              value={form.email}
-              onChange={e => set("email", e.target.value)}
-              type="text"
-              inputMode="email"
-              autoComplete="username"
-              placeholder="name@company.com"
-              required
-              className="auth-input"
-            />
-          </div>
+          {/* Form Fields */}
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-email">
+                Email atau WhatsApp
+              </label>
+              <div className="relative">
+                <input
+                  id="login-email"
+                  value={form.email}
+                  onChange={e => set("email", e.target.value)}
+                  type="text"
+                  inputMode="email"
+                  autoComplete="username"
+                  placeholder="nama@perusahaan.com / 08xxxxxxxxxx"
+                  required
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
+                />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+              </div>
+            </div>
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="login-password">Password</label>
-            <div className="auth-input-wrap">
-              <input
-                id="login-password"
-                value={form.password}
-                onChange={e => set("password", e.target.value)}
-                type={showPw ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                required
-                className="auth-input auth-input--with-icon"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(p => !p)}
-                className="auth-eye-btn"
-                aria-label={showPw ? "Hide password" : "Show password"}
-              >
-                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-password">
+                Kata Sandi
+              </label>
+              <div className="relative">
+                <input
+                  id="login-password"
+                  value={form.password}
+                  onChange={e => set("password", e.target.value)}
+                  type={showPw ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  required
+                  className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
+                />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(p => !p)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] p-1 rounded-lg transition-colors"
+                  aria-label={showPw ? "Hide password" : "Show password"}
+                >
+                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, position: "relative", zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Options */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
                 id="remember-me"
                 type="checkbox"
                 checked={rememberMe}
                 onChange={e => setRememberMe(e.target.checked)}
-                style={{
-                  width: 18,
-                  height: 18,
-                  cursor: "pointer",
-                  accentColor: "#f97316",
-                  position: "relative",
-                  zIndex: 10
-                }}
+                className="w-4 h-4 rounded border-[var(--ui-border-input)] text-orange-500 focus:ring-orange-500/20 accent-orange-500 cursor-pointer"
               />
-              <label htmlFor="remember-me" style={{
-                fontSize: 13,
-                color: "var(--ui-text-secondary)",
-                cursor: "pointer",
-                userSelect: "none",
-                position: "relative",
-                zIndex: 10
-              }}>
-                Remember me for 30 days
-              </label>
-            </div>
-            <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 700, color: "#f97316", textDecoration: "none", position: "relative", zIndex: 10, cursor: "pointer" }}>
-              Forgot password?
+              <span className="text-xs font-medium text-[var(--ui-text-secondary)]">
+                Ingat Saya
+              </span>
+            </label>
+            <Link 
+              to="/forgot-password" 
+              className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
+            >
+              Lupa Kata Sandi?
             </Link>
           </div>
 
-          {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
+          {error && (
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5 animate-in fade-in">
+              <span className="shrink-0 text-base">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
 
-          <button type="submit" disabled={loading} className="auth-btn auth-btn--primary">
+          {/* Submit Button */}
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-lg shadow-orange-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
             {loading ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Signing in...
+                <Loader2 size={18} className="animate-spin" /> Memproses...
               </>
             ) : (
-              "Sign In"
+              <>
+                <LogIn size={18} /> Masuk Akun
+              </>
             )}
           </button>
 
-          <p className="auth-footer">
-            Don&apos;t have an account?{" "}
-            <Link to="/register" className="auth-link">Create an account</Link>
-          </p>
+          {/* Footer Link */}
+          <div className="text-center pt-2 border-t border-[var(--ui-border-subtle)]">
+            <p className="text-xs text-[var(--ui-text-muted)]">
+              Belum memiliki akun perusahaan?{" "}
+              <Link to="/register" className="font-bold text-orange-500 hover:underline ml-1">
+                Daftar Sekarang
+              </Link>
+            </p>
+          </div>
         </form>
       ) : (
-        <form onSubmit={handle2FASubmit} className="auth-form">
-          <div className="auth-form__header auth-form__header--2fa">
-            <div className="auth-2fa-icon">
-              <ShieldCheck size={32} color="#fff" />
+        <form onSubmit={handle2FASubmit} className="flex flex-col gap-6">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+              <ShieldCheck size={28} />
             </div>
-            <h1 className="auth-heading">2FA Verification</h1>
-            <p className="auth-subheading">
-              {useRecovery ? "Enter recovery code" : "Enter authenticator code"}
+            <h1 className="text-2xl font-black text-[var(--ui-text-primary)]">
+              Verifikasi 2FA
+            </h1>
+            <p className="text-xs text-[var(--ui-text-muted)] max-w-xs mx-auto">
+              {useRecovery ? "Masukkan kode pemulihan (recovery code) Anda" : "Masukkan 6 digit kode dari aplikasi autentikator Anda"}
             </p>
           </div>
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="login-2fa">
-              {useRecovery ? "Recovery Code" : "Authentication Code"}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-2fa">
+              {useRecovery ? "Kode Pemulihan" : "Kode Autentikasi"}
             </label>
             <input
               id="login-2fa"
@@ -254,34 +281,46 @@ export default function Login() {
               autoComplete="one-time-code"
               placeholder={useRecovery ? "87654321" : "123456"}
               required
-              className="auth-input auth-otp-input"
+              className="w-full px-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-center text-xl font-bold tracking-[0.2em] outline-none focus:border-emerald-500/60 focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:tracking-normal placeholder:text-sm placeholder:font-normal"
             />
           </div>
 
-          {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
+          {error && (
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5">
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
 
-          <button type="submit" disabled={loading} className="auth-btn auth-btn--primary">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : "Verify & Continue"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setUseRecovery(!useRecovery); setTwoFactorCode(""); }}
-            className="auth-text-btn auth-text-btn--link"
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
           >
-            <Key size={14} />
-            {useRecovery ? "Use authenticator app" : "Use recovery code"}
+            {loading ? <Loader2 size={18} className="animate-spin" /> : "Verifikasi & Lanjutkan"}
           </button>
 
-          <button
-            type="button"
-            onClick={() => { setShow2FA(false); setTwoFactorCode(""); }}
-            className="auth-text-btn auth-text-btn--muted"
-          >
-            Back to Login
-          </button>
+          <div className="space-y-2 pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => { setUseRecovery(!useRecovery); setTwoFactorCode(""); }}
+              className="text-xs font-bold text-orange-500 hover:underline flex items-center justify-center gap-1.5 w-full"
+            >
+              <Key size={14} />
+              {useRecovery ? "Gunakan Aplikasi Authenticator" : "Gunakan Kode Pemulihan"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setShow2FA(false); setTwoFactorCode(""); }}
+              className="text-xs font-medium text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-colors w-full"
+            >
+              Kembali ke Form Login
+            </button>
+          </div>
         </form>
       )}
     </AuthLayout>
   );
 }
+
