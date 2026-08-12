@@ -445,11 +445,7 @@ export default function MyPurchaseRequisitionDetail() {
                           }}
                         />
                       ) : (
-                        <div style={{ 
-                          fontSize: 24, 
-                          color: "var(--ui-text-muted)",
-                          opacity: 0.5
-                        }}>📦</div>
+                        <Package size={22} style={{ color: "var(--ui-text-muted)", opacity: 0.4 }} />
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

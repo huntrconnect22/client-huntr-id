@@ -3,7 +3,7 @@ import {
   Building2, ShieldCheck, LogOut, CheckCircle2, XCircle,
   Clock, Eye, FileText, ChevronDown, ChevronUp, Search,
   Loader2, AlertCircle, Users, TrendingUp, X, ExternalLink, Trash2, Pencil, Package,
-  Menu, Settings,
+  Menu, Settings, CreditCard,
 } from "lucide-react";
 
 /* ─── tiny responsive hook ─── */
@@ -416,9 +416,7 @@ function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () =>
               borderTop: activeTab === t.id ? "2px solid #f97316" : "2px solid transparent",
               transition: "all 0.15s",
             }}>
-              <span style={{ fontSize: 16 }}>
-                {t.id === "companies" ? "🏢" : t.id === "catalogue" ? "📦" : t.id === "transactions" ? "💳" : t.id === "users" ? "👥" : t.id === "admins" ? "🛡️" : "⚙️"}
-              </span>
+              {t.id === "companies" ? <Building2 size={16} /> : t.id === "catalogue" ? <Package size={16} /> : t.id === "transactions" ? <CreditCard size={16} /> : t.id === "users" ? <Users size={16} /> : t.id === "admins" ? <ShieldCheck size={16} /> : <Settings size={16} />}
               {t.label.slice(0, 5)}
             </button>
           ))}

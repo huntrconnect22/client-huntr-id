@@ -30,131 +30,72 @@ export function VendorProposalForm({
   handleSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
 }) {
-  const iconButtonStyle: React.CSSProperties = {
-    background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)",
-    color: "var(--ui-text-primary)", width: 40, height: 40, borderRadius: 12,
-    display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"
-  };
-  const formContainerStyle: React.CSSProperties = {
-    background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
-    borderRadius: 24, overflow: "hidden"
-  };
-  const formHeaderStyle: React.CSSProperties = {
-    padding: "24px 32px", borderBottom: "1px solid var(--ui-border)",
-    background: "var(--ui-bg-page)", display: "flex", justifyContent: "space-between", alignItems: "center"
-  };
-  const iconContainerStyle: React.CSSProperties = {
-    width: 48, height: 48, borderRadius: 14, background: "rgba(249,115,22,0.1)",
-    color: "#f97316", display: "flex", alignItems: "center", justifyContent: "center"
-  };
-  const formItemRowStyle: React.CSSProperties = {
-    display: "flex", alignItems: "center", gap: 16, padding: 16,
-    background: "var(--ui-bg-input)", borderRadius: 16, border: "1px solid var(--ui-border-input)"
-  };
-  const inputStyle: React.CSSProperties = {
-    width: "100%", background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
-    borderRadius: 10, padding: "10px 12px 10px 32px", fontSize: 14,
-    fontWeight: 800, color: "var(--ui-text-primary)", outline: "none"
-  };
-  const currencyPrefixStyle: React.CSSProperties = {
-    position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-    fontSize: 10, fontWeight: 800, color: "var(--ui-text-muted)"
-  };
-  const fieldGroupStyle: React.CSSProperties = {
-    display: "flex", flexDirection: "column", gap: 8
-  };
-  const labelStyle: React.CSSProperties = {
-    fontSize: 10, fontWeight: 900, color: "var(--ui-text-brand)",
-    textTransform: "uppercase", letterSpacing: 1
-  };
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle, padding: "10px 12px", appearance: "auto"
-  };
-  const dropzoneStyle: React.CSSProperties = {
-    border: "2px dashed var(--ui-border)", borderRadius: 16, padding: "40px 20px",
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-    cursor: "pointer", transition: "all 0.2s"
-  };
-  const dropzoneIconStyle: React.CSSProperties = {
-    width: 48, height: 48, borderRadius: "50%", background: "var(--ui-bg-page)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
-  };
-  const infoBoxStyle: React.CSSProperties = {
-    display: "flex", gap: 12, padding: 16, background: "rgba(249,115,22,0.05)",
-    borderRadius: 12, border: "1px solid rgba(249,115,22,0.1)", marginTop: 16
-  };
-  const formFooterStyle: React.CSSProperties = {
-    padding: 32, borderTop: "1px solid var(--ui-border)", display: "flex",
-    justifyContent: "flex-end", gap: 16, background: "var(--ui-bg-page)"
-  };
-  const secondaryBtnStyle: React.CSSProperties = {
-    background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)",
-    color: "var(--ui-text-secondary)", padding: "10px 20px", borderRadius: 12,
-    fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center"
-  };
-  const primaryBtnStyle: React.CSSProperties = {
-    background: "var(--ui-text-primary)", color: "var(--ui-bg-page)",
-    border: "none", padding: "10px 20px", borderRadius: 12,
-    fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8
-  };
-
-  const SectionHeader = ({ icon, title }: { icon: React.ReactNode, title: string }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid var(--ui-border)", paddingBottom: 12 }}>
-      <div style={{ color: "var(--ui-text-brand)" }}>{icon}</div>
-      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: "var(--ui-text-primary)", textTransform: "uppercase", letterSpacing: 1 }}>{title}</h3>
-    </div>
-  );
-
-  const ErrorBox = ({ message }: { message: string }) => (
-    <div style={{ padding: 16, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 12, color: "#ef4444", fontSize: 13, fontWeight: 600, marginTop: 16 }}>
-      {message}
-    </div>
-  );
-
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-         <button onClick={onCancel} style={iconButtonStyle} aria-label="Back to tender list" title="Back to tender list">
-           <ChevronLeft size={20} />
-         </button>
-         <div>
-           <div style={{ fontSize: 11, fontWeight: 800, color: "var(--ui-text-brand)", textTransform: "uppercase", letterSpacing: 1 }}>SUBMIT PROPOSAL</div>
-           <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)" }}>{selectedRfq.title}</h2>
-         </div>
+    <div className="w-full space-y-4">
+      {/* Top back title */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onCancel}
+          className="w-8 h-8 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center text-[var(--ui-text-primary)] hover:border-orange-400/50 transition-all"
+          aria-label="Back to tender list"
+          title="Back to tender list"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 block">SUBMIT PROPOSAL</span>
+          <h2 className="text-sm sm:text-base font-bold text-[var(--ui-text-primary)]">{selectedRfq.title}</h2>
+        </div>
       </div>
 
-      <div style={formContainerStyle}>
-        <div style={formHeaderStyle}>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-             <div style={{ ...iconContainerStyle, width: 36, height: 36 }}><Building2 size={18} /></div>
-             <div>
-               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase" }}>TARGET BUYER</div>
-               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ui-text-primary)" }}>{selectedRfq.company?.name}</div>
-             </div>
+      {/* Main Form Container */}
+      <div className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] overflow-hidden">
+        <div className="p-3.5 px-4 border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center">
+              <Building2 size={16} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">TARGET BUYER</span>
+              <span className="font-bold text-[var(--ui-text-primary)]">{selectedRfq.company?.name}</span>
+            </div>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase" }}>Purchase Req ID</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ui-text-primary)" }}>PR-{selectedRfq.id ? String(selectedRfq.id).substring(0, 8).toUpperCase() : ""}</div>
+          <div className="text-right">
+            <span className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">PR ID</span>
+            <span className="font-mono font-bold text-[var(--ui-text-primary)]">PR-{selectedRfq.id ? String(selectedRfq.id).substring(0, 8).toUpperCase() : ""}</span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: 32, display: "flex", flexDirection: "column", gap: 32 }}>
-          <section>
-            <SectionHeader icon={<DollarSign size={18} />} title="Itemized Price Offers" />
-            <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
+        <form onSubmit={handleSubmit} className="p-4 space-y-4 text-xs">
+          
+          {/* Itemized Price Offers */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-[var(--ui-border)] text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+              <DollarSign size={14} className="text-orange-500" /> Itemized Price Offers
+            </div>
+            <div className="space-y-2">
               {form.items.map((item: any, idx: number) => {
                 const rfqItem = selectedRfq.items?.find((i:any) => i.id === item.rfq_item_id);
                 return (
-                  <div key={item.rfq_item_id} style={formItemRowStyle}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ui-text-primary)" }}>{item.catalogue?.name}</div>
-                      <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                        <span style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>{item.catalogue?.item_code} · {rfqItem?.qty} Units Requested</span>
-                      </div>
+                  <div key={item.rfq_item_id} className="p-3 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-between gap-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-[var(--ui-text-primary)]">{item.catalogue?.name}</p>
+                      <p className="text-[10px] text-[var(--ui-text-muted)] font-mono mt-0.5 flex items-center gap-2 flex-wrap">
+                        <span>{item.catalogue?.item_code}</span>
+                        <span>·</span>
+                        <span className="font-bold text-orange-500">{rfqItem?.qty} Units Requested</span>
+                        {rfqItem?.estimated_price > 0 && (
+                          <>
+                            <span>·</span>
+                            <span className="text-[var(--ui-text-secondary)] font-semibold bg-[var(--ui-bg-card)] px-1.5 py-0.5 rounded border border-[var(--ui-border)]">
+                              Target Buyer: Rp {Number(rfqItem.estimated_price).toLocaleString()} / unit
+                            </span>
+                          </>
+                        )}
+                      </p>
                     </div>
-                    <div style={{ position: "relative", width: 220 }}>
-                      <span style={currencyPrefixStyle}>Rp</span>
+                    <div className="relative w-44">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[var(--ui-text-muted)]">Rp</span>
                       <input 
                         value={item.price_offer} 
                         onChange={e => {
@@ -163,7 +104,8 @@ export function VendorProposalForm({
                           updateForm("items", newItems);
                         }}
                         type="number" min="0" required placeholder="0"
-                        style={inputStyle} />
+                        className="w-full pl-7 pr-2.5 py-1.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs font-bold text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+                      />
                     </div>
                   </div>
                 );
@@ -171,98 +113,115 @@ export function VendorProposalForm({
             </div>
           </section>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
-            <section>
-                <SectionHeader icon={<Clock size={18} />} title="SERVICE TERMS" />
-                <div style={{ display: "grid", gap: 16, marginTop: 16 }}>
-                  <div style={fieldGroupStyle}>
-                    <label style={labelStyle}>LEAD TIME (DAYS TO DELIVERY)</label>
-                    <select value={form.delivery_days} onChange={e => updateForm("delivery_days", e.target.value)} style={selectStyle}>
-                      <option value="3">3 Days (Express)</option>
-                      <option value="7">7 Days (Standard)</option>
-                      <option value="14">14 Days</option>
-                      <option value="30">30 Days</option>
-                    </select>
-                  </div>
-                  <div style={fieldGroupStyle}>
-                    <label style={labelStyle}>WARRANTY PERIOD (MONTHS)</label>
-                    <select value={form.warranty_months} onChange={e => updateForm("warranty_months", e.target.value)} style={selectStyle}>
-                      <option value="0">No Warranty</option>
-                      <option value="6">6 Months</option>
-                      <option value="12">12 Months (1 Year)</option>
-                      <option value="24">24 Months (2 Years)</option>
-                      <option value="36">36 Months (3 Years)</option>
-                    </select>
-                  </div>
-                  <div style={fieldGroupStyle}>
-                    <label style={labelStyle}>PAYMENT SCHEME</label>
-                    <select value={form.payment_term} onChange={e => updateForm("payment_term", e.target.value)} style={selectStyle}>
-                      <option value="7 days">Net 7 Days</option>
-                      <option value="14 days">Net 14 Days</option>
-                      <option value="30 days">Net 30 Days</option>
-                      <option value="60 days">Net 60 Days</option>
-                    </select>
-                  </div>
+          {/* Service Terms & Upload */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Service Terms */}
+            <section className="space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-[var(--ui-border)] text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                <Clock size={14} className="text-orange-500" /> Service Terms
+              </div>
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">Lead Time (Days to Delivery)</label>
+                  <select value={form.delivery_days} onChange={e => updateForm("delivery_days", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
+                    <option value="3">3 Days (Express)</option>
+                    <option value="7">7 Days (Standard)</option>
+                    <option value="14">14 Days</option>
+                    <option value="30">30 Days</option>
+                  </select>
                 </div>
-              </section>
-
-            <section>
-              <SectionHeader icon={<Upload size={18} />} title="Supporting Documents" />
-              <div style={{ marginTop: 16 }}>
-                <div 
-                  onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{ 
-                    ...dropzoneStyle,
-                    borderColor: isDragging ? "var(--ui-text-brand)" : "var(--ui-border)",
-                    background: isDragging ? "var(--ui-bg-badge)" : "var(--ui-bg-input)"
-                  }}
-                >
-                  <input type="file" ref={fileInputRef} onChange={e => updateForm("document", e.target.files?.[0] || null)} style={{ display: "none" }} />
-                  <div style={dropzoneIconStyle}>
-                    {form.document ? <CheckCircle2 size={24} color="var(--ui-status-active)" /> : <Upload size={24} color="var(--ui-text-muted)" />}
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)" }}>
-                      {form.document ? form.document.name : "Drag & Drop Supporting Document"}
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>
-                      {form.document ? "File ready for upload" : "PDF, JPG, or PNG (Max 5MB)"}
-                    </div>
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">Warranty Period (Months)</label>
+                  <select value={form.warranty_months} onChange={e => updateForm("warranty_months", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
+                    <option value="0">No Warranty</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months (1 Year)</option>
+                    <option value="24">24 Months (2 Years)</option>
+                    <option value="36">36 Months (3 Years)</option>
+                  </select>
                 </div>
-                <div style={infoBoxStyle}>
-                  <Info size={14} color="var(--ui-text-brand)" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <p style={{ margin: 0, fontSize: 11, color: "var(--ui-text-secondary)", lineHeight: 1.5 }}>
-                    <strong>Optional:</strong> Attaching company profile, additional technical specifications, or vendor certifications will increase your evaluation score.
-                  </p>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">Payment Scheme</label>
+                  <select value={form.payment_term} onChange={e => updateForm("payment_term", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
+                    <option value="7 days">Net 7 Days</option>
+                    <option value="14 days">Net 14 Days</option>
+                    <option value="30 days">Net 30 Days</option>
+                    <option value="60 days">Net 60 Days</option>
+                  </select>
                 </div>
               </div>
             </section>
+
+            {/* Supporting Docs */}
+            <section className="space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-[var(--ui-border)] text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                <Upload size={14} className="text-orange-500" /> Supporting Documents
+              </div>
+              <div className="space-y-2">
+                <div 
+                  onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                    isDragging ? "border-orange-500 bg-orange-500/5" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] hover:border-orange-400/50"
+                  }`}
+                >
+                  <input type="file" ref={fileInputRef} onChange={e => updateForm("document", e.target.files?.[0] || null)} className="hidden" />
+                  <div className="w-9 h-9 rounded-full bg-[var(--ui-bg-card)] flex items-center justify-center">
+                    {form.document ? <CheckCircle2 size={18} className="text-emerald-500" /> : <Upload size={18} className="text-[var(--ui-text-muted)]" />}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-semibold text-[var(--ui-text-primary)] truncate max-w-[200px]">
+                      {form.document ? form.document.name : "Drag & Drop Supporting Document"}
+                    </p>
+                    <p className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
+                      {form.document ? "File ready for upload" : "PDF, JPG, or PNG (Max 5MB)"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-orange-500/5 border border-orange-500/15 flex items-start gap-2 text-[11px] text-[var(--ui-text-muted)] leading-relaxed">
+                  <Info size={13} className="text-orange-500 shrink-0 mt-0.5" />
+                  <p><strong>Optional:</strong> Attaching company profile or specifications will increase evaluation score.</p>
+                </div>
+              </div>
+            </section>
+
           </div>
 
-          <div style={formFooterStyle}>
-            <button type="button" onClick={onCancel} style={secondaryBtnStyle}>Cancel</button>
+          {/* Form Actions Footer */}
+          <div className="pt-3 border-t border-[var(--ui-border)] flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-3.5 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] transition-all"
+            >
+              Cancel
+            </button>
             <button 
               type="submit" 
               disabled={loading || hasSubmittedForSelectedRfq || isProcessing.current}
-              style={{
-                ...primaryBtnStyle,
-                background: (loading || hasSubmittedForSelectedRfq || isProcessing.current) ? "#9ca3af" : "var(--huntr-gradient)",
-                cursor: (loading || hasSubmittedForSelectedRfq || isProcessing.current) ? "not-allowed" : "pointer",
-                boxShadow: (loading || hasSubmittedForSelectedRfq || isProcessing.current) ? "none" : "0 4px 12px rgba(249,115,22,0.2)",
-                opacity: 1
-              }}
+              style={(loading || hasSubmittedForSelectedRfq || isProcessing.current) ? {} : { color: 'white' }}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                (loading || hasSubmittedForSelectedRfq || isProcessing.current)
+                  ? "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] border border-[var(--ui-border)] cursor-not-allowed"
+                  : "bg-orange-500 hover:bg-orange-600 cursor-pointer"
+              }`}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <><ShieldCheck size={18} /> Submit Official Proposal</>}
+              {loading ? <Loader2 size={13} className="animate-spin" /> : <><ShieldCheck size={13} /> Submit Official Proposal</>}
             </button>
           </div>
+
           {hasSubmittedForSelectedRfq && (
-            <div style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700, marginTop: 8 }}>
+            <p className="text-xs font-semibold text-amber-500">
               Duplicate submission is not allowed for this RFQ.
+            </p>
+          )}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold">
+              {error}
             </div>
           )}
-          {error && <ErrorBox message={error} />}
         </form>
       </div>
     </div>

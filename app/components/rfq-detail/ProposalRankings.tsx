@@ -1,7 +1,7 @@
 import React from "react";
 import { 
   ShieldCheck, Trophy, MessageSquare, Award, CheckCircle2, 
-  Info, Loader2, Sparkles 
+  Info, Loader2, Sparkles, FileText
 } from "lucide-react";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../../hooks/useMediaQuery";
 import { getAssetUrl } from "../../lib/assets";
@@ -380,7 +380,7 @@ export function ProposalRankings({
                         marginTop: 2
                       }}
                     >
-                      📄 Lihat Dokumen
+                      <FileText size={13} style={{ display: "inline", marginRight: 4 }} /> Lihat Dokumen
                     </a>
                   ) : (
                     <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontStyle: "italic", display: "block", marginTop: 2 }}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Building2, Package, DollarSign, Calendar, MessageSquare, Loader2 } from 'lucide-react';
+import { Trophy, Building2, Package, DollarSign, Calendar, MessageSquare, Loader2, FileText } from 'lucide-react';
 import { getAssetUrl } from '../../lib/assets';
 
 interface ProposalRankingsProps {
@@ -140,7 +140,7 @@ export function ProposalRankings({
                               textDecoration: "none"
                             }}
                           >
-                            📄 Lihat Dokumen Vendor
+                            <FileText size={13} style={{ display: "inline", marginRight: 4 }} /> Lihat Dokumen Vendor
                           </a>
                         </div>
                       )}
@@ -262,7 +262,7 @@ export function ProposalRankings({
                                 textDecoration: "none"
                               }}
                             >
-                              📄 Lihat Dokumen Vendor
+                              <FileText size={13} style={{ display: "inline", marginRight: 4 }} /> Lihat Dokumen Vendor
                             </a>
                           </div>
                         )}

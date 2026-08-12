@@ -188,9 +188,11 @@ export default function SelectCompany() {
 
                 <div className="flex flex-col gap-2.5">
                   <button
+                    type="button"
                     onClick={handleLogin}
                     disabled={!selected}
-                    className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 transition-all"
+                    style={{ color: 'white' }}
+                    className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
                   >
                     Enter Workspace <ArrowRight size={16} />
                   </button>

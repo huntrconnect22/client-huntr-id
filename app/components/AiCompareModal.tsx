@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { X, Sparkles, Star, Loader2, CheckCircle2, ShoppingCart } from "lucide-react";
+import { X, Sparkles, Star, Loader2, CheckCircle2, ShoppingCart, Lightbulb } from "lucide-react";
 import { aiCompare } from "../lib/api/ai";
 
 interface AiCompareModalProps {
@@ -276,7 +276,7 @@ export default function AiCompareModal({
                         color: "#f97316",
                       }}
                     >
-                      💡 {analysis.recommendation}
+                      <Lightbulb size={14} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} />{analysis.recommendation}
                     </div>
                   )}
                 </div>

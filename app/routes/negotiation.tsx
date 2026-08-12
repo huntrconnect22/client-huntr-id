@@ -43,75 +43,78 @@ function NegotiationResponseModal({ negotiation, onClose, onSuccess }: { negotia
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: 20 }}>
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
-        <div style={{ padding: "24px 32px", borderBottom: "1px solid var(--ui-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="fixed inset-0 z-[999] bg-black/50 backdrop-blur-md flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="p-4 border-b border-[var(--ui-border)] flex items-center justify-between">
           <div>
-            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)" }}>Review Negotiation</h3>
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 600 }}>Proposed terms for RFQ: {negotiation.proposal?.rfq?.title}</p>
+            <h3 className="text-sm font-bold text-[var(--ui-text-primary)]">Review Negotiation</h3>
+            <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">Proposed terms for RFQ: {negotiation.proposal?.rfq?.title}</p>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer" }}><X size={24} /></button>
+          <button onClick={onClose} className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]">
+            <X size={18} />
+          </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: 32, display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Terms Comparison */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            <div style={{ padding: 16, background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid var(--ui-border)" }}>
-              <div style={{ fontSize: 10, fontWeight: 900, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 8 }}>Original Offer</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ui-text-primary)" }}>Rp {Number(negotiation.proposal?.price_offer).toLocaleString()}</div>
-              <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 4 }}>Term: {negotiation.proposal?.payment_term}</div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="p-3 bg-[var(--ui-bg-input)] rounded-xl border border-[var(--ui-border)] space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] block">Original Offer</span>
+              <p className="font-bold text-[var(--ui-text-primary)]">Rp {Number(negotiation.proposal?.price_offer).toLocaleString()}</p>
+              <p className="text-[11px] text-[var(--ui-text-muted)]">Term: {negotiation.proposal?.payment_term}</p>
             </div>
-            <div style={{ padding: 16, background: "rgba(249,115,22,0.05)", borderRadius: 16, border: "1px solid rgba(249,115,22,0.2)" }}>
-              <div style={{ fontSize: 10, fontWeight: 900, color: "var(--huntr-orange)", textTransform: "uppercase", marginBottom: 8 }}>Buyer's Counter</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--huntr-orange)" }}>Rp {negotiation.items?.reduce((acc: number, item: any) => acc + (Number(item.negotiated_price) * item.negotiated_qty), 0).toLocaleString()}</div>
-              <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 4 }}>Term: {negotiation.payment_scheme}</div>
+            <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/30 space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 block">Buyer's Counter</span>
+              <p className="font-bold text-orange-500">Rp {negotiation.items?.reduce((acc: number, item: any) => acc + (Number(item.negotiated_price) * item.negotiated_qty), 0).toLocaleString()}</p>
+              <p className="text-[11px] text-[var(--ui-text-muted)]">Term: {negotiation.payment_scheme}</p>
             </div>
           </div>
 
           {/* Negotiated Items */}
-          <div>
-            <label style={{ fontSize: 10, fontWeight: 900, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, display: "block" }}>Negotiated Items</label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] block">Negotiated Items</span>
+            <div className="space-y-2">
               {negotiation.items?.map((it: any, idx: number) => (
-                <div key={idx} style={{ padding: 16, background: "var(--ui-bg-input)", borderRadius: 16, border: "1px solid var(--ui-border-input)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div key={idx} className="p-3 bg-[var(--ui-bg-input)] rounded-xl border border-[var(--ui-border)] flex items-center justify-between text-xs">
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ui-text-primary)" }}>{it.proposal_item?.rfq_item?.catalogue?.name || "Item"}</div>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 600 }}>Qty: {it.negotiated_qty}</div>
+                    <p className="font-semibold text-[var(--ui-text-primary)]">{it.proposal_item?.rfq_item?.catalogue?.name || "Item"}</p>
+                    <p className="text-[11px] text-[var(--ui-text-muted)]">Qty: {it.negotiated_qty}</p>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: "var(--huntr-orange)" }}>Rp {Number(it.negotiated_price).toLocaleString()}</div>
-                    <div style={{ fontSize: 10, color: "var(--ui-text-muted)" }}>per Unit</div>
+                  <div className="text-right">
+                    <p className="font-bold text-orange-500">Rp {Number(it.negotiated_price).toLocaleString()}</p>
+                    <p className="text-[10px] text-[var(--ui-text-muted)]">per Unit</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div>
-            <label style={{ fontSize: 10, fontWeight: 900, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>Your Response Remarks</label>
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] block">Your Response Remarks</span>
             <textarea 
               value={remarks}
               onChange={e => setRemarks(e.target.value)}
               placeholder="Any comments regarding your decision..."
-              style={{ width: "100%", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: 16, fontSize: 14, color: "var(--ui-text-primary)", minHeight: 100, outline: "none", resize: "none" }}
+              className="w-full bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded-xl p-3 text-xs text-[var(--ui-text-primary)] min-h-[80px] outline-none resize-none"
             />
           </div>
         </div>
 
-        <div style={{ padding: 32, borderTop: "1px solid var(--ui-border)", display: "flex", gap: 16 }}>
+        <div className="p-4 border-t border-[var(--ui-border)] flex items-center gap-2">
           <button 
             onClick={() => handleRespond('declined')}
             disabled={loading}
-            style={{ flex: 1, padding: 16, borderRadius: 16, border: "1px solid #ef4444", background: "none", fontSize: 14, fontWeight: 700, color: "#ef4444", cursor: "pointer" }}
+            className="flex-1 py-2 rounded-lg border border-red-500 text-red-500 font-semibold text-xs hover:bg-red-500/5 transition-all"
           >
             Decline
           </button>
           <button 
             onClick={() => handleRespond('accepted')}
             disabled={loading}
-            style={{ flex: 2, padding: 16, borderRadius: 16, background: "var(--huntr-gradient)", border: "none", color: "#fff", fontSize: 14, fontWeight: 900, cursor: "pointer", boxShadow: "0 10px 20px rgba(249,115,22,0.2)" }}
+            style={{ color: 'white' }}
+            className="flex-1 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
           >
-            {loading ? <Loader2 className="animate-spin" style={{ margin: "0 auto" }} /> : "Accept New Terms"}
+            {loading ? <Loader2 size={13} className="animate-spin" /> : "Accept New Terms"}
           </button>
         </div>
       </div>
@@ -127,6 +130,13 @@ export default function Negotiation() {
   const [selectedNeg, setSelectedNeg] = useState<any>(null);
   const [showRespondModal, setShowRespondModal] = useState(false);
 
+  const getCompanyPrefix = (comp?: any) => {
+    const c = comp ?? activeCompany;
+    if (!c) return "";
+    const slug = c.slug || c.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    return slug ? `/${slug}` : "";
+  };
+
   useEffect(() => {
     const comp = localStorage.getItem("active_company");
     if (comp) {
@@ -137,7 +147,6 @@ export default function Negotiation() {
       navigate("/login");
     }
     
-    // Listen for new notifications to refresh data
     const handleRefreshData = () => {
       const comp = localStorage.getItem("active_company");
       if (comp) {
@@ -147,11 +156,19 @@ export default function Negotiation() {
     };
     
     window.addEventListener('huntr:notification_received', handleRefreshData);
-    
     return () => {
       window.removeEventListener('huntr:notification_received', handleRefreshData);
     };
   }, []);
+
+  // Company slug redirect check
+  useEffect(() => {
+    if (!activeCompany) return;
+    const slug = getCompanyPrefix(activeCompany);
+    if (slug && !window.location.pathname.startsWith(slug)) {
+      navigate(`${slug}/negotiation`, { replace: true });
+    }
+  }, [activeCompany]);
 
   const fetchNegotiations = async (companyId: string) => {
     setLoading(true);
@@ -172,96 +189,108 @@ export default function Negotiation() {
       title="Negotiations" 
       subtitle={isBuyer ? "Manage your counter-offers to vendors." : "Respond to buyer counter-offers and finalise terms."}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="w-full space-y-4">
+        {/* Header toolbar */}
+        <div className="flex items-center justify-between gap-3 flex-wrap bg-[var(--ui-bg-card)] border border-[var(--ui-border)] p-3.5 px-4 rounded-xl">
           <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "var(--ui-text-primary)" }}>
+            <h2 className="text-sm font-bold text-[var(--ui-text-primary)]">
               {isBuyer ? "Sent Counter-Offers" : "Pending Counter-Offers"}
             </h2>
-            <p style={{ fontSize: 13, color: "var(--ui-text-secondary)", marginTop: 4 }}>
+            <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">
               Track all ongoing price and term negotiations.
             </p>
           </div>
-          <button onClick={() => fetchNegotiations(activeCompany.id)} style={secondaryBtnStyle}>
-            <RefreshCw size={16} style={{ marginRight: 8 }} /> Refresh
+          <button
+            onClick={() => fetchNegotiations(activeCompany.id)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
+          >
+            <RefreshCw size={13} /> Refresh
           </button>
         </div>
 
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: 100 }}>
-            <Loader2 className="animate-spin" color="var(--huntr-orange)" size={40} />
+          <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
+            <Loader2 className="animate-spin text-orange-500" size={28} />
+            <span className="text-xs text-[var(--ui-text-muted)]">Loading negotiations...</span>
           </div>
         ) : negotiations.length === 0 ? (
-          <div style={emptyStateStyle}>
-            <MessageSquare size={48} color="var(--ui-text-muted)" style={{ marginBottom: 16, opacity: 0.2 }} />
-            <div style={{ color: "var(--ui-text-primary)", fontSize: 15, fontWeight: 700 }}>No Negotiations Found</div>
-            <div style={{ color: "var(--ui-text-muted)", fontSize: 13, marginTop: 4 }}>You don't have any active negotiation records.</div>
+          <div className="border border-dashed border-[var(--ui-border)] rounded-xl py-16 flex flex-col items-center justify-center gap-3 text-center">
+            <MessageSquare size={36} className="text-[var(--ui-text-muted)] opacity-20" />
+            <p className="text-sm font-semibold text-[var(--ui-text-primary)]">No Negotiations Found</p>
+            <p className="text-xs text-[var(--ui-text-muted)]">You don't have any active negotiation records.</p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+          <div className="space-y-3">
             {negotiations.map(neg => (
-              <div key={neg.id} style={{ ...cardStyle, borderLeft: neg.status === 'pending' ? "4px solid var(--huntr-orange)" : "1px solid var(--ui-border)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <h4 style={{ fontSize: 16, fontWeight: 800, color: "var(--ui-text-primary)", margin: 0 }}>RFQ: {neg.proposal?.rfq?.title}</h4>
-                      <div style={{ 
-                        padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: "uppercase",
-                        background: neg.status === 'pending' ? "rgba(249,115,22,0.1)" : neg.status === 'accepted' ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                        color: neg.status === 'pending' ? "var(--huntr-orange)" : neg.status === 'accepted' ? "#22c55e" : "#ef4444"
-                      }}>
+              <div
+                key={neg.id}
+                className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] p-4 space-y-3 transition-all"
+              >
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)]">RFQ: {neg.proposal?.rfq?.title}</h4>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                        neg.status === 'pending'
+                          ? "bg-orange-500/10 text-orange-500"
+                          : neg.status === 'accepted'
+                          ? "bg-emerald-500/10 text-emerald-500"
+                          : "bg-red-500/10 text-red-500"
+                      }`}>
                         {neg.status}
-                      </div>
+                      </span>
                     </div>
-                    <p style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 4 }}>
+                    <p className="text-xs text-[var(--ui-text-muted)]">
                       {isBuyer ? `Vendor: ${neg.proposal?.company?.name}` : `Buyer: ${neg.proposal?.rfq?.company?.name || "Global Buyer"}`}
                     </p>
                   </div>
+
                   {!isBuyer && neg.status === 'pending' && (
                     <button 
                       onClick={() => {
                         setSelectedNeg(neg);
                         setShowRespondModal(true);
                       }}
-                      style={primaryBtnStyle}
+                      style={{ color: 'white' }}
+                      className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-bold transition-all"
                     >
                       Review & Respond
                     </button>
                   )}
                   {isBuyer && neg.status === 'accepted' && (
                     <button 
-                      onClick={() => navigate(`/my-pr/${neg.proposal?.rfq_id}`)}
-                      style={secondaryBtnStyle}
+                      onClick={() => navigate(`${getCompanyPrefix()}/my-pr/${neg.proposal?.rfq_id}`)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-orange-500 hover:border-orange-400/50 transition-all"
                     >
-                      Go to Award <ChevronRight size={14} style={{ marginLeft: 4 }} />
+                      Go to Award <ChevronRight size={13} />
                     </button>
                   )}
                 </div>
                 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 16, marginTop: 16, padding: "16px 0", borderTop: "1px solid var(--ui-border)" }}>
-                  <div style={itemDetailStyle}>
-                    <DollarSign size={14} /> Proposed: Rp {neg.items?.reduce((acc: number, item: any) => acc + (Number(item.negotiated_price) * item.negotiated_qty), 0).toLocaleString()}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 py-2 border-t border-[var(--ui-border)] text-xs">
+                  <div className="flex items-center gap-1.5 text-[var(--ui-text-secondary)]">
+                    <DollarSign size={13} className="text-orange-500" /> Proposed: <span className="font-bold text-[var(--ui-text-primary)]">Rp {neg.items?.reduce((acc: number, item: any) => acc + (Number(item.negotiated_price) * item.negotiated_qty), 0).toLocaleString()}</span>
                   </div>
-                  <div style={itemDetailStyle}>
-                    <Clock size={14} /> Lead Time: {neg.delivery_terms} Days
+                  <div className="flex items-center gap-1.5 text-[var(--ui-text-secondary)]">
+                    <Clock size={13} className="text-[var(--ui-text-muted)]" /> Lead Time: <span className="font-semibold text-[var(--ui-text-primary)]">{neg.delivery_terms} Days</span>
                   </div>
-                  <div style={itemDetailStyle}>
-                    <ShieldCheck size={14} /> Term: {neg.payment_scheme}
+                  <div className="flex items-center gap-1.5 text-[var(--ui-text-secondary)]">
+                    <ShieldCheck size={13} className="text-[var(--ui-text-muted)]" /> Term: <span className="font-semibold text-[var(--ui-text-primary)]">{neg.payment_scheme}</span>
                   </div>
                 </div>
 
                 {(neg.buyer_remarks || neg.vendor_remarks) && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
                     {neg.buyer_remarks && (
-                      <div style={{ flex: 1, minWidth: 200, padding: 12, background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px solid var(--ui-border)" }}>
-                        <div style={{ fontSize: 10, fontWeight: 900, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 4 }}>Buyer's Note</div>
-                        <div style={{ fontSize: 12, color: "var(--ui-text-secondary)" }}>"{neg.buyer_remarks}"</div>
+                      <div className="p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] space-y-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] block">Buyer's Note</span>
+                        <p className="text-[var(--ui-text-secondary)] italic">"{neg.buyer_remarks}"</p>
                       </div>
                     )}
                     {neg.vendor_remarks && (
-                      <div style={{ flex: 1, minWidth: 200, padding: 12, background: "rgba(34,197,94,0.02)", borderRadius: 12, border: "1px solid rgba(34,197,94,0.1)" }}>
-                        <div style={{ fontSize: 10, fontWeight: 900, color: "#22c55e", textTransform: "uppercase", marginBottom: 4 }}>Vendor's Response</div>
-                        <div style={{ fontSize: 12, color: "var(--ui-text-secondary)" }}>"{neg.vendor_remarks}"</div>
+                      <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-500 block">Vendor's Response</span>
+                        <p className="text-[var(--ui-text-secondary)] italic">"{neg.vendor_remarks}"</p>
                       </div>
                     )}
                   </div>
@@ -289,31 +318,3 @@ export default function Negotiation() {
     </Layout>
   );
 }
-
-// ── Shared Styles ──────────────────────────────────────────────────────────
-
-const cardStyle: React.CSSProperties = {
-  background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
-  borderRadius: 20, padding: 24, transition: "all 0.2s ease",
-  display: "flex", flexDirection: "column",
-};
-
-const itemDetailStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 6, color: "var(--ui-text-secondary)", fontSize: 12, fontWeight: 600
-};
-
-const emptyStateStyle: React.CSSProperties = {
-  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-  padding: "80px 20px", background: "var(--ui-bg-card)", borderRadius: 24, border: "1px solid var(--ui-border)"
-};
-
-const primaryBtnStyle: React.CSSProperties = {
-  padding: "10px 20px", borderRadius: 12, background: "var(--huntr-gradient)",
-  border: "none", color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer",
-  display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(249,115,22,0.2)"
-};
-
-const secondaryBtnStyle: React.CSSProperties = {
-  padding: "10px 16px", borderRadius: 10, background: "var(--ui-bg-input)",
-  border: "1px solid var(--ui-border)", color: "var(--ui-text-primary)", fontWeight: 700, fontSize: 13, cursor: "pointer"
-};

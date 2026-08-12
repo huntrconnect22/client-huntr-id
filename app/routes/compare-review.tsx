@@ -18,7 +18,9 @@ import {
   Trophy,
   DollarSign,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Lightbulb,
+  FileText
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useAppShell } from "../routes/_app";
@@ -425,11 +427,7 @@ export default function CompareReview() {
                           }}
                         />
                       ) : (
-                        <div style={{
-                          fontSize: 24,
-                          color: "var(--ui-text-muted)",
-                          opacity: 0.5
-                        }}>📦</div>
+                        <Package size={22} className="text-[var(--ui-text-muted)] opacity-40" />
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -608,7 +606,7 @@ export default function CompareReview() {
                                   textDecoration: "none"
                                 }}
                               >
-                                📄 View Vendor Document
+                                <FileText size={14} /> View Vendor Document
                               </a>
                             </div>
                           )}
@@ -647,8 +645,8 @@ export default function CompareReview() {
                           borderRadius: 12,
                           border: "1px solid rgba(34,197,94,0.2)"
                         }}>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: "#22c55e", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                            ✅ Strengths
+                          <div style={{ fontSize: 12, fontWeight: 800, color: "#22c55e", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
+                            <CheckCircle2 size={14} /> Strengths
                           </div>
                           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 4 }}>
                             {rankData.strengths.map((strength: string, i: number) => (
@@ -665,8 +663,8 @@ export default function CompareReview() {
                           borderRadius: 12,
                           border: "1px solid rgba(239,68,68,0.2)"
                         }}>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: "#ef4444", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                            ⚠️ Weaknesses
+                          <div style={{ fontSize: 12, fontWeight: 800, color: "#ef4444", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
+                            <AlertCircle size={14} /> Weaknesses
                           </div>
                           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 4 }}>
                             {rankData.weaknesses.map((weakness: string, i: number) => (
@@ -683,8 +681,8 @@ export default function CompareReview() {
                           borderRadius: 12,
                           border: "1px solid var(--ui-border)"
                         }}>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: "var(--ui-text-brand)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                            💡 Recommendation
+                          <div style={{ fontSize: 12, fontWeight: 800, color: "var(--ui-text-brand)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
+                            <Lightbulb size={14} /> Recommendation
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: "var(--ui-text-primary)" }}>
                             {rankData.recommendation}
@@ -699,8 +697,8 @@ export default function CompareReview() {
                           borderRadius: 12,
                           border: "1px solid var(--ui-border)"
                         }}>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: "var(--ui-text-brand)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                            📊 Detailed Reason
+                          <div style={{ fontSize: 12, fontWeight: 800, color: "var(--ui-text-brand)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
+                            <BarChart3 size={14} /> Detailed Reason
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: "var(--ui-text-primary)" }}>
                             {rankData.detailed_reason.summary}

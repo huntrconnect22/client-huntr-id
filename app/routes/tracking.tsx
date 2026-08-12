@@ -131,7 +131,7 @@ const TimelineStep = ({ step, isLast }: { step: TrackingStep; isLast: boolean })
                 background: "rgba(6,182,212,0.1)", color: "#06b6d4",
                 border: "1px solid rgba(6,182,212,0.2)",
               }}>
-                🚚 {resi}
+                <Truck size={11} style={{ display: "inline", marginRight: 3, verticalAlign: "middle" }} />{resi}
               </span>
             ))}
           </div>
@@ -380,7 +380,7 @@ export default function TrackingPage() {
                         background: "rgba(6,182,212,0.09)", color: "#06b6d4",
                         border: "1px solid rgba(6,182,212,0.22)",
                       }}>
-                        🚚 {resi}
+                        <Truck size={12} style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }} />{resi}
                       </span>
                     ))}
                   </div>

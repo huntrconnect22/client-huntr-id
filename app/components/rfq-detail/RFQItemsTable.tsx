@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router";
-import { Package, Calendar, ExternalLink } from "lucide-react";
+import { Package, Calendar, ExternalLink, Camera } from "lucide-react";
 import { getAssetUrl } from "../../lib/assets";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../../hooks/useMediaQuery";
 
@@ -193,7 +193,7 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
                               textTransform: "uppercase",
                               letterSpacing: 0.5
                             }}>
-                              📷 Visual
+                              <Camera size={12} style={{ display: "inline", marginRight: 2 }} /> Visual
                             </span>
                           )}
                         </div>
