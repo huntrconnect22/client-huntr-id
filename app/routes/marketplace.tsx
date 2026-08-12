@@ -1,32 +1,36 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
 import { getCatalogues } from "../lib/api";
-
-const PRODUCT_CATEGORIES = [
-  "All",
-  "Hardware",
-  "Software",
-  "Furniture",
-  "Office Supplies",
-  "Services",
-  "Spareparts",
-  "Electronics",
-  "Mechanical",
-  "Chemicals",
-  "Construction",
-  "Stationery",
-  "Pantry & F&B",
-  "Logistics",
-  "Marketing",
-  "Other"
-];
 import { aiSearch, aiGeneratePr, isAiQuery, aiCompareText } from "../lib/api/ai";
 import AiInsightCard from "../components/AiInsightCard";
 import AiCompareModal from "../components/AiCompareModal";
 import {
   ShoppingCart, Search, Filter, Plus, Minus, Trash2,
   CheckCircle2, Loader2, Package, X, Sparkles, GitCompare, ArrowRight,
+  SlidersHorizontal, ChevronLeft, ChevronRight, ChevronDown,
+  LayoutGrid, Wrench, Monitor, Sofa, Paperclip, Handshake,
+  Settings2, Zap, Building2, FlaskConical, HardHat, PenLine,
+  Coffee, BoxIcon, Megaphone, Bookmark, type LucideIcon
 } from "lucide-react";
+
+const CATEGORY_CONFIG: { label: string; Icon: LucideIcon }[] = [
+  { label: "All",            Icon: LayoutGrid   },
+  { label: "Hardware",       Icon: Wrench        },
+  { label: "Software",       Icon: Monitor       },
+  { label: "Furniture",      Icon: Sofa          },
+  { label: "Office Supplies",Icon: Paperclip     },
+  { label: "Services",       Icon: Handshake     },
+  { label: "Spareparts",     Icon: Settings2     },
+  { label: "Electronics",    Icon: Zap           },
+  { label: "Mechanical",     Icon: Building2     },
+  { label: "Chemicals",      Icon: FlaskConical  },
+  { label: "Construction",   Icon: HardHat       },
+  { label: "Stationery",     Icon: PenLine       },
+  { label: "Pantry & F&B",   Icon: Coffee        },
+  { label: "Logistics",      Icon: BoxIcon       },
+  { label: "Marketing",      Icon: Megaphone     },
+  { label: "Other",          Icon: Bookmark      },
+];
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useNavigate, useSearchParams } from "react-router";
 import { getAssetUrl } from "../lib/assets";
@@ -34,8 +38,6 @@ import {
   loadCart,
   saveCart,
   addItemToCart as addItemToCartLib,
-  updateCartQty as updateCartQtyLib,
-  removeCartItem as removeCartItemLib,
   getCartItemCount,
 } from "../lib/cart";
 
@@ -55,7 +57,6 @@ export default function Marketplace() {
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   
-  // Pagination & Category states
   const [totalPages, setTotalPages] = useState(1);
 
   // AI state
@@ -77,7 +78,27 @@ export default function Marketplace() {
   const [toast, setToast] = useState<{ name: string } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Pagination helper function
+  // Category dropdown state
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close category dropdown on outside click
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+    if (showCategoryDropdown) document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [showCategoryDropdown]);
+
+  const getCompanyPrefix = () => {
+    if (!activeCompany) return "";
+    const slug = activeCompany.slug || activeCompany.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return slug ? `/${slug}` : "";
+  };
+
   const getPaginationPages = (total: number, current: number): (number | string)[] => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
@@ -87,50 +108,15 @@ export default function Marketplace() {
       return pages;
     }
 
-    // Always show first page
     pages.push(1);
-
     const startPage = Math.max(2, current - 1);
     const endPage = Math.min(total - 1, current + 1);
 
-    if (startPage > 2) {
-      pages.push("...");
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    if (endPage < total - 1) {
-      pages.push("...");
-    }
-
-    // Always show last page
+    if (startPage > 2) pages.push("...");
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
+    if (endPage < total - 1) pages.push("...");
     pages.push(total);
     return pages;
-  };
-
-  const CACHE_KEY = "huntr_marketplace_cache";
-  const CACHE_TTL = 10 * 60 * 1000;
-
-  const loadCachedItems = () => {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return false;
-    try {
-      const parsed = JSON.parse(cached);
-      if (!parsed?.items) return false;
-      const age = Date.now() - (parsed.timestamp || 0);
-      if (age > CACHE_TTL) return false;
-      setItems(parsed.items);
-      setLoading(false);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const saveItemsToCache = (items: any[]) => {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ items, timestamp: Date.now() }));
   };
 
   useEffect(() => {
@@ -219,7 +205,6 @@ export default function Marketplace() {
         const intent = res.intent || null;
         setAiIntent(intent);
 
-        // Jika AI mendeteksi intent comparison, fetch comparison text secara async
         if (intent?.is_comparison) {
           setIsLoadingComparison(true);
           aiCompareText(query)
@@ -247,7 +232,6 @@ export default function Marketplace() {
     }
   };
 
-  // Sync debounced search input with URL search params
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localSearch !== searchTerm) {
@@ -262,7 +246,6 @@ export default function Marketplace() {
     return () => clearTimeout(timer);
   }, [localSearch, searchTerm]);
 
-  // Main data fetching effect reacting to URL changes (page, category, search)
   useEffect(() => {
     if (!searchTerm) {
       setAiMode(false);
@@ -293,7 +276,7 @@ export default function Marketplace() {
       const res = await aiGeneratePr(searchTerm, ids);
       if (res.success && res.draft) {
         localStorage.setItem("ai_pr_draft", JSON.stringify(res.draft));
-        navigate("/checkout?from=ai");
+        navigate(`${getCompanyPrefix()}/checkout?from=ai`);
       }
     } catch (e) {
       console.error("Failed to generate PR", e);
@@ -302,420 +285,336 @@ export default function Marketplace() {
     }
   };
 
-  const openQtyModal = (item: any) => {
+  const toggleCompare = (id: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((i) => i !== id);
+      if (prev.length >= 4) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const addToCart = (item: any) => {
     setQtyModalItem(item);
     setQtyValue(1);
   };
 
   const confirmAddToCart = () => {
     if (!qtyModalItem) return;
-    const next = addItemToCartLib(qtyModalItem, qtyValue);
-    setCart(next);
+    const updated = addItemToCartLib(qtyModalItem, qtyValue);
+    setCart(updated);
+    showToast(qtyModalItem.name);
     setQtyModalItem(null);
-    // Show toast
+  };
+
+  const showToast = (name: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast({ name: qtyModalItem.name });
+    setToast({ name });
     toastTimerRef.current = setTimeout(() => setToast(null), 3500);
   };
 
-  const addToCart = (item: any) => {
-    openQtyModal(item);
-  };
-
-  const updateQty = (id: string, delta: number) => {
-    const next = updateCartQtyLib(id, delta);
-    setCart(next);
-  };
-
-  const removeFromCart = (id: string) => {
-    const next = removeCartItemLib(id);
-    setCart(next);
-  };
-
-  const toggleCompare = (id: string) => {
-    setCompareIds((prev) => {
-      if (prev.includes(id)) return prev.filter((i) => i !== id);
-      if (prev.length >= 5) return prev; // max 5
-      return [...prev, id];
-    });
-  };
-
-
-
   return (
-    <Layout title="Marketplace" subtitle="Discover items and services from our trusted vendors.">
-      <div style={{ paddingBottom: isMobile ? 88 : 0 }}>
-          {/* Search Bar */}
-          <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, position: "relative" }}>
-              {/* AI mode indicator in search */}
-              {aiMode ? (
-                <Sparkles
-                  style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#a855f7", transition: "color 0.3s ease" }}
-                  size={18}
-                />
-              ) : (
-                <Search
-                  style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ui-text-muted)", transition: "color 0.3s ease" }}
-                  size={18}
-                />
-              )}
-              <input
-                type="text"
-                placeholder="Cari produk atau deskripsikan kebutuhan Anda... (AI akan membantu)"
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                style={{
-                  width: "100%", padding: "12px 12px 12px 42px", borderRadius: 14,
-                  background: "var(--ui-bg-input)",
-                  border: aiMode ? "1px solid rgba(168,85,247,0.4)" : "1px solid var(--ui-border-input)",
-                  color: "var(--ui-text-primary)", outline: "none", fontSize: 14,
-                  transition: "all 0.3s ease",
-                  boxShadow: aiMode ? "0 0 0 3px rgba(168,85,247,0.1)" : "none",
-                }}
-              />
-              {aiMode && (
-                <div style={{
-                  position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                  fontSize: 10, fontWeight: 900, color: "#a855f7",
-                  background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.2)",
-                  padding: "3px 8px", borderRadius: 20,
-                }}>
-                  ✦ AI Mode
+    <Layout title="Huntr Catalog" subtitle="Standardized corporate procurement catalog">
+      <div className="w-full space-y-4">
+        
+        {/* Search & Filter Toolbar */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            {aiMode ? (
+              <Sparkles size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-500" />
+            ) : (
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+            )}
+            <input
+              type="text"
+              placeholder="Search products or describe your procurement need (AI-enabled)..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className={`w-full pl-9 pr-24 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border text-[var(--ui-text-primary)] text-sm outline-none transition-all ${
+                aiMode ? "border-purple-500/50 ring-2 ring-purple-500/10" : "border-[var(--ui-border-input)] focus:border-orange-500/50"
+              }`}
+            />
+            {aiMode && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded">
+                ✦ AI Mode
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Category Selector ── */}
+        {(() => {
+          const PRIMARY_COUNT = 8; // show first N (incl. "All") as inline chips
+          const primaryCats = CATEGORY_CONFIG.slice(0, PRIMARY_COUNT);
+          const overflowCats = CATEGORY_CONFIG.slice(PRIMARY_COUNT);
+          const activeInOverflow = overflowCats.some(c => c.label === activeCategory);
+          return (
+            <div className="relative" ref={categoryDropdownRef}>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {/* Primary inline chips */}
+                {primaryCats.map(({ label, Icon }) => {
+                  const isActive = activeCategory === label;
+                  return (
+                    <button
+                      key={label}
+                      onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
+                      style={isActive ? { color: 'white' } : {}}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                        isActive
+                          ? "bg-orange-500 border-orange-500 shadow-sm shadow-orange-500/30"
+                          : "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
+                      }`}
+                    >
+                      <Icon size={12} strokeWidth={2} />
+                      {label}
+                    </button>
+                  );
+                })}
+
+                {/* More button */}
+                <button
+                  onClick={() => setShowCategoryDropdown(prev => !prev)}
+                  style={activeInOverflow ? { color: 'white' } : {}}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                    activeInOverflow
+                      ? "bg-orange-500 border-orange-500 shadow-sm shadow-orange-500/30"
+                      : showCategoryDropdown
+                        ? "bg-[var(--ui-bg-input)] border-orange-400/50 text-orange-500"
+                        : "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
+                  }`}
+                >
+                  {activeInOverflow
+                    ? (
+                      <>
+                        {(() => { const c = overflowCats.find(c => c.label === activeCategory)!; return <c.Icon size={12} strokeWidth={2} />; })()}
+                        {activeCategory}
+                      </>
+                    )
+                    : (
+                      <>
+                        More <ChevronDown size={11} className={`transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
+                      </>
+                    )
+                  }
+                </button>
+              </div>
+
+              {/* Overflow dropdown panel */}
+              {showCategoryDropdown && (
+                <div className="absolute left-0 top-full mt-2 z-50 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-xl shadow-xl p-3 min-w-[320px]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)] mb-2.5 px-1">More Categories</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {overflowCats.map(({ label, Icon }) => {
+                      const isActive = activeCategory === label;
+                      return (
+                        <button
+                          key={label}
+                          onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
+                          style={isActive ? { color: 'white' } : {}}
+                          className={`flex flex-col items-center gap-1 px-2 pt-2.5 pb-2 rounded-lg text-[9px] font-bold uppercase tracking-wide transition-all border ${
+                            isActive
+                              ? "bg-orange-500 border-orange-500 shadow-sm"
+                              : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
+                          }`}
+                        >
+                          <Icon size={14} strokeWidth={1.75} />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
-            <button style={{
-              padding: "0 18px", borderRadius: 14, background: "var(--ui-bg-input)",
-              border: "1px solid var(--ui-border-input)", color: "var(--ui-text-secondary)", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 8, fontSize: 14, transition: "all 0.3s ease",
-            }}>
-              <Filter size={16} /> Filters
-            </button>
-          </div>
+          );
+        })()}
 
-          {/* Category Filter Tabs */}
-          <div style={{ display: "flex", gap: "clamp(6px, 2vw, 10px)", overflowX: "auto", paddingBottom: 16, marginBottom: 24, scrollbarWidth: "none" }}>
-            {PRODUCT_CATEGORIES.map(cat => (
-              <button 
-                key={cat}
-                onClick={() => handleCategoryChange(cat)}
-                style={{
-                  padding: "8px 16px", 
-                  borderRadius: 12, 
-                  fontSize: 13, 
-                  fontWeight: 600,
-                  background: activeCategory === cat ? "rgba(249,115,22,0.15)" : "var(--ui-bg-card)",
-                  border: "1px solid",
-                  borderColor: activeCategory === cat ? "rgba(249,115,22,0.3)" : "var(--ui-border)",
-                  color: activeCategory === cat ? "#fb923c" : "var(--ui-text-secondary)",
-                  cursor: "pointer", 
-                  whiteSpace: "nowrap", 
-                  transition: "all 0.2s"
-                }}
-              >
-                {cat}
+        {/* AI Insight Card */}
+        {aiMode && aiSummary && !aiInsightDismissed && (
+          <AiInsightCard
+            summary={aiSummary}
+            totalFound={items.length}
+            query={searchTerm}
+            catalogueIds={items.slice(0, 10).map((i) => i.id)}
+            onGeneratePr={handleGeneratePr}
+            onDismiss={() => setAiInsightDismissed(true)}
+            isGenerating={isGeneratingPr}
+            comparisonAnalysis={comparisonText}
+            isComparison={!!aiIntent?.is_comparison || isLoadingComparison}
+            specs={aiIntent?.specs ?? []}
+          />
+        )}
+
+        {/* Compare Floating Bar */}
+        {compareIds.length >= 2 && (
+          <div className="flex items-center justify-between p-3.5 px-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--ui-text-primary)]">
+              <GitCompare size={16} className="text-indigo-500" />
+              <span><strong className="text-indigo-500">{compareIds.length} items</strong> selected to compare</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCompareIds([])} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]">
+                Reset
               </button>
-            ))}
+              <button onClick={() => setShowCompareModal(true)} style={{ color: 'white' }} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-bold shadow-sm">
+                <Sparkles size={13} /> Compare with AI
+              </button>
+            </div>
           </div>
+        )}
 
-          {/* AI Insight Card */}
-          {aiMode && aiSummary && !aiInsightDismissed && (
-            <AiInsightCard
-              summary={aiSummary}
-              totalFound={items.length}
-              query={searchTerm}
-              catalogueIds={items.slice(0, 10).map((i) => i.id)}
-              onGeneratePr={handleGeneratePr}
-              onDismiss={() => setAiInsightDismissed(true)}
-              isGenerating={isGeneratingPr}
-              comparisonAnalysis={comparisonText}
-              isComparison={!!aiIntent?.is_comparison || isLoadingComparison}
-              specs={aiIntent?.specs ?? []}
-            />
-          )}
+        {/* Product Grid */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            {aiMode ? (
+              <>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center animate-pulse">
+                  <Sparkles size={22} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-[var(--ui-text-primary)]">Analyzing specifications...</p>
+                  <p className="text-xs text-[var(--ui-text-muted)]">Huntr AI is scoring the best matches for you</p>
+                </div>
+              </>
+            ) : (
+              <Loader2 size={28} className="animate-spin text-orange-500" />
+            )}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-[var(--ui-border)] bg-[var(--ui-bg-input)] gap-3">
+            <Package size={32} className="text-[var(--ui-text-muted)] opacity-25" />
+            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">No catalog items found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5">
+            {items.map((item) => {
+              const isSelected = compareIds.includes(item.id);
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => navigate(`${getCompanyPrefix()}/marketplace/${item.id}`)}
+                  className={`group rounded-2xl border bg-[var(--ui-bg-card)] overflow-hidden flex flex-col transition-all cursor-pointer hover:shadow-lg hover:shadow-black/5 ${
+                    isSelected ? "border-indigo-500/60 ring-2 ring-indigo-500/20" : "border-[var(--ui-border)]"
+                  }`}
+                >
+                  {/* Image Area — matches landing h-36 sm:h-44 */}
+                  <div className="relative h-36 sm:h-44 bg-[var(--ui-bg-input)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {(item.image_url || item.image_path) ? (
+                      <img
+                        src={getAssetUrl(item.image_url || item.image_path)}
+                        alt={item.name}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <Package size={32} className="text-[var(--ui-text-muted)] opacity-30" />
+                    )}
 
-          {/* Compare floating bar */}
-          {compareIds.length >= 2 && (
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.08))",
-              border: "1px solid rgba(99,102,241,0.25)", borderRadius: 14,
-              padding: "12px 18px", marginBottom: 20,
-              animation: "fadeSlideIn 0.3s ease",
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
-                <GitCompare size={16} color="#6366f1" />
-                <span style={{ color: "#6366f1" }}>{compareIds.length} produk</span> dipilih untuk dibandingkan
-              </div>
-              <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => setCompareIds([])}
-                  style={{ padding: "6px 12px", borderRadius: 10, background: "none", border: "1px solid rgba(99,102,241,0.2)", color: "var(--ui-text-muted)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                  Reset
-                </button>
-                <button onClick={() => setShowCompareModal(true)}
-                  style={{
-                    padding: "6px 16px", borderRadius: 10,
-                    background: "linear-gradient(135deg, #6366f1, #a855f7)",
-                    border: "none", color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: 6,
-                    boxShadow: "0 4px 12px rgba(99,102,241,0.3)",
-                  }}>
-                  <Sparkles size={12} /> Bandingkan dengan AI
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Product Grid */}
-          {loading ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 80, gap: 16 }}>
-              {aiMode ? (
-                <>
-                  <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #f97316, #a855f7)", display: "flex", alignItems: "center", justifyContent: "center", animation: "pulse 1.5s ease-in-out infinite" }}>
-                    <Sparkles size={26} color="#fff" />
+                    {/* Compare toggle button */}
+                    <button
+                      type="button"
+                      aria-label="Compare"
+                      onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
+                      className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all ${
+                        isSelected ? "bg-indigo-600 text-white shadow-sm" : "bg-black/40 text-white/80 hover:bg-black/60"
+                      }`}
+                    >
+                      {isSelected ? <CheckCircle2 size={13} /> : <GitCompare size={12} />}
+                    </button>
                   </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: "var(--ui-text-primary)", marginBottom: 4 }}>Huntr AI is thinking...</div>
-                    <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>Menganalisis kebutuhan dan mencari produk terbaik</div>
-                  </div>
-                </>
-              ) : (
-                <Loader2 className="animate-spin" size={32} color="#f59e0b" />
-              )}
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 200px), 1fr))", gap: "clamp(12px, 3vw, 20px)" }}>
-              {items.map((item) => {
-                const isSelected = compareIds.includes(item.id);
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => navigate(`/marketplace/${item.id}`)}
-                    style={{
-                      background: "var(--ui-bg-card)", borderRadius: 20,
-                      border: isSelected ? "2px solid rgba(99,102,241,0.5)" : "1px solid var(--ui-border)",
-                      padding: 16, display: "flex", flexDirection: "column", gap: 12,
-                      transition: "all 0.3s ease", cursor: "pointer",
-                      boxShadow: isSelected ? "0 0 0 3px rgba(99,102,241,0.1)" : "none",
-                    }}
-                  >
-                    <div style={{ width: "100%", aspectRatio: "1/1", borderRadius: 12, background: "var(--ui-bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                      {(item.image_url || item.image_path) ? (
-                        <img
-                          src={getAssetUrl(item.image_url || item.image_path)}
-                          alt={item.name}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          onError={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <Package size={36} color="var(--ui-text-muted)" strokeWidth={1.5} style={{ opacity: 0.35 }} />
-                      )}
-                      {/* Compare checkbox */}
-                      <button
-                        type="button"
-                        aria-label={isSelected ? "Hapus dari perbandingan" : "Tambah ke perbandingan"}
-                        onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
-                        style={{
-                          position: "absolute", top: 8, left: 8,
-                          width: 26, height: 26, borderRadius: 8,
-                          background: isSelected ? "linear-gradient(135deg, #6366f1, #a855f7)" : "rgba(0,0,0,0.4)",
-                          border: isSelected ? "none" : "1px solid rgba(255,255,255,0.2)",
-                          color: "#fff", cursor: "pointer",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          backdropFilter: "blur(4px)",
-                          transition: "all 0.2s ease",
-                          boxShadow: isSelected ? "0 2px 8px rgba(99,102,241,0.4)" : "none",
-                        }}
-                      >
-                        {isSelected ? <CheckCircle2 size={14} /> : <GitCompare size={12} />}
-                      </button>
+
+                  {/* Content — matches landing p-3 sm:p-4 */}
+                  <div className="p-3 sm:p-4 flex flex-col gap-1.5 flex-1">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-orange-500 truncate">
+                      {item.category || "General"}
                     </div>
+                    <h3 className="text-xs sm:text-sm font-semibold text-[var(--ui-text-primary)] line-clamp-2 leading-snug flex-1">
+                      {item.name}
+                    </h3>
+                    
+                    {item.brand && (
+                      <p className="text-[10px] sm:text-xs text-[var(--ui-text-muted)] truncate">
+                        <span className="font-medium">Brand:</span> {item.brand}
+                      </p>
+                    )}
 
-                    <div>
-                      <div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                        {item.category || "General"}
+                    {/* Price */}
+                    {item.price > 0 && (
+                      <div className="text-xs font-bold text-orange-500 mt-0.5">
+                        Rp {Number(item.price).toLocaleString("id-ID")}
                       </div>
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--ui-text-primary)", margin: "4px 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                        {item.name}
-                      </h3>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
-                        {item.brand && (
-                          <div style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>Brand: <strong style={{ color: "var(--ui-text-secondary)" }}>{item.brand}</strong></div>
+                    )}
+
+                    {/* AI Score */}
+                    {item.ai_score !== undefined && (
+                      <div className="pt-1 border-t border-[var(--ui-border)]">
+                        <span className="inline-block text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                          🤖 {item.ai_score}% Match
+                        </span>
+                        {item.ai_explanation && (
+                          <p className="text-[10px] text-[var(--ui-text-muted)] italic line-clamp-2 mt-0.5">
+                            {item.ai_explanation}
+                          </p>
                         )}
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "#f97316", marginTop: 8 }}>
-                        {item.price > 0 ? `Rp ${Number(item.price).toLocaleString("id-ID")}` : ""}
-                      </div>
+                    )}
 
-                      {/* AI Re-ranking Badge & Explanation */}
-                      {item.ai_score !== undefined && (
-                        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ 
-                              fontSize: 10, 
-                              fontWeight: 900, 
-                              color: item.ai_score >= 80 ? "#f97316" : "var(--ui-text-secondary)",
-                              background: item.ai_score >= 80 ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.06)",
-                              padding: "2px 6px",
-                              borderRadius: 6,
-                              border: item.ai_score >= 80 ? "1px solid rgba(249,115,22,0.2)" : "1px solid var(--ui-border-input)"
-                            }}>
-                              🤖 {item.ai_score}% Match
-                            </span>
-                          </div>
-                          {item.ai_explanation && (
-                            <div style={{ 
-                              fontSize: 11, 
-                              color: "var(--ui-text-muted)", 
-                              lineHeight: 1.4,
-                              fontStyle: "italic",
-                              borderLeft: "2px solid rgba(249,115,22,0.3)",
-                              paddingLeft: 6,
-                              marginTop: 2
-                            }}>
-                              {item.ai_explanation}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                    {/* Add to Cart button */}
+                    <div className="mt-auto pt-2">
                       <button
                         type="button"
                         aria-label="Add to cart"
                         onClick={(e) => { e.stopPropagation(); addToCart(item); }}
-                        style={{
-                          width: 36, height: 36, borderRadius: 10,
-                          background: "rgba(249,115,22,0.15)", border: "none",
-                          color: "#f97316", cursor: "pointer",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          transition: "all 0.2s ease",
-                        }}
+                        style={{ color: 'white' }}
+                        className="w-full py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm"
                       >
-                        <ShoppingCart size={16} />
+                        <ShoppingCart size={13} /> Add to Cart
                       </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 32, flexWrap: "wrap" }}>
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 10,
-                  border: "1px solid var(--ui-border)",
-                  background: "var(--ui-bg-card)",
-                  color: "var(--ui-text-primary)",
-                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                  opacity: currentPage === 1 ? 0.5 : 1,
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                Previous
-              </button>
-              {getPaginationPages(totalPages, currentPage).map((page, index) => (
-                typeof page === "string" ? (
-                  <span
-                    key={`ellipsis-${index}`}
-                    style={{
-                      padding: "0 8px",
-                      color: "var(--ui-text-muted)",
-                      fontSize: 18,
-                      fontWeight: 700
-                    }}
-                  >
-                    {page}
-                  </span>
-                ) : (
-                  <button
-                    key={`page-${page}`}
-                    onClick={() => handlePageChange(page)}
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      border: currentPage === page ? "none" : "1px solid var(--ui-border)",
-                      background: currentPage === page ? "linear-gradient(135deg,#f97316,#f59e0b)" : "var(--ui-bg-card)",
-                      color: currentPage === page ? "#fff" : "var(--ui-text-primary)",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {page}
-                  </button>
-                )
-              ))}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 10,
-                  border: "1px solid var(--ui-border)",
-                  background: "var(--ui-bg-card)",
-                  color: "var(--ui-text-primary)",
-                  cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                  opacity: currentPage === totalPages ? 0.5 : 1,
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                Next
-              </button>
-            </div>
-          )}
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1.5 pt-4">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            {getPaginationPages(totalPages, currentPage).map((page, idx) => (
+              typeof page === "string" ? (
+                <span key={`el-${idx}`} className="px-1 text-xs text-[var(--ui-text-muted)]">...</span>
+              ) : (
+                <button
+                  key={`p-${page}`}
+                  onClick={() => handlePageChange(page)}
+                  style={currentPage === page ? { color: 'white' } : {}}
+                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                    currentPage === page ? "bg-orange-500" : "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-primary)]"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Cart icon button (Mobile Only FAB) */}
-      {isMobile && (
-        <button
-          type="button"
-          className="huntr-cart-fab"
-          onClick={() => navigate("/cart")}
-          aria-label={`Go to cart, ${cart.length} items`}
-          style={{
-            position: "fixed",
-            bottom: 24,
-            right: 24,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            background: "linear-gradient(135deg,#f97316,#f59e0b)",
-            border: "none",
-            color: "#fff",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 8px 24px rgba(249,115,22,0.4)",
-            zIndex: 1000,
-            transition: "all 0.2s"
-          }}
-        >
-          <ShoppingCart size={22} />
-          {cart.length > 0 && (
-            <span style={{ position: "absolute", top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, background: "var(--ui-bg-page)", border: "2px solid #f59e0b", color: "#f59e0b", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {cart.length > 9 ? "9+" : cart.length}
-            </span>
-          )}
-        </button>
-      )}
-
-      {/* AI Compare Modal */}
+      {/* Compare Modal */}
       {showCompareModal && compareIds.length >= 2 && (
         <AiCompareModal
           catalogueIds={compareIds}
@@ -724,70 +623,66 @@ export default function Marketplace() {
         />
       )}
 
-      {/* Quantity Modal */}
+      {/* Modern Quantity Modal */}
       {qtyModalItem && (
         <div
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200, padding: 16 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[999] p-4"
           onClick={() => setQtyModalItem(null)}
         >
           <div
-            style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, width: "100%", maxWidth: 320, padding: "20px 20px 16px", display: "flex", flexDirection: "column", gap: 16, boxShadow: "0 12px 40px rgba(0,0,0,0.25)", boxSizing: "border-box", overflow: "hidden" }}
+            className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-xl w-full max-w-sm p-5 space-y-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ui-text-primary)" }}>Tambah ke Keranjang</div>
-                <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 2, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {qtyModalItem.name}
-                </div>
+                <h3 className="text-sm font-bold text-[var(--ui-text-primary)] leading-snug">Set Quantity</h3>
+                <p className="text-xs text-[var(--ui-text-muted)] line-clamp-1 mt-0.5">{qtyModalItem.name}</p>
               </div>
-              <button onClick={() => setQtyModalItem(null)} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer", padding: 0, lineHeight: 0 }}>
-                <X size={18} />
+              <button onClick={() => setQtyModalItem(null)} className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]">
+                <X size={16} />
               </button>
             </div>
 
-            {/* Qty Stepper */}
-            <div style={{ display: "flex", alignItems: "center", gap: 0, border: "1px solid var(--ui-border)", borderRadius: 10, overflow: "hidden" }}>
+            {/* Stepper */}
+            <div className="flex items-center justify-between border border-[var(--ui-border)] rounded-lg bg-[var(--ui-bg-input)] p-1">
               <button
                 onClick={() => setQtyValue(Math.max(1, qtyValue - 1))}
-                style={{ width: 40, height: 40, border: "none", borderRight: "1px solid var(--ui-border)", background: "var(--ui-bg-input)", color: "var(--ui-text-primary)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                className="w-9 h-9 rounded-md bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex items-center justify-center text-[var(--ui-text-primary)] hover:border-orange-500/40"
               >
-                <Minus size={15} />
+                <Minus size={14} />
               </button>
               <input
                 type="number"
                 value={qtyValue}
                 onChange={(e) => setQtyValue(Math.max(1, parseInt(e.target.value) || 1))}
                 min={1}
-                style={{ flex: 1, minWidth: 0, textAlign: "center", background: "transparent", border: "none", color: "var(--ui-text-primary)", fontSize: 16, fontWeight: 700, outline: "none", padding: "0 8px" }}
+                className="w-20 text-center font-bold text-base bg-transparent border-none text-[var(--ui-text-primary)] outline-none"
               />
               <button
                 onClick={() => setQtyValue(qtyValue + 1)}
-                style={{ width: 40, height: 40, border: "none", borderLeft: "1px solid var(--ui-border)", background: "var(--ui-bg-input)", color: "var(--ui-text-primary)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                className="w-9 h-9 rounded-md bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex items-center justify-center text-[var(--ui-text-primary)] hover:border-orange-500/40"
               >
-                <Plus size={15} />
+                <Plus size={14} />
               </button>
             </div>
 
-            {/* UOM hint */}
-            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", textAlign: "center", marginTop: -8 }}>
-              satuan: <strong>{qtyModalItem.uom || "unit"}</strong>
+            <div className="text-[11px] text-center text-[var(--ui-text-muted)]">
+              Unit of measure: <span className="font-semibold text-[var(--ui-text-secondary)]">{qtyModalItem.uom || "unit"}</span>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: 8 }}>
+            <div className="flex gap-2 pt-1">
               <button
                 onClick={() => setQtyModalItem(null)}
-                style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1px solid var(--ui-border-input)", background: "transparent", color: "var(--ui-text-secondary)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+                className="flex-1 py-2.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] font-semibold text-xs"
               >
-                Batal
+                Cancel
               </button>
               <button
                 onClick={confirmAddToCart}
-                style={{ flex: 2, padding: "10px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#f97316,#f59e0b)", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                style={{ color: 'white' }}
+                className="flex-1 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
               >
-                <ShoppingCart size={14} /> Tambah
+                <ShoppingCart size={14} /> Add to Cart
               </button>
             </div>
           </div>
@@ -796,36 +691,17 @@ export default function Marketplace() {
 
       {/* Toast Notification */}
       {toast && (
-        <div style={{
-          position: "fixed", bottom: 32, right: 32,
-          background: "var(--ui-bg-card)",
-          border: "1px solid rgba(16,185,129,0.25)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-          padding: "14px 20px", borderRadius: 16,
-          display: "flex", alignItems: "center", gap: 12,
-          zIndex: 1300, fontSize: 14, fontWeight: 600,
-          color: "var(--ui-text-primary)",
-          animation: "toastIn 0.3s ease",
-          maxWidth: 340,
-        }}>
-          <CheckCircle2 size={20} color="#10b981" style={{ flexShrink: 0 }} />
-          <span style={{ flex: 1, lineHeight: 1.4 }}>
-            <strong style={{ color: "var(--ui-text-primary)" }}>{toast.name}</strong> berhasil ditambahkan ke keranjang!
-          </span>
+        <div className="fixed bottom-6 right-6 bg-[var(--ui-bg-card)] border border-emerald-500/30 p-3.5 px-4 rounded-xl shadow-xl flex items-center gap-3 z-50 text-xs font-semibold text-[var(--ui-text-primary)]">
+          <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+          <span className="truncate max-w-[200px]">Added <strong>{toast.name}</strong></span>
           <button
-            onClick={() => navigate("/cart")}
-            style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: "#f97316", fontWeight: 800, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", padding: 0 }}
+            onClick={() => navigate(`${getCompanyPrefix()}/cart`)}
+            className="text-orange-500 font-bold hover:underline ml-1"
           >
-            Lihat <ArrowRight size={12} />
+            View Cart
           </button>
         </div>
       )}
-
-      <style>{`
-        @keyframes fadeSlideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.05); opacity:0.85; } }
-        @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
-      `}</style>
     </Layout>
   );
 }
