@@ -492,7 +492,7 @@ export default function Marketplace() {
                 <div
                   key={item.id}
                   onClick={() => navigate(`${getCompanyPrefix()}/marketplace/${item.id}`)}
-                  className={`group rounded-2xl border bg-[var(--ui-bg-card)] overflow-hidden flex flex-col transition-all cursor-pointer hover:shadow-lg hover:shadow-black/5 ${
+                  className={`group rounded-2xl border bg-[var(--ui-bg-card)] overflow-hidden flex flex-col transition-all cursor-pointer hover:border-orange-400/50 ${
                     isSelected ? "border-indigo-500/60 ring-2 ring-indigo-500/20" : "border-[var(--ui-border)]"
                   }`}
                 >
@@ -547,8 +547,8 @@ export default function Marketplace() {
                     {/* AI Score */}
                     {item.ai_score !== undefined && (
                       <div className="pt-1 border-t border-[var(--ui-border)]">
-                        <span className="inline-block text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded">
-                          🤖 {item.ai_score}% Match
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                          <Sparkles size={10} /> {item.ai_score}% Match
                         </span>
                         {item.ai_explanation && (
                           <p className="text-[10px] text-[var(--ui-text-muted)] italic line-clamp-2 mt-0.5">
@@ -565,7 +565,7 @@ export default function Marketplace() {
                         aria-label="Add to cart"
                         onClick={(e) => { e.stopPropagation(); addToCart(item); }}
                         style={{ color: 'white' }}
-                        className="w-full py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                        className="w-full py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
                       >
                         <ShoppingCart size={13} /> Add to Cart
                       </button>

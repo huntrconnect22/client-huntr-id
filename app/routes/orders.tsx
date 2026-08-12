@@ -303,36 +303,78 @@ export default function Orders() {
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <Layout title="Purchase Order" subtitle="View and manage all purchase order documents.">
-      <div style={{ maxWidth:"100%", width:"100%" }}>
-        <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:16 }}>
+      <div className="w-full space-y-4">
 
-          {/* Header Card */}
-          <div className="huntr-action-card" style={{ background:"var(--ui-bg-card)", border:"1px solid var(--ui-border)", borderRadius:12, backdropFilter:"blur(20px)", transition:"all 0.3s ease", flexWrap:"wrap" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              <div style={{ width:40, height:40, borderRadius:8, background:"linear-gradient(135deg,#f97316,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 12px rgba(249,115,22,0.2)" }}>
-                <FileText size={20} color="#fff" />
-              </div>
-              <div>
-                <h2 style={{ fontSize:16, fontWeight:700, color:"var(--ui-text-primary)", margin:0 }}>
-                  {company.type==="buyer" ? "Purchase Orders" : "Catalogue Items"} ({totalOrders})
-                </h2>
-                <p style={{ fontSize:12, color:"var(--ui-text-secondary)", margin:"2px 0 0" }}>
-                  Workspace: <strong style={{ color:"#fdba74" }}>{company.name}</strong>
-                </p>
-              </div>
+        {/* Header & Controls Toolbar */}
+        <div className="flex items-center justify-between gap-3 flex-wrap bg-[var(--ui-bg-card)] border border-[var(--ui-border)] p-3.5 px-4 rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+              <FileText size={20} />
             </div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginLeft:"auto" }}>
-              <button onClick={() => setShowImportModal(true)} style={{ background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.2)", borderRadius:8, padding:"7px 12px", display:"flex", alignItems:"center", gap:6, cursor:"pointer", color:"#fb923c", fontWeight:600, fontSize:12 }}>
-                <UploadCloud size={14} /> Import {company.type==="buyer" ? "Historical PO" : "Catalogue"}
-              </button>
-              <button onClick={exportToExcel} disabled={orders.length===0} style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:8, padding:"7px 12px", display:"flex", alignItems:"center", gap:6, cursor:orders.length===0?"not-allowed":"pointer", color:"#22c55e", fontWeight:600, fontSize:12, opacity:orders.length===0?0.6:1 }}>
-                <FileSpreadsheet size={14} /> Export Excel
-              </button>
-              <button onClick={() => fetchOrders(company.id, currentPage, searchQuery, activeTab)} disabled={refreshing} style={{ background:"var(--ui-bg-input)", border:"1px solid var(--ui-border-input)", borderRadius:8, width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--ui-text-secondary)" }}>
-                <RefreshCw size={15} className={refreshing?"animate-spin":""} />
-              </button>
+            <div>
+              <h2 className="text-sm font-bold text-[var(--ui-text-primary)] leading-tight">
+                {company?.type === "buyer" ? "Purchase Orders" : "Catalogue Items"} ({totalOrders})
+              </h2>
+              <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">
+                Workspace: <span className="font-semibold text-orange-500">{company?.name}</span>
+              </p>
             </div>
           </div>
+
+          <div className="flex items-center gap-2 flex-wrap ml-auto">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
+            >
+              <UploadCloud size={13} /> Import {company?.type === "buyer" ? "Historical PO" : "Catalogue"}
+            </button>
+            <button
+              onClick={exportToExcel}
+              disabled={orders.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <FileSpreadsheet size={13} /> Export Excel
+            </button>
+            <button
+              onClick={() => fetchOrders(company.id, currentPage, searchQuery, activeTab)}
+              disabled={refreshing}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
+            >
+              <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs & Search */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1 bg-[var(--ui-bg-input)] p-1 rounded-xl border border-[var(--ui-border)]">
+            {([{ id: "all", label: "All POs" }, { id: "operational", label: "Operational" }, { id: "historical", label: "Historical" }] as const).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={activeTab === tab.id ? { color: 'white' } : {}}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === tab.id
+                    ? "bg-orange-500 shadow-sm"
+                    : "text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative min-w-[240px] flex-1 max-w-sm">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+            <input
+              type="text"
+              placeholder="Search by PO number, vendor, or user..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs outline-none focus:border-orange-400/60 transition-all"
+            />
+          </div>
+        </div>
 
           {/* Import Modal */}
           {showImportModal && (
@@ -348,175 +390,163 @@ export default function Orders() {
             />
           )}
 
-          {/* Tabs + Search */}
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:16, flexWrap:"wrap" }}>
-            <div style={{ display:"flex", gap:8, background:"var(--ui-bg-input)", padding:6, borderRadius:8, width:"fit-content" }}>
-              {([{id:"all",label:"All POs"},{id:"operational",label:"Operational"},{id:"historical",label:"Historical"}] as const).map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  style={{ padding:"6px 12px", borderRadius:12, border:"none", background:activeTab===tab.id?"rgba(249,115,22,0.15)":"transparent", color:activeTab===tab.id?"#fdba74":"var(--ui-text-muted)", fontSize:13, fontWeight:700, cursor:"pointer", transition:"all 0.3s ease" }}>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            <div style={{ position:"relative", flex:1, maxWidth:400 }}>
-              <Search size={18} color="var(--ui-text-muted)" style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)" }} />
-              <input type="text" placeholder="Search by PO number, vendor, or user..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                style={{ width:"100%", padding:"9px 12px 9px 40px", borderRadius:8, background:"var(--ui-bg-input)", border:"1px solid var(--ui-border-input)", color:"var(--ui-text-primary)", outline:"none", fontSize:14, boxSizing:"border-box" }} />
-            </div>
+
+
+        {/* ── PO List ── */}
+        {orders.length === 0 ? (
+          <div className="border border-dashed border-[var(--ui-border)] rounded-xl py-20 flex flex-col items-center justify-center gap-3">
+            <FileText size={36} className="text-[var(--ui-text-muted)] opacity-20" />
+            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">No purchase orders found</p>
           </div>
-
-          {/* Feedback */}
-          {successMessage && <div style={{ padding:12, borderRadius:8, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", color:"#4ade80", fontSize:14, fontWeight:700 }}>{successMessage}</div>}
-          {error && <div style={{ padding:12, borderRadius:8, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", color:"#f87171", fontSize:14, fontWeight:700 }}>{error}</div>}
-
-          {/* PO List */}
-          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-            {orders.length === 0 ? (
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"80px 0", background:"var(--ui-bg-input)", borderRadius:8, border:"1px dashed var(--ui-border-input)" }}>
-                <FileText size={48} style={{ opacity:0.1, marginBottom:16 }} />
-                <h3 style={{ color:"var(--ui-text-secondary)", margin:0, fontSize:16 }}>No purchase orders found</h3>
-              </div>
-            ) : orders.map(po => {
+        ) : (
+          <div className="space-y-3">
+            {orders.map(po => {
               const { label, bg, color, Icon: StatusIcon } = getStatusBadge(po.status);
+              const isExpanded = expandedPo === po.id;
+              const base = Number(po.total_amount);
+
               return (
-                <div key={po.id} style={{ background:"var(--ui-bg-card)", borderRadius:12, border:"1px solid var(--ui-border)", padding:"10px 12px", display:"flex", flexDirection:"column", gap:16, transition:"all 0.3s ease" }}>
-                  {/* PO Row */}
-                  <div style={{ display:"flex", alignItems:"center", gap:16 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:8 }}>
-                        <span style={{ fontSize:12, fontWeight:600, color:"#f59e0b", background:"rgba(249,115,22,0.1)", padding:"2px 8px", borderRadius:6 }}>{po.po_number}</span>
-                        {po.is_historical && <span style={{ fontSize:10, fontWeight:600, color:"#f59e0b", background:"rgba(245,158,11,0.1)", padding:"2px 8px", borderRadius:6, textTransform:"uppercase" }}>Historical</span>}
+                <div
+                  key={po.id}
+                  className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] overflow-hidden transition-all"
+                >
+                  {/* PO Row — main info */}
+                  <div className="p-4 flex items-start gap-4 flex-wrap">
+
+                    {/* Left: PO identity */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded">
+                          {po.po_number}
+                        </span>
+                        {po.is_historical && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
+                            Historical
+                          </span>
+                        )}
+                        {/* Status badge inline with PO number on mobile */}
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: bg, color }}
+                        >
+                          <StatusIcon size={10} /> {label}
+                        </span>
                       </div>
-                      <h3 style={{ margin:0, fontSize:18, fontWeight:600, color:"var(--ui-text-primary)" }}>{po.rfq?.title||"Purchase Order Document"}</h3>
+                      <h3 className="text-sm font-bold text-[var(--ui-text-primary)] leading-snug truncate">
+                        {po.rfq?.title || "Purchase Order Document"}
+                      </h3>
                     </div>
-                    <div style={{ width:200 }}>
-                      <div style={{ fontSize:11, color:"var(--ui-text-muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>Vendor</div>
-                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <Building size={14} color="var(--ui-text-secondary)" />
-                        <span style={{ fontSize:14, fontWeight:700, color:"var(--ui-text-primary)" }}>{po.vendor_name||"N/A"}</span>
+
+                    {/* Meta chips */}
+                    <div className="flex items-center gap-4 flex-shrink-0 flex-wrap">
+                      <div className="text-right">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">Vendor</p>
+                        <p className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1">
+                          <Building size={11} className="text-[var(--ui-text-muted)]" />
+                          {po.vendor_name || "N/A"}
+                        </p>
                       </div>
-                    </div>
-                    <div style={{ width:160 }}>
-                      <div style={{ fontSize:11, color:"var(--ui-text-muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>Date</div>
-                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <Calendar size={14} color="var(--ui-text-secondary)" />
-                        <span style={{ fontSize:14, fontWeight:600, color:"var(--ui-text-primary)" }}>{po.order_date||new Date(po.created_at).toLocaleDateString()}</span>
+                      <div className="text-right">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">Date</p>
+                        <p className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1">
+                          <Calendar size={11} className="text-[var(--ui-text-muted)]" />
+                          {po.order_date || new Date(po.created_at).toLocaleDateString()}
+                        </p>
                       </div>
+                      {base > 0 && (
+                        <div className="text-right">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">Amount</p>
+                          <p className="text-xs font-bold text-orange-500">IDR {fmt(base)}</p>
+                        </div>
+                      )}
                     </div>
-                    <div style={{ width:140 }}>
-                      <div style={{ fontSize:11, color:"var(--ui-text-muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>Status</div>
-                      <div style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", borderRadius:10, background:bg, color, fontSize:12, fontWeight:700, textTransform:"capitalize" }}>
-                        <StatusIcon size={14} /> {label}
-                      </div>
-                    </div>
-                    <div style={{ display:"flex", gap:12 }}>
-                      {company.type==='vendor' && ['published','issued'].includes(po.status) && (
-                        <button onClick={() => handleConfirmPo(po.id)} disabled={confirmingId===po.id}
-                          style={{ background:"var(--huntr-orange)", border:"none", borderRadius:8, padding:"6px 10px", color:"#fff", fontWeight:700, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 4px 12px rgba(249,115,22,0.2)" }}>
-                          {confirmingId===po.id ? <Loader2 size={12} className="animate-spin"/> : <CheckCircle2 size={12}/>} Confirm PO
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                      {company.type === 'vendor' && ['published','issued'].includes(po.status) && (
+                        <button
+                          onClick={() => handleConfirmPo(po.id)}
+                          disabled={confirmingId === po.id}
+                          style={{ color: 'white' }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                        >
+                          {confirmingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <CheckCircle2 size={11}/>} Confirm
                         </button>
                       )}
-                      {company.type==='vendor' && po.status==='paid' && (
-                        <button onClick={() => handleUpdateTrackingStatus(po.id,'packing',po.status)} disabled={processingId===po.id}
-                          style={{ background:"linear-gradient(135deg,#8b5cf6,#7c3aed)", border:"none", borderRadius:8, padding:"6px 10px", color:"#fff", fontWeight:700, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 4px 12px rgba(139,92,246,0.2)" }}>
-                          {processingId===po.id ? <Loader2 size={12} className="animate-spin"/> : <Package size={12}/>} Mark as Packing
+                      {company.type === 'vendor' && po.status === 'paid' && (
+                        <button
+                          onClick={() => handleUpdateTrackingStatus(po.id,'packing',po.status)}
+                          disabled={processingId === po.id}
+                          style={{ color: 'white' }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-500 hover:bg-violet-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                        >
+                          {processingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <Package size={11}/>} Packing
                         </button>
                       )}
-                      {company.type==='vendor' && po.status==='packing' && (
-                        <button onClick={() => handleArrangeDelivery(po.id,po.buyer_address)} disabled={processingId===po.id}
-                          style={{ background:"linear-gradient(135deg,#3b82f6,#2563eb)", border:"none", borderRadius:8, padding:"6px 10px", color:"#fff", fontWeight:700, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 4px 12px rgba(59,130,246,0.2)" }}>
-                          {processingId===po.id ? <Loader2 size={12} className="animate-spin"/> : <Truck size={12}/>} Arrange Delivery
+                      {company.type === 'vendor' && po.status === 'packing' && (
+                        <button
+                          onClick={() => handleArrangeDelivery(po.id, po.buyer_address)}
+                          disabled={processingId === po.id}
+                          style={{ color: 'white' }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                        >
+                          {processingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <Truck size={11}/>} Deliver
                         </button>
                       )}
-                      {company.type==='vendor' && po.status==='in_transit' && (
-                        <button onClick={() => handleUpdateTrackingStatus(po.id,'delivered',po.status)} disabled={processingId===po.id}
-                          style={{ background:"linear-gradient(135deg,#22c55e,#16a34a)", border:"none", borderRadius:8, padding:"6px 10px", color:"#fff", fontWeight:700, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 4px 12px rgba(34,197,94,0.2)" }}>
-                          {processingId===po.id ? <Loader2 size={12} className="animate-spin"/> : <CheckCircle2 size={12}/>} Mark as Delivered
+                      {company.type === 'vendor' && po.status === 'in_transit' && (
+                        <button
+                          onClick={() => handleUpdateTrackingStatus(po.id,'delivered',po.status)}
+                          disabled={processingId === po.id}
+                          style={{ color: 'white' }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                        >
+                          {processingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <CheckCircle2 size={11}/>} Delivered
                         </button>
                       )}
-                      {company.type==='buyer' && po.delivery_orders?.some((d: any) => ['shipped','delivered'].includes(d.status)) && (
-                        <button onClick={() => navigate(`/receipts?po_id=${po.id}`)}
-                          style={{ background:"var(--huntr-green)", border:"none", borderRadius:8, padding:"6px 10px", color:"#fff", fontWeight:700, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 4px 12px rgba(34,197,94,0.2)" }}>
-                          <Package size={12}/> Receive Goods
+                      {company.type === 'buyer' && po.delivery_orders?.some((d: any) => ['shipped','delivered'].includes(d.status)) && (
+                        <button
+                          onClick={() => navigate(`/receipts?po_id=${po.id}`)}
+                          style={{ color: 'white' }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all"
+                        >
+                          <Package size={11}/> Receive
                         </button>
                       )}
-                      <button onClick={() => setExpandedPo(expandedPo===po.id ? null : po.id)}
-                        style={{ width:40, height:40, borderRadius:12, background:"var(--ui-bg-input)", border:"1px solid var(--ui-border-input)", color:"var(--ui-text-secondary)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.3s ease" }}>
-                        {expandedPo===po.id ? <ChevronDown size={20}/> : <ChevronRight size={20}/>}
+                      <button
+                        onClick={() => setExpandedPo(isExpanded ? null : po.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 transition-all"
+                      >
+                        {isExpanded ? <ChevronDown size={15}/> : <ChevronRight size={15}/>}
                       </button>
                     </div>
                   </div>
 
-                  {/* Fee Breakdown */}
-                  {!po.is_historical && Number(po.total_amount) > 0 && (() => {
-                    const base = Number(po.total_amount);
+                  {/* Fee Breakdown — inset */}
+                  {!po.is_historical && base > 0 && (() => {
                     const { platFeeRate, platFee, ppnPlatform, adminBank, pph23, biayaLayanan, ppn, grandTotal } = calcFees(base);
-
-                    const rows = [
-                      { label: "Subtotal Barang",                                                  value: base,                  muted: false },
-                      { label: `Platform Fee + PPN (${(platFeeRate*100).toFixed(0)}% + 11%)`,      value: platFee + ppnPlatform, muted: true  },
-                      { label: "Admin Bank",                                                        value: adminBank,             muted: true  },
-                      { label: "PPH 23 (2%)",                                                       value: pph23,                 muted: true  },
-                      { label: "Biaya Layanan",                                                      value: biayaLayanan,          muted: true  },
-                      { label: "PPN (11%)",                                                         value: ppn,                   muted: true  },
-                    ] as Array<{ label: string; value: number; muted: boolean }>;
-
+                    const feeRows = [
+                      { label: "Subtotal Barang", value: base },
+                      { label: `Platform Fee + PPN (${(platFeeRate*100).toFixed(0)}% + 11%)`, value: platFee + ppnPlatform },
+                      { label: "Admin Bank", value: adminBank },
+                      { label: "PPH 23 (2%)", value: pph23 },
+                      { label: "Biaya Layanan", value: biayaLayanan },
+                      { label: "PPN (11%)", value: ppn },
+                    ];
                     return (
-                      <div style={{
-                        background: "var(--ui-bg-input)",
-                        border: "1px solid var(--ui-border-input)",
-                        borderRadius: 12,
-                        overflow: "hidden",
-                      }}>
-                        {/* Header */}
-                        <div style={{
-                          padding: "9px 14px",
-                          borderBottom: "1px solid var(--ui-border-input)",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}>
-                          <span style={{ fontSize: 10, fontWeight: 800, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.09em" }}>
-                            Rincian Biaya
-                          </span>
+                      <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                        <div className="px-4 py-2 border-b border-[var(--ui-border)]">
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)]">Rincian Biaya</span>
                         </div>
-
-                        {/* Rows */}
-                        <div style={{ padding: "8px 14px", display: "flex", flexDirection: "column", gap: 0 }}>
-                          {rows.map((item, idx) => (
-                            <div key={item.label} style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              padding: "5px 0",
-                              borderBottom: idx < rows.length - 1 ? "1px solid var(--ui-border-input)" : "none",
-                            }}>
-                              <span style={{ fontSize: 11, color: item.muted ? "var(--ui-text-muted)" : "var(--ui-text-secondary)", fontWeight: 500 }}>
-                                {item.label}
-                              </span>
-                              <span style={{ fontSize: 12, fontWeight: 600, color: item.muted ? "var(--ui-text-muted)" : "var(--ui-text-primary)", fontVariantNumeric: "tabular-nums" }}>
-                                {fmt(Math.round(item.value))}
-                              </span>
+                        <div className="divide-y divide-[var(--ui-border)]">
+                          {feeRows.map(row => (
+                            <div key={row.label} className="flex items-center justify-between px-4 py-1.5 text-xs">
+                              <span className="text-[var(--ui-text-muted)]">{row.label}</span>
+                              <span className="font-semibold text-[var(--ui-text-secondary)] tabular-nums">{fmt(Math.round(row.value))}</span>
                             </div>
                           ))}
-
-                          {/* Grand Total row */}
-                          <div style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            padding: "8px 10px",
-                            marginTop: 6,
-                            borderRadius: 8,
-                            background: "rgba(249,115,22,0.08)",
-                            border: "1px solid rgba(249,115,22,0.2)",
-                          }}>
-                            <span style={{ fontSize: 11, fontWeight: 800, color: "var(--ui-text-primary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                              Total
-                            </span>
-                            <span style={{ fontSize: 14, fontWeight: 900, color: "#f97316", fontVariantNumeric: "tabular-nums" }}>
-                              IDR {fmt(Math.round(grandTotal))}
-                            </span>
+                          <div className="flex items-center justify-between px-4 py-2.5">
+                            <span className="text-xs font-bold text-[var(--ui-text-primary)] uppercase tracking-wide">Total</span>
+                            <span className="text-sm font-bold text-orange-500 tabular-nums">IDR {fmt(Math.round(grandTotal))}</span>
                           </div>
                         </div>
                       </div>
@@ -524,39 +554,26 @@ export default function Orders() {
                   })()}
 
                   {/* Expanded Details */}
-                  {expandedPo===po.id && (
-                    <PoExpandedDetails
-                      po={po} company={company} user={user}
-                      processingId={processingId} issuingBastId={issuingBastId}
-                      generateQRCode={generateQRCode}
-                      onSign={handleSignDocument}
-                      onArrangeDelivery={handleArrangeDelivery}
-                      onUpdateTrackingStatus={handleUpdateTrackingStatus}
-                      onIssueBast={handleIssueBast}
-                      onPayInvoice={(inv) => { setSelectedInvoice(inv); setShowPaymentModal(true); }}
-                      onPublishInvoice={handlePublishInvoice}
-                    />
+                  {isExpanded && (
+                    <div className="border-t border-[var(--ui-border)]">
+                      <PoExpandedDetails
+                        po={po} company={company} user={user}
+                        processingId={processingId} issuingBastId={issuingBastId}
+                        generateQRCode={generateQRCode}
+                        onSign={handleSignDocument}
+                        onArrangeDelivery={handleArrangeDelivery}
+                        onUpdateTrackingStatus={handleUpdateTrackingStatus}
+                        onIssueBast={handleIssueBast}
+                        onPayInvoice={(inv) => { setSelectedInvoice(inv); setShowPaymentModal(true); }}
+                        onPublishInvoice={handlePublishInvoice}
+                      />
+                    </div>
                   )}
                 </div>
               );
             })}
           </div>
-
-          {/* Pagination */}
-          {lastPage>1 && (
-            <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:16, marginTop:20 }}>
-              <button onClick={() => handlePageChange(currentPage-1)} disabled={currentPage===1}
-                style={{ width:40, height:40, borderRadius:12, border:"1px solid var(--ui-border-input)", background:"var(--ui-bg-input)", color:"var(--ui-text-secondary)", cursor:currentPage===1?"not-allowed":"pointer" }}>
-                <ChevronLeft size={20}/>
-              </button>
-              <span style={{ fontSize:14, color:"var(--ui-text-secondary)", fontWeight:600 }}>Page {currentPage} of {lastPage}</span>
-              <button onClick={() => handlePageChange(currentPage+1)} disabled={currentPage===lastPage}
-                style={{ width:40, height:40, borderRadius:12, border:"1px solid var(--ui-border-input)", background:"var(--ui-bg-input)", color:"var(--ui-text-secondary)", cursor:currentPage===lastPage?"not-allowed":"pointer" }}>
-                <ChevronRight size={20}/>
-              </button>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Payment Modal */}
         {showPaymentModal && selectedInvoice && (

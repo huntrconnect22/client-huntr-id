@@ -64,7 +64,7 @@ export function ProposalRankings({
           >
             {aiRankLoading
               ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> AI Menganalisis...</>
-              : <><Sparkles size={13} /> {showAiPanel ? "Refresh AI Analisis" : "🤖 Analisis AI"}</>
+              : <><Sparkles size={13} /> {showAiPanel ? "Refresh AI Analisis" : "Analisis AI"}</>
             }
           </button>
         )}
