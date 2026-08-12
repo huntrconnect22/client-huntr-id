@@ -44,6 +44,18 @@ export const aiGeneratePr = (query: string, catalogueIds?: string[]) =>
   });
 
 /**
+ * Auto-fill metadata produk menggunakan Genkit AI berdasarkan nama produk.
+ */
+export const aiAutofillCatalogue = (name: string, category?: string) =>
+  apiPost("/api/ai/autofill-catalogue", { name, category });
+
+/**
+ * Batch enrichment / update massal produk menggunakan Genkit AI (max 10 item).
+ */
+export const aiBatchUpdateCatalogue = (items: { id: string | number; name: string; category?: string }[]) =>
+  apiPost("/api/ai/batch-update-catalogue", { items });
+
+/**
  * Helper: deteksi apakah query cukup deskriptif untuk AI search.
  * Minimal 20 karakter ATAU mengandung kata sifat/deskriptif.
  */
@@ -65,3 +77,4 @@ export const isAiQuery = (query: string): boolean => {
   const lower = query.toLowerCase();
   return descriptiveWords.some((w) => lower.includes(w)) || query.trim().length > 25;
 };
+
