@@ -21,14 +21,42 @@ const chartTooltipStyle = (accent?: string) => ({
   labelStyle: { color: "var(--ui-chart-legend)" },
 });
 
+import { getOrders } from "../../lib/api";
+
 export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompany: any }) {
-  // Recharts Data
-  const spendData = [
-    { name: 'IT Equipment', value: 5600000000 },
-    { name: 'HR Services', value: 3750000000 },
-    { name: 'Production', value: 3150000000 },
-  ];
-  const COLORS = ['#fb923c', '#fbbf24', '#f87171'];
+  const [realSpendData, setRealSpendData] = React.useState<{ name: string; value: number }[]>([]);
+  const [totalRealSpend, setTotalRealSpend] = React.useState<number>(0);
+  const [loadingOrders, setLoadingOrders] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    if (!activeCompany?.id) return;
+    setLoadingOrders(true);
+    getOrders(activeCompany.id, 1, 100)
+      .then((res) => {
+        const orders = res?.data || [];
+        const deptMap: Record<string, number> = {};
+        let total = 0;
+
+        orders.forEach((po: any) => {
+          const amt = Number(po.total_amount || 0);
+          total += amt;
+          const dept = po.department || po.purchase_category || "General";
+          deptMap[dept] = (deptMap[dept] || 0) + amt;
+        });
+
+        const formatted = Object.entries(deptMap).map(([name, value]) => ({ name, value }));
+        setRealSpendData(formatted.length > 0 ? formatted : [{ name: "General", value: 0 }]);
+        setTotalRealSpend(total);
+      })
+      .catch((err) => {
+        console.error("Failed to load real dashboard spend data", err);
+      })
+      .finally(() => {
+        setLoadingOrders(false);
+      });
+  }, [activeCompany?.id]);
+
+  const COLORS = ['#fb923c', '#fbbf24', '#f87171', '#60a5fa', '#34d399', '#a78bfa'];
 
   const cycleTimeData = [
     { month: 'Jan', time: 3.2 },
@@ -193,22 +221,22 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Total Spend</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{formatCurrency(12500000000)}</div>
-              <div style={{ fontSize: 10, color: "#34d399", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}><TrendingDown size={10}/> 4.2% vs last month</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{formatCurrency(totalRealSpend)}</div>
+              <div style={{ fontSize: 10, color: "#34d399", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}><TrendingDown size={10}/> Real PO Aggregation</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Maverick Spend</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>8.5%</div>
-              <div style={{ fontSize: 10, color: "#ef4444", marginTop: 4 }}>Off-contract purchases</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>0%</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Off-contract purchases</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Defect Rate</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>2.1%</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#22c55e", marginTop: 4, lineHeight: 1 }}>0.0%</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Target: &lt;2.0%</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Lead Time Avg</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#60a5fa", marginTop: 4, lineHeight: 1 }}>7.2 Days</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#60a5fa", marginTop: 4, lineHeight: 1 }}>7.0 Days</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>PO → Goods Receipt</div>
             </div>
           </div>
@@ -216,17 +244,27 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "18px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pengeluaran per Departemen</h3>
             <div style={{ height: 260, width: "100%" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <Pie data={spendData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                    {spendData.map((entry, index) => (
-                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} {...chartTooltipStyle()} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ui-chart-legend)" }} />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+              {loadingOrders ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 12, color: "var(--ui-text-muted)" }}>
+                  Mengambil data PO...
+                </div>
+              ) : realSpendData.length === 0 || (realSpendData.length === 1 && realSpendData[0].value === 0) ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 12, color: "var(--ui-text-muted)" }}>
+                  Belum ada transaksi PO untuk dihitung pengeluarannya.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie data={realSpendData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
+                      {realSpendData.map((entry, index) => (
+                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} {...chartTooltipStyle()} />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ui-chart-legend)" }} />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </section>
