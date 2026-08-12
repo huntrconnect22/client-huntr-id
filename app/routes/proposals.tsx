@@ -10,25 +10,9 @@ import { VendorTendersView } from "../features/proposals/components/VendorTender
 import { VendorSubmissionsList } from "../features/proposals/components/VendorSubmissionsList";
 import { VendorProposalForm } from "../features/proposals/components/VendorProposalForm";
 
-const emptyStateStyle: React.CSSProperties = {
-  padding: "60px 40px", textAlign: "center", background: "var(--ui-bg-card)",
-  borderRadius: 24, border: "1px dashed var(--ui-border)",
-  display: "flex", flexDirection: "column", alignItems: "center"
-};
-
-const floatingSuccessStyle: React.CSSProperties = {
-  position: "fixed", bottom: 32, right: 32, background: "var(--ui-status-active)", color: "#fff",
-  padding: "14px 20px", borderRadius: 14, display: "flex", alignItems: "center", gap: 12,
-  boxShadow: "0 10px 30px rgba(34,197,94,0.3)", zIndex: 1000
-};
-
-const closeButtonStyle: React.CSSProperties = {
-  background: "rgba(0,0,0,0.1)", border: "none", color: "#fff", cursor: "pointer",
-  width: 20, height: 20, borderRadius: "50%", fontWeight: 900, fontSize: 14
-};
-
 export default function Proposals() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeCompany, setActiveCompany] = useState<any>(null);
 
   // Buyer state
@@ -52,7 +36,7 @@ export default function Proposals() {
     warranty_months: "12",
     payment_term: "30 days",
     document: null as File | null,
-    items: [] // { rfq_item_id, price_offer }
+    items: []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +44,13 @@ export default function Proposals() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isProcessing = useRef(false);
+
+  const getCompanyPrefix = (comp?: any) => {
+    const c = comp ?? activeCompany;
+    if (!c) return "";
+    const slug = c.slug || c.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    return slug ? `/${slug}` : "";
+  };
 
   useEffect(() => {
     const activeComp = localStorage.getItem("active_company");
@@ -93,11 +84,19 @@ export default function Proposals() {
     };
     
     window.addEventListener('huntr:notification_received', handleRefreshData);
-    
     return () => {
       window.removeEventListener('huntr:notification_received', handleRefreshData);
     };
   }, [location.state]);
+
+  // Company slug redirect check
+  useEffect(() => {
+    if (!activeCompany) return;
+    const slug = getCompanyPrefix(activeCompany);
+    if (slug && !window.location.pathname.startsWith(slug)) {
+      navigate(`${slug}/proposals`, { replace: true });
+    }
+  }, [activeCompany]);
 
   const fetchReceivedProposals = async (companyId: string | number) => {
     setProposalsLoading(true);
@@ -123,7 +122,6 @@ export default function Proposals() {
         rfq_id: receivedProposals.find(p => p.id === proposalId)?.rfq_id,
         user_id: user?.id,
       });
-      // SweetAlert moved slightly inside or we can leave it to Buyer component to dispatch events if we wanted, but it's simpler here
       const Swal = (await import("sweetalert2")).default;
       Swal.fire({
         icon: 'success',
@@ -299,8 +297,9 @@ export default function Proposals() {
   if (!activeCompany) {
     return (
       <Layout title="Proposals" subtitle="Loading your workspace...">
-        <div style={{ display: "flex", justifyContent: "center", padding: 100 }}>
-          <Loader2 className="animate-spin" color="var(--huntr-orange)" size={40} />
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
+          <Loader2 className="animate-spin text-orange-500" size={28} />
+          <span className="text-xs text-[var(--ui-text-muted)]">Loading workspace...</span>
         </div>
       </Layout>
     );
@@ -308,9 +307,9 @@ export default function Proposals() {
 
   return (
     <Layout title="Proposals" subtitle={isBuyer ? "Review, negotiate, and award vendor proposals for your RFQs." : "Manage your bids, submit quotations, and review active tender opportunities."}>
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 32 }}>
+      <div className="w-full space-y-6">
         
-        <div style={{ width: "100%" }}>
+        <div className="w-full">
           {isBuyer ? (
             <BuyerProposalsView
               receivedProposals={receivedProposals}
@@ -322,7 +321,7 @@ export default function Proposals() {
               onAward={handleAward}
             />
           ) : isVendor && !selectedRfq ? (
-            <>
+            <div className="space-y-6">
               <VendorTendersView 
                 openRfqs={openRfqs}
                 rfqsLoading={rfqsLoading}
@@ -334,7 +333,7 @@ export default function Proposals() {
               <VendorSubmissionsList 
                 vendorSubmissions={vendorSubmissions}
               />
-            </>
+            </div>
           ) : isVendor && selectedRfq ? (
             <VendorProposalForm 
               selectedRfq={selectedRfq}
@@ -352,23 +351,23 @@ export default function Proposals() {
               onCancel={() => { setSelectedRfq(null); setHasSubmittedForSelectedRfq(false); setError(null); }}
             />
           ) : (
-            <div style={emptyStateStyle}>
-              <Briefcase size={48} color="var(--ui-text-muted)" style={{ marginBottom: 16, opacity: 0.2 }} />
-              <div style={{ color: "var(--ui-text-primary)", fontSize: 15, fontWeight: 700 }}>Workspace Not Found</div>
-              <div style={{ color: "var(--ui-text-muted)", fontSize: 13, marginTop: 4 }}>Please ensure you are logged in correctly.</div>
+            <div className="border border-dashed border-[var(--ui-border)] rounded-xl py-16 flex flex-col items-center justify-center gap-2 text-center">
+              <Briefcase size={40} className="text-[var(--ui-text-muted)] opacity-20" />
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)]">Workspace Not Found</p>
+              <p className="text-xs text-[var(--ui-text-muted)]">Please ensure you are logged in correctly.</p>
             </div>
           )}
         </div>
 
         {/* Floating Success Notification */}
         {result && (
-          <div style={floatingSuccessStyle}>
-            <CheckCircle2 size={20} />
+          <div className="fixed bottom-6 right-6 bg-emerald-500 text-white p-4 rounded-xl shadow-xl flex items-center gap-3 z-50 text-xs font-semibold">
+            <CheckCircle2 size={18} />
             <div>
-              <div style={{ fontWeight: 800, fontSize: 13 }}>Quotation Submitted!</div>
-              <div style={{ fontSize: 11, opacity: 0.8 }}>Your offer is now active in the tender system.</div>
+              <p className="font-bold">Quotation Submitted!</p>
+              <p className="text-[11px] opacity-90">Your offer is now active in the tender system.</p>
             </div>
-            <button onClick={() => setResult(null)} style={closeButtonStyle}>×</button>
+            <button onClick={() => setResult(null)} className="ml-2 text-white/80 hover:text-white font-bold text-sm">×</button>
           </div>
         )}
       </div>
