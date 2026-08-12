@@ -97,7 +97,7 @@ export function TrendingSearchWidget() {
       style={{
         background: "var(--ui-bg-card)",
         border: "1px solid var(--ui-border)",
-        borderRadius: 20,
+        borderRadius: 4,
         overflow: "hidden",
       }}
     >
@@ -146,7 +146,7 @@ export function TrendingSearchWidget() {
                 color: "var(--ui-text-muted)",
                 background: "var(--ui-bg)",
                 border: "1px solid var(--ui-border)",
-                borderRadius: 6,
+                borderRadius: 4,
                 padding: "2px 8px",
               }}
             >

@@ -21,15 +21,15 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Premium Glassmorphism */
+/* Custom Clean Card Panel (Huntr-landing style) */
 .glass-panel {
   background: var(--ui-glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--ui-glass-border);
-  border-radius: 16px;
+  border-radius: var(--radius-card, 12px);
   box-shadow: var(--ui-glass-shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   color: var(--ui-text-primary);
 }
 
@@ -45,6 +45,22 @@ body {
 
 [data-theme="light"] .huntr-page-content .text-white {
   color: var(--ui-text-primary);
+}
+
+/* Colored buttons always keep white text in light mode */
+[data-theme="light"] .huntr-page-content [class*="bg-orange-"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-orange-"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-emerald-"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-emerald-"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-red-"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-red-"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-green-"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-green-"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-blue-"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-blue-"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-indigo-"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-indigo-"] .text-white {
+  color: #ffffff !important;
 }
 
 [data-theme="light"] .huntr-page-content .text-gray-300 {
@@ -111,7 +127,6 @@ body {
   background: var(--ui-glass-bg-hover);
   border-color: var(--ui-glass-border-hover);
   box-shadow: var(--ui-glass-shadow-hover);
-  transform: translateY(-2px);
 }
 
 /* Premium Gradient Text */

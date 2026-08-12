@@ -418,27 +418,34 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
 
     case 7:
       return (
-        <SlideSection title="Success" subtitle="Your workspace is ready" icon={<LogIn size={22} className="text-pink-500" />} accentColor="#ec4899">
+        <SlideSection title="Berhasil!" subtitle="Workspace perusahaan Anda telah siap" icon={<LogIn size={22} className="text-orange-500" />} accentColor="#f97316">
           <div className="flex flex-col gap-3">
             {companies.map((c: any) => (
               <button 
                 key={c.id} 
                 onClick={() => setSelectedCompany(c)} 
                 className={`
-                  p-5 rounded-2xl text-left transition-all border-2
+                  p-4 rounded-xl text-left transition-all border flex items-center justify-between
                   ${selectedCompany?.id === c.id 
-                    ? "bg-orange-500/10 border-orange-500/50" 
-                    : "bg-[var(--ui-bg-input)] border-[var(--ui-border-subtle)] hover:border-[var(--ui-border-input)]"
+                    ? "bg-orange-500/10 border-orange-500/40 text-orange-400 shadow-sm shadow-orange-500/10" 
+                    : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-orange-500/30 text-[var(--ui-text-primary)]"
                   }
                 `}
               >
-                <div className={`font-bold ${selectedCompany?.id === c.id ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>{c.name}</div>
-                <div className="text-[10px] text-[var(--ui-text-muted)] uppercase tracking-widest mt-1">Perusahaan Aktif</div>
+                <div>
+                  <div className={`font-semibold text-sm ${selectedCompany?.id === c.id ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>{c.name}</div>
+                  <div className="text-[10px] text-[var(--ui-text-muted)] uppercase tracking-wider mt-0.5">Perusahaan Terdaftar</div>
+                </div>
+                {selectedCompany?.id === c.id && (
+                  <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={12} className="text-white" />
+                  </div>
+                )}
               </button>
             ))}
             <button 
               onClick={handleLoginAsCompany} 
-              className="w-full p-4 bg-orange-500 hover:bg-orange-600 rounded-xl text-white font-black text-sm uppercase tracking-wider transition-all shadow-lg shadow-orange-500/20 mt-4"
+              className="w-full py-3 bg-orange-500 hover:bg-orange-600 rounded-xl text-white font-bold text-sm transition-all shadow-md shadow-orange-500/20 mt-2"
             >
               Masuk ke Workspace
             </button>

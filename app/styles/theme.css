@@ -29,70 +29,74 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* ── Dark Theme (Default Premium) ────────────────────────────────────── */
-  --ui-bg-page:      #0a0a0a;
-  --ui-bg-page-grad: radial-gradient(125% 125% at 50% 10%, #0f0a06 40%, #1a1008 80%, #0f0a06 100%);
-  --ui-bg-sidebar:   rgba(15, 10, 6, 0.97);
-  --ui-bg-header:    rgba(10, 10, 10, 0.85);
-  --ui-bg-card:      #1a1a1a; /* Solid dark background */
-  --ui-bg-card-hover:#222222;
-  --ui-bg-input:     #252525;
-  --ui-bg-input-focus: #2a2a2a;
-  --ui-bg-badge:     rgba(249, 115, 22, 0.08);
-  --ui-bg-notif:     rgba(15, 10, 6, 0.95);
-  --ui-bg-overlay:   rgba(255, 255, 255, 0.02);
+  /* ── Huntr-landing Aligned Dark Theme ────────────────────────────────── */
+  --radius:          0.5rem; /* 8px standard radius from landing */
+  --radius-card:     0.75rem; /* 12px for cards */
+  --radius-sm:       0.375rem; /* 6px for small elements */
+
+  --ui-bg-page:      #020817;
+  --ui-bg-page-grad: radial-gradient(125% 125% at 50% 10%, #090d16 40%, #020817 100%);
+  --ui-bg-sidebar:   rgba(9, 13, 22, 0.95);
+  --ui-bg-header:    rgba(2, 8, 23, 0.85);
+  --ui-bg-card:      #090d16;
+  --ui-bg-card-hover:#0f172a;
+  --ui-bg-input:     #0f172a;
+  --ui-bg-input-focus: #1e293b;
+  --ui-bg-badge:     rgba(249, 115, 22, 0.10);
+  --ui-bg-notif:     rgba(9, 13, 22, 0.95);
+  --ui-bg-overlay:   rgba(2, 8, 23, 0.75);
   --ui-bg-switch-btn: rgba(255, 255, 255, 0.05);
-  --ui-bg-pending-card: rgba(255, 255, 255, 0.02);
+  --ui-bg-pending-card: rgba(15, 23, 42, 0.6);
 
   /* Borders */
-  --ui-border:       rgba(255, 255, 255, 0.06);
-  --ui-border-subtle:rgba(255, 255, 255, 0.05);
-  --ui-border-input: rgba(255, 255, 255, 0.10);
-  --ui-border-badge: rgba(249, 115, 22, 0.20);
-  --ui-border-notif: rgba(255, 255, 255, 0.08);
+  --ui-border:       rgba(255, 255, 255, 0.10);
+  --ui-border-subtle:rgba(255, 255, 255, 0.06);
+  --ui-border-input: rgba(255, 255, 255, 0.14);
+  --ui-border-badge: rgba(249, 115, 22, 0.25);
+  --ui-border-notif: rgba(255, 255, 255, 0.10);
 
   /* Text */
-  --ui-text-primary: #f3f4f6;
-  --ui-text-secondary:#9ca3af;
-  --ui-text-muted:   #6b7280;
+  --ui-text-primary: #f8fafc;
+  --ui-text-secondary:#94a3b8;
+  --ui-text-muted:   #64748b;
   --ui-text-brand:   #fb923c;
   --ui-text-logo:    #ffffff;
   --ui-text-nav-active: #fdba74;
-  --ui-text-nav-idle:   #9ca3af;
+  --ui-text-nav-idle:   #94a3b8;
 
   /* Scrollbar */
-  --ui-scrollbar-track: #141008;
-  --ui-scrollbar-thumb: #3d2814;
+  --ui-scrollbar-track: #020817;
+  --ui-scrollbar-thumb: #1e293b;
 
   /* Notification badge border */
-  --ui-notif-badge-border: #141008;
+  --ui-notif-badge-border: #020817;
 
   /* Nav active bg */
-  --ui-nav-active-bg:     rgba(249, 115, 22, 0.15);
-  --ui-nav-active-border: rgba(249, 115, 22, 0.25);
+  --ui-nav-active-bg:     rgba(249, 115, 22, 0.12);
+  --ui-nav-active-border: rgba(249, 115, 22, 0.30);
 
   /* Glass panel */
-  --ui-glass-bg:     rgba(255, 255, 255, 0.03);
-  --ui-glass-bg-hover: rgba(255, 255, 255, 0.05);
-  --ui-glass-border: rgba(255, 255, 255, 0.08);
-  --ui-glass-border-hover: rgba(255, 255, 255, 0.12);
-  --ui-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --ui-glass-shadow-hover: 0 12px 40px 0 rgba(249, 115, 22, 0.2);
+  --ui-glass-bg:     rgba(9, 13, 22, 0.80);
+  --ui-glass-bg-hover: rgba(15, 23, 42, 0.90);
+  --ui-glass-border: rgba(255, 255, 255, 0.10);
+  --ui-glass-border-hover: rgba(249, 115, 22, 0.30);
+  --ui-glass-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  --ui-glass-shadow-hover: 0 8px 30px -4px rgba(249, 115, 22, 0.2);
 
   /* Logout button */
-  --ui-logout-bg:    rgba(239, 68, 68, 0.08);
-  --ui-logout-border:rgba(239, 68, 68, 0.18);
+  --ui-logout-bg:    rgba(239, 68, 68, 0.10);
+  --ui-logout-border:rgba(239, 68, 68, 0.22);
   --ui-logout-text:  #f87171;
 
   /* Switch company button */
   --ui-switch-bg:    rgba(249, 115, 22, 0.12);
-  --ui-switch-border:rgba(249, 115, 22, 0.20);
+  --ui-switch-border:rgba(249, 115, 22, 0.25);
   --ui-switch-text:  #fb923c;
 
   /* Theme toggle */
-  --ui-toggle-bg:    rgba(255, 255, 255, 0.03);
-  --ui-toggle-border:rgba(255, 255, 255, 0.08);
-  --ui-toggle-text:  #9ca3af;
+  --ui-toggle-bg:    rgba(255, 255, 255, 0.05);
+  --ui-toggle-border:rgba(255, 255, 255, 0.10);
+  --ui-toggle-text:  #94a3b8;
 
   /* Status colors */
   --ui-status-approved: #34d399;
@@ -100,30 +104,31 @@
   --ui-status-rejected: #f87171;
 
   /* Skeleton loader */
-  --ui-skeleton-base: rgba(255, 255, 255, 0.05);
-  --ui-skeleton-highlight: rgba(255, 255, 255, 0.1);
+  --ui-skeleton-base: rgba(255, 255, 255, 0.06);
+  --ui-skeleton-highlight: rgba(255, 255, 255, 0.12);
   --ui-status-active: #22c55e;
   --ui-status-selected: #8b5cf6;
 
   /* Gradients */
-  --ui-gradient-active-card: linear-gradient(180deg, rgba(79,70,229,0.16), rgba(63,63,70,0.72));
+  --ui-gradient-active-card: linear-gradient(180deg, rgba(249,115,22,0.12), rgba(15,23,42,0.8));
 
   /* Shadows */
-  --ui-shadow-orange: 0 24px 60px rgba(249,115,22,0.18);
-  --ui-shadow-orange-hover: 0 12px 40px rgba(249,115,22,0.2);
+  --ui-shadow-orange: 0 10px 30px -10px rgba(249,115,22,0.25);
+  --ui-shadow-orange-hover: 0 14px 36px -8px rgba(249,115,22,0.35);
 
-  /* Layout */
-  --ui-layout-padding: 32px;
+  /* Layout & Spacing */
+  --ui-layout-padding: 24px;
+  --ui-gap-grid: 20px;
 
   /* Charts & inset surfaces */
-  --ui-bg-inset:       rgba(255, 255, 255, 0.05);
-  --ui-progress-track: #374151;
-  --ui-chart-grid:     rgba(255, 255, 255, 0.05);
-  --ui-chart-axis:     #6b7280;
-  --ui-chart-tooltip-bg:     rgba(15, 10, 6, 0.92);
-  --ui-chart-tooltip-border: rgba(249, 115, 22, 0.30);
-  --ui-chart-tooltip-text:   #f3f4f6;
-  --ui-chart-legend:     #9ca3af;
+  --ui-bg-inset:       #0f172a;
+  --ui-progress-track: #1e293b;
+  --ui-chart-grid:     rgba(255, 255, 255, 0.08);
+  --ui-chart-axis:     #64748b;
+  --ui-chart-tooltip-bg:     rgba(9, 13, 22, 0.95);
+  --ui-chart-tooltip-border: rgba(249, 115, 22, 0.35);
+  --ui-chart-tooltip-text:   #f8fafc;
+  --ui-chart-legend:     #94a3b8;
   --ui-chart-pie-stroke: rgba(255, 255, 255, 0.10);
 }
 
@@ -132,7 +137,7 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 14px;
@@ -143,58 +148,63 @@ select {
 [data-theme="light"] {
   color-scheme: light;
 
+  /* ── Huntr-landing Aligned Light Theme ───────────────────────────────── */
+  --radius:          0.5rem; /* 8px standard radius from landing */
+  --radius-card:     0.75rem; /* 12px for cards */
+  --radius-sm:       0.375rem; /* 6px for small elements */
+
   /* Backgrounds */
-  --ui-bg-page:      #f5f3ef;
-  --ui-bg-page-grad: radial-gradient(125% 125% at 50% 10%, #faf8f5 40%, #f0ece4 80%, #faf8f5 100%);
-  --ui-bg-sidebar:   rgba(255, 252, 248, 0.98);
-  --ui-bg-header:    rgba(255, 252, 248, 0.92);
-  --ui-bg-card:      rgba(255, 255, 255, 0.80);
-  --ui-bg-card-hover:rgba(255, 255, 255, 0.95);
-  --ui-bg-input:     rgba(0, 0, 0, 0.04);
-  --ui-bg-input-focus: rgba(0, 0, 0, 0.06);
+  --ui-bg-page:      #ffffff;
+  --ui-bg-page-grad: radial-gradient(125% 125% at 50% 10%, #ffffff 50%, #f8fafc 100%);
+  --ui-bg-sidebar:   #ffffff;
+  --ui-bg-header:    rgba(255, 255, 255, 0.90);
+  --ui-bg-card:      #ffffff;
+  --ui-bg-card-hover:#f8fafc;
+  --ui-bg-input:     #f1f5f9;
+  --ui-bg-input-focus: #e2e8f0;
   --ui-bg-badge:     rgba(249, 115, 22, 0.08);
-  --ui-bg-notif:     rgba(255, 252, 248, 0.98);
-  --ui-bg-overlay:   rgba(255, 255, 255, 0.70);
+  --ui-bg-notif:     #ffffff;
+  --ui-bg-overlay:   rgba(15, 23, 42, 0.4);
   --ui-bg-switch-btn: rgba(0, 0, 0, 0.04);
-  --ui-bg-pending-card: rgba(255, 255, 255, 0.70);
+  --ui-bg-pending-card: #f8fafc;
 
   /* Borders */
-  --ui-border:       rgba(0, 0, 0, 0.08);
-  --ui-border-subtle:rgba(0, 0, 0, 0.06);
-  --ui-border-input: rgba(0, 0, 0, 0.12);
+  --ui-border:       #e2e8f0;
+  --ui-border-subtle:#cbd5e1;
+  --ui-border-input: #cbd5e1;
   --ui-border-badge: rgba(249, 115, 22, 0.25);
-  --ui-border-notif: rgba(0, 0, 0, 0.08);
+  --ui-border-notif: #e2e8f0;
 
   /* Text */
-  --ui-text-primary: #111827;
-  --ui-text-secondary:#4b5563;
-  --ui-text-muted:   #6b7280;
+  --ui-text-primary: #020817;
+  --ui-text-secondary:#475569;
+  --ui-text-muted:   #64748b;
   --ui-text-brand:   #ea580c;
-  --ui-text-logo:    #111827;
+  --ui-text-logo:    #020817;
   --ui-text-nav-active: #ea580c;
-  --ui-text-nav-idle:   #6b7280;
+  --ui-text-nav-idle:   #64748b;
 
   /* Scrollbar */
-  --ui-scrollbar-track: #e5e0d8;
-  --ui-scrollbar-thumb: #c4b8a8;
+  --ui-scrollbar-track: #f1f5f9;
+  --ui-scrollbar-thumb: #cbd5e1;
 
   /* Notification badge border */
-  --ui-notif-badge-border: #f5f3ef;
+  --ui-notif-badge-border: #ffffff;
 
   /* Nav active bg */
   --ui-nav-active-bg:     rgba(249, 115, 22, 0.10);
   --ui-nav-active-border: rgba(249, 115, 22, 0.25);
 
   /* Glass panel */
-  --ui-glass-bg:     rgba(255, 255, 255, 0.70);
-  --ui-glass-bg-hover: rgba(255, 255, 255, 0.90);
-  --ui-glass-border: rgba(0, 0, 0, 0.08);
-  --ui-glass-border-hover: rgba(249, 115, 22, 0.25);
-  --ui-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.10);
-  --ui-glass-shadow-hover: 0 12px 40px 0 rgba(249, 115, 22, 0.15);
+  --ui-glass-bg:     #ffffff;
+  --ui-glass-bg-hover: #f8fafc;
+  --ui-glass-border: #e2e8f0;
+  --ui-glass-border-hover: rgba(249, 115, 22, 0.30);
+  --ui-glass-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --ui-glass-shadow-hover: 0 4px 12px -2px rgba(249, 115, 22, 0.15);
 
   /* Logout button */
-  --ui-logout-bg:    rgba(239, 68, 68, 0.06);
+  --ui-logout-bg:    rgba(239, 68, 68, 0.08);
   --ui-logout-border:rgba(239, 68, 68, 0.20);
   --ui-logout-text:  #dc2626;
 
@@ -204,9 +214,9 @@ select {
   --ui-switch-text:  #ea580c;
 
   /* Theme toggle */
-  --ui-toggle-bg:    rgba(0, 0, 0, 0.04);
-  --ui-toggle-border:rgba(0, 0, 0, 0.10);
-  --ui-toggle-text:  #6b7280;
+  --ui-toggle-bg:    #f1f5f9;
+  --ui-toggle-border:#e2e8f0;
+  --ui-toggle-text:  #64748b;
 
   /* Status colors */
   --ui-status-approved: #059669;
@@ -216,27 +226,29 @@ select {
   --ui-status-selected: #7c3aed;
 
   /* Skeleton loader */
-  --ui-skeleton-base: rgba(0, 0, 0, 0.06);
-  --ui-skeleton-highlight: rgba(0, 0, 0, 0.12);
+  --ui-skeleton-base: #f1f5f9;
+  --ui-skeleton-highlight: #e2e8f0;
 
   /* Gradients */
-  --ui-gradient-active-card: linear-gradient(180deg, rgba(79,70,229,0.08), rgba(229,229,229,0.5));
+  --ui-gradient-active-card: linear-gradient(180deg, rgba(249,115,22,0.06), #f8fafc);
 
   /* Shadows */
-  --ui-shadow-orange: 0 24px 60px rgba(249,115,22,0.1);
-  --ui-shadow-orange-hover: 0 12px 40px rgba(249,115,22,0.08);
+  --ui-shadow-orange: 0 4px 20px -2px rgba(249,115,22,0.15);
+  --ui-shadow-orange-hover: 0 8px 24px -2px rgba(249,115,22,0.22);
 
-  /* Layout */
-  --ui-layout-padding: 32px;
+  /* Layout & Spacing */
+  --ui-layout-padding: 24px;
+  --ui-gap-grid: 20px;
 
   /* Charts & inset surfaces */
-  --ui-bg-inset:       rgba(0, 0, 0, 0.04);
-  --ui-progress-track: #e5e7eb;
-  --ui-chart-grid:     rgba(0, 0, 0, 0.08);
-  --ui-chart-axis:     #6b7280;
-  --ui-chart-tooltip-bg:     rgba(255, 252, 248, 0.98);
-  --ui-chart-tooltip-border: rgba(0, 0, 0, 0.10);
-  --ui-chart-tooltip-text:   #111827;
-  --ui-chart-legend:     #6b7280;
-  --ui-chart-pie-stroke: rgba(255, 255, 255, 0.85);
+  --ui-bg-inset:       #f8fafc;
+  --ui-progress-track: #e2e8f0;
+  --ui-chart-grid:     #e2e8f0;
+  --ui-chart-axis:     #64748b;
+  --ui-chart-tooltip-bg:     #ffffff;
+  --ui-chart-tooltip-border: #e2e8f0;
+  --ui-chart-tooltip-text:   #020817;
+  --ui-chart-legend:     #64748b;
+  --ui-chart-pie-stroke: #ffffff;
 }
+

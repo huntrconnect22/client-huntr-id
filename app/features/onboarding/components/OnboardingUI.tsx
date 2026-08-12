@@ -9,16 +9,13 @@ export const SlideSection = ({ title, subtitle, icon, children, accentColor }: a
   <div className="flex flex-col gap-6 animate-fade-in">
     <div className="flex items-center gap-3 md:gap-4">
       <div 
-        className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-        style={{
-          background: `rgba(${accentColor === '#f97316' ? '249,115,22' : accentColor === '#f59e0b' ? '245,158,11' : '251,191,36'}, 0.12)`,
-        }}
+        className="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-orange-500/10 border border-orange-500/20 text-orange-400"
       >
         {icon}
       </div>
       <div>
-        <h2 className="text-lg md:text-xl font-black text-[var(--ui-text-primary)] leading-tight">{title}</h2>
-        <p className="text-xs md:text-sm text-[var(--ui-text-secondary)] mt-1">{subtitle}</p>
+        <h2 className="text-lg md:text-xl font-extrabold text-[var(--ui-text-primary)] leading-tight tracking-tight">{title}</h2>
+        <p className="text-xs text-[var(--ui-text-secondary)] mt-0.5">{subtitle}</p>
       </div>
     </div>
     <div className="flex flex-col gap-5">{children}</div>
@@ -38,7 +35,7 @@ export const Field = ({ label, value, onChange, placeholder, type = "text" }: an
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm transition-all focus:border-orange-500/50"
+      className="w-full px-4 py-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-sm transition-all focus:border-orange-500/50 focus:bg-[var(--ui-bg-input-focus)]"
     />
   </div>
 );

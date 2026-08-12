@@ -191,29 +191,29 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
           </div>
           {/* Stat cards row — compact, small */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px", borderLeft: "3px solid #f97316" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Spend</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{formatCurrency(12500000000)}</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Total Spend</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{formatCurrency(12500000000)}</div>
               <div style={{ fontSize: 10, color: "#34d399", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}><TrendingDown size={10}/> 4.2% vs last month</div>
             </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Maverick Spend</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>8.5%</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Maverick Spend</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>8.5%</div>
               <div style={{ fontSize: 10, color: "#ef4444", marginTop: 4 }}>Off-contract purchases</div>
             </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Defect Rate</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>2.1%</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Defect Rate</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>2.1%</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Target: &lt;2.0%</div>
             </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Lead Time Avg</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "#60a5fa", marginTop: 4, lineHeight: 1 }}>7.2 Days</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Lead Time Avg</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#60a5fa", marginTop: 4, lineHeight: 1 }}>7.2 Days</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>PO → Goods Receipt</div>
             </div>
           </div>
           {/* Chart — full width */}
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, padding: "16px 20px" }}>
+          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "18px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pengeluaran per Departemen</h3>
             <div style={{ height: 260, width: "100%" }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -258,24 +258,24 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
           </div>
           {/* Stat cards row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Active PO</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "#fb923c", marginTop: 4, lineHeight: 1 }}>8</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Active PO</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#fb923c", marginTop: 4, lineHeight: 1 }}>8</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>In-Transit</div>
             </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Unprocessed PRs</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>24</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Unprocessed PRs</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>24</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Needs review</div>
             </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>POs/Staff/Mo</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "#f472b6", marginTop: 4, lineHeight: 1 }}>45</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>POs/Staff/Mo</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#f472b6", marginTop: 4, lineHeight: 1 }}>45</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Average</div>
             </div>
           </div>
           {/* Line chart — full width */}
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, padding: "16px 20px" }}>
+          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Rata-rata Waktu Siklus PO (Hari)</h3>
             <div style={{ height: 260, width: "100%" }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -318,14 +318,14 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
           </div>
           {/* Stat card */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "12px 14px", borderLeft: "3px solid #34d399" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>PPV</div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: "#34d399", marginTop: 4, lineHeight: 1 }}>{formatCurrency(-450000000)}</div>
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #34d399" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>PPV</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#34d399", marginTop: 4, lineHeight: 1 }}>{formatCurrency(-450000000)}</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Favorable variance</div>
             </div>
           </div>
           {/* Area chart — full width */}
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, padding: "16px 20px" }}>
+          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Kumulatif Penghematan Cost (YTD)</h3>
             <div style={{ height: 260, width: "100%" }}>
               <ResponsiveContainer width="100%" height="100%">

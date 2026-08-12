@@ -23,7 +23,7 @@ export function SummaryWidget({
     <div style={{
       background: "var(--ui-bg-card)",
       border: "1px solid var(--ui-border)",
-      borderRadius: 14,
+      borderRadius: 4,
       padding: "12px 16px",
       display: "flex",
       flexDirection: "column",
@@ -32,7 +32,7 @@ export function SummaryWidget({
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-        <div style={{ width: 32, height: 32, borderRadius: 10, background: accentStyles.bg, color: accentStyles.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 32, height: 32, borderRadius: 4, background: accentStyles.bg, color: accentStyles.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Icon size={16} />
         </div>
       </div>

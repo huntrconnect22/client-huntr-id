@@ -117,23 +117,23 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-start md:justify-center p-4 md:p-8 relative bg-[var(--ui-bg-page-grad)]">
       
-      {/* Visual Decor: Background blobs */}
+      {/* Visual Decor: Background ambient blur matching AuthLayout */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-15%] left-[-8%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] rounded-full bg-radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 65%)" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[350px] md:w-[700px] h-[350px] md:h-[700px] rounded-full bg-radial-gradient(circle, rgba(251,146,60,0.06) 0%, transparent 65%)" />
+        <div className="absolute top-[-10%] left-[-5%] w-[450px] h-[450px] rounded-full bg-orange-500/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[100px]" />
       </div>
 
       {/* Branding Header */}
-      <header className="sticky top-0 mb-8 w-full flex items-center justify-between z-10 py-2">
+      <header className="sticky top-0 mb-6 w-full max-w-4xl flex items-center justify-between z-10 py-2">
         <div className="flex items-center gap-3">
           <img 
             src="/assets/img/logo/sidebar.png" 
             alt="Huntr Logo" 
-            className="w-32 h-8 md:w-40 md:h-10 object-contain"
+            className="w-32 h-8 md:w-36 md:h-9 object-contain"
           />
-          <div className="hidden sm:block">
-            <div className="font-black text-sm md:text-base text-[var(--ui-text-primary)] tracking-tight">Huntr.id</div>
-            <div className="text-[8px] md:text-[9px] text-orange-400 tracking-[0.12em] font-bold uppercase">Onboarding</div>
+          <div className="hidden sm:block pl-2 border-l border-[var(--ui-border)]">
+            <div className="font-extrabold text-sm text-[var(--ui-text-primary)] tracking-tight">Huntr.id</div>
+            <div className="text-[9px] text-orange-400 tracking-widest font-bold uppercase">Company Onboarding</div>
           </div>
         </div>
         
@@ -145,7 +145,7 @@ export default function Onboarding() {
         <StepTracker steps={STEP_META} currentSlide={vm.slide} />
 
         {/* Main Card Container */}
-        <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-3xl backdrop-blur-3xl overflow-hidden shadow-2xl">
+        <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-2xl backdrop-blur-xl overflow-hidden shadow-2xl">
           {/* Top Progress Bar */}
           <div 
             className="h-1 transition-all duration-500" 
@@ -155,11 +155,11 @@ export default function Onboarding() {
             }} 
           />
           
-          <div className="p-6 md:p-10">
+          <div className="p-6 md:p-8">
             {/* Global Error Display */}
             {vm.error && (
-              <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 text-red-400 text-sm mb-6 flex items-center gap-2 animate-shake">
-                <AlertCircle size={16} /> {vm.error}
+              <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3.5 text-red-400 text-sm mb-6 flex items-center gap-2.5 animate-shake">
+                <AlertCircle size={17} className="shrink-0" /> <span>{vm.error}</span>
               </div>
             )}
 
@@ -173,13 +173,13 @@ export default function Onboarding() {
             />
 
             {/* Navigation Buttons */}
-            <footer className="mt-8 md:mt-12 flex items-center justify-between gap-4">
+            <footer className="mt-8 md:mt-10 pt-6 border-t border-[var(--ui-border)] flex items-center justify-between gap-4">
               {vm.slide > 1 && vm.slide < 7 && (
                 <button 
                   onClick={() => vm.setSlide((p: any) => p - 1)} 
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--ui-border)] text-[var(--ui-text-muted)] font-bold text-sm hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)] transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30 font-semibold text-sm transition-all"
                 >
-                  <ChevronLeft size={18} /> Back
+                  <ChevronLeft size={16} /> Back
                 </button>
               )}
               <div className="flex-1" />
@@ -187,10 +187,10 @@ export default function Onboarding() {
                 <button 
                   onClick={nextSlide} 
                   disabled={vm.isLoading} 
-                  className="flex items-center gap-2 px-8 py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-lg shadow-orange-500/25"
+                  className="flex items-center gap-2 px-7 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-500/20"
                 >
-                  {vm.isLoading ? <Loader2 className="animate-spin" size={18} /> : vm.slide === 6 ? "Setuju" : "Next"} 
-                  {!vm.isLoading && <ChevronRight size={18} />}
+                  {vm.isLoading ? <Loader2 className="animate-spin" size={16} /> : vm.slide === 6 ? "Setuju & Lanjutkan" : "Next"} 
+                  {!vm.isLoading && <ChevronRight size={16} />}
                 </button>
               )}
             </footer>

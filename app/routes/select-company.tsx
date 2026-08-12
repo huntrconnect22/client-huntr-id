@@ -21,11 +21,15 @@ export default function SelectCompany() {
     setUser(u);
     getMyCompanies()
       .then(data => {
-        const list = data.companies || [];
+        console.log("[SelectCompany] getMyCompanies response:", data);
+        const list = Array.isArray(data?.companies) ? data.companies : Array.isArray(data) ? data : [];
         setCompanies(list);
         if (list.length > 0) setSelected(list[0]);
       })
-      .catch(() => setCompanies([]))
+      .catch((err) => {
+        console.error("[SelectCompany] getMyCompanies failed:", err);
+        setCompanies([]);
+      })
       .finally(() => setIsLoading(false));
   }, [navigate]);
 
@@ -37,7 +41,13 @@ export default function SelectCompany() {
   };
 
   const handleRegisterNew = () => navigate("/onboarding");
-  const handleSignOut = () => { localStorage.clear(); navigate("/login"); };
+
+  const handleSignOut = () => { 
+    localStorage.removeItem("user_session");
+    localStorage.removeItem("active_company");
+    localStorage.removeItem("huntr_cart");
+    navigate("/login"); 
+  };
 
   const statusMeta: Record<string, { color: string; bg: string; label: string }> = {
     approved: { color: "#34d399", bg: "rgba(52,211,153,0.12)", label: "Verified" },

@@ -79,7 +79,7 @@ export default function Notifications() {
               onClick={handleReadAll}
               disabled={notifications.length === 0 || notifications.every(n => n.read_at)}
               style={{
-                padding: "8px 16px", borderRadius: 10, background: "rgba(249,115,22,0.1)",
+                padding: "8px 16px", borderRadius: 8, background: "rgba(249,115,22,0.1)",
                 border: "1px solid rgba(249,115,22,0.2)", color: "#fb923c", fontSize: 13,
                 fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
                 opacity: (notifications.length === 0 || notifications.every(n => n.read_at)) ? 0.4 : 1,
@@ -92,7 +92,7 @@ export default function Notifications() {
               onClick={handleClearAll}
               disabled={notifications.length === 0}
               style={{
-                padding: "8px 16px", borderRadius: 10, background: "rgba(239,68,68,0.08)",
+                padding: "8px 16px", borderRadius: 8, background: "rgba(239,68,68,0.08)",
                 border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: 13,
                 fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
                 opacity: notifications.length === 0 ? 0.4 : 1,
@@ -109,7 +109,7 @@ export default function Notifications() {
             <Loader2 className="animate-spin" size={32} color="#f59e0b" />
           </div>
         ) : notifications.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "100px 0", background: "var(--ui-bg-input)", borderRadius: 32, border: "1px dashed var(--ui-border-input)", transition: "all 0.3s ease" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", background: "var(--ui-bg-card)", borderRadius: 12, border: "1px dashed var(--ui-border-input)", transition: "all 0.3s ease" }}>
             <Bell size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
             <h3 style={{ color: "var(--ui-text-secondary)", margin: 0, fontSize: 16, transition: "color 0.3s ease" }}>No notifications yet</h3>
           </div>
@@ -122,19 +122,19 @@ export default function Notifications() {
                   key={n.id} 
                   onClick={() => handleMarkAsRead(n.id, n.data?.url)}
                   style={{
-                    background: isRead ? "var(--ui-bg-input)" : "rgba(249,115,22,0.05)",
-                    borderRadius: 20, border: "1px solid",
-                    borderColor: isRead ? "var(--ui-border-input)" : "rgba(249,115,22,0.2)",
-                    padding: "20px 24px", display: "flex", alignItems: "flex-start", gap: 20,
-                    cursor: "pointer", transition: "all 0.3s ease",
+                    background: isRead ? "var(--ui-bg-card)" : "rgba(249,115,22,0.05)",
+                    borderRadius: 12, border: "1px solid",
+                    borderColor: isRead ? "var(--ui-border)" : "rgba(249,115,22,0.2)",
+                    padding: "18px 20px", display: "flex", alignItems: "flex-start", gap: 16,
+                    cursor: "pointer", transition: "all 0.2s ease",
                   }}
                 >
                   <div style={{ 
-                    width: 44, height: 44, borderRadius: 14, 
-                    background: isRead ? "var(--ui-bg-card)" : "rgba(249,115,22,0.15)",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.3s ease"
+                    width: 40, height: 40, borderRadius: 8, 
+                    background: isRead ? "var(--ui-bg-input)" : "rgba(249,115,22,0.15)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.2s ease"
                   }}>
-                    {isRead ? <MailOpen size={20} color="var(--ui-text-muted)" /> : <Mail size={20} color="#fb923c" />}
+                    {isRead ? <MailOpen size={18} color="var(--ui-text-muted)" /> : <Mail size={18} color="#fb923c" />}
                   </div>
 
                   <div style={{ flex: 1 }}>

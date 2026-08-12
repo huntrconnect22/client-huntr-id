@@ -72,17 +72,16 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
       style={{
         margin: embedded ? 0 : "0 10px 14px",
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 4,
         border: "1px solid var(--ui-border)",
-        background: "linear-gradient(180deg, rgba(59,130,246,0.08), rgba(15,23,42,0.06))",
-        boxShadow: embedded ? "none" : "0 14px 30px rgba(0,0,0,0.12)",
+        background: "var(--ui-bg-card)",
         width: "100%",
         boxSizing: "border-box",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 10, background: "rgba(59,130,246,0.16)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa", flexShrink: 0 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 4, background: "rgba(59,130,246,0.16)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa", flexShrink: 0 }}>
             <Banknote size={16} />
           </div>
           <div style={{ minWidth: 0 }}>
@@ -96,7 +95,7 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
           style={{
             width: 30,
             height: 30,
-            borderRadius: 10,
+            borderRadius: 4,
             border: "1px solid var(--ui-border)",
             background: "var(--ui-bg-card)",
             color: "var(--ui-text-primary)",
@@ -121,7 +120,7 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
           style={{
             width: "100%",
             padding: "10px 12px",
-            borderRadius: 12,
+            borderRadius: 4,
             border: "1px solid var(--ui-border)",
             background: "var(--ui-bg-card)",
             color: "var(--ui-text-primary)",

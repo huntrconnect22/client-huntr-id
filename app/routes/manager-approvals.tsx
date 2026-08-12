@@ -343,7 +343,7 @@ export default function ManagerApprovals() {
 const approvalCardStyle: React.CSSProperties = {
   background: "var(--ui-bg-card)",
   border: "1px solid var(--ui-border)",
-  borderRadius: 16,
+  borderRadius: 12,
   padding: "16px 20px",
   display: "flex",
   alignItems: "center",
@@ -354,7 +354,7 @@ const approvalCardStyle: React.CSSProperties = {
 const detailPanelStyle: React.CSSProperties = {
   background: "var(--ui-bg-card)",
   border: "1px solid var(--ui-border)",
-  borderRadius: 20,
+  borderRadius: 12,
   padding: 24,
   display: "flex",
   flexDirection: "column",
@@ -396,14 +396,14 @@ const emptyStateStyle: React.CSSProperties = {
   textAlign: "center",
   padding: 80,
   background: "var(--ui-bg-card)",
-  borderRadius: 24,
+  borderRadius: 12,
   border: "1px dashed var(--ui-border)",
 };
 
 const errorBoxStyle: React.CSSProperties = {
   background: "rgba(239,68,68,0.1)",
   border: "1px solid rgba(239,68,68,0.2)",
-  borderRadius: 10,
+  borderRadius: 8,
   padding: "10px 14px",
   fontSize: 12,
   color: "#f87171",

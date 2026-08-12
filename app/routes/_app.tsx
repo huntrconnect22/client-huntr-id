@@ -62,6 +62,7 @@ export default function AppShell() {
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
@@ -134,6 +135,7 @@ export default function AppShell() {
   // Sidebar scroll — persists forever because this component never unmounts
   const navScrollRef = React.useRef<HTMLDivElement>(null);
   const notifButtonRef = React.useRef<HTMLButtonElement>(null);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   // ── Auth guard ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -227,6 +229,9 @@ export default function AppShell() {
         if (dropdown && !dropdown.contains(e.target as Node)) {
           setShowNotifications(false);
         }
+      }
+      if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
       }
     };
 
@@ -518,31 +523,8 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* Active Company Badge */}
-      {activeCompany && (
-        <div style={{ margin: "0 10px 16px", background: "var(--ui-bg-badge)", border: "1px solid var(--ui-border-badge)", borderRadius: 10, padding: "10px 12px" }}>
-          <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.08em", marginBottom: 5 }}>ACTIVE WORKSPACE</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg,#f97316,#f59e0b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Building2 size={14} color="#fff" />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{activeCompany.name}</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", textTransform: "uppercase" }}>
-                {activeCompany.type}
-              </div>
-            </div>
-          </div>
-          <div style={{ marginTop: 8 }}>
-            <button onClick={handleSwitchCompany} style={{ width: "100%", padding: "5px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: "pointer", background: "var(--ui-switch-bg)", border: "1px solid var(--ui-switch-border)", color: "var(--ui-switch-text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-              <ArrowLeftRight size={10} /> Switch Company
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Nav — ref is stable (never re-created) so scroll position is preserved */}
-      <nav ref={navScrollRef} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, padding: "0 10px", overflowY: "auto" }}>
+      <nav ref={navScrollRef} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3, padding: "0 10px", overflowY: "auto" }}>
         {(() => {
           let currentSection = "";
           return NAV.map(({ to, label, Icon, section, badge }: any) => {
@@ -559,8 +541,8 @@ export default function AppShell() {
                   </div>
                 )}
                 <Link to={to} onClick={handleNavClick} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "9px 12px", borderRadius: 10,
+                  display: "flex", alignItems: "center", gap: 9,
+                  padding: "8px 12px", borderRadius: 8,
                   background: active ? "var(--ui-nav-active-bg)" : "transparent",
                   border: active ? "1px solid var(--ui-nav-active-border)" : "1px solid transparent",
                   color: active ? "var(--ui-text-nav-active)" : "var(--ui-text-nav-idle)",
@@ -583,38 +565,21 @@ export default function AppShell() {
         })()}
       </nav>
 
-      {/* User panel */}
-      {user && (
-        <div style={{ padding: "14px 18px", borderTop: "1px solid var(--ui-border-subtle)", display: "flex", flexDirection: "column", gap: 8 }}>
-          {/* Role switcher - LOCAL ONLY */}
-          {import.meta.env.DEV && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Debug: Switch Role
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+      {/* Active Company Badge — Sidebar bottom */}
+      {activeCompany && (
+        <div style={{ margin: "8px 8px 0", borderTop: "1px solid var(--ui-border)", paddingTop: 10 }}>
+          {/* Dev: role switcher */}
+          {import.meta.env.DEV && user && (
+            <div style={{ marginBottom: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Debug: Switch Role</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                 {(() => {
                   const buyerRoles = ["manager", "buyer", "finance"];
                   const vendorRoles = ["manager", "admin", "finance"];
                   const roles = isBuyerComp ? buyerRoles : vendorRoles;
                   return roles.map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => handleRoleSwitch(role)}
-                      disabled={roleSwitching || user.role === role}
-                      style={{
-                        padding: "4px 6px",
-                        borderRadius: 6,
-                        fontSize: 9,
-                        fontWeight: 600,
-                        background: user.role === role ? "rgba(249, 115, 22, 0.2)" : "var(--ui-bg-input)",
-                        border: user.role === role ? "1px solid rgba(249,115,22,0.4)" : "1px solid var(--ui-border-input)",
-                        color: user.role === role ? "#f97316" : "var(--ui-text-muted)",
-                        cursor: user.role === role ? "not-allowed" : "pointer",
-                        textTransform: "capitalize",
-                        transition: "all 0.15s ease"
-                      }}
-                    >
+                    <button key={role} onClick={() => handleRoleSwitch(role)} disabled={roleSwitching || user.role === role}
+                      style={{ padding: "3px 7px", borderRadius: 6, fontSize: 9, fontWeight: 600, background: user.role === role ? "rgba(249,115,22,0.15)" : "var(--ui-bg-input)", border: user.role === role ? "1px solid rgba(249,115,22,0.35)" : "1px solid var(--ui-border)", color: user.role === role ? "#f97316" : "var(--ui-text-muted)", cursor: user.role === role ? "not-allowed" : "pointer", textTransform: "capitalize", transition: "all 0.15s ease" }}>
                       {role}
                     </button>
                   ));
@@ -622,20 +587,23 @@ export default function AppShell() {
               </div>
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg,#ea580c,#f97316)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
-              {user.name?.[0]?.toUpperCase() || "U"}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", fontWeight: 500, textTransform: "none" }}>
-                {user.email || "No email"}
+          <div style={{ background: "var(--ui-bg-badge)", border: "1px solid var(--ui-border-badge)", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
+            <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 5, textTransform: "uppercase" }}>Active Workspace</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 26, height: 26, borderRadius: 6, background: "linear-gradient(135deg,#f97316,#f59e0b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Building2 size={13} color="#fff" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{activeCompany.name}</div>
+                <div style={{ fontSize: 9, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 1 }}>{activeCompany.type}</div>
               </div>
             </div>
+            <div style={{ marginTop: 8 }}>
+              <button onClick={handleSwitchCompany} style={{ width: "100%", padding: "6px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: "pointer", background: "var(--ui-switch-bg)", border: "1px solid var(--ui-switch-border)", color: "var(--ui-switch-text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "all 0.15s" }}>
+                <ArrowLeftRight size={10} /> Switch Company
+              </button>
+            </div>
           </div>
-          <button onClick={handleLogout} style={{ width: "100%", padding: "6px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "var(--ui-logout-bg)", border: "1px solid var(--ui-logout-border)", color: "var(--ui-logout-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
-            <LogOut size={11} /> Sign Out
-          </button>
         </div>
       )}
     </>
@@ -687,38 +655,36 @@ export default function AppShell() {
                 aria-label={`Go to cart, ${cartCount} items`}
                 style={{
                   position: "relative",
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  background: "var(--ui-toggle-bg)",
-                  border: "1px solid var(--ui-toggle-border)",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 4,
+                  background: "var(--ui-bg-input)",
+                  border: "1px solid var(--ui-border)",
                   color: cartCount > 0 ? "#fb923c" : "var(--ui-text-muted)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transition: "all 0.2s",
-                  marginRight: 8
                 }}
               >
-                <ShoppingCart size={18} />
+                <ShoppingCart size={16} />
                 {cartCount > 0 && (
                   <span style={{
                     position: "absolute",
                     top: -4,
                     right: -4,
-                    minWidth: 18,
-                    height: 18,
-                    borderRadius: 9,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: 2,
                     background: "#f59e0b",
-                    border: "2px solid var(--ui-notif-badge-border)",
                     color: "#fff",
                     fontSize: 9,
-                    fontWeight: 800,
+                    fontWeight: 700,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    padding: "0 4px"
+                    padding: "0 3px"
                   }}>
                     {cartCount > 9 ? "9+" : cartCount}
                   </span>
@@ -736,11 +702,11 @@ export default function AppShell() {
                 aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
                 style={{ 
                   position: "relative", 
-                  width: 40, 
-                  height: 40, 
-                  borderRadius: 12, 
-                  background: "var(--ui-toggle-bg)", 
-                  border: "1px solid var(--ui-toggle-border)", 
+                  width: 34, 
+                  height: 34, 
+                  borderRadius: 8, 
+                  background: "var(--ui-bg-input)", 
+                  border: "1px solid var(--ui-border)", 
                   color: unreadCount > 0 ? "#fb923c" : "var(--ui-text-muted)", 
                   cursor: "pointer", 
                   display: "flex", 
@@ -749,9 +715,9 @@ export default function AppShell() {
                   transition: "all 0.2s" 
                 }}
               >
-                <Bell size={18} fill={unreadCount > 0 ? "rgba(249,115,22,0.2)" : "none"} />
+                <Bell size={16} fill={unreadCount > 0 ? "rgba(249,115,22,0.2)" : "none"} />
                 {unreadCount > 0 && (
-                  <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, background: "#f59e0b", border: "2px solid var(--ui-notif-badge-border)", color: "#fff", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                  <span style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 4, background: "#f59e0b", color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -768,31 +734,31 @@ export default function AppShell() {
                     tabIndex={-1}
                     style={{ 
                       background: "var(--ui-bg-card)", 
-                      borderRadius: 20, 
+                      borderRadius: 12, 
                       border: "1px solid var(--ui-border)", 
-                      boxShadow: "0 20px 60px rgba(0,0,0,0.5)", 
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
                       zIndex: 99999, 
                       overflow: "hidden",
                       position: "absolute",
-                      top: "calc(100% + 12px)",
+                      top: "calc(100% + 8px)",
                       right: 0,
-                      width: "400px",
+                      width: "360px",
                       maxWidth: "90vw",
                       outline: "none"
                     }}
                   >
-                    <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--ui-border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--ui-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span id="notifications-title" style={{ fontSize: 14, fontWeight: 800, color: "var(--ui-text-primary)" }}>Notifications</span>
-                        {unreadCount > 0 && <span style={{ fontSize: 10, background: "rgba(249,115,22,0.2)", color: "#fb923c", padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{unreadCount} NEW</span>}
+                        <span id="notifications-title" style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)" }}>Notifications</span>
+                        {unreadCount > 0 && <span style={{ fontSize: 9, background: "rgba(249,115,22,0.15)", color: "#fb923c", padding: "2px 7px", borderRadius: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>{unreadCount} new</span>}
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); handleMarkAllAsRead(); }} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", fontSize: 11, fontWeight: 600, cursor: "pointer", padding: 0 }}>
-                        Mark all as read
+                        Mark all read
                       </button>
                     </div>
-                    <div style={{ maxHeight: 350, overflowY: "auto" }}>
+                    <div style={{ maxHeight: 340, overflowY: "auto" }}>
                       {recentNotifications.length === 0 ? (
-                        <div style={{ padding: 40, textAlign: "center", color: "var(--ui-text-muted)", fontSize: 13 }}>No recent activity</div>
+                        <div style={{ padding: 36, textAlign: "center", color: "var(--ui-text-muted)", fontSize: 12 }}>No recent activity</div>
                       ) : (
                         recentNotifications.map((n: any) => (
                           <div 
@@ -809,22 +775,22 @@ export default function AppShell() {
                             }}
                             aria-label={`Notification: ${n.data?.title}`}
                             style={{ 
-                              padding: "14px 20px", 
-                              borderBottom: "1px solid var(--ui-border-subtle)", 
+                              padding: "12px 18px", 
+                              borderBottom: "1px solid var(--ui-border)", 
                               cursor: "pointer", 
-                              background: n.read_at ? "transparent" : "rgba(249,115,22,0.04)", 
-                              transition: "all 0.2s",
+                              background: n.read_at ? "transparent" : "rgba(249,115,22,0.03)", 
+                              transition: "background 0.15s",
                               outline: "none"
                             }}
                           >
-                            <div style={{ fontSize: 13, fontWeight: 700, color: n.read_at ? "var(--ui-text-muted)" : "var(--ui-text-primary)", marginBottom: 2 }}>{n.data?.title}</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: n.read_at ? "var(--ui-text-secondary)" : "var(--ui-text-primary)", marginBottom: 2 }}>{n.data?.title}</div>
                             <div style={{ fontSize: 11, color: "var(--ui-text-muted)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{n.data?.body}</div>
                           </div>
                         ))
                       )}
                     </div>
                     <button onClick={() => { navigate("/notifications"); closeNotifications(); }}
-                      style={{ width: "100%", padding: "12px", background: "var(--ui-bg-overlay)", border: "none", color: "#f59e0b", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                      style={{ width: "100%", padding: "12px", background: "transparent", borderTop: "1px solid var(--ui-border)", border: "none", color: "#f59e0b", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                       View All Notifications
                     </button>
                   </div>
@@ -832,53 +798,130 @@ export default function AppShell() {
               )}
             </div>
 
-            {activeCompany && (
-              <div className="huntr-header-company-badge" style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 10, background: "var(--ui-bg-badge)", border: "1px solid var(--ui-border-badge)", fontSize: 12, fontWeight: 600, color: "var(--ui-text-primary)" }}>
-                <Building2 size={13} style={{ flexShrink: 0, color: "#f97316" }} />
-                <span style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {activeCompany.name}
-                </span>
-                {activeCompany.status && (
-                  <span style={{
-                    padding: "2px 6px",
-                    borderRadius: 6,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.02em",
-                    flexShrink: 0,
-                    lineHeight: 1,
-                    background: activeCompany.status === "approved" ? "rgba(16,185,129,0.15)" : "rgba(249,115,22,0.15)",
-                    color: activeCompany.status === "approved" ? "#10b981" : "#f97316",
-                    border: activeCompany.status === "approved" ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(249,115,22,0.3)",
-                  }}>
-                    {activeCompany.status}
-                  </span>
+            {/* User Profile Dropdown Topbar */}
+            {user && (
+              <div ref={userMenuRef} style={{ position: "relative", paddingLeft: 8, borderLeft: "1px solid var(--ui-border)" }}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  aria-expanded={showUserMenu}
+                  aria-haspopup="true"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "4px 8px 4px 4px",
+                    borderRadius: 8,
+                    background: showUserMenu ? "var(--ui-bg-input)" : "transparent",
+                    border: "1px solid",
+                    borderColor: showUserMenu ? "var(--ui-border)" : "transparent",
+                    cursor: "pointer",
+                    transition: "all 0.15s"
+                  }}
+                >
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#ea580c,#f97316)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0, lineHeight: 1 }}>
+                    {user.name?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }} className="hidden md:flex">
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-primary)", lineHeight: 1.2 }}>{user.name}</span>
+                    <span style={{ fontSize: 10, color: "var(--ui-text-muted)", lineHeight: 1.2 }}>{user.email || "No email"}</span>
+                  </div>
+                </button>
+
+                {showUserMenu && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      right: 0,
+                      width: "210px",
+                      background: "var(--ui-bg-card)",
+                      border: "1px solid var(--ui-border)",
+                      borderRadius: 12,
+                      boxShadow: "0 10px 25px -5px rgba(0,0,0,0.15)",
+                      zIndex: 99999,
+                      padding: "6px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 2
+                    }}
+                  >
+                    <div style={{ padding: "8px 10px 6px", borderBottom: "1px solid var(--ui-border)", marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)" }}>{user.name}</div>
+                      <div style={{ fontSize: 11, color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                    </div>
+
+                    <button
+                      onClick={() => { setShowUserMenu(false); navigate("/account"); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        background: "transparent",
+                        color: "var(--ui-text-primary)",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        textAlign: "left"
+                      }}
+                      className="hover:bg-[var(--ui-bg-input)]"
+                    >
+                      <Settings size={14} className="text-[var(--ui-text-muted)]" />
+                      <span>Account Settings</span>
+                    </button>
+
+                    <button
+                      onClick={() => { setShowUserMenu(false); handleLogout(); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: 6,
+                        border: "none",
+                        background: "rgba(239,68,68,0.08)",
+                        color: "#ef4444",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        marginTop: 2
+                      }}
+                    >
+                      <LogOut size={14} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
                 )}
               </div>
             )}
+
           </div>
         </header>
 
         {/* Child routes render here — only this area changes on navigation */}
         <div className="huntr-page-content">
           {activeCompany && activeCompany.status === "pending" && pathname !== "/company" ? (
-            <div className="huntr-pending-gate" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", textAlign: "center", background: "var(--ui-bg-pending-card)", border: "1px solid var(--ui-border)", borderRadius: "32px", boxShadow: "0 24px 60px rgba(0,0,0,0.15)", gap: "24px" }}>
-              <div style={{ width: 80, height: 80, borderRadius: "24px", background: "rgba(251, 191, 36, 0.1)", border: "1px solid rgba(251, 191, 36, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 30px rgba(251,191,36,0.1)", color: "#fbbf24" }}>
-                <Building2 size={42} style={{ animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }} />
+            <div className="huntr-pending-gate" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", textAlign: "center", background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", gap: "20px", padding: "48px 32px" }}>
+              <div style={{ width: 72, height: 72, borderRadius: "18px", background: "rgba(251, 191, 36, 0.1)", border: "1px solid rgba(251, 191, 36, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fbbf24" }}>
+                <Building2 size={36} style={{ animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }} />
               </div>
-              <div>
-                <h2 style={{ fontSize: "24px", fontWeight: 900, color: "var(--ui-text-primary)", margin: "0 0 10px", letterSpacing: "-0.5px" }}>Verifikasi Perusahaan Pending</h2>
-                <p style={{ fontSize: "14px", color: "var(--ui-text-secondary)", lineHeight: "1.6", margin: 0 }}>
-                  The workspace for <strong>{activeCompany.name}</strong> is currently under review by the admin team.
-                  All transactions, RFQ creation, document uploads, and catalog management are temporarily disabled until your account is approved.
+              <div style={{ maxWidth: 460 }}>
+                <h2 style={{ fontSize: "20px", fontWeight: 700, color: "var(--ui-text-primary)", margin: "0 0 8px", letterSpacing: "-0.3px" }}>Verifikasi Perusahaan Pending</h2>
+                <p style={{ fontSize: "13px", color: "var(--ui-text-secondary)", lineHeight: "1.6", margin: 0 }}>
+                  Workspace untuk <strong>{activeCompany.name}</strong> sedang dalam proses review oleh tim admin.
+                  Semua transaksi, pembuatan RFQ, upload dokumen, dan manajemen katalog dinonaktifkan sementara hingga akun Anda disetujui.
                 </p>
               </div>
               <div className="huntr-pending-gate-actions">
-                <button onClick={() => navigate("/company")} style={{ padding: "12px 24px", borderRadius: "14px", background: "linear-gradient(135deg, #f97316, #f59e0b)", border: "none", color: "#fff", fontWeight: 700, fontSize: "13px", cursor: "pointer", boxShadow: "0 10px 25px rgba(249,115,22,0.25)" }}>
+                <button onClick={() => navigate("/company")} style={{ padding: "10px 22px", borderRadius: "10px", background: "linear-gradient(135deg, #f97316, #f59e0b)", border: "none", color: "#fff", fontWeight: 600, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 16px rgba(249,115,22,0.25)" }}>
                   View Verification Status
                 </button>
-                <button onClick={handleSwitchCompany} style={{ padding: "12px 24px", borderRadius: "14px", background: "var(--ui-bg-switch-btn)", border: "1px solid var(--ui-border)", color: "var(--ui-text-primary)", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}>
+                <button onClick={handleSwitchCompany} style={{ padding: "10px 22px", borderRadius: "10px", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", color: "var(--ui-text-secondary)", fontWeight: 600, fontSize: "13px", cursor: "pointer" }}>
                   Ganti Perusahaan
                 </button>
               </div>

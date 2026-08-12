@@ -125,15 +125,15 @@ export default function Finance() {
 
         <div style={{
           background: "linear-gradient(135deg, var(--ui-bg-card) 0%, var(--ui-bg-card-hover) 100%)",
-          borderRadius: 24, border: "1px solid var(--ui-border-input)", padding: 32, marginBottom: 32,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.05)"
+          borderRadius: 12, border: "1px solid var(--ui-border)", padding: 24, marginBottom: 24,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 16, background: "rgba(16,185,129,0.1)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Briefcase size={24} />
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(16,185,129,0.1)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Briefcase size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 900, color: "var(--ui-text-primary)", margin: 0, letterSpacing: "-0.5px" }}>
+              <h2 style={{ fontSize: 22, fontWeight: 900, color: "var(--ui-text-primary)", margin: 0, letterSpacing: "-0.5px" }}>
                 Pending Approval ({orders.length})
               </h2>
               <p style={{ fontSize: 13, color: "var(--ui-text-muted)", margin: "4px 0 0" }}>
@@ -149,7 +149,7 @@ export default function Finance() {
             <span style={{ fontSize: 14, fontWeight: 600 }}>Loading data...</span>
           </div>
         ) : orders.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 24, border: "1px dashed var(--ui-border-input)" }}>
+          <div style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 12, border: "1px dashed var(--ui-border-input)" }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--ui-bg-input)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--ui-text-muted)" }}>
               <CheckCircle2 size={32} />
             </div>
@@ -168,7 +168,7 @@ export default function Finance() {
 
                 return (
                   <div key={inv.id} style={{
-                    background: "var(--ui-bg-card)", borderRadius: 20, border: "1px solid var(--ui-border-input)",
+                    background: "var(--ui-bg-card)", borderRadius: 12, border: "1px solid var(--ui-border-input)",
                     overflow: "hidden", display: "flex", flexDirection: "column"
                   }}>
                     <div style={{ padding: 24, borderBottom: "1px solid var(--ui-border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
