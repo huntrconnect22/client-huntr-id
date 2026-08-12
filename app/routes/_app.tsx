@@ -33,6 +33,7 @@ import { SessionManager } from "../lib/session";
 import { useTheme } from "../context/ThemeContext";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useEventBus } from "../lib/EventBus";
+import { isDemoMode, isNavItemDisabledInDemo } from "../lib/demo-mode";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
 export interface AppShellContext {
@@ -340,7 +341,7 @@ export default function AppShell() {
       { to: `${companyPrefix}/company`, label: "Company", Icon: Building2, section: "settings", badge: "companyAlerts" },
       { to: `${companyPrefix}/account`, label: "Settings", Icon: Settings, section: "settings", badge: "accountAlerts" },
     ]),
-  ];
+  ].filter((item: any) => !isNavItemDisabledInDemo(item.to));
 
   // ── Notification logic ───────────────────────────────────────────────────
   const fetchUnreadCount = async (userId: number) => {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import DemoDisabledBanner from "../components/DemoDisabledBanner";
 import { getFullApiUrl } from "../lib/client";
+import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { Loader2, AlertCircle, FileText, Package, CheckCircle2, XCircle, Download } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -135,6 +137,10 @@ export default function ReturnsPage() {
   const filteredReturns = filterStatus === "all" 
     ? returns 
     : returns.filter(r => r.status === filterStatus);
+
+  if (isModuleDisabledInDemo("returns")) {
+    return <DemoDisabledBanner module="returns" />;
+  }
 
   return (
     <Layout title="Returns Management" subtitle="Track returned and rejected goods">

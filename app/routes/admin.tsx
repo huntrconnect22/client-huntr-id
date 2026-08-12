@@ -1808,7 +1808,7 @@ function AdminSettingsTab() {
     {
       key: "bypass_npwp_verification" as keyof AdminSettings,
       title: "Bypass NPWP Verification",
-      description: "Lewati verifikasi NPWP ke Pajak.io dan gunakan dummy data. Aktifkan sementara ketika API Pajak.io tidak tersedia.",
+      description: "Lewati verifikasi NPWP ke Pajak Express dan gunakan dummy data. Aktifkan sementara ketika API Pajak Express tidak tersedia.",
       danger: true,
     },
   ];

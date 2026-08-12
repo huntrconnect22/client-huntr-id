@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import DemoDisabledBanner from "../components/DemoDisabledBanner";
 import { getFullApiUrl } from "../lib/client";
+import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { Loader2, AlertCircle, FileText, Banknote, CheckCircle2, Download } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -150,6 +152,10 @@ export default function DebitNotesPage() {
   const filteredNotes = filterStatus === "all"
     ? debitNotes
     : debitNotes.filter(d => d.status === filterStatus);
+
+  if (isModuleDisabledInDemo("debit-notes")) {
+    return <DemoDisabledBanner module="debit-notes" />;
+  }
 
   return (
     <Layout title="Debit Notes" subtitle="Manage debit notes for returns and adjustments">

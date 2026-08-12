@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import DemoDisabledBanner from "../components/DemoDisabledBanner";
 import { getFullApiUrl } from "../lib/client";
+import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { Loader2, AlertCircle, FileText, ReceiptText, CheckCircle2, Download, RefreshCw, Trash2, Calendar, CircleDollarSign, Send } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -353,6 +355,10 @@ export default function EFakturPage() {
   // Stats computation
   const totalDpp = efakturs.reduce((acc, curr) => curr.status.toUpperCase() !== "CANCELLED" ? acc + Number(curr.dpp) : acc, 0);
   const totalPpn = efakturs.reduce((acc, curr) => curr.status.toUpperCase() !== "CANCELLED" ? acc + Number(curr.ppn) : acc, 0);
+
+  if (isModuleDisabledInDemo("efaktur")) {
+    return <DemoDisabledBanner module="efaktur" />;
+  }
 
   return (
     <Layout title="e-Faktur Pajak.io" subtitle="Penerbitan & Pengelolaan Faktur Pajak Terintegrasi">

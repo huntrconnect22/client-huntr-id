@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import DemoDisabledBanner from "../components/DemoDisabledBanner";
 import { getOrders, approveInvoice, getFullApiUrl } from "../lib/api";
+import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { Briefcase, Loader2, CheckCircle2, ChevronRight, AlertCircle, FileText, Clock, Calendar, Lock } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -110,6 +112,10 @@ export default function Finance() {
       setProcessingId(null);
     }
   };
+
+  if (isModuleDisabledInDemo("finance")) {
+    return <DemoDisabledBanner module="finance" />;
+  }
 
   return (
     <Layout title="Finance Approval" subtitle="Review and approve final invoices before payment">

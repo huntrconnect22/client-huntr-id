@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import DemoDisabledBanner from "../components/DemoDisabledBanner";
 import { getFullApiUrl } from "../lib/client";
+import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { Loader2, CheckCircle2, AlertCircle, FileText, Signature } from "lucide-react";
 
 interface Bast {
@@ -101,6 +103,10 @@ export default function BastPage() {
     };
     return colors[status] || "#3b82f6";
   };
+
+  if (isModuleDisabledInDemo("bast")) {
+    return <DemoDisabledBanner module="bast" />;
+  }
 
   return (
     <Layout title="BAST Document" subtitle="Manage Berita Acara Serah Terima (Handover Documents)">
