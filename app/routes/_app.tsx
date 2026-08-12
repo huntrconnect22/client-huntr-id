@@ -288,7 +288,7 @@ export default function AppShell() {
       { to: `${companyPrefix}/company`, label: "Company", Icon: Building2, section: "settings", badge: "companyAlerts" },
       { to: `${companyPrefix}/account`, label: "Settings", Icon: Settings, section: "settings", badge: "accountAlerts" },
     ] : [
-      { to: `${companyPrefix || "/"}`, label: "Dashboard", Icon: LayoutDashboard, section: "main" },
+      { to: `${companyPrefix || "/"}`, label: "Dashboard", Icon: LayoutDashboard, section: "main", exact: true },
       { to: `${companyPrefix}/tasks`, label: "Tasks", Icon: ListTodo, section: "main", badge: "totalUnread" },
 
       // Procurement (Buyer)
@@ -537,8 +537,8 @@ export default function AppShell() {
       <nav ref={navScrollRef} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3, padding: "0 10px", overflowY: "auto" }}>
         {(() => {
           let currentSection = "";
-          return NAV.map(({ to, label, Icon, section, badge }: any) => {
-            const active = pathname === to || (to !== "/" && pathname.startsWith(to + "/"));
+          return NAV.map(({ to, label, Icon, section, badge, exact }: any) => {
+            const active = pathname === to || (!exact && to !== "/" && pathname.startsWith(to + "/"));
             const badgeCount = badge ? pendingCounts[badge] || 0 : 0;
             const showSection = section && section !== currentSection;
             if (showSection) currentSection = section;
