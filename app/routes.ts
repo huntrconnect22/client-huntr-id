@@ -18,11 +18,42 @@ export default [
   route("verify", "routes/verify.tsx"),
 
   // ── Authenticated routes (inside persistent AppShell) ─────────────────────
-  // _app.tsx renders the sidebar, header, notification sound, badge counts.
-  // It NEVER unmounts between route transitions — sidebar keeps scroll position,
-  // NotificationSound keeps mount time so it won't replay old events.
   layout("routes/_app.tsx", [
     index("routes/home.tsx"),
+
+    // Dynamic company slug prefixed routes (e.g. /micro-padma-nusantara, /micro-padma-nusantara/dashboard)
+    route(":companySlug", "routes/home.tsx", { id: "company-home" }),
+    route(":companySlug/dashboard", "routes/home.tsx", { id: "company-dashboard" }),
+    route(":companySlug/marketplace", "routes/marketplace.tsx", { id: "company-marketplace" }),
+    route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", { id: "company-marketplace-detail" }),
+    route(":companySlug/cart", "routes/cart.tsx", { id: "company-cart" }),
+    route(":companySlug/my-pr", "routes/my-pr.tsx", { id: "company-my-pr" }),
+    route(":companySlug/my-pr/:id", "routes/my-pr-detail.tsx", { id: "company-my-pr-detail" }),
+    route(":companySlug/compare-review/:id", "routes/compare-review.tsx", { id: "company-compare-review" }),
+    route(":companySlug/all-requests", "routes/all-requests.tsx", { id: "company-all-requests" }),
+    route(":companySlug/rfq/:id", "routes/rfq-detail.tsx", { id: "company-rfq-detail" }),
+    route(":companySlug/checkout", "routes/checkout.tsx", { id: "company-checkout" }),
+    route(":companySlug/approvals", "routes/approvals.tsx", { id: "company-approvals" }),
+    route(":companySlug/finance", "routes/finance.tsx", { id: "company-finance" }),
+    route(":companySlug/company", "routes/company.tsx", { id: "company-company" }),
+    route(":companySlug/catalogue", "routes/catalogue.tsx", { id: "company-catalogue" }),
+    route(":companySlug/rfq", "routes/rfq.tsx", { id: "company-rfq" }),
+    route(":companySlug/proposals", "routes/proposals.tsx", { id: "company-proposals" }),
+    route(":companySlug/negotiation", "routes/negotiation.tsx", { id: "company-negotiation" }),
+    route(":companySlug/my-rank", "routes/my-rank.tsx", { id: "company-my-rank" }),
+    route(":companySlug/orders", "routes/orders.tsx", { id: "company-orders" }),
+    route(":companySlug/receipts", "routes/receipts.tsx", { id: "company-receipts" }),
+    route(":companySlug/payment-history", "routes/payment-history.tsx", { id: "company-payment-history" }),
+    route(":companySlug/returns", "routes/returns.tsx", { id: "company-returns" }),
+    route(":companySlug/debit-notes", "routes/debit-notes.tsx", { id: "company-debit-notes" }),
+    route(":companySlug/bast", "routes/bast.tsx", { id: "company-bast" }),
+    route(":companySlug/efaktur", "routes/efaktur.tsx", { id: "company-efaktur" }),
+    route(":companySlug/notifications", "routes/notifications.tsx", { id: "company-notifications" }),
+    route(":companySlug/account", "routes/account.tsx", { id: "company-account" }),
+    route(":companySlug/pr-audit", "routes/pr-audit.tsx", { id: "company-pr-audit" }),
+    route(":companySlug/tasks", "routes/tasks.tsx", { id: "company-tasks" }),
+
+    // Fallback legacy paths
     route("marketplace", "routes/marketplace.tsx"),
     route("marketplace/:id", "routes/marketplace-detail.tsx"),
     route("cart", "routes/cart.tsx"),
@@ -51,7 +82,8 @@ export default [
     route("account", "routes/account.tsx"),
     route("pr-audit", "routes/pr-audit.tsx"),
     route("tasks", "routes/tasks.tsx"),
-    // Catch-all for well-known and other non-route paths
+
+    // Catch-all
     route("*", "routes/404.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -111,7 +111,8 @@ export default function Onboarding() {
     if (!vm.selectedCompany) return;
     localStorage.setItem("active_company", JSON.stringify(vm.selectedCompany));
     vm.resetForm();
-    navigate("/");
+    const slug = vm.selectedCompany.slug || vm.selectedCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    navigate(`/${slug}`);
   };
 
   return (

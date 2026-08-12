@@ -163,11 +163,11 @@ export default function AppShell() {
     }
   }, []); // Only on mount — shell never unmounts, so this runs once
 
-  // ── Nav refresh when route changes (re-check auth) ───────────────────────
+  // ── Nav refresh when route changes (re-check auth & ensure company slug URL) ──
   useEffect(() => {
     const userSession = localStorage.getItem("user_session");
     const companySession = localStorage.getItem("active_company");
-    const isGuestRoute = pathname === "/" || pathname.startsWith("/marketplace/");
+    const isGuestRoute = pathname === "/";
 
     if (!userSession) {
       if (isGuestRoute) {
@@ -183,9 +183,17 @@ export default function AppShell() {
       navigate("/select-company");
       return;
     }
-    // Update state in case company switched via another tab
-    setUser(JSON.parse(userSession));
-    setActiveCompany(JSON.parse(companySession));
+    
+    const u = JSON.parse(userSession);
+    const c = JSON.parse(companySession);
+    setUser(u);
+    setActiveCompany(c);
+
+    // If user is at root "/" after logging in, redirect to active company slug route
+    const slug = c?.slug || (c?.name ? c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : "");
+    if (slug && pathname === "/") {
+      navigate(`/${slug}`, { replace: true });
+    }
   }, [pathname]);
 
   // ── Real-time: refresh counts on new event ───────────────────────────────
@@ -272,63 +280,65 @@ export default function AppShell() {
 
   // ── Nav items ─────────────────────────────────────────────────────────────
   const isPendingCompany = activeCompany?.status === "pending";
+  const companySlug = activeCompany?.slug || (activeCompany?.name ? activeCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : "");
+  const companyPrefix = companySlug ? `/${companySlug}` : "";
 
   const NAV = [
     ...(isPendingCompany ? [
-      { to: "/company", label: "Company", Icon: Building2, section: "settings", badge: "companyAlerts" },
-      { to: "/account", label: "Settings", Icon: Settings, section: "settings", badge: "accountAlerts" },
+      { to: `${companyPrefix}/company`, label: "Company", Icon: Building2, section: "settings", badge: "companyAlerts" },
+      { to: `${companyPrefix}/account`, label: "Settings", Icon: Settings, section: "settings", badge: "accountAlerts" },
     ] : [
-      { to: "/", label: "Dashboard", Icon: LayoutDashboard, section: "main" },
-      { to: "/tasks", label: "Tasks", Icon: ListTodo, section: "main", badge: "totalUnread" },
+      { to: `${companyPrefix || "/"}`, label: "Dashboard", Icon: LayoutDashboard, section: "main" },
+      { to: `${companyPrefix}/tasks`, label: "Tasks", Icon: ListTodo, section: "main", badge: "totalUnread" },
 
       // Procurement (Buyer)
       ...(isBuyerComp && (isManager || isBuyerRole) ? [
-        { to: "/marketplace", label: "Huntr Catalog", Icon: Package, section: "procurement" },
+        { to: `${companyPrefix}/marketplace`, label: "Huntr Catalog", Icon: Package, section: "procurement" },
       ] : []),
       ...(isBuyerComp && (isManager || isBuyerRole) ? [
-        { to: "/my-pr", label: "My PR", Icon: ClipboardList, section: "procurement", badge: "pendingNewProposals" },
+        { to: `${companyPrefix}/my-pr`, label: "My PR", Icon: ClipboardList, section: "procurement", badge: "pendingNewProposals" },
       ] : []),
       ...(canManageApprovals ? [
-        { to: "/approvals", label: "Approvals", Icon: CheckCircle2, section: "procurement", badge: "pendingApprovals" },
+        { to: `${companyPrefix}/approvals`, label: "Approvals", Icon: CheckCircle2, section: "procurement", badge: "pendingApprovals" },
       ] : []),
       ...(isBuyerComp && (isManager || isBuyerRole) ? [
-        { to: "/pr-audit", label: "PR Audit Log", Icon: History, section: "procurement" },
+        { to: `${companyPrefix}/pr-audit`, label: "PR Audit Log", Icon: History, section: "procurement" },
       ] : []),
 
       // Vendor
       ...(isVendorComp ? [
-        { to: "/all-requests", label: "All Request", Icon: Lightbulb, section: "vendor", badge: "opportunities" },
+        { to: `${companyPrefix}/all-requests`, label: "All Request", Icon: Lightbulb, section: "vendor", badge: "opportunities" },
       ] : []),
       ...(isVendorComp && (isManager || isAdminRole) ? [
-        { to: "/catalogue", label: "Catalogue", Icon: List, section: "vendor", badge: "catalogueAlerts" },
-        { to: "/proposals", label: "Proposals", Icon: Trophy, section: "vendor", badge: "pendingProposals" },
+        { to: `${companyPrefix}/catalogue`, label: "Catalogue", Icon: List, section: "vendor", badge: "catalogueAlerts" },
+        { to: `${companyPrefix}/proposals`, label: "Proposals", Icon: Trophy, section: "vendor", badge: "pendingProposals" },
       ] : []),
       ...(isVendorComp && (isManager || isAdminRole) ? [
-        { to: "/my-rank", label: "My Rank", Icon: Medal, section: "vendor", badge: "rankAlerts" },
+        { to: `${companyPrefix}/my-rank`, label: "My Rank", Icon: Medal, section: "vendor", badge: "rankAlerts" },
       ] : []),
 
       // Orders & Documents
-      { to: "/negotiation", label: "Negotiations", Icon: MessageSquare, section: "orders", badge: "negotiations" },
+      { to: `${companyPrefix}/negotiation`, label: "Negotiations", Icon: MessageSquare, section: "orders", badge: "negotiations" },
       ...(isVendorComp ? [
-        { to: "/orders", label: "Purchase Order", Icon: ReceiptText, section: "orders", badge: "pendingPurchaseOrders" },
+        { to: `${companyPrefix}/orders`, label: "Purchase Order", Icon: ReceiptText, section: "orders", badge: "pendingPurchaseOrders" },
       ] : [
-        { to: "/orders", label: "Purchase Order", Icon: ReceiptText, section: "orders", badge: "buyerOrderAlerts" },
+        { to: `${companyPrefix}/orders`, label: "Purchase Order", Icon: ReceiptText, section: "orders", badge: "buyerOrderAlerts" },
       ]),
-      { to: "/receipts", label: "Goods Receipt", Icon: CheckCircle2, section: "orders", badge: "receiptsToInspect" },
-      { to: "/bast", label: "BAST", Icon: FileText, section: "orders", badge: "pendingBast" },
-      { to: "/efaktur", label: "e-Faktur", Icon: ReceiptText, section: "orders" },
-      { to: "/returns", label: "Returns", Icon: Package, section: "orders", badge: "pendingReturns" },
-      { to: "/debit-notes", label: "Debit Notes", Icon: Briefcase, section: "orders", badge: "pendingDebitNotes" },
+      { to: `${companyPrefix}/receipts`, label: "Goods Receipt", Icon: CheckCircle2, section: "orders", badge: "receiptsToInspect" },
+      { to: `${companyPrefix}/bast`, label: "BAST", Icon: FileText, section: "orders", badge: "pendingBast" },
+      { to: `${companyPrefix}/efaktur`, label: "e-Faktur", Icon: ReceiptText, section: "orders" },
+      { to: `${companyPrefix}/returns`, label: "Returns", Icon: Package, section: "orders", badge: "pendingReturns" },
+      { to: `${companyPrefix}/debit-notes`, label: "Debit Notes", Icon: Briefcase, section: "orders", badge: "pendingDebitNotes" },
 
       // Finance
       ...(canManageApprovals ? [
-        { to: "/finance", label: "Finance Approval", Icon: Briefcase, section: "finance", badge: "financeApprovals" },
+        { to: `${companyPrefix}/finance`, label: "Finance Approval", Icon: Briefcase, section: "finance", badge: "financeApprovals" },
       ] : []),
-      { to: "/payment-history", label: "Payment History", Icon: History, section: "finance" },
+      { to: `${companyPrefix}/payment-history`, label: "Payment History", Icon: History, section: "finance" },
 
       // Settings
-      { to: "/company", label: "Company", Icon: Building2, section: "settings", badge: "companyAlerts" },
-      { to: "/account", label: "Settings", Icon: Settings, section: "settings", badge: "accountAlerts" },
+      { to: `${companyPrefix}/company`, label: "Company", Icon: Building2, section: "settings", badge: "companyAlerts" },
+      { to: `${companyPrefix}/account`, label: "Settings", Icon: Settings, section: "settings", badge: "accountAlerts" },
     ]),
   ];
 

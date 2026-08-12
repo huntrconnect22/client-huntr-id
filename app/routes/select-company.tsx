@@ -37,7 +37,8 @@ export default function SelectCompany() {
   const handleLogin = () => {
     if (!selected) return;
     localStorage.setItem("active_company", JSON.stringify(selected));
-    navigate("/");
+    const slug = selected.slug || selected.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    navigate(`/${slug}`);
   };
 
   const handleRegisterNew = () => navigate("/onboarding");
