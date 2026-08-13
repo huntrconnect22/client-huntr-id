@@ -13,6 +13,7 @@ export default [
   route("onboarding", "routes/onboarding.tsx"),
   route("select-company", "routes/select-company.tsx"),
   route("admin", "routes/admin.tsx"),
+  route("admin/:tab", "routes/admin.tsx", { id: "admin-tab" }),
   route("invite/accept", "routes/invite-accept.tsx"),
   route("track", "routes/tracking.tsx"),
   route("verify", "routes/verify.tsx"),

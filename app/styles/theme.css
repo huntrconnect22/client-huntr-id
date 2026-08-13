@@ -20,6 +20,18 @@
   --huntr-gradient-wide: linear-gradient(90deg, #f97316, #f59e0b, #fbbf24);
   --huntr-gradient-soft: linear-gradient(135deg, #fb923c, #f59e0b);
 
+  /* Primary action color — used by buttons, active states, etc. */
+  --ui-primary:          #f97316;
+  --ui-primary-hover:    #ea580c;
+  --ui-primary-muted:    rgba(249, 115, 22, 0.15);
+  --ui-primary-border:   rgba(249, 115, 22, 0.30);
+  --ui-primary-shadow:   rgba(249, 115, 22, 0.30);
+
+  /* Indigo/violet accent — used by Users tab */
+  --ui-accent-indigo:        #6366f1;
+  --ui-accent-indigo-muted:  rgba(99, 102, 241, 0.12);
+  --ui-accent-indigo-text:   #818cf8;
+
   --huntr-brand-rgb: 249, 115, 22;
   --huntr-amber-rgb: 251, 191, 36;
 }
@@ -152,6 +164,18 @@ select {
   --radius:          0.5rem; /* 8px standard radius from landing */
   --radius-card:     0.75rem; /* 12px for cards */
   --radius-sm:       0.375rem; /* 6px for small elements */
+
+  /* Primary action color */
+  --ui-primary:         #ea580c;
+  --ui-primary-hover:   #c2410c;
+  --ui-primary-muted:   rgba(249, 115, 22, 0.10);
+  --ui-primary-border:  rgba(249, 115, 22, 0.25);
+  --ui-primary-shadow:  rgba(249, 115, 22, 0.20);
+
+  /* Indigo/violet accent */
+  --ui-accent-indigo:       #4f46e5;
+  --ui-accent-indigo-muted: rgba(79, 70, 229, 0.10);
+  --ui-accent-indigo-text:  #4338ca;
 
   /* Backgrounds */
   --ui-bg-page:      #ffffff;
