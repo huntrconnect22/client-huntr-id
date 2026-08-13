@@ -1,4 +1,5 @@
 import { clearAuthSession, getAuthHeaders } from "./session";
+import Swal from "sweetalert2";
 
 /**
  * API Client Core
@@ -31,6 +32,20 @@ async function handleResponse<T>(res: Response): Promise<T> {
     if (res.status === 401) {
       clearAuthSession();
     }
+
+    // Demo mode — tampilkan Swal dan lempar error silent
+    if (data?.error === "demo_mode_disabled") {
+      const label = data?.message || "Fitur ini dinonaktifkan dalam mode demo.";
+      Swal.fire({
+        icon: "info",
+        title: "Mode Demo",
+        text: label,
+        confirmButtonText: "Mengerti",
+        confirmButtonColor: "#f97316",
+      });
+      throw new Error("demo_mode_disabled");
+    }
+
     const msg = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Server error");
     throw new Error(msg as string);
   }
