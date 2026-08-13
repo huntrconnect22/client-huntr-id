@@ -30,6 +30,33 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
       return (
         <SlideSection title="Profil Perusahaan" subtitle="Informasi dasar & identitas" icon={<Building2 size={22} className="text-orange-500" />} accentColor="#f97316">
           <div className="flex flex-col gap-2">
+            <FormLabel>Business Type *</FormLabel>
+            <div className="grid grid-cols-2 gap-3">
+              {[{ v: "buyer", l: "Buyer" }, { v: "vendor", l: "Vendor" }].map(opt => (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => updateField("type", opt.v)}
+                  className={`
+                    py-3 rounded-xl font-bold text-sm transition-all border-2
+                    ${formData.type === opt.v
+                      ? "bg-orange-500/10 border-orange-500/40 text-orange-400"
+                      : "bg-[var(--ui-bg-input)] border-[var(--ui-border-subtle)] text-[var(--ui-text-muted)] hover:border-[var(--ui-border-input)]"
+                    }
+                  `}
+                >
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+            {!formData.type && (
+              <p className="text-[11px] text-amber-400/80 flex items-center gap-1 mt-0.5">
+                <AlertCircle size={11} /> Pilih Business Type terlebih dahulu
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
             <FormLabel>Negara & Tax ID{isIndonesia() ? " (NPWP) *" : ""}</FormLabel>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <select
@@ -42,17 +69,17 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
                 <option value="SG">Singapore</option>
               </select>
               <div className="md:col-span-2 flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder={formData.country === 'ID' ? "01.234.567.8-901.000" : "Tax ID / UEN"} 
-                  value={formData.tax_id} 
-                  onChange={e => updateField("tax_id", e.target.value)} 
-                  className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm" 
+                <input
+                  type="text"
+                  placeholder={formData.country === 'ID' ? "01.234.567.8-901.000" : "Tax ID / UEN"}
+                  value={formData.tax_id}
+                  onChange={e => updateField("tax_id", e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm"
                 />
                 {isIndonesia() && (
-                  <button 
-                    onClick={handleVerifyNpwp} 
-                    disabled={isVerifyingNpwp || !formData.tax_id} 
+                  <button
+                    onClick={handleVerifyNpwp}
+                    disabled={isVerifyingNpwp || !formData.tax_id}
                     className={`px-4 md:px-6 rounded-xl font-bold text-xs transition-all ${npwpVerifiedData ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" : "bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20"}`}
                   >
                     {isVerifyingNpwp ? <Loader2 size={16} className="animate-spin" /> : npwpVerifiedData ? <CheckCircle2 size={16} /> : "Verifikasi"}
@@ -84,8 +111,9 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
               </div>
             )}
           </div>
+
           <Field label="Nama Perusahaan *" value={formData.company_name} onChange={(v:any) => updateField("company_name", v)} placeholder="Contoh: PT Tunas Global Teknologi" />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="flex flex-col gap-1.5">
               <FormLabel>Jenis Industri *</FormLabel>
@@ -122,27 +150,6 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Field label="Telepon" value={formData.phone} onChange={(v:any) => updateField("phone", v)} />
             <Field label="Email" value={formData.email} onChange={(v:any) => updateField("email", v)} type="email" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <FormLabel>Business Type *</FormLabel>
-            <div className="grid grid-cols-2 gap-3">
-              {[{ v: "buyer", l: "Buyer" }, { v: "vendor", l: "Vendor" }].map(opt => (
-                <button 
-                  key={opt.v} 
-                  type="button" 
-                  onClick={() => updateField("type", opt.v)} 
-                  className={`
-                    py-3 rounded-xl font-bold text-sm transition-all border-2
-                    ${formData.type === opt.v 
-                      ? "bg-orange-500/10 border-orange-500/40 text-orange-400" 
-                      : "bg-[var(--ui-bg-input)] border-[var(--ui-border-subtle)] text-[var(--ui-text-muted)] hover:border-[var(--ui-border-input)]"
-                    }
-                  `}
-                >
-                  {opt.l}
-                </button>
-              ))}
-            </div>
           </div>
         </SlideSection>
       );
