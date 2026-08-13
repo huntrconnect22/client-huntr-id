@@ -70,10 +70,3 @@ export const adminGetUsers = (params?: { page?: number; per_page?: number; searc
   const queryString = query.toString();
   return apiGet(`/api/admin/users${queryString ? `?${queryString}` : ""}`);
 };
-
-// Settings / feature flags
-export const adminGetSettings = () =>
-  apiGet("/api/admin/settings");
-
-export const adminUpdateSettings = (payload: Record<string, boolean>) =>
-  apiPost("/api/admin/settings", payload);

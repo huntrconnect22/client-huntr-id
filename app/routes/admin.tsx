@@ -3,7 +3,7 @@ import {
   Building2, ShieldCheck, LogOut, CheckCircle2, XCircle,
   Clock, Eye, FileText, ChevronDown, ChevronUp, Search,
   Loader2, AlertCircle, Users, TrendingUp, X, ExternalLink, Trash2, Pencil, Package,
-  Menu, Settings, CreditCard,
+  Menu, CreditCard,
 } from "lucide-react";
 
 /* ─── tiny responsive hook ─── */
@@ -26,8 +26,6 @@ import {
   adminDeleteCatalogueItem,
   adminGetTransactions,
   adminGetEscrowSummary,
-  adminGetSettings,
-  adminUpdateSettings,
 } from "../lib/api";
 import { getCompanyDocumentUrl, getAssetUrl } from "../lib/assets";
 import Swal from "sweetalert2";
@@ -279,7 +277,7 @@ const getImageUrl = (path: string | undefined | null) => {
 };
 
 function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () => void }) {
-  const [activeTab, setActiveTab] = useState<"companies" | "catalogue" | "transactions" | "users" | "admins" | "settings">("companies");
+  const [activeTab, setActiveTab] = useState<"companies" | "catalogue" | "transactions" | "users" | "admins">("companies");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -289,7 +287,6 @@ function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () =>
     { id: "transactions", label: "Transactions" },
     { id: "users",        label: "Users" },
     { id: "admins",       label: "Admins" },
-    { id: "settings",     label: "Settings" },
   ] as const;
 
   return (
@@ -416,7 +413,7 @@ function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () =>
               borderTop: activeTab === t.id ? "2px solid #f97316" : "2px solid transparent",
               transition: "all 0.15s",
             }}>
-              {t.id === "companies" ? <Building2 size={16} /> : t.id === "catalogue" ? <Package size={16} /> : t.id === "transactions" ? <CreditCard size={16} /> : t.id === "users" ? <Users size={16} /> : t.id === "admins" ? <ShieldCheck size={16} /> : <Settings size={16} />}
+              {t.id === "companies" ? <Building2 size={16} /> : t.id === "catalogue" ? <Package size={16} /> : t.id === "transactions" ? <CreditCard size={16} /> : t.id === "users" ? <Users size={16} /> : <ShieldCheck size={16} />}
               {t.label.slice(0, 5)}
             </button>
           ))}
@@ -434,7 +431,6 @@ function AdminDashboard({ admin, onLogout }: { admin: AdminUser; onLogout: () =>
         {activeTab === "transactions" && <AdminTransactionsTab />}
         {activeTab === "users" && <AdminUsersTab />}
         {activeTab === "admins" && <AdminAdminsTab />}
-        {activeTab === "settings" && <AdminSettingsTab />}
       </main>
     </div>
   );
@@ -1760,154 +1756,3 @@ function AdminAdminsTab() {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────── */
-/*  Admin Settings Tab                                                 */
-/* ─────────────────────────────────────────────────────────────────── */
-
-interface AdminSettings {
-  bypass_npwp_verification: boolean;
-}
-
-function AdminSettingsTab() {
-  const [settings, setSettings] = useState<AdminSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const fetchSettings = async () => {
-    setIsLoading(true);
-    try {
-      const res = await adminGetSettings();
-      setSettings(res.settings);
-    } catch (err: any) {
-      Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to load settings." });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchSettings(); }, []);
-
-  const handleToggle = async (key: keyof AdminSettings) => {
-    if (!settings) return;
-    const newValue = !settings[key];
-    const newSettings = { ...settings, [key]: newValue };
-    setSettings(newSettings);
-    setIsSaving(true);
-    try {
-      await adminUpdateSettings({ [key]: newValue });
-    } catch (err: any) {
-      // revert on failure
-      setSettings(settings);
-      Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to save setting." });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const settingItems = [
-    {
-      key: "bypass_npwp_verification" as keyof AdminSettings,
-      title: "Bypass NPWP Verification",
-      description: "Lewati verifikasi NPWP ke Pajak Express dan gunakan dummy data. Aktifkan sementara ketika API Pajak Express tidak tersedia.",
-      danger: true,
-    },
-  ];
-
-  return (
-    <div>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        <div style={{
-          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-          background: "linear-gradient(135deg,#6366f1,#4f46e5)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Settings size={20} color="#fff" />
-        </div>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.4px" }}>System Settings</div>
-          <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 2 }}>Feature flags dan konfigurasi sistem</div>
-        </div>
-        {isSaving && (
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ui-text-muted)" }}>
-            <Loader2 size={14} className="animate-spin" /> Saving...
-          </div>
-        )}
-      </div>
-
-      {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-          <Loader2 size={32} className="animate-spin" style={{ color: "var(--ui-text-muted)" }} />
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {settingItems.map(item => {
-            const isOn = settings?.[item.key] ?? false;
-            return (
-              <div key={item.key} style={{
-                background: "var(--ui-bg-card)",
-                border: `1px solid ${item.danger && isOn ? "rgba(239,68,68,0.4)" : "var(--ui-border)"}`,
-                borderRadius: 16,
-                padding: "20px 24px",
-                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20,
-                transition: "border-color 0.2s",
-              }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ui-text-primary)" }}>
-                      {item.title}
-                    </span>
-                    {item.danger && isOn && (
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6,
-                        background: "rgba(239,68,68,0.15)", color: "#ef4444",
-                        letterSpacing: "0.05em",
-                      }}>
-                        ACTIVE
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 13, color: "var(--ui-text-muted)", lineHeight: 1.5 }}>
-                    {item.description}
-                  </div>
-                </div>
-
-                {/* Toggle switch */}
-                <button
-                  onClick={() => handleToggle(item.key)}
-                  disabled={isSaving}
-                  style={{
-                    position: "relative",
-                    width: 48, height: 26,
-                    borderRadius: 13,
-                    background: isOn
-                      ? (item.danger ? "#ef4444" : "#10b981")
-                      : "var(--ui-border)",
-                    border: "none",
-                    cursor: isSaving ? "not-allowed" : "pointer",
-                    transition: "background 0.25s",
-                    flexShrink: 0,
-                    opacity: isSaving ? 0.7 : 1,
-                  }}
-                  aria-label={`Toggle ${item.title}`}
-                  aria-checked={isOn}
-                  role="switch"
-                >
-                  <span style={{
-                    position: "absolute",
-                    top: 3, left: isOn ? 25 : 3,
-                    width: 20, height: 20,
-                    borderRadius: "50%",
-                    background: "#fff",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
-                    transition: "left 0.25s",
-                  }} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}

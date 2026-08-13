@@ -61,9 +61,26 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
               </div>
             </div>
             {npwpVerifiedData && (
-              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col gap-1.5">
                 <div className="text-sm font-bold text-[var(--ui-text-primary)]">{npwpVerifiedData.nama}</div>
-                <div className="text-[10px] text-[var(--ui-text-muted)] uppercase tracking-widest mt-0.5">Status: <span className="text-emerald-400 font-bold">{npwpVerifiedData.statusWp || npwpVerifiedData.status || "Aktif"}</span></div>
+                <div className="flex flex-wrap gap-2 mt-0.5">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border ${
+                    npwpVerifiedData.statusWp?.toUpperCase() === "VALID"
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                      : "bg-red-500/10 border-red-500/30 text-red-400"
+                  }`}>
+                    WP: {npwpVerifiedData.statusWp || npwpVerifiedData.status || "Aktif"}
+                  </span>
+                  {npwpVerifiedData.statusSpt && (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border ${
+                      npwpVerifiedData.statusSpt?.toUpperCase().startsWith("VALID")
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                        : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                    }`}>
+                      SPT: {npwpVerifiedData.statusSpt}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>
