@@ -1,620 +1,567 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Layout from "../components/Layout";
 import DemoDisabledBanner from "../components/DemoDisabledBanner";
-import { getFullApiUrl } from "../lib/client";
 import { isModuleDisabledInDemo } from "../lib/demo-mode";
-import { Loader2, AlertCircle, FileText, ReceiptText, CheckCircle2, Download, RefreshCw, Trash2, Calendar, CircleDollarSign, Send } from "lucide-react";
+import { apiGet } from "../lib/client";
+import {
+  issueEFaktur, getEFakturs, getEFaktur, uploadEFaktur,
+  cancelEFaktur, deleteEFaktur, getVatInList, prepopulatedVatIn,
+  uploadVatIn, verifyVatIn,
+} from "../lib/api/efaktur";
+import type { EFaktur, VatInItem, PrepopulatedItem, Bast } from "../lib/api/efaktur";
+import {
+  Loader2, AlertCircle, FileText, ReceiptText, CheckCircle2,
+  RefreshCw, Trash2, Calendar, CircleDollarSign, Send,
+  Upload, X, Search, ChevronDown, ArrowDownToLine,
+} from "lucide-react";
 import Swal from "sweetalert2";
 
-interface EFaktur {
-  id: string;
-  bast_id: string;
-  po_id: string;
-  invoice_id?: string;
-  nofa?: string;
-  transaction_id?: string;
-  status: string;
-  no_invoice: string;
-  masa_pajak: string;
-  tahun_pajak: string;
-  tanggal_faktur: string;
-  dpp: number;
-  ppn: number;
-  created_at: string;
-  purchase_order?: {
-    po_number: string;
-    total_amount: number;
-  };
-  bast?: {
-    bast_number: string;
-    bast_date: string;
-  };
+/* ─── Status badge helper ────────────────────────────────────────── */
+function StatusBadge({ status }: { status: string }) {
+  const s = status?.toUpperCase() ?? "";
+  let bg = "rgba(249,115,22,0.10)";
+  let color = "var(--ui-primary)";
+  let border = "var(--ui-primary-border)";
+  if (s === "APPROVED") { bg = "rgba(34,197,94,0.10)"; color = "var(--ui-status-approved)"; border = "rgba(34,197,94,0.22)"; }
+  if (s === "CANCELLED") { bg = "rgba(239,68,68,0.10)"; color = "var(--ui-status-rejected)"; border = "rgba(239,68,68,0.22)"; }
+  if (s === "DRAFT") { bg = "rgba(148,163,184,0.12)"; color = "var(--ui-text-muted)"; border = "var(--ui-border)"; }
+  return (
+    <span style={{ padding: "3px 10px", borderRadius: 7, background: bg, color, border: `1px solid ${border}`, fontSize: 11, fontWeight: 700 }}>
+      {s || "—"}
+    </span>
+  );
 }
 
-interface Bast {
-  id: string;
-  bast_number: string;
-  bast_date: string;
-  status: string;
-  po_id: string;
-  purchase_order?: {
-    po_number: string;
-  };
+/* ─── Shared section header ──────────────────────────────────────── */
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ui-text-primary)", marginBottom: 4 }}>
+      {children}
+    </div>
+  );
 }
 
-export default function EFakturPage() {
-  const [company, setCompany] = useState<any>(null);
+/* ─── Tab button ─────────────────────────────────────────────────── */
+function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: "11px 4px", fontSize: 14, fontWeight: 800, border: "none", background: "none", cursor: "pointer",
+      color: active ? "var(--ui-text-primary)" : "var(--ui-text-muted)",
+      borderBottom: active ? "3px solid var(--ui-primary)" : "3px solid transparent",
+      transition: "all 0.15s",
+    }}>
+      {children}
+    </button>
+  );
+}
+
+/* ─── Upload Modal (manual upload DRAFT → DJP) ───────────────────── */
+function UploadModal({ efaktur, onClose, onDone }: {
+  efaktur: EFaktur;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [tempat, setTempat] = useState("Jakarta");
+  const [npwkNik, setNpwkNik] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!npwkNik.trim()) { setError("NPWP/NIK Penandatangan wajib diisi."); return; }
+    setLoading(true); setError(null);
+    try {
+      await uploadEFaktur(efaktur.id, { tempat_penandatangan: tempat, npwp_nik_penandatangan: npwkNik });
+      onDone();
+    } catch (err: any) { setError(err.message || "Gagal upload ke DJP."); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "var(--ui-bg-overlay)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, width: "100%", maxWidth: 440, padding: "24px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontWeight: 800, fontSize: 16, color: "var(--ui-text-primary)" }}>Upload ke DJP</div>
+          <button onClick={onClose} style={{ background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", borderRadius: 8, cursor: "pointer", color: "var(--ui-text-muted)", padding: "4px 6px", display: "flex" }}><X size={15} /></button>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginBottom: 18, background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 8, padding: "8px 12px" }}>
+          Faktur ID: <strong style={{ color: "var(--ui-text-primary)" }}>{efaktur.pajak_express_id}</strong>&nbsp;·&nbsp;Ref: <strong style={{ color: "var(--ui-text-primary)" }}>{efaktur.no_invoice}</strong>
+        </div>
+        {error && <div style={{ marginBottom: 14, padding: "9px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, color: "var(--ui-status-rejected)", display: "flex", gap: 7 }}><AlertCircle size={13} />{error}</div>}
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", display: "block", marginBottom: 6 }}>Tempat Penandatangan</label>
+            <input value={tempat} onChange={e => setTempat(e.target.value)} required style={{ width: "100%", padding: "10px 14px", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 9, fontSize: 13, color: "var(--ui-text-primary)", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", display: "block", marginBottom: 6 }}>NPWP / NIK Penandatangan</label>
+            <input value={npwkNik} onChange={e => setNpwkNik(e.target.value)} required placeholder="16 digit" style={{ width: "100%", padding: "10px 14px", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 9, fontSize: 13, color: "var(--ui-text-primary)", outline: "none", fontFamily: "monospace" }} />
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Batal</button>
+            <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, minHeight: 44, opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+              {loading ? <><Loader2 size={14} className="animate-spin" />Mengupload…</> : <><Upload size={14} />Upload ke DJP</>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ─── VAT OUT Tab ────────────────────────────────────────────────── */
+function VatOutTab({ company }: { company: any }) {
   const [efakturs, setEfakturs] = useState<EFaktur[]>([]);
   const [basts, setBasts] = useState<Bast[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"list" | "ready">("list");
-  
-  // Signer loading/action states
+  const [uploadTarget, setUploadTarget] = useState<EFaktur | null>(null);
   const [issuingId, setIssuingId] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    const activeComp = localStorage.getItem("active_company");
-    if (activeComp) {
-      setCompany(JSON.parse(activeComp));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (company) {
-      fetchData();
-    }
-  }, [company]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async (p = page) => {
     setLoading(true);
-    setError(null);
     try {
-      const userSession = localStorage.getItem("user_session");
-      const token = userSession ? JSON.parse(userSession).token : null;
-      if (!token) {
-        setError("Authentication token not found. Please log in again.");
-        setLoading(false);
-        return;
-      }
+      const [efRes, bastRes] = await Promise.all([
+        getEFakturs(company.id, p, 15),
+        apiGet<{ data: Bast[] }>(`/api/basts?company_id=${company.id}&per_page=100`),
+      ]);
+      setEfakturs(efRes.data || []);
+      setLastPage(efRes.last_page || 1);
+      setTotal(efRes.total || 0);
+      setBasts(bastRes?.data || []);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  }, [company.id, page]);
 
-      // Fetch e-Fakturs
-      const efResponse = await fetch(getFullApiUrl(`/api/efaktur?company_id=${company.id}`), {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-      // Fetch BASTs to check completed ones (request large page to avoid pagination cutoff)
-      const bastResponse = await fetch(getFullApiUrl(`/api/basts?company_id=${company.id}&per_page=100`), {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+  const readyBasts = basts.filter(b => b.status?.toLowerCase() === "completed" && !efakturs.some(ef => ef.bast_id === b.id));
 
-      if (!efResponse.ok) throw new Error("Failed to load e-Faktur data");
-      if (!bastResponse.ok) throw new Error("Failed to load BAST data");
-
-      const efData = await efResponse.json();
-      const bData = await bastResponse.json();
-
-      setEfakturs(efData.data || efData || []);
-      setBasts(bData.data || bData || []);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to load page data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Filter completed BASTs that don't have e-Fakturs yet (case-insensitive status check)
-  const readyBasts = basts.filter(bast => {
-    const hasEFaktur = efakturs.some(ef => ef.bast_id === bast.id);
-    return bast.status?.toLowerCase() === "completed" && !hasEFaktur;
-  });
-
-  const handleIssueEFaktur = async (bast: Bast) => {
-    if (!company) return;
-    
-    // Prompt for signer info
-    const { value: formValues } = await Swal.fire({
+  const handleIssue = async (bast: Bast) => {
+    const { value } = await Swal.fire({
       title: "Terbitkan e-Faktur",
-      html: `
-        <div style="text-align: left; font-family: inherit;">
-          <label style="display:block; margin-bottom: 6px; font-weight:600; font-size:12px; color:var(--ui-text-secondary);">Nama Penandatangan</label>
-          <input id="swal-signer-name" class="swal2-input" style="margin-top:0; width:100%; box-sizing:border-box; border-radius:8px;" value="${company.owner_name || 'DIREKTUR'}">
-          <label style="display:block; margin: 16px 0 6px; font-weight:600; font-size:12px; color:var(--ui-text-secondary);">Jabatan Penandatangan</label>
-          <input id="swal-signer-jabatan" class="swal2-input" style="margin-top:0; width:100%; box-sizing:border-box; border-radius:8px;" value="DIREKTUR">
-        </div>
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: "Terbitkan Sekarang",
-      cancelButtonText: "Batal",
-      confirmButtonColor: "#f97316",
-      preConfirm: () => {
-        return {
-          signer_name: (document.getElementById("swal-signer-name") as HTMLInputElement).value,
-          signer_jabatan: (document.getElementById("swal-signer-jabatan") as HTMLInputElement).value,
-        };
-      }
+      html: `<div style="text-align:left">
+        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px">Nama Penandatangan</label>
+        <input id="s-name" class="swal2-input" style="margin:0 0 12px;box-sizing:border-box;width:100%" value="${company.owner_name || "DIREKTUR"}">
+        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px">NPWP Penandatangan (16 digit)</label>
+        <input id="s-npwp" class="swal2-input" style="margin:0 0 12px;box-sizing:border-box;width:100;font-family:monospace" placeholder="16 digit">
+        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px">Kota Penandatangan</label>
+        <input id="s-kota" class="swal2-input" style="margin:0;box-sizing:border-box;width:100%" value="Jakarta">
+      </div>`,
+      focusConfirm: false, showCancelButton: true,
+      confirmButtonText: "Terbitkan", cancelButtonText: "Batal", confirmButtonColor: "#f97316",
+      preConfirm: () => ({
+        signer_name: (document.getElementById("s-name") as HTMLInputElement).value,
+        signer_npwp: (document.getElementById("s-npwp") as HTMLInputElement).value,
+        signer_kota: (document.getElementById("s-kota") as HTMLInputElement).value,
+      }),
     });
-
-    if (!formValues) return;
-
+    if (!value) return;
     setIssuingId(bast.id);
     try {
-      const userSession = localStorage.getItem("user_session");
-      const token = userSession ? JSON.parse(userSession).token : null;
-      if (!token) throw new Error("Auth token not found.");
-
-      const response = await fetch(getFullApiUrl("/api/efaktur"), {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bast_id: bast.id,
-          signer_name: formValues.signer_name,
-          signer_jabatan: formValues.signer_jabatan,
-        }),
-      });
-
-      const resData = await response.json();
-      if (!response.ok) {
-        throw new Error(resData.message || "Failed to issue e-Faktur");
-      }
-
-      Swal.fire({
-        icon: "success",
-        title: "Berhasil!",
-        text: `e-Faktur dengan nomor ${resData.efaktur?.nofa || "Simulasi"} berhasil diterbitkan via Pajak.io.`,
-        confirmButtonColor: "#22c55e",
-      });
-
-      // Refresh data
-      await fetchData();
-      setActiveTab("list");
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Gagal!",
-        text: err.message || "Gagal menerbitkan e-Faktur",
-        confirmButtonColor: "#ef4444",
-      });
-    } finally {
-      setIssuingId(null);
-    }
+      const res = await issueEFaktur({ bast_id: bast.id, ...value });
+      Swal.fire({ icon: "success", title: "Berhasil!", text: `e-Faktur diterbitkan. NOFA: ${res.efaktur?.nofa || "Menunggu DJP"}`, confirmButtonColor: "#22c55e" });
+      setActiveTab("list"); setPage(1); fetchData(1);
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
+    finally { setIssuingId(null); }
   };
 
-  const handleRefreshStatus = async (efakturId: string) => {
-    setRefreshingId(efakturId);
+  const handleRefresh = async (id: string) => {
+    setRefreshingId(id);
     try {
-      const userSession = localStorage.getItem("user_session");
-      const token = userSession ? JSON.parse(userSession).token : null;
-      if (!token) throw new Error("Auth token not found.");
-
-      const response = await fetch(getFullApiUrl(`/api/efaktur/${efakturId}`), {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error("Failed to refresh status");
-      
-      const resData = await response.json();
-      
-      // Update local state
-      setEfakturs(prev => prev.map(ef => ef.id === efakturId ? { ...ef, ...resData.efaktur } : ef));
-      
-      Swal.fire({
-        icon: "success",
-        title: "Status Diperbarui",
-        text: `Status Faktur Pajak: ${resData.efaktur?.status || "CREATED"}`,
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Gagal!",
-        text: err.message || "Gagal memperbarui status",
-      });
-    } finally {
-      setRefreshingId(null);
-    }
+      const res = await getEFaktur(id);
+      setEfakturs(prev => prev.map(ef => ef.id === id ? { ...ef, ...res.efaktur } : ef));
+      Swal.fire({ icon: "success", title: "Status diperbarui", text: `Status: ${res.efaktur?.status}`, timer: 1500, showConfirmButton: false });
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
+    finally { setRefreshingId(null); }
   };
 
-  const handleDownloadPdf = async (efaktur: EFaktur) => {
+  const handleCancel = async (id: string) => {
+    const ok = await Swal.fire({ title: "Batalkan e-Faktur?", icon: "warning", showCancelButton: true, confirmButtonColor: "#ef4444", confirmButtonText: "Ya, Batalkan", cancelButtonText: "Batal" });
+    if (!ok.isConfirmed) return;
+    setCancellingId(id);
     try {
-      const userSession = localStorage.getItem("user_session");
-      const token = userSession ? JSON.parse(userSession).token : null;
-      if (!token) throw new Error("Auth token not found.");
-
-      Swal.fire({
-        title: "Mengunduh PDF...",
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      const response = await fetch(getFullApiUrl(`/api/efaktur/${efaktur.id}/pdf`), {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-
-      const resData = await response.json();
-      Swal.close();
-
-      if (!response.ok || !resData.pdf) {
-        throw new Error(resData.message || "Failed to generate PDF");
-      }
-
-      // If PDF has url or base64
-      const pdfData = resData.pdf;
-      if (pdfData.data?.pdfUrl || pdfData.pdfUrl) {
-        window.open(pdfData.data?.pdfUrl || pdfData.pdfUrl, "_blank");
-      } else if (pdfData.data?.base64 || pdfData.base64) {
-        const base64Str = pdfData.data?.base64 || pdfData.base64;
-        const cleanBase64 = base64Str.startsWith("data:application/pdf;base64,")
-          ? base64Str
-          : `data:application/pdf;base64,${base64Str}`;
-        const win = window.open();
-        if (win) {
-          win.document.write(`<iframe src="${cleanBase64}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-        } else {
-          // Download fallback
-          const link = document.createElement("a");
-          link.href = cleanBase64;
-          link.download = `e-Faktur-${efaktur.nofa || efaktur.id}.pdf`;
-          link.click();
-        }
-      } else {
-        throw new Error("No PDF link or base64 stream returned.");
-      }
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Gagal!",
-        text: err.message || "Gagal mendapatkan PDF e-Faktur",
-      });
-    }
+      await cancelEFaktur(id);
+      Swal.fire({ icon: "success", title: "Dibatalkan!", timer: 1500, showConfirmButton: false });
+      fetchData();
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
+    finally { setCancellingId(null); }
   };
 
-  const handleCancelEFaktur = async (efakturId: string) => {
-    const result = await Swal.fire({
-      title: "Batalkan e-Faktur?",
-      text: "Tindakan ini akan membatalkan Faktur Pajak ini di Pajak.io sandbox.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Ya, Batalkan",
-      cancelButtonText: "Batal",
-    });
-
-    if (!result.isConfirmed) return;
-
-    setCancellingId(efakturId);
+  const handleDelete = async (id: string) => {
+    const ok = await Swal.fire({ title: "Hapus draft ini?", icon: "warning", showCancelButton: true, confirmButtonColor: "#ef4444", confirmButtonText: "Ya, Hapus", cancelButtonText: "Batal" });
+    if (!ok.isConfirmed) return;
+    setDeletingId(id);
     try {
-      const userSession = localStorage.getItem("user_session");
-      const token = userSession ? JSON.parse(userSession).token : null;
-      if (!token) throw new Error("Auth token not found.");
-
-      const response = await fetch(getFullApiUrl(`/api/efaktur/${efakturId}/cancel`), {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const resData = await response.json();
-      if (!response.ok) {
-        throw new Error(resData.message || "Failed to cancel e-Faktur");
-      }
-
-      Swal.fire({
-        icon: "success",
-        title: "Dibatalkan!",
-        text: "e-Faktur berhasil dibatalkan.",
-        confirmButtonColor: "#22c55e",
-      });
-
-      await fetchData();
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Gagal!",
-        text: err.message || "Gagal membatalkan e-Faktur",
-      });
-    } finally {
-      setCancellingId(null);
-    }
+      await deleteEFaktur(id);
+      Swal.fire({ icon: "success", title: "Dihapus!", timer: 1200, showConfirmButton: false });
+      fetchData();
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
+    finally { setDeletingId(null); }
   };
 
-  const getStatusStyle = (status: string) => {
-    const normalized = status.toUpperCase();
-    if (normalized === "APPROVED" || normalized === "SUCCESS") {
-      return { bg: "rgba(34,197,94,0.1)", text: "#22c55e" };
-    }
-    if (normalized === "CANCELLED" || normalized === "BATAL") {
-      return { bg: "rgba(239,68,68,0.1)", text: "#ef4444" };
-    }
-    return { bg: "rgba(249,115,22,0.1)", text: "#f97316" };
+  const totalDpp = efakturs.reduce((a, e) => !e.status?.toUpperCase().includes("CANCEL") ? a + Number(e.dpp) : a, 0);
+  const totalPpn = efakturs.reduce((a, e) => !e.status?.toUpperCase().includes("CANCEL") ? a + Number(e.ppn) : a, 0);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Stat cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+        {[
+          { label: "Total e-Faktur", value: total, icon: <ReceiptText size={22} />, color: "var(--ui-primary)", bg: "var(--ui-primary-muted)" },
+          { label: "Total DPP", value: `IDR ${totalDpp.toLocaleString()}`, icon: <CircleDollarSign size={22} />, color: "var(--ui-status-approved)", bg: "rgba(34,197,94,0.1)" },
+          { label: "Total PPN", value: `IDR ${totalPpn.toLocaleString()}`, icon: <FileText size={22} />, color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
+          { label: "BAST Siap Faktur", value: readyBasts.length, icon: <CheckCircle2 size={22} />, color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+        ].map(s => (
+          <div key={s.label} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "var(--ui-glass-shadow)" }}>
+            <div style={{ width: 44, height: 44, borderRadius: 11, background: s.bg, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.icon}</div>
+            <div>
+              <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)", lineHeight: 1 }}>{s.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--ui-border)", gap: 24 }}>
+        <TabBtn active={activeTab === "list"} onClick={() => setActiveTab("list")}>Daftar e-Faktur ({total})</TabBtn>
+        <TabBtn active={activeTab === "ready"} onClick={() => setActiveTab("ready")}>Siap Diterbitkan ({readyBasts.length})</TabBtn>
+      </div>
+
+      {loading ? (
+        <div style={{ padding: 48, display: "flex", justifyContent: "center" }}><Loader2 size={28} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
+      ) : activeTab === "list" ? (
+        efakturs.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14, color: "var(--ui-text-muted)" }}>
+            <ReceiptText size={36} style={{ marginBottom: 12, opacity: 0.4 }} />
+            <div style={{ fontWeight: 700 }}>Belum ada e-Faktur</div>
+            <div style={{ fontSize: 13, marginTop: 4 }}>Terbitkan dari tab "Siap Diterbitkan".</div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {efakturs.map(ef => (
+              <div key={ef.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                      <StatusBadge status={ef.status} />
+                      {ef.nofa && <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>NOFA: {ef.nofa}</span>}
+                      {!ef.nofa && ef.pajak_express_id && <span style={{ fontSize: 11, color: "var(--ui-text-muted)", fontStyle: "italic" }}>Menunggu nomor dari DJP…</span>}
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: "var(--ui-text-primary)", marginBottom: 4 }}>{ef.no_invoice || "—"}</div>
+                    <div style={{ fontSize: 12, color: "var(--ui-text-muted)", display: "flex", gap: 12, flexWrap: "wrap" }}>
+                      <span><Calendar size={11} style={{ display: "inline", marginRight: 3 }} />{ef.tanggal_faktur || "—"}</span>
+                      <span>Masa/Tahun: {ef.masa_pajak}/{ef.tahun_pajak}</span>
+                      {ef.bast && <span>BAST: {ef.bast.bast_number}</span>}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, marginBottom: 3 }}>PPN</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)" }}>IDR {Number(ef.ppn).toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>DPP: IDR {Number(ef.dpp).toLocaleString()}</div>
+                  </div>
+                </div>
+                <div style={{ padding: "12px 18px", background: "var(--ui-bg-inset)", borderTop: "1px solid var(--ui-border)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>PE-ID: {ef.pajak_express_id || "—"}</span>
+                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                    {ef.status?.toUpperCase() === "DRAFT" && (
+                      <button onClick={() => setUploadTarget(ef)} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(34,197,94,0.1)", color: "var(--ui-status-approved)", border: "1px solid rgba(34,197,94,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                        <Upload size={12} />Upload DJP
+                      </button>
+                    )}
+                    <button onClick={() => handleRefresh(ef.id)} disabled={refreshingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "var(--ui-bg-card)", color: "var(--ui-text-muted)", border: "1px solid var(--ui-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                      <RefreshCw size={12} className={refreshingId === ef.id ? "animate-spin" : ""} />Refresh
+                    </button>
+                    {ef.status?.toUpperCase() !== "CANCELLED" && ef.nofa && (
+                      <button onClick={() => handleCancel(ef.id)} disabled={cancellingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                        <X size={12} />Cancel
+                      </button>
+                    )}
+                    {ef.status?.toUpperCase() === "DRAFT" && (
+                      <button onClick={() => handleDelete(ef.id)} disabled={deletingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                        <Trash2 size={12} />Hapus
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {lastPage > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, paddingTop: 4 }}>
+                <button onClick={() => { setPage(p => Math.max(1, p - 1)); fetchData(page - 1); }} disabled={page === 1} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</button>
+                <span style={{ fontSize: 12, color: "var(--ui-text-muted)", lineHeight: "30px" }}>{page} / {lastPage}</span>
+                <button onClick={() => { setPage(p => Math.min(lastPage, p + 1)); fetchData(page + 1); }} disabled={page === lastPage} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</button>
+              </div>
+            )}
+          </div>
+        )
+      ) : (
+        readyBasts.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14, color: "var(--ui-text-muted)" }}>
+            <CheckCircle2 size={36} style={{ marginBottom: 12, opacity: 0.4 }} />
+            <div style={{ fontWeight: 700 }}>Semua BAST sudah diproses</div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {readyBasts.map(bast => (
+              <div key={bast.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                <div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(34,197,94,0.1)", color: "var(--ui-status-approved)", padding: "2px 9px", borderRadius: 6 }}>COMPLETED BAST</span>
+                    <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>{bast.bast_number}</span>
+                  </div>
+                  <div style={{ fontWeight: 800, color: "var(--ui-text-primary)" }}>PO: {bast.purchase_order?.po_number || "N/A"}</div>
+                  <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 3 }}>Tanggal: {bast.bast_date}</div>
+                </div>
+                <button onClick={() => handleIssue(bast)} disabled={issuingId === bast.id} style={{ padding: "10px 20px", borderRadius: 9, background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: "0 4px 16px rgba(249,115,22,0.25)", minHeight: 44 }}>
+                  {issuingId === bast.id ? <><Loader2 size={14} className="animate-spin" />Memproses…</> : <><Send size={14} />Terbitkan e-Faktur</>}
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {uploadTarget && (
+        <UploadModal efaktur={uploadTarget} onClose={() => setUploadTarget(null)} onDone={() => { setUploadTarget(null); fetchData(); Swal.fire({ icon: "success", title: "Berhasil diupload ke DJP!", timer: 1800, showConfirmButton: false }); }} />
+      )}
+    </div>
+  );
+}
+
+/* ─── VAT IN Tab ─────────────────────────────────────────────────── */
+function VatInTab() {
+  const now = new Date();
+  const [periode, setPeriode] = useState(`${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`);
+  const [vatInList, setVatInList] = useState<VatInItem[]>([]);
+  const [prepopList, setPrepopList] = useState<PrepopulatedItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [prepopLoading, setPrepopLoading] = useState(false);
+  const [subTab, setSubTab] = useState<"list" | "prepopulated">("list");
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+
+  // Prepop filters
+  const [ppTahun, setPpTahun] = useState(String(now.getFullYear()));
+  const [ppMasa, setPpMasa] = useState(String(now.getMonth() + 1).padStart(2, "0"));
+  const [ppNpwp, setPpNpwp] = useState("");
+  const [ppNofa, setPpNofa] = useState("");
+
+  const fetchList = useCallback(async (p = 1) => {
+    setLoading(true);
+    try {
+      const res = await getVatInList({ page: p, limit: 20, periode });
+      setVatInList(res.data || []);
+      setTotal(res.metaPage?.totalRow || 0);
+      setLastPage(Math.ceil((res.metaPage?.totalRow || 0) / 20) || 1);
+      setPage(p);
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
+    finally { setLoading(false); }
+  }, [periode]);
+
+  const fetchPrepop = async () => {
+    setPrepopLoading(true);
+    try {
+      const res = await prepopulatedVatIn({ tahun_pajak: ppTahun, masa_pajak: ppMasa, npwp_penjual: ppNpwp, nomor_faktur: ppNofa });
+      setPrepopList(res.data?.dataFaktur || []);
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
+    finally { setPrepopLoading(false); }
   };
 
-  // Stats computation
-  const totalDpp = efakturs.reduce((acc, curr) => curr.status.toUpperCase() !== "CANCELLED" ? acc + Number(curr.dpp) : acc, 0);
-  const totalPpn = efakturs.reduce((acc, curr) => curr.status.toUpperCase() !== "CANCELLED" ? acc + Number(curr.ppn) : acc, 0);
+  useEffect(() => { if (subTab === "list") fetchList(1); }, [subTab, fetchList]);
+
+  const handleKredit = async (item: PrepopulatedItem) => {
+    const masaPajak = item.TaxInvoiceDate ? String(new Date(item.TaxInvoiceDate).getMonth() + 1).padStart(2, "0") : ppMasa;
+    const ok = await Swal.fire({ title: "Kreditkan Faktur Ini?", text: `No. Faktur: ${item.TaxInvoiceNumber}`, icon: "question", showCancelButton: true, confirmButtonText: "Ya, Kreditkan", cancelButtonText: "Batal", confirmButtonColor: "#f97316" });
+    if (!ok.isConfirmed) return;
+    try {
+      await uploadVatIn({ nomor_faktur: item.TaxInvoiceNumber, masa_pajak: masaPajak, tahun_pajak: item.TaxInvoiceYear, konfirmasi_pengkreditan: 1 });
+      Swal.fire({ icon: "success", title: "Berhasil dikreditkan!", timer: 1800, showConfirmButton: false });
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
+  };
+
+  const inputStyle: React.CSSProperties = { padding: "8px 12px", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 8, fontSize: 12, color: "var(--ui-text-primary)", outline: "none", fontFamily: "monospace" };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Sub-tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--ui-border)", gap: 20 }}>
+        <TabBtn active={subTab === "list"} onClick={() => setSubTab("list")}>Daftar Faktur Masukan</TabBtn>
+        <TabBtn active={subTab === "prepopulated"} onClick={() => setSubTab("prepopulated")}>Prepopulated DJP</TabBtn>
+      </div>
+
+      {subTab === "list" ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Filter periode */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5, textTransform: "uppercase" }}>Periode (MM/YYYY)</div>
+              <input value={periode} onChange={e => setPeriode(e.target.value)} placeholder="01/2025" style={{ ...inputStyle, width: 130 }} />
+            </div>
+            <button onClick={() => fetchList(1)} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 36 }}>
+              <Search size={13} />Tampilkan
+            </button>
+          </div>
+
+          {loading ? (
+            <div style={{ padding: 40, display: "flex", justifyContent: "center" }}><Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
+          ) : vatInList.length === 0 ? (
+            <div style={{ padding: "40px 20px", textAlign: "center", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12, color: "var(--ui-text-muted)" }}>
+              <ArrowDownToLine size={32} style={{ marginBottom: 10, opacity: 0.4 }} />
+              <div style={{ fontWeight: 700 }}>Tidak ada faktur masukan</div>
+              <div style={{ fontSize: 13, marginTop: 4 }}>Coba ubah filter periode.</div>
+            </div>
+          ) : (
+            <>
+              <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
+                        {["No. Faktur", "Penjual", "Tgl Faktur", "DPP", "PPN", "Status", "Kredit"].map(h => (
+                          <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{h.toUpperCase()}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vatInList.map(item => (
+                        <tr key={item.id} style={{ borderBottom: "1px solid var(--ui-border)" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                          <td style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>{item.nomorfaktur}</td>
+                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.namatokopenjual || item.npwppenjual}</td>
+                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{item.tanggalfaktur ? new Date(item.tanggalfaktur).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}</td>
+                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-primary)", whiteSpace: "nowrap", fontWeight: 700 }}>Rp {Number(item.totaldpp).toLocaleString()}</td>
+                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-primary)", whiteSpace: "nowrap", fontWeight: 700 }}>Rp {Number(item.totalppn).toLocaleString()}</td>
+                          <td style={{ padding: "11px 14px" }}><StatusBadge status={item.statusfaktur} /></td>
+                          <td style={{ padding: "11px 14px" }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: item.statuspembeli === "CREDITED" ? "rgba(34,197,94,0.1)" : "var(--ui-bg-input)", color: item.statuspembeli === "CREDITED" ? "var(--ui-status-approved)" : "var(--ui-text-muted)" }}>
+                              {item.statuspembeli || item.buyerstatus || "—"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {lastPage > 1 && (
+                <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+                  <button onClick={() => fetchList(Math.max(1, page - 1))} disabled={page === 1} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</button>
+                  <span style={{ fontSize: 12, color: "var(--ui-text-muted)", lineHeight: "28px" }}>{page} / {lastPage} · {total.toLocaleString()} total</span>
+                  <button onClick={() => fetchList(Math.min(lastPage, page + 1))} disabled={page === lastPage} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        /* Prepopulated DJP */
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", padding: "14px 16px", background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 10 }}>
+            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>TAHUN PAJAK</div><input value={ppTahun} onChange={e => setPpTahun(e.target.value)} style={{ ...inputStyle, width: 90 }} /></div>
+            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>MASA PAJAK</div><input value={ppMasa} onChange={e => setPpMasa(e.target.value)} placeholder="09" style={{ ...inputStyle, width: 70 }} /></div>
+            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>NPWP PENJUAL (opt.)</div><input value={ppNpwp} onChange={e => setPpNpwp(e.target.value)} placeholder="0623907…" style={{ ...inputStyle, width: 160 }} /></div>
+            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>NO. FAKTUR (opt.)</div><input value={ppNofa} onChange={e => setPpNofa(e.target.value)} style={{ ...inputStyle, width: 160 }} /></div>
+            <button onClick={fetchPrepop} disabled={prepopLoading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 36 }}>
+              {prepopLoading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}Inquiry DJP
+            </button>
+          </div>
+
+          {prepopList.length > 0 && (
+            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
+                      {["No. Faktur", "Penjual", "Tgl Faktur", "DPP", "PPN", "Status DJP", "Buyer Status", "Aksi"].map(h => (
+                        <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prepopList.map((item, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid var(--ui-border)" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                        <td style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{item.TaxInvoiceNumber}</td>
+                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis" }}>{item.SellerTaxpayerName}</td>
+                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{new Date(item.TaxInvoiceDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</td>
+                        <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700 }}>Rp {item.SellingPrice?.toLocaleString()}</td>
+                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-primary)", fontWeight: 700 }}>Rp {item.VAT?.toLocaleString()}</td>
+                        <td style={{ padding: "11px 14px" }}><StatusBadge status={item.TaxInvoiceStatus} /></td>
+                        <td style={{ padding: "11px 14px" }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: item.BuyerStatus === "CREDITED" ? "rgba(34,197,94,0.1)" : "var(--ui-bg-input)", color: item.BuyerStatus === "CREDITED" ? "var(--ui-status-approved)" : "var(--ui-text-muted)" }}>
+                            {item.BuyerStatus || "—"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "11px 14px" }}>
+                          {item.BuyerStatus !== "CREDITED" && (
+                            <button onClick={() => handleKredit(item)} style={{ padding: "5px 10px", borderRadius: 7, fontSize: 11, fontWeight: 700, background: "var(--ui-primary-muted)", color: "var(--ui-primary)", border: "1px solid var(--ui-primary-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                              <ArrowDownToLine size={11} />Kreditkan
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Main Page ──────────────────────────────────────────────────── */
+export default function EFakturPage() {
+  const [company, setCompany] = useState<any>(null);
+  const [mainTab, setMainTab] = useState<"vat-out" | "vat-in">("vat-out");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("active_company");
+    if (stored) {
+      try { setCompany(JSON.parse(stored)); } catch { /* ignore */ }
+    }
+  }, []);
 
   if (isModuleDisabledInDemo("efaktur")) {
     return <DemoDisabledBanner module="efaktur" />;
   }
 
   return (
-    <Layout title="e-Faktur Pajak.io" subtitle="Penerbitan & Pengelolaan Faktur Pajak Terintegrasi">
+    <Layout title="e-Faktur" subtitle="Faktur Pajak Keluaran & Masukan via PajakExpress">
       <div style={{ width: "100%" }}>
-        
-        {error && (
-          <div style={{
-            padding: 16, background: "rgba(239,68,68,0.1)", color: "#ef4444", borderRadius: 12, marginBottom: 24, display: "flex", alignItems: "center", gap: 10
-          }}>
-            <AlertCircle size={20} />
-            <span style={{ fontWeight: 600 }}>{error}</span>
+        {!company ? (
+          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ui-text-muted)" }}>
+            <AlertCircle size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
+            <div style={{ fontWeight: 700 }}>Pilih perusahaan terlebih dahulu</div>
           </div>
-        )}
-
-        {/* Stats Row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 32 }}>
-          
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border-input)", borderRadius: 24, padding: 24, display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: "rgba(249,115,22,0.1)", color: "#f97316", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <ReceiptText size={26} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Total e-Faktur</div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: "var(--ui-text-primary)" }}>{efakturs.length}</div>
-            </div>
-          </div>
-
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border-input)", borderRadius: 24, padding: 24, display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: "rgba(34,197,94,0.1)", color: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CircleDollarSign size={26} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Total DPP Pajak</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: "var(--ui-text-primary)" }}>IDR {totalDpp.toLocaleString()}</div>
-            </div>
-          </div>
-
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border-input)", borderRadius: 24, padding: 24, display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: "rgba(59,130,246,0.1)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <FileText size={26} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase" }}>BAST Siap Faktur</div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: "var(--ui-text-primary)" }}>{readyBasts.length}</div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Tab Buttons */}
-        <div style={{ display: "flex", borderBottom: "1px solid var(--ui-border-subtle)", gap: 24, marginBottom: 28 }}>
-          <button
-            onClick={() => setActiveTab("list")}
-            style={{
-              padding: "12px 4px", fontSize: 15, fontWeight: 800, border: "none", background: "none",
-              color: activeTab === "list" ? "var(--ui-text-logo)" : "var(--ui-text-muted)",
-              borderBottom: activeTab === "list" ? "3px solid #f97316" : "3px solid transparent",
-              cursor: "pointer", transition: "all 0.15s"
-            }}
-          >
-            Daftar e-Faktur ({efakturs.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("ready")}
-            style={{
-              padding: "12px 4px", fontSize: 15, fontWeight: 800, border: "none", background: "none",
-              color: activeTab === "ready" ? "var(--ui-text-logo)" : "var(--ui-text-muted)",
-              borderBottom: activeTab === "ready" ? "3px solid #f97316" : "3px solid transparent",
-              cursor: "pointer", transition: "all 0.15s"
-            }}
-          >
-            Siap Diterbitkan ({readyBasts.length})
-          </button>
-        </div>
-
-        {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 80, color: "var(--ui-text-muted)" }}>
-            <Loader2 size={36} className="animate-spin" style={{ marginBottom: 16 }} />
-            <span style={{ fontSize: 14, fontWeight: 600 }}>Loading data...</span>
-          </div>
-        ) : activeTab === "list" ? (
-          
-          /* TAB 1: E-FAKTUR LIST */
-          efakturs.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 24, border: "1px dashed var(--ui-border-input)" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--ui-bg-input)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--ui-text-muted)" }}>
-                <ReceiptText size={32} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", margin: "0 0 8px" }}>Belum Ada e-Faktur</h3>
-              <p style={{ fontSize: 14, color: "var(--ui-text-muted)", margin: 0 }}>Silakan terbitkan e-Faktur dari tab "Siap Diterbitkan".</p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              {efakturs.map((ef) => {
-                const statusColor = getStatusStyle(ef.status);
-                return (
-                  <div key={ef.id} style={{
-                    background: "var(--ui-bg-card)", borderRadius: 24, border: "1px solid var(--ui-border-input)",
-                    overflow: "hidden", display: "flex", flexDirection: "column", transition: "transform 0.2s"
-                  }}>
-                    <div style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
-                          <span style={{ padding: "4px 10px", borderRadius: 8, background: statusColor.bg, color: statusColor.text, fontSize: 10, fontWeight: 800 }}>
-                            {ef.status.toUpperCase()}
-                          </span>
-                          <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontFamily: "monospace", fontWeight: 600 }}>
-                            NOFA: {ef.nofa || "PROSES DJP"}
-                          </span>
-                        </div>
-                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", margin: "0 0 6px" }}>
-                          Invoice Ref: {ef.no_invoice}
-                        </h3>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ui-text-muted)", flexWrap: "wrap" }}>
-                          <Calendar size={14} />
-                          <span>Faktur: {ef.tanggal_faktur}</span>
-                          <span>•</span>
-                          <span>Masa/Tahun: {ef.masa_pajak}/{ef.tahun_pajak}</span>
-                          {ef.bast && (
-                            <>
-                              <span>•</span>
-                              <span>BAST: {ef.bast.bast_number}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Jumlah PPN</div>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: "var(--ui-text-primary)", letterSpacing: "-0.5px" }}>
-                          IDR {Number(ef.ppn).toLocaleString()}
-                        </div>
-                        <div style={{ fontSize: 12, color: "var(--ui-text-secondary)" }}>
-                          DPP: IDR {Number(ef.dpp).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ padding: "16px 24px", background: "var(--ui-bg-input)", borderTop: "1px solid var(--ui-border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                      <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>
-                        TxID: {ef.transaction_id || "N/A"}
-                      </div>
-                      
-                      <div style={{ display: "flex", gap: 10 }}>
-                        <button
-                          onClick={() => handleRefreshStatus(ef.id)}
-                          disabled={refreshingId === ef.id}
-                          style={{
-                            padding: "8px 14px", borderRadius: 10,
-                            background: "var(--ui-bg-card)", color: "var(--ui-text-secondary)",
-                            border: "1px solid var(--ui-border-input)", fontSize: 12, fontWeight: 700,
-                            cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                          }}
-                        >
-                          <RefreshCw size={14} className={refreshingId === ef.id ? "animate-spin" : ""} /> Perbarui Status
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDownloadPdf(ef)}
-                          style={{
-                            padding: "8px 14px", borderRadius: 10,
-                            background: "rgba(249,115,22,0.1)", color: "#f97316",
-                            border: "none", fontSize: 12, fontWeight: 700,
-                            cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                          }}
-                        >
-                          <Download size={14} /> Unduh PDF
-                        </button>
-
-                        {ef.status.toUpperCase() !== "CANCELLED" && (
-                          <button
-                            onClick={() => handleCancelEFaktur(ef.id)}
-                            disabled={cancellingId === ef.id}
-                            style={{
-                              padding: "8px 14px", borderRadius: 10,
-                              background: "rgba(239,68,68,0.1)", color: "#ef4444",
-                              border: "none", fontSize: 12, fontWeight: 700,
-                              cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                            }}
-                          >
-                            <Trash2 size={14} /> Batalkan
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )
-
         ) : (
-          
-          /* TAB 2: READY TO ISSUE BASTS */
-          readyBasts.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 24, border: "1px dashed var(--ui-border-input)" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--ui-bg-input)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--ui-text-muted)" }}>
-                <CheckCircle2 size={32} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", margin: "0 0 8px" }}>Semua BAST Sudah Diproses</h3>
-              <p style={{ fontSize: 14, color: "var(--ui-text-muted)", margin: 0 }}>Tidak ada handover document pending yang belum dibuat e-Fakturnya.</p>
+          <>
+            {/* Main tabs */}
+            <div style={{ display: "flex", borderBottom: "1px solid var(--ui-border)", gap: 28, marginBottom: 24 }}>
+              <TabBtn active={mainTab === "vat-out"} onClick={() => setMainTab("vat-out")}>
+                Pajak Keluaran (VAT Out)
+              </TabBtn>
+              <TabBtn active={mainTab === "vat-in"} onClick={() => setMainTab("vat-in")}>
+                Pajak Masukan (VAT In)
+              </TabBtn>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {readyBasts.map((bast) => (
-                <div key={bast.id} style={{
-                  background: "var(--ui-bg-card)", borderRadius: 24, border: "1px solid var(--ui-border-input)",
-                  padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16
-                }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                      <span style={{ padding: "4px 10px", borderRadius: 8, background: "rgba(34,197,94,0.1)", color: "#22c55e", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>
-                        COMPLETED BAST
-                      </span>
-                      <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontFamily: "monospace", fontWeight: 600 }}>
-                        {bast.bast_number}
-                      </span>
-                    </div>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", margin: "0 0 4px" }}>
-                      PO Ref: {bast.purchase_order?.po_number || "N/A"}
-                    </h3>
-                    <div style={{ fontSize: 13, color: "var(--ui-text-secondary)" }}>
-                      Tanggal Handover: {bast.bast_date}
-                    </div>
-                  </div>
-
-                  <div>
-                    <button
-                      onClick={() => handleIssueEFaktur(bast)}
-                      disabled={issuingId === bast.id}
-                      style={{
-                        padding: "12px 24px", borderRadius: 14,
-                        background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                        color: "#fff", border: "none", fontSize: 13, fontWeight: 800,
-                        cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
-                        boxShadow: "0 8px 24px rgba(249,115,22,0.2)", transition: "all 0.2s"
-                      }}
-                    >
-                      {issuingId === bast.id ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" /> Menghubungi Pajak.io...
-                        </>
-                      ) : (
-                        <>
-                          <Send size={16} /> Terbitkan e-Faktur
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-
+            {mainTab === "vat-out" ? <VatOutTab company={company} /> : <VatInTab />}
+          </>
         )}
-
       </div>
     </Layout>
   );
