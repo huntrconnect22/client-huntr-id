@@ -70,3 +70,6 @@ export const adminGetUsers = (params?: { page?: number; per_page?: number; searc
   const queryString = query.toString();
   return apiGet(`/api/admin/users${queryString ? `?${queryString}` : ""}`);
 };
+
+export const adminDeleteUser = (userId: string) =>
+  apiDelete(`/api/admin/users/${userId}`);

@@ -1343,12 +1343,13 @@ function AdminUsersTab() {
                   <th style={thStyle}>PERUSAHAAN</th>
                   <th style={thStyle}>ROLE</th>
                   <th style={thStyle}>BERGABUNG</th>
+                  <th style={{ ...thStyle, textAlign: "center", width: 80 }}>AKSI</th>
                 </tr>
               </thead>
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ ...tdStyle, textAlign: "center", padding: 48, color: "var(--ui-text-muted)" }}>
+                    <td colSpan={7} style={{ ...tdStyle, textAlign: "center", padding: 48, color: "var(--ui-text-muted)" }}>
                       Tidak ada user ditemukan
                     </td>
                   </tr>
@@ -1381,6 +1382,40 @@ function AdminUsersTab() {
                     </td>
                     <td style={{ ...tdStyle, color: "var(--ui-text-muted)", fontSize: 12, whiteSpace: "nowrap" }}>
                       {user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    </td>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>
+                      {!user.company && !user.company_id ? (
+                        <button
+                          onClick={async () => {
+                            const result = await Swal.fire({
+                              icon: "warning",
+                              title: "Hapus User?",
+                              text: `Hapus akun "${user.name || user.email}"? Tindakan ini tidak bisa dibatalkan.`,
+                              showCancelButton: true,
+                              confirmButtonText: "Hapus",
+                              cancelButtonText: "Batal",
+                              confirmButtonColor: "#ef4444",
+                            });
+                            if (!result.isConfirmed) return;
+                            try {
+                              await adminDeleteUser(user.id);
+                              fetchUsers();
+                            } catch (err: any) {
+                              Swal.fire({ icon: "error", title: "Gagal", text: err?.message || "Gagal menghapus user" });
+                            }
+                          }}
+                          style={{
+                            padding: "5px 10px", borderRadius: 7, fontSize: 12, fontWeight: 700,
+                            background: "rgba(239,68,68,0.1)", color: "#ef4444",
+                            border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", gap: 4,
+                          }}
+                        >
+                          <Trash2 size={11} /> Hapus
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1632,7 +1667,7 @@ const inp: React.CSSProperties = {
   transition: "border-color 0.2s, background 0.3s ease, color 0.3s ease",
   minHeight: 48,
 };
-import { adminGetAdmins, adminCreateAdmin, adminGetUsers } from "../lib/api";
+import { adminGetAdmins, adminCreateAdmin, adminGetUsers, adminDeleteUser } from "../lib/api";
 
 function AdminAdminsTab() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
