@@ -85,6 +85,13 @@
   color: var(--ui-text-primary);
 }
 
+/* ── Sidebar nav item hover ───────────────────────────────────────────────── */
+.huntr-nav-item:hover {
+  background: var(--ui-nav-active-bg) !important;
+  color: var(--ui-text-nav-active) !important;
+  border-color: var(--ui-primary-border) !important;
+}
+
 .huntr-header-titles {
   min-width: 0;
   flex: 1;

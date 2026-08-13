@@ -551,7 +551,7 @@ export default function AppShell() {
                     {sectionLabels[section] || section}
                   </div>
                 )}
-                <Link to={to} onClick={handleNavClick} style={{
+                <Link to={to} onClick={handleNavClick} className="huntr-nav-item" style={{
                   display: "flex", alignItems: "center", gap: 9,
                   padding: "8px 12px", borderRadius: 8,
                   background: active ? "var(--ui-nav-active-bg)" : "transparent",
