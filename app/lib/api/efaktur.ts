@@ -144,6 +144,20 @@ export const cancelEFaktur = (id: string) =>
 export const deleteEFaktur = (id: string) =>
   apiDelete<{ message: string }>(`/api/efaktur/${id}`);
 
+/** Download PDF faktur (membutuhkan approvalSign dari DJP) */
+export const downloadEFakturPdf = (id: string) =>
+  apiPost<{ pdf: { KdStatus: string; MsgStatus?: string; data?: { arraybuff?: string } } }>(
+    `/api/efaktur/${id}/pdf`, {}
+  );
+
+/** Verifikasi faktur ke DJP via IF_TXR_063 */
+export const verifyEFaktur = (id: string, payload?: { npwp_pembeli?: string; user_id?: string }) =>
+  apiPost<{ message: string; result: any }>(`/api/efaktur/${id}/verify`, payload ?? {});
+
+/** Verifikasi prepopulated data faktur via IF_TXR_063/prepop */
+export const verifyEFakturPrepop = (id: string, payload?: { npwp_pembeli?: string; user_id?: string }) =>
+  apiPost<{ message: string; result: any }>(`/api/efaktur/${id}/verify-prepop`, payload ?? {});
+
 /** List langsung dari PajakExpress (tidak difilter lokal) */
 export const getVatOutList = (page = 1, limit = 20) =>
   apiGet<{ data: any[]; metaPage: any }>(`/api/efaktur/vat-out/list?page=${page}&limit=${limit}`);

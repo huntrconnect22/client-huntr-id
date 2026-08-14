@@ -6,14 +6,14 @@ import { apiGet } from "../lib/client";
 import {
   issueEFaktur, getEFakturs, getEFaktur, uploadEFaktur,
   cancelEFaktur, deleteEFaktur, getVatInList, prepopulatedVatIn, uploadVatIn,
-  getEFakturReferences, getBastItems,
+  getEFakturReferences, getBastItems, downloadEFakturPdf, verifyEFaktur, verifyEFakturPrepop,
 } from "../lib/api/efaktur";
 import type { EFaktur, VatInItem, PrepopulatedItem, Bast, BastItem, ItemOverride } from "../lib/api/efaktur";
 import {
   Loader2, AlertCircle, ReceiptText, CheckCircle2, RefreshCw,
   Trash2, Send, Upload, X, Search, ArrowDownToLine,
   FileCheck2, FileX2, FileClock, Building2, Calendar,
-  TrendingUp, ChevronRight, Info, ChevronDown,
+  TrendingUp, ChevronRight, Info, ChevronDown, Download, ShieldCheck,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -98,32 +98,25 @@ function ModalHeader({ icon, title, subtitle, onClose }: { icon: React.ReactNode
 function IssueModal({ bast, company, onClose, onDone }: {
   bast: Bast; company: any; onClose(): void; onDone(): void;
 }) {
-  // Step 1: load + configure items | Step 2: signer info
   const [step, setStep] = useState<1 | 2>(1);
-
-  // Reference data
   const [goodsRef, setGoodsRef] = useState<{ code: string; bahasa: string }[]>([]);
   const [satuanRef, setSatuanRef] = useState<{ code: string; description: string }[]>([]);
   const [refsLoading, setRefsLoading] = useState(true);
-
-  // PO items
   const [poItems, setPoItems] = useState<BastItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
-
-  // Per-item overrides (kd_brg + satuan)
-  const [overrides, setOverrides] = useState<Record<string, { kd_brg: string; satuan: string; search: string }>>({});
-  // Dropdown open state
+  const [overrides, setOverrides] = useState<Record<string, { kd_brg: string; satuan: string }>>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownSearch, setDropdownSearch] = useState("");
+  // Ref dan posisi untuk fixed dropdown
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const btnRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
 
-  // Step 2 state
   const [signerName, setSignerName] = useState(company?.owner_name || "DIREKTUR");
   const [signerNpwp, setSignerNpwp] = useState("");
   const [signerKota, setSignerKota] = useState("Jakarta");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load references + items in parallel
   useEffect(() => {
     Promise.all([
       getEFakturReferences().catch(() => ({ goods: [], satuan: [] })),
@@ -132,12 +125,9 @@ function IssueModal({ bast, company, onClose, onDone }: {
       setGoodsRef(refs.goods || []);
       setSatuanRef(refs.satuan || []);
       setRefsLoading(false);
-
       const items = itemsRes.items || [];
       setPoItems(items);
       setItemsLoading(false);
-
-      // Init overrides with smart defaults (UOM → satuan code)
       const uomMap: Record<string, string> = {
         pc: "UM.0021", pcs: "UM.0021", piece: "UM.0021", unit: "UM.0018",
         set: "UM.0019", kg: "UM.0003", kilogram: "UM.0003", ton: "UM.0001",
@@ -145,28 +135,42 @@ function IssueModal({ bast, company, onClose, onDone }: {
         box: "UM.0022", drum: "UM.0036", roll: "UM.0039", lembar: "UM.0020",
         sheet: "UM.0020", karton: "UM.0037",
       };
-      const init: Record<string, { kd_brg: string; satuan: string; search: string }> = {};
-      items.forEach(it => {
-        const satuanCode = uomMap[it.uom?.toLowerCase() || ""] || "UM.0021";
-        init[it.id] = { kd_brg: "000000", satuan: satuanCode, search: "" };
+      const init: Record<string, { kd_brg: string; satuan: string }> = {};
+      items.forEach((it: BastItem) => {
+        init[it.id] = { kd_brg: "000000", satuan: uomMap[it.uom?.toLowerCase() || ""] || "UM.0021" };
       });
       setOverrides(init);
     });
   }, [bast.id]);
 
-  const updateOverride = (id: string, field: "kd_brg" | "satuan", val: string) => {
-    setOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: val } }));
+  // Tutup dropdown saat scroll atau resize
+  useEffect(() => {
+    const close = () => { setOpenDropdown(null); setDropdownPos(null); };
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => { window.removeEventListener("scroll", close, true); window.removeEventListener("resize", close); };
+  }, []);
+
+  const openGoodsDropdown = (id: string) => {
+    const btn = btnRefs.current[id];
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    setOpenDropdown(id);
+    setDropdownSearch("");
   };
+
+  const updateOverride = (id: string, field: "kd_brg" | "satuan", val: string) =>
+    setOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: val } }));
 
   const filteredGoods = (search: string) => {
     if (!search.trim()) return goodsRef.slice(0, 50);
     const q = search.toLowerCase();
-    return goodsRef.filter(g =>
-      g.code.includes(q) || g.bahasa.toLowerCase().includes(q)
-    ).slice(0, 80);
+    return goodsRef.filter(g => g.code.includes(q) || g.bahasa.toLowerCase().includes(q)).slice(0, 80);
   };
 
   const isStep1Valid = poItems.every(it => overrides[it.id]?.kd_brg && overrides[it.id]?.satuan);
+  const totalTagihan = poItems.reduce((s, it) => s + it.total, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,250 +178,173 @@ function IssueModal({ bast, company, onClose, onDone }: {
     setLoading(true); setError(null);
     try {
       const items_override: ItemOverride[] = poItems.map(it => ({
-        id: it.id,
-        nama: it.nama,
-        qty: it.qty,
-        unit_price: it.unit_price,
-        uom: it.uom,
+        id: it.id, nama: it.nama, qty: it.qty, unit_price: it.unit_price, uom: it.uom,
         kd_brg: overrides[it.id]?.kd_brg || "000000",
         satuan: overrides[it.id]?.satuan || "UM.0021",
       }));
-      const res = await issueEFaktur({
-        bast_id: bast.id, signer_name: signerName,
-        signer_npwp: signerNpwp, signer_kota: signerKota,
-        items_override,
-      });
+      const res = await issueEFaktur({ bast_id: bast.id, signer_name: signerName, signer_npwp: signerNpwp, signer_kota: signerKota, items_override });
       onDone();
       Swal.fire({ icon: "success", title: "e-Faktur Diterbitkan", text: `NOFA: ${res.efaktur?.nofa || "Menunggu nomor dari DJP"}`, confirmButtonColor: "#22c55e" });
     } catch (err: any) { setError(err.message || "Gagal menerbitkan e-Faktur."); }
     finally { setLoading(false); }
   };
 
-  const totalTagihan = poItems.reduce((s, it) => s + it.total, 0);
   const isLoading = refsLoading || itemsLoading;
 
   return (
-    <Modal onClose={onClose} maxWidth={640}>
-      <ModalHeader
-        icon={<Send size={20} />}
-        title={step === 1 ? "Pilih Kode Barang DJP" : "Data Penandatangan"}
-        subtitle={step === 1
-          ? `PO: ${bast.purchase_order?.po_number || bast.bast_number} · ${poItems.length} item`
-          : "Lengkapi info penandatangan untuk upload ke DJP"}
-        onClose={onClose}
-      />
+    <>
+      <Modal onClose={onClose} maxWidth={600}>
+        <ModalHeader icon={<Send size={20} />} title={step === 1 ? "Pilih Kode Barang DJP" : "Data Penandatangan"} subtitle={step === 1 ? `PO: ${bast.purchase_order?.po_number || bast.bast_number} · ${poItems.length} item` : "Lengkapi info penandatangan"} onClose={onClose} />
 
-      {/* Step indicator */}
-      <div style={{ display: "flex", padding: "12px 20px 0", gap: 8 }}>
-        {[1, 2].map(s => (
-          <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
-            <div style={{
-              width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 11, fontWeight: 700, flexShrink: 0,
-              background: step >= s ? "var(--ui-primary)" : "var(--ui-bg-inset)",
-              color: step >= s ? "#fff" : "var(--ui-text-muted)",
-              border: `1px solid ${step >= s ? "var(--ui-primary)" : "var(--ui-border)"}`,
-            }}>{s}</div>
-            <div style={{ fontSize: 11, color: step === s ? "var(--ui-text-primary)" : "var(--ui-text-muted)", fontWeight: step === s ? 700 : 400 }}>
-              {s === 1 ? "Kode Barang" : "Penandatangan"}
+        {/* Step indicator */}
+        <div style={{ display: "flex", padding: "12px 20px 0", gap: 8 }}>
+          {[1, 2].map(s => (
+            <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, background: step >= s ? "var(--ui-primary)" : "var(--ui-bg-inset)", color: step >= s ? "#fff" : "var(--ui-text-muted)", border: `1px solid ${step >= s ? "var(--ui-primary)" : "var(--ui-border)"}` }}>{s}</div>
+              <div style={{ fontSize: 11, color: step === s ? "var(--ui-text-primary)" : "var(--ui-text-muted)", fontWeight: step === s ? 700 : 400 }}>{s === 1 ? "Kode Barang" : "Penandatangan"}</div>
+              {s < 2 && <div style={{ flex: 1, height: 1, background: step > s ? "var(--ui-primary)" : "var(--ui-border)", marginLeft: 4 }} />}
             </div>
-            {s < 2 && <div style={{ flex: 1, height: 1, background: step > s ? "var(--ui-primary)" : "var(--ui-border)", marginLeft: 4 }} />}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div style={{ padding: "16px 20px 20px" }}>
-        {/* ── STEP 1: item table ── */}
-        {step === 1 && (
-          isLoading ? (
-            <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              <Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} />
-              <span style={{ fontSize: 13, color: "var(--ui-text-muted)" }}>Memuat data item & referensi DJP…</span>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 9, padding: "10px 14px", fontSize: 12, color: "var(--ui-text-muted)", display: "flex", alignItems: "center", gap: 7 }}>
-                <Info size={13} style={{ flexShrink: 0, color: "var(--ui-primary)" }} />
-                Pilih <strong style={{ color: "var(--ui-text-primary)" }}>Kode Barang DJP</strong> dan <strong style={{ color: "var(--ui-text-primary)" }}>Satuan</strong> untuk setiap item. Kode ini sesuai klasifikasi Bea Cukai DJP.
+        <div style={{ padding: "16px 20px 20px" }}>
+          {step === 1 && (
+            isLoading ? (
+              <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                <Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} />
+                <span style={{ fontSize: 13, color: "var(--ui-text-muted)" }}>Memuat data item & referensi DJP…</span>
               </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 9, padding: "10px 14px", fontSize: 12, color: "var(--ui-text-muted)", display: "flex", alignItems: "flex-start", gap: 7 }}>
+                  <Info size={13} style={{ color: "var(--ui-primary)", flexShrink: 0, marginTop: 1 }} />
+                  Pilih <strong style={{ color: "var(--ui-text-primary)" }}>Kode Barang DJP</strong> dan <strong style={{ color: "var(--ui-text-primary)" }}>Satuan</strong> yang sesuai untuk setiap item. Kode ini sesuai klasifikasi DJP.
+                </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: "45vh", overflowY: "auto", overflowX: "visible" }}>
-                {poItems.map((it, idx) => {
-                  const ov = overrides[it.id] || { kd_brg: "000000", satuan: "UM.0021", search: "" };
-                  const selectedGoods = goodsRef.find(g => g.code === ov.kd_brg);
-                  const selectedSatuan = satuanRef.find(s => s.code === ov.satuan);
-                  const isOpen = openDropdown === it.id;
+                {/* Item list — scroll di dalam modal */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: "40vh", overflowY: "auto", paddingRight: 2 }}>
+                  {poItems.map((it, idx) => {
+                    const ov = overrides[it.id] || { kd_brg: "000000", satuan: "UM.0021" };
+                    const selectedGoods = goodsRef.find(g => g.code === ov.kd_brg);
+                    const isOpen = openDropdown === it.id;
 
-                  return (
-                    <div key={it.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 10, padding: "12px 14px" }}>
-                      {/* Item header */}
-                      <div style={{ marginBottom: 10 }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>ITEM {idx + 1}</div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)", wordBreak: "break-word", lineHeight: 1.4 }}>
-                          {it.nama}
-                        </div>
-                        <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>
-                          {it.qty} {it.uom} × Rp {it.unit_price.toLocaleString("id")} = <strong style={{ color: "var(--ui-primary)" }}>Rp {it.total.toLocaleString("id")}</strong>
-                        </div>
-                      </div>
-
-                      {/* Kode Barang — full width, dropdown di bawah */}
-                      <div style={{ marginBottom: 10 }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
-                          Kode Barang DJP <span style={{ color: "var(--ui-status-rejected)" }}>*</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => { setOpenDropdown(isOpen ? null : it.id); setDropdownSearch(""); }}
-                          style={{
-                            width: "100%", padding: "9px 12px", borderRadius: 8, textAlign: "left", cursor: "pointer",
-                            background: "var(--ui-bg-input)", border: `1px solid ${ov.kd_brg !== "000000" ? "var(--ui-primary)" : "var(--ui-border-input)"}`,
-                            fontSize: 12, color: "var(--ui-text-primary)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-                          }}
-                        >
-                          <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
-                            <span style={{ fontFamily: "monospace", fontWeight: 700, color: "var(--ui-primary)", flexShrink: 0, fontSize: 11 }}>{ov.kd_brg}</span>
-                            <span style={{ color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11 }}>
-                              {selectedGoods?.bahasa || "Pilih kode barang DJP…"}
-                            </span>
-                          </span>
-                          <ChevronDown size={12} style={{ flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
-                        </button>
-
-                        {isOpen && (
-                          <div style={{
-                            marginTop: 4, borderRadius: 9, overflow: "hidden",
-                            background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
-                            boxShadow: "var(--ui-glass-shadow)",
-                          }}>
-                            <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--ui-border)" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--ui-bg-input)", borderRadius: 7, padding: "6px 10px" }}>
-                                <Search size={12} style={{ color: "var(--ui-text-muted)", flexShrink: 0 }} />
-                                <input
-                                  autoFocus
-                                  value={dropdownSearch}
-                                  onChange={e => setDropdownSearch(e.target.value)}
-                                  placeholder="Cari kode atau nama barang…"
-                                  style={{ background: "none", border: "none", outline: "none", fontSize: 12, color: "var(--ui-text-primary)", width: "100%" }}
-                                />
-                              </div>
-                            </div>
-                            <div style={{ maxHeight: 180, overflowY: "auto" }}>
-                              {filteredGoods(dropdownSearch).map(g => (
-                                <button
-                                  key={g.code}
-                                  type="button"
-                                  onClick={() => { updateOverride(it.id, "kd_brg", g.code); setOpenDropdown(null); }}
-                                  style={{
-                                    width: "100%", padding: "7px 12px", textAlign: "left", border: "none", cursor: "pointer",
-                                    background: ov.kd_brg === g.code ? "var(--ui-primary-muted)" : "transparent",
-                                    borderBottom: "1px solid var(--ui-border)", display: "flex", alignItems: "center", gap: 10,
-                                  }}
-                                  onMouseEnter={e => { if (ov.kd_brg !== g.code) (e.currentTarget as HTMLButtonElement).style.background = "var(--ui-bg-inset)"; }}
-                                  onMouseLeave={e => { if (ov.kd_brg !== g.code) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-                                >
-                                  <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "var(--ui-primary)", flexShrink: 0, width: 56 }}>{g.code}</span>
-                                  <span style={{ fontSize: 11, color: "var(--ui-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.bahasa}</span>
-                                </button>
-                              ))}
-                              {filteredGoods(dropdownSearch).length === 0 && (
-                                <div style={{ padding: "12px", textAlign: "center", fontSize: 12, color: "var(--ui-text-muted)" }}>Tidak ditemukan</div>
-                              )}
-                            </div>
+                    return (
+                      <div key={it.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 10, padding: "12px 14px" }}>
+                        <div style={{ marginBottom: 10 }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>ITEM {idx + 1}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)", wordBreak: "break-word", lineHeight: 1.4 }}>{it.nama}</div>
+                          <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>
+                            {it.qty} {it.uom} × Rp {it.unit_price.toLocaleString("id")} = <strong style={{ color: "var(--ui-primary)" }}>Rp {it.total.toLocaleString("id")}</strong>
                           </div>
-                        )}
-                      </div>
-
-                      {/* Satuan — full width di bawah */}
-                      <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
-                          Satuan <span style={{ color: "var(--ui-status-rejected)" }}>*</span>
                         </div>
-                        <select
-                          value={ov.satuan}
-                          onChange={e => updateOverride(it.id, "satuan", e.target.value)}
-                          style={{ ...field, padding: "8px 36px 8px 12px", fontSize: 12 }}
-                        >
-                          {satuanRef.map(s => (
-                            <option key={s.code} value={s.code}>{s.code} — {s.description}</option>
-                          ))}
-                        </select>
+
+                        {/* Kode Barang — button trigger fixed dropdown */}
+                        <div style={{ marginBottom: 10 }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+                            Kode Barang DJP <span style={{ color: "var(--ui-status-rejected)" }}>*</span>
+                          </div>
+                          <button
+                            type="button"
+                            ref={el => { btnRefs.current[it.id] = el; }}
+                            onClick={() => isOpen ? (setOpenDropdown(null), setDropdownPos(null)) : openGoodsDropdown(it.id)}
+                            style={{ width: "100%", padding: "9px 12px", borderRadius: 8, textAlign: "left", cursor: "pointer", background: "var(--ui-bg-input)", border: `1px solid ${ov.kd_brg !== "000000" ? "var(--ui-primary)" : "var(--ui-border-input)"}`, fontSize: 12, color: "var(--ui-text-primary)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}
+                          >
+                            <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
+                              <span style={{ fontFamily: "monospace", fontWeight: 700, color: "var(--ui-primary)", flexShrink: 0, fontSize: 11 }}>{ov.kd_brg}</span>
+                              <span style={{ color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11 }}>{selectedGoods?.bahasa || "Pilih kode barang DJP…"}</span>
+                            </span>
+                            <ChevronDown size={12} style={{ flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                          </button>
+                        </div>
+
+                        {/* Satuan */}
+                        <div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>Satuan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></div>
+                          <select value={ov.satuan} onChange={e => updateOverride(it.id, "satuan", e.target.value)} style={{ ...field, padding: "8px 36px 8px 12px", fontSize: 12 }}>
+                            {satuanRef.map(s => <option key={s.code} value={s.code}>{s.code} — {s.description}</option>)}
+                          </select>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
 
-              {/* Summary */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--ui-primary-muted)", border: "1px solid var(--ui-primary-border)", borderRadius: 9 }}>
-                <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{poItems.length} item · Total sebelum PPN</span>
-                <span style={{ fontSize: 15, fontWeight: 900, color: "var(--ui-primary)" }}>Rp {totalTagihan.toLocaleString("id")}</span>
-              </div>
+                {/* Summary */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--ui-primary-muted)", border: "1px solid var(--ui-primary-border)", borderRadius: 9 }}>
+                  <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{poItems.length} item · Total sebelum PPN</span>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: "var(--ui-primary)" }}>Rp {totalTagihan.toLocaleString("id")}</span>
+                </div>
 
-              <div style={{ display: "flex", gap: 10 }}>
-                <button type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  disabled={!isStep1Valid}
-                  style={{ flex: 2, padding: "11px", borderRadius: 9, background: isStep1Valid ? "var(--ui-primary)" : "var(--ui-bg-inset)", color: isStep1Valid ? "#fff" : "var(--ui-text-muted)", border: "none", cursor: isStep1Valid ? "pointer" : "not-allowed", fontWeight: 700, fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
-                  Lanjut ke Penandatangan →
-                </button>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>Batal</button>
+                  <button type="button" onClick={() => setStep(2)} disabled={!isStep1Valid} style={{ flex: 2, padding: "11px", borderRadius: 9, background: isStep1Valid ? "var(--ui-primary)" : "var(--ui-bg-inset)", color: isStep1Valid ? "#fff" : "var(--ui-text-muted)", border: "none", cursor: isStep1Valid ? "pointer" : "not-allowed", fontWeight: 700, fontSize: 13, minHeight: 44 }}>
+                    Lanjut ke Penandatangan →
+                  </button>
+                </div>
               </div>
-            </div>
-          )
-        )}
+            )
+          )}
 
-        {/* ── STEP 2: signer info ── */}
-        {step === 2 && (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Summary items */}
-            <div style={{ background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 9, padding: "10px 14px", fontSize: 12, display: "flex", flexDirection: "column", gap: 4, maxHeight: 120, overflowY: "auto" }}>
-              {poItems.map(it => {
-                const g = goodsRef.find(g => g.code === overrides[it.id]?.kd_brg);
-                return (
+          {step === 2 && (
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 9, padding: "10px 14px", fontSize: 12, display: "flex", flexDirection: "column", gap: 4, maxHeight: 120, overflowY: "auto" }}>
+                {poItems.map(it => (
                   <div key={it.id} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                     <span style={{ color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{it.nama}</span>
                     <span style={{ fontFamily: "monospace", color: "var(--ui-primary)", flexShrink: 0, fontWeight: 700, fontSize: 11 }}>{overrides[it.id]?.kd_brg}</span>
                   </div>
-                );
-              })}
-            </div>
-
-            {error && (
-              <div style={{ padding: "10px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "var(--ui-status-rejected)", display: "flex", gap: 8, alignItems: "flex-start" }}>
-                <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}
+                ))}
               </div>
-            )}
+              {error && <div style={{ padding: "10px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "var(--ui-status-rejected)", display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
+              <div><label style={lbl}>Nama Penandatangan</label><input value={signerName} onChange={e => setSignerName(e.target.value)} required style={field} /></div>
+              <div>
+                <label style={lbl}>NPWP Penandatangan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></label>
+                <input value={signerNpwp} onChange={e => setSignerNpwp(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace", letterSpacing: "0.05em" }} placeholder="16 digit" />
+                <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>{signerNpwp.length}/16 digit</div>
+              </div>
+              <div><label style={lbl}>Kota Penandatangan</label><input value={signerKota} onChange={e => setSignerKota(e.target.value)} required style={field} /></div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>← Kembali</button>
+                <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(249,115,22,0.5)" : "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: loading ? "none" : "0 4px 14px rgba(249,115,22,0.3)" }}>
+                  {loading ? <><Loader2 size={14} className="animate-spin" />Memproses…</> : <><Send size={14} />Terbitkan Sekarang</>}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </Modal>
 
-            <div>
-              <label style={lbl}>Nama Penandatangan</label>
-              <input value={signerName} onChange={e => setSignerName(e.target.value)} required style={field} placeholder="Nama lengkap penandatangan" />
+      {/* Dropdown kode barang — fixed agar tidak tertutup overflow modal */}
+      {openDropdown && dropdownPos && (
+        <div
+          style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, zIndex: 2000, background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 9, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", overflow: "hidden" }}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--ui-border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--ui-bg-input)", borderRadius: 7, padding: "6px 10px" }}>
+              <Search size={12} style={{ color: "var(--ui-text-muted)", flexShrink: 0 }} />
+              <input autoFocus value={dropdownSearch} onChange={e => setDropdownSearch(e.target.value)} placeholder="Cari kode atau nama barang…" style={{ background: "none", border: "none", outline: "none", fontSize: 12, color: "var(--ui-text-primary)", width: "100%" }} />
             </div>
-            <div>
-              <label style={lbl}>NPWP Penandatangan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></label>
-              <input value={signerNpwp} onChange={e => setSignerNpwp(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace", letterSpacing: "0.05em" }} placeholder="16 digit NPWP/NIK" />
-              <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>{signerNpwp.length}/16 digit</div>
-            </div>
-            <div>
-              <label style={lbl}>Kota Penandatangan</label>
-              <input value={signerKota} onChange={e => setSignerKota(e.target.value)} required style={field} placeholder="Jakarta" />
-            </div>
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>
-                ← Kembali
+          </div>
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {filteredGoods(dropdownSearch).map(g => (
+              <button
+                key={g.code}
+                type="button"
+                onMouseDown={() => { updateOverride(openDropdown, "kd_brg", g.code); setOpenDropdown(null); setDropdownPos(null); }}
+                style={{ width: "100%", padding: "7px 12px", textAlign: "left", border: "none", cursor: "pointer", background: overrides[openDropdown]?.kd_brg === g.code ? "var(--ui-primary-muted)" : "transparent", borderBottom: "1px solid var(--ui-border)", display: "flex", alignItems: "center", gap: 10 }}
+                onMouseEnter={e => { if (overrides[openDropdown]?.kd_brg !== g.code) (e.currentTarget as HTMLButtonElement).style.background = "var(--ui-bg-inset)"; }}
+                onMouseLeave={e => { if (overrides[openDropdown]?.kd_brg !== g.code) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              >
+                <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "var(--ui-primary)", flexShrink: 0, width: 56 }}>{g.code}</span>
+                <span style={{ fontSize: 11, color: "var(--ui-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.bahasa}</span>
               </button>
-              <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(249,115,22,0.5)" : "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: loading ? "none" : "0 4px 14px rgba(249,115,22,0.3)" }}>
-                {loading ? <><Loader2 size={14} className="animate-spin" />Memproses…</> : <><Send size={14} />Terbitkan Sekarang</>}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </Modal>
+            ))}
+            {filteredGoods(dropdownSearch).length === 0 && <div style={{ padding: "12px", textAlign: "center", fontSize: 12, color: "var(--ui-text-muted)" }}>Tidak ditemukan</div>}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -483,6 +410,11 @@ function VatOutTab({ company }: { company: any }) {
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [verifyPrepopId, setVerifyPrepopId] = useState<string | null>(null);
+  const [bastLoaded, setBastLoaded] = useState(false);
+  const [bastLoading, setBastLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -502,7 +434,30 @@ function VatOutTab({ company }: { company: any }) {
     finally { setLoading(false); }
   }, [company.id, page]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // Auto-fetch BAST saat user pindah ke tab ready
+  useEffect(() => {
+    if (subTab === "list") fetchData();
+    if (subTab === "ready" && !bastLoaded) fetchBasts();
+  }, [subTab, fetchData]);
+
+  const fetchBasts = async () => {
+    setBastLoading(true);
+    try {
+      const [efRes, bastRes] = await Promise.all([
+        getEFakturs(company.id, 1, 200), // ambil lebih banyak untuk cek duplikat
+        apiGet<{ data: Bast[] }>(`/api/basts?company_id=${company.id}&per_page=100`),
+      ]);
+      setEfakturs(prev => {
+        // merge agar list tab tetap punya data
+        const ids = new Set(efRes.data?.map((e: EFaktur) => e.id) || []);
+        const merged = [...prev.filter(e => !ids.has(e.id)), ...(efRes.data || [])];
+        return merged;
+      });
+      setBasts(bastRes?.data || []);
+      setBastLoaded(true);
+    } catch { /* silent */ }
+    finally { setBastLoading(false); }
+  };
 
   const readyBasts = basts.filter(b =>
     b.status?.toLowerCase() === "completed" && !efakturs.some(ef => ef.bast_id === b.id)
@@ -548,6 +503,66 @@ function VatOutTab({ company }: { company: any }) {
       fetchData();
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
     finally { setDeletingId(null); }
+  };
+
+  const handleDownloadPdf = async (ef: EFaktur) => {
+    setDownloadingId(ef.id);
+    try {
+      const res = await downloadEFakturPdf(ef.id);
+      const pdfData = res.pdf;
+      const arraybuff = pdfData?.data?.arraybuff;
+      if (!arraybuff) {
+        throw new Error(pdfData?.MsgStatus || "PDF tidak tersedia. Pastikan faktur sudah APPROVED oleh DJP.");
+      }
+      // Buka PDF dari base64
+      const dataUri = arraybuff.startsWith("data:application/pdf;base64,")
+        ? arraybuff : `data:application/pdf;base64,${arraybuff}`;
+      const win = window.open();
+      if (win) {
+        win.document.write(`<iframe src="${dataUri}" frameborder="0" style="width:100%;height:100vh"></iframe>`);
+      } else {
+        const link = document.createElement("a");
+        link.href = dataUri;
+        link.download = `efaktur-${ef.nofa || ef.id}.pdf`;
+        link.click();
+      }
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal Download PDF", text: err.message }); }
+    finally { setDownloadingId(null); }
+  };
+
+  const handleVerify = async (ef: EFaktur) => {
+    setVerifyingId(ef.id);
+    try {
+      const res = await verifyEFaktur(ef.id);
+      Swal.fire({ icon: "success", title: "Verifikasi Dikirim", text: res.message || "Tunggu beberapa menit untuk hasil verifikasi dari DJP.", timer: 3000, showConfirmButton: false });
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal Verifikasi", text: err.message }); }
+    finally { setVerifyingId(null); }
+  };
+
+  const handleVerifyPrepop = async (ef: EFaktur) => {
+    setVerifyPrepopId(ef.id);
+    try {
+      const res = await verifyEFakturPrepop(ef.id);
+      // Jika berhasil dan dapat approvalSign, refresh data lokal
+      if (res.result?.data?.approvalSign) {
+        setEfakturs(prev => prev.map(e =>
+          e.id === ef.id
+            ? { ...e, raw_response: { ...(e as any).raw_response, verify_prepop: res.result } }
+            : e
+        ));
+      }
+      Swal.fire({
+        icon: "success",
+        title: "Verify Prepop Berhasil",
+        html: res.result?.data?.approvalSign
+          ? `<p style="font-size:13px">approvalSign diterima dari DJP. Sekarang bisa klik <strong>PDF</strong> untuk download faktur.</p>`
+          : `<p style="font-size:13px">${res.message || "Proses berhasil, coba download PDF sekarang."}</p>`,
+        confirmButtonColor: "#f97316",
+      });
+      // Reload data faktur agar approvalSign tersimpan
+      fetchData();
+    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal Verify Prepop", text: err.message }); }
+    finally { setVerifyPrepopId(null); }
   };
 
   return (
@@ -640,6 +655,19 @@ function VatOutTab({ company }: { company: any }) {
                           <Upload size={12} /> Upload ke DJP
                         </button>
                       )}
+                      {isApproved && (
+                        <>
+                          <button onClick={() => handleDownloadPdf(ef)} disabled={downloadingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                            {downloadingId === ef.id ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} PDF
+                          </button>
+                          <button onClick={() => handleVerify(ef)} disabled={verifyingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(139,92,246,0.08)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                            {verifyingId === ef.id ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />} Verifikasi
+                          </button>
+                          <button onClick={() => handleVerifyPrepop(ef)} disabled={verifyPrepopId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }} title="Ambil approvalSign dari DJP — diperlukan untuk download PDF">
+                            {verifyPrepopId === ef.id ? <Loader2 size={12} className="animate-spin" /> : <FileCheck2 size={12} />} Verify Prepop
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => handleRefresh(ef.id)} disabled={refreshingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "transparent", color: "var(--ui-text-muted)", border: "1px solid var(--ui-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                         <RefreshCw size={12} className={refreshingId === ef.id ? "animate-spin" : ""} /> Refresh
                       </button>
@@ -670,11 +698,18 @@ function VatOutTab({ company }: { company: any }) {
         )
       ) : (
         /* BAST Siap Faktur */
-        readyBasts.length === 0 ? (
+        bastLoading ? (
+          <div style={{ padding: "48px 0", display: "flex", justifyContent: "center" }}>
+            <Loader2 size={28} className="animate-spin" style={{ color: "var(--ui-primary)" }} />
+          </div>
+        ) : readyBasts.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "60px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14 }}>
             <CheckCircle2 size={40} style={{ color: "var(--ui-status-approved)", opacity: 0.4, marginBottom: 14 }} />
             <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ui-text-primary)" }}>Semua BAST sudah dibuatkan faktur</div>
             <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 6 }}>Tidak ada BAST yang menunggu penerbitan e-Faktur.</div>
+            <button onClick={fetchBasts} style={{ marginTop: 14, padding: "7px 16px", borderRadius: 8, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              <RefreshCw size={12} /> Muat Ulang
+            </button>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
