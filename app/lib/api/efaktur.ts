@@ -79,7 +79,36 @@ export interface Bast {
   purchase_order?: { po_number: string };
 }
 
+export interface BastItem {
+  id: string;
+  nama: string;
+  qty: number;
+  unit_price: number;
+  uom: string;
+  total: number;
+}
+
+export interface ItemOverride {
+  id: string;
+  nama: string;
+  qty: number;
+  unit_price: number;
+  uom: string;
+  kd_brg: string;   // kode barang DJP dipilih user
+  satuan: string;   // kode satuan DJP dipilih user
+}
+
 /* ─── VAT OUT endpoints ──────────────────────────────────────────── */
+
+/** Reference data: goods codes + satuan codes dari PajakExpress */
+export const getEFakturReferences = () =>
+  apiGet<{ goods: { code: string; bahasa: string; english: string }[]; satuan: { code: string; description: string }[] }>(
+    "/api/efaktur/references"
+  );
+
+/** Ambil item-item PO dari BAST untuk preview sebelum terbitkan faktur */
+export const getBastItems = (bastId: string) =>
+  apiGet<{ po_number: string; items: BastItem[] }>(`/api/efaktur/bast/${bastId}/items`);
 
 /** Terbitkan e-Faktur baru dari BAST yang sudah completed */
 export const issueEFaktur = (payload: {
@@ -88,6 +117,7 @@ export const issueEFaktur = (payload: {
   signer_jabatan?: string;
   signer_npwp?: string;
   signer_kota?: string;
+  items_override?: ItemOverride[];
 }) => apiPost<{ message: string; efaktur: EFaktur }>("/api/efaktur", payload);
 
 /** List e-Faktur keluaran lokal milik company */

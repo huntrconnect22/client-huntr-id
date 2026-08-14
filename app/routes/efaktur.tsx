@@ -5,49 +5,56 @@ import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { apiGet } from "../lib/client";
 import {
   issueEFaktur, getEFakturs, getEFaktur, uploadEFaktur,
-  cancelEFaktur, deleteEFaktur, getVatInList, prepopulatedVatIn,
-  uploadVatIn, verifyVatIn,
+  cancelEFaktur, deleteEFaktur, getVatInList, prepopulatedVatIn, uploadVatIn,
+  getEFakturReferences, getBastItems,
 } from "../lib/api/efaktur";
-import type { EFaktur, VatInItem, PrepopulatedItem, Bast } from "../lib/api/efaktur";
+import type { EFaktur, VatInItem, PrepopulatedItem, Bast, BastItem, ItemOverride } from "../lib/api/efaktur";
 import {
-  Loader2, AlertCircle, FileText, ReceiptText, CheckCircle2,
-  RefreshCw, Trash2, Calendar, CircleDollarSign, Send,
-  Upload, X, Search, ChevronDown, ArrowDownToLine,
+  Loader2, AlertCircle, ReceiptText, CheckCircle2, RefreshCw,
+  Trash2, Send, Upload, X, Search, ArrowDownToLine,
+  FileCheck2, FileX2, FileClock, Building2, Calendar,
+  TrendingUp, ChevronRight, Info, ChevronDown,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
-/* ─── Status badge helper ────────────────────────────────────────── */
-function StatusBadge({ status }: { status: string }) {
-  const s = status?.toUpperCase() ?? "";
-  let bg = "rgba(249,115,22,0.10)";
-  let color = "var(--ui-primary)";
-  let border = "var(--ui-primary-border)";
-  if (s === "APPROVED") { bg = "rgba(34,197,94,0.10)"; color = "var(--ui-status-approved)"; border = "rgba(34,197,94,0.22)"; }
-  if (s === "CANCELLED") { bg = "rgba(239,68,68,0.10)"; color = "var(--ui-status-rejected)"; border = "rgba(239,68,68,0.22)"; }
-  if (s === "DRAFT") { bg = "rgba(148,163,184,0.12)"; color = "var(--ui-text-muted)"; border = "var(--ui-border)"; }
+/* ─── shared field style ────────────────────────────────────────── */
+const field: React.CSSProperties = {
+  width: "100%", padding: "10px 14px",
+  background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)",
+  borderRadius: 9, fontSize: 14, color: "var(--ui-text-primary)",
+  outline: "none", fontFamily: "inherit",
+  transition: "border-color 0.15s",
+};
+const lbl: React.CSSProperties = {
+  fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)",
+  textTransform: "uppercase", letterSpacing: "0.07em",
+  display: "block", marginBottom: 6,
+};
+
+/* ─── StatusBadge ─────────────────────────────────────────────────── */
+function StatusBadge({ status }: { status?: string | null }) {
+  const s = (status ?? "").toUpperCase();
+  const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
+    APPROVED: { bg: "rgba(34,197,94,0.10)", color: "var(--ui-status-approved)", border: "rgba(34,197,94,0.25)", label: "Approved" },
+    CANCELLED: { bg: "rgba(239,68,68,0.10)", color: "var(--ui-status-rejected)", border: "rgba(239,68,68,0.25)", label: "Cancelled" },
+    DRAFT: { bg: "var(--ui-bg-inset)", color: "var(--ui-text-muted)", border: "var(--ui-border)", label: "Draft" },
+    CREDITED: { bg: "rgba(34,197,94,0.10)", color: "var(--ui-status-approved)", border: "rgba(34,197,94,0.25)", label: "Credited" },
+  };
+  const cfg = map[s] ?? { bg: "var(--ui-primary-muted)", color: "var(--ui-primary)", border: "var(--ui-primary-border)", label: s || "—" };
   return (
-    <span style={{ padding: "3px 10px", borderRadius: 7, background: bg, color, border: `1px solid ${border}`, fontSize: 11, fontWeight: 700 }}>
-      {s || "—"}
+    <span style={{ padding: "3px 9px", borderRadius: 7, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
+      {cfg.label}
     </span>
   );
 }
 
-/* ─── Shared section header ──────────────────────────────────────── */
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ui-text-primary)", marginBottom: 4 }}>
-      {children}
-    </div>
-  );
-}
-
 /* ─── Tab button ─────────────────────────────────────────────────── */
-function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Tab({ active, onClick, children }: { active: boolean; onClick(): void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} style={{
-      padding: "11px 4px", fontSize: 14, fontWeight: 800, border: "none", background: "none", cursor: "pointer",
+      padding: "10px 0", fontSize: 14, fontWeight: 700, border: "none", background: "none", cursor: "pointer",
       color: active ? "var(--ui-text-primary)" : "var(--ui-text-muted)",
-      borderBottom: active ? "3px solid var(--ui-primary)" : "3px solid transparent",
+      borderBottom: active ? "2px solid var(--ui-primary)" : "2px solid transparent",
       transition: "all 0.15s",
     }}>
       {children}
@@ -55,69 +62,424 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   );
 }
 
-/* ─── Upload Modal (manual upload DRAFT → DJP) ───────────────────── */
-function UploadModal({ efaktur, onClose, onDone }: {
-  efaktur: EFaktur;
-  onClose: () => void;
-  onDone: () => void;
+/* ─── Modal wrapper ──────────────────────────────────────────────── */
+function Modal({ onClose, children, maxWidth = 480 }: { onClose(): void; children: React.ReactNode; maxWidth?: number }) {
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 1000, background: "var(--ui-bg-overlay)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, width: "100%", maxWidth, maxHeight: "92dvh", overflowY: "auto", boxShadow: "var(--ui-glass-shadow)" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ─── ModalHeader ────────────────────────────────────────────────── */
+function ModalHeader({ icon, title, subtitle, onClose }: { icon: React.ReactNode; title: string; subtitle?: string; onClose(): void }) {
+  return (
+    <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--ui-border)", display: "flex", alignItems: "flex-start", gap: 14 }}>
+      <div style={{ width: 44, height: 44, borderRadius: 11, background: "var(--ui-primary-muted)", color: "var(--ui-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 800, fontSize: 16, color: "var(--ui-text-primary)" }}>{title}</div>
+        {subtitle && <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 2 }}>{subtitle}</div>}
+      </div>
+      <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", cursor: "pointer", color: "var(--ui-text-muted)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+/* ─── IssueModal — 2-step: pilih kode barang → isi signer → submit ─ */
+function IssueModal({ bast, company, onClose, onDone }: {
+  bast: Bast; company: any; onClose(): void; onDone(): void;
 }) {
+  // Step 1: load + configure items | Step 2: signer info
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Reference data
+  const [goodsRef, setGoodsRef] = useState<{ code: string; bahasa: string }[]>([]);
+  const [satuanRef, setSatuanRef] = useState<{ code: string; description: string }[]>([]);
+  const [refsLoading, setRefsLoading] = useState(true);
+
+  // PO items
+  const [poItems, setPoItems] = useState<BastItem[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
+
+  // Per-item overrides (kd_brg + satuan)
+  const [overrides, setOverrides] = useState<Record<string, { kd_brg: string; satuan: string; search: string }>>({});
+  // Dropdown open state
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [dropdownSearch, setDropdownSearch] = useState("");
+
+  // Step 2 state
+  const [signerName, setSignerName] = useState(company?.owner_name || "DIREKTUR");
+  const [signerNpwp, setSignerNpwp] = useState("");
+  const [signerKota, setSignerKota] = useState("Jakarta");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load references + items in parallel
+  useEffect(() => {
+    Promise.all([
+      getEFakturReferences().catch(() => ({ goods: [], satuan: [] })),
+      getBastItems(bast.id).catch(() => ({ po_number: "", items: [] })),
+    ]).then(([refs, itemsRes]) => {
+      setGoodsRef(refs.goods || []);
+      setSatuanRef(refs.satuan || []);
+      setRefsLoading(false);
+
+      const items = itemsRes.items || [];
+      setPoItems(items);
+      setItemsLoading(false);
+
+      // Init overrides with smart defaults (UOM → satuan code)
+      const uomMap: Record<string, string> = {
+        pc: "UM.0021", pcs: "UM.0021", piece: "UM.0021", unit: "UM.0018",
+        set: "UM.0019", kg: "UM.0003", kilogram: "UM.0003", ton: "UM.0001",
+        l: "UM.0007", liter: "UM.0007", m: "UM.0013", meter: "UM.0013",
+        box: "UM.0022", drum: "UM.0036", roll: "UM.0039", lembar: "UM.0020",
+        sheet: "UM.0020", karton: "UM.0037",
+      };
+      const init: Record<string, { kd_brg: string; satuan: string; search: string }> = {};
+      items.forEach(it => {
+        const satuanCode = uomMap[it.uom?.toLowerCase() || ""] || "UM.0021";
+        init[it.id] = { kd_brg: "000000", satuan: satuanCode, search: "" };
+      });
+      setOverrides(init);
+    });
+  }, [bast.id]);
+
+  const updateOverride = (id: string, field: "kd_brg" | "satuan", val: string) => {
+    setOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: val } }));
+  };
+
+  const filteredGoods = (search: string) => {
+    if (!search.trim()) return goodsRef.slice(0, 50);
+    const q = search.toLowerCase();
+    return goodsRef.filter(g =>
+      g.code.includes(q) || g.bahasa.toLowerCase().includes(q)
+    ).slice(0, 80);
+  };
+
+  const isStep1Valid = poItems.every(it => overrides[it.id]?.kd_brg && overrides[it.id]?.satuan);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signerNpwp.trim()) { setError("NPWP penandatangan wajib diisi."); return; }
+    setLoading(true); setError(null);
+    try {
+      const items_override: ItemOverride[] = poItems.map(it => ({
+        id: it.id,
+        nama: it.nama,
+        qty: it.qty,
+        unit_price: it.unit_price,
+        uom: it.uom,
+        kd_brg: overrides[it.id]?.kd_brg || "000000",
+        satuan: overrides[it.id]?.satuan || "UM.0021",
+      }));
+      const res = await issueEFaktur({
+        bast_id: bast.id, signer_name: signerName,
+        signer_npwp: signerNpwp, signer_kota: signerKota,
+        items_override,
+      });
+      onDone();
+      Swal.fire({ icon: "success", title: "e-Faktur Diterbitkan", text: `NOFA: ${res.efaktur?.nofa || "Menunggu nomor dari DJP"}`, confirmButtonColor: "#22c55e" });
+    } catch (err: any) { setError(err.message || "Gagal menerbitkan e-Faktur."); }
+    finally { setLoading(false); }
+  };
+
+  const totalTagihan = poItems.reduce((s, it) => s + it.total, 0);
+  const isLoading = refsLoading || itemsLoading;
+
+  return (
+    <Modal onClose={onClose} maxWidth={640}>
+      <ModalHeader
+        icon={<Send size={20} />}
+        title={step === 1 ? "Pilih Kode Barang DJP" : "Data Penandatangan"}
+        subtitle={step === 1
+          ? `PO: ${bast.purchase_order?.po_number || bast.bast_number} · ${poItems.length} item`
+          : "Lengkapi info penandatangan untuk upload ke DJP"}
+        onClose={onClose}
+      />
+
+      {/* Step indicator */}
+      <div style={{ display: "flex", padding: "12px 20px 0", gap: 8 }}>
+        {[1, 2].map(s => (
+          <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+            <div style={{
+              width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11, fontWeight: 700, flexShrink: 0,
+              background: step >= s ? "var(--ui-primary)" : "var(--ui-bg-inset)",
+              color: step >= s ? "#fff" : "var(--ui-text-muted)",
+              border: `1px solid ${step >= s ? "var(--ui-primary)" : "var(--ui-border)"}`,
+            }}>{s}</div>
+            <div style={{ fontSize: 11, color: step === s ? "var(--ui-text-primary)" : "var(--ui-text-muted)", fontWeight: step === s ? 700 : 400 }}>
+              {s === 1 ? "Kode Barang" : "Penandatangan"}
+            </div>
+            {s < 2 && <div style={{ flex: 1, height: 1, background: step > s ? "var(--ui-primary)" : "var(--ui-border)", marginLeft: 4 }} />}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ padding: "16px 20px 20px" }}>
+        {/* ── STEP 1: item table ── */}
+        {step === 1 && (
+          isLoading ? (
+            <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              <Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} />
+              <span style={{ fontSize: 13, color: "var(--ui-text-muted)" }}>Memuat data item & referensi DJP…</span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 9, padding: "10px 14px", fontSize: 12, color: "var(--ui-text-muted)", display: "flex", alignItems: "center", gap: 7 }}>
+                <Info size={13} style={{ flexShrink: 0, color: "var(--ui-primary)" }} />
+                Pilih <strong style={{ color: "var(--ui-text-primary)" }}>Kode Barang DJP</strong> dan <strong style={{ color: "var(--ui-text-primary)" }}>Satuan</strong> untuk setiap item. Kode ini sesuai klasifikasi Bea Cukai DJP.
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: "45vh", overflowY: "auto", overflowX: "visible" }}>
+                {poItems.map((it, idx) => {
+                  const ov = overrides[it.id] || { kd_brg: "000000", satuan: "UM.0021", search: "" };
+                  const selectedGoods = goodsRef.find(g => g.code === ov.kd_brg);
+                  const selectedSatuan = satuanRef.find(s => s.code === ov.satuan);
+                  const isOpen = openDropdown === it.id;
+
+                  return (
+                    <div key={it.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 10, padding: "12px 14px" }}>
+                      {/* Item header */}
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>ITEM {idx + 1}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)", wordBreak: "break-word", lineHeight: 1.4 }}>
+                          {it.nama}
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>
+                          {it.qty} {it.uom} × Rp {it.unit_price.toLocaleString("id")} = <strong style={{ color: "var(--ui-primary)" }}>Rp {it.total.toLocaleString("id")}</strong>
+                        </div>
+                      </div>
+
+                      {/* Kode Barang — full width, dropdown di bawah */}
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+                          Kode Barang DJP <span style={{ color: "var(--ui-status-rejected)" }}>*</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setOpenDropdown(isOpen ? null : it.id); setDropdownSearch(""); }}
+                          style={{
+                            width: "100%", padding: "9px 12px", borderRadius: 8, textAlign: "left", cursor: "pointer",
+                            background: "var(--ui-bg-input)", border: `1px solid ${ov.kd_brg !== "000000" ? "var(--ui-primary)" : "var(--ui-border-input)"}`,
+                            fontSize: 12, color: "var(--ui-text-primary)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                          }}
+                        >
+                          <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
+                            <span style={{ fontFamily: "monospace", fontWeight: 700, color: "var(--ui-primary)", flexShrink: 0, fontSize: 11 }}>{ov.kd_brg}</span>
+                            <span style={{ color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11 }}>
+                              {selectedGoods?.bahasa || "Pilih kode barang DJP…"}
+                            </span>
+                          </span>
+                          <ChevronDown size={12} style={{ flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                        </button>
+
+                        {isOpen && (
+                          <div style={{
+                            marginTop: 4, borderRadius: 9, overflow: "hidden",
+                            background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
+                            boxShadow: "var(--ui-glass-shadow)",
+                          }}>
+                            <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--ui-border)" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--ui-bg-input)", borderRadius: 7, padding: "6px 10px" }}>
+                                <Search size={12} style={{ color: "var(--ui-text-muted)", flexShrink: 0 }} />
+                                <input
+                                  autoFocus
+                                  value={dropdownSearch}
+                                  onChange={e => setDropdownSearch(e.target.value)}
+                                  placeholder="Cari kode atau nama barang…"
+                                  style={{ background: "none", border: "none", outline: "none", fontSize: 12, color: "var(--ui-text-primary)", width: "100%" }}
+                                />
+                              </div>
+                            </div>
+                            <div style={{ maxHeight: 180, overflowY: "auto" }}>
+                              {filteredGoods(dropdownSearch).map(g => (
+                                <button
+                                  key={g.code}
+                                  type="button"
+                                  onClick={() => { updateOverride(it.id, "kd_brg", g.code); setOpenDropdown(null); }}
+                                  style={{
+                                    width: "100%", padding: "7px 12px", textAlign: "left", border: "none", cursor: "pointer",
+                                    background: ov.kd_brg === g.code ? "var(--ui-primary-muted)" : "transparent",
+                                    borderBottom: "1px solid var(--ui-border)", display: "flex", alignItems: "center", gap: 10,
+                                  }}
+                                  onMouseEnter={e => { if (ov.kd_brg !== g.code) (e.currentTarget as HTMLButtonElement).style.background = "var(--ui-bg-inset)"; }}
+                                  onMouseLeave={e => { if (ov.kd_brg !== g.code) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                                >
+                                  <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "var(--ui-primary)", flexShrink: 0, width: 56 }}>{g.code}</span>
+                                  <span style={{ fontSize: 11, color: "var(--ui-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.bahasa}</span>
+                                </button>
+                              ))}
+                              {filteredGoods(dropdownSearch).length === 0 && (
+                                <div style={{ padding: "12px", textAlign: "center", fontSize: 12, color: "var(--ui-text-muted)" }}>Tidak ditemukan</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Satuan — full width di bawah */}
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+                          Satuan <span style={{ color: "var(--ui-status-rejected)" }}>*</span>
+                        </div>
+                        <select
+                          value={ov.satuan}
+                          onChange={e => updateOverride(it.id, "satuan", e.target.value)}
+                          style={{ ...field, padding: "8px 36px 8px 12px", fontSize: 12 }}
+                        >
+                          {satuanRef.map(s => (
+                            <option key={s.code} value={s.code}>{s.code} — {s.description}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Summary */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--ui-primary-muted)", border: "1px solid var(--ui-primary-border)", borderRadius: 9 }}>
+                <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{poItems.length} item · Total sebelum PPN</span>
+                <span style={{ fontSize: 15, fontWeight: 900, color: "var(--ui-primary)" }}>Rp {totalTagihan.toLocaleString("id")}</span>
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  disabled={!isStep1Valid}
+                  style={{ flex: 2, padding: "11px", borderRadius: 9, background: isStep1Valid ? "var(--ui-primary)" : "var(--ui-bg-inset)", color: isStep1Valid ? "#fff" : "var(--ui-text-muted)", border: "none", cursor: isStep1Valid ? "pointer" : "not-allowed", fontWeight: 700, fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                  Lanjut ke Penandatangan →
+                </button>
+              </div>
+            </div>
+          )
+        )}
+
+        {/* ── STEP 2: signer info ── */}
+        {step === 2 && (
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Summary items */}
+            <div style={{ background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 9, padding: "10px 14px", fontSize: 12, display: "flex", flexDirection: "column", gap: 4, maxHeight: 120, overflowY: "auto" }}>
+              {poItems.map(it => {
+                const g = goodsRef.find(g => g.code === overrides[it.id]?.kd_brg);
+                return (
+                  <div key={it.id} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                    <span style={{ color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{it.nama}</span>
+                    <span style={{ fontFamily: "monospace", color: "var(--ui-primary)", flexShrink: 0, fontWeight: 700, fontSize: 11 }}>{overrides[it.id]?.kd_brg}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {error && (
+              <div style={{ padding: "10px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "var(--ui-status-rejected)", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}
+              </div>
+            )}
+
+            <div>
+              <label style={lbl}>Nama Penandatangan</label>
+              <input value={signerName} onChange={e => setSignerName(e.target.value)} required style={field} placeholder="Nama lengkap penandatangan" />
+            </div>
+            <div>
+              <label style={lbl}>NPWP Penandatangan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></label>
+              <input value={signerNpwp} onChange={e => setSignerNpwp(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace", letterSpacing: "0.05em" }} placeholder="16 digit NPWP/NIK" />
+              <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>{signerNpwp.length}/16 digit</div>
+            </div>
+            <div>
+              <label style={lbl}>Kota Penandatangan</label>
+              <input value={signerKota} onChange={e => setSignerKota(e.target.value)} required style={field} placeholder="Jakarta" />
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>
+                ← Kembali
+              </button>
+              <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(249,115,22,0.5)" : "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: loading ? "none" : "0 4px 14px rgba(249,115,22,0.3)" }}>
+                {loading ? <><Loader2 size={14} className="animate-spin" />Memproses…</> : <><Send size={14} />Terbitkan Sekarang</>}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/* ─── UploadDJPModal ─────────────────────────────────────────────── */
+function UploadDJPModal({ efaktur, onClose, onDone }: { efaktur: EFaktur; onClose(): void; onDone(): void }) {
   const [tempat, setTempat] = useState("Jakarta");
-  const [npwkNik, setNpwkNik] = useState("");
+  const [npwpNik, setNpwpNik] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!npwkNik.trim()) { setError("NPWP/NIK Penandatangan wajib diisi."); return; }
+    if (!npwpNik.trim()) { setError("NPWP/NIK wajib diisi."); return; }
     setLoading(true); setError(null);
     try {
-      await uploadEFaktur(efaktur.id, { tempat_penandatangan: tempat, npwp_nik_penandatangan: npwkNik });
+      await uploadEFaktur(efaktur.id, { tempat_penandatangan: tempat, npwp_nik_penandatangan: npwpNik });
       onDone();
     } catch (err: any) { setError(err.message || "Gagal upload ke DJP."); }
     finally { setLoading(false); }
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "var(--ui-bg-overlay)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, width: "100%", maxWidth: 440, padding: "24px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ fontWeight: 800, fontSize: 16, color: "var(--ui-text-primary)" }}>Upload ke DJP</div>
-          <button onClick={onClose} style={{ background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", borderRadius: 8, cursor: "pointer", color: "var(--ui-text-muted)", padding: "4px 6px", display: "flex" }}><X size={15} /></button>
+    <Modal onClose={onClose} maxWidth={440}>
+      <ModalHeader icon={<Upload size={20} />} title="Upload ke DJP" subtitle="Kirim faktur draft untuk mendapat nomor resmi" onClose={onClose} />
+      <div style={{ padding: "20px" }}>
+        <div style={{ background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 10, padding: "10px 14px", marginBottom: 18, fontSize: 12 }}>
+          <span style={{ color: "var(--ui-text-muted)" }}>Ref: </span>
+          <strong style={{ color: "var(--ui-text-primary)" }}>{efaktur.no_invoice}</strong>
+          <span style={{ color: "var(--ui-text-muted)", margin: "0 6px" }}>·</span>
+          <span style={{ color: "var(--ui-text-muted)" }}>PE-ID: </span>
+          <strong style={{ color: "var(--ui-text-primary)", fontFamily: "monospace" }}>{efaktur.pajak_express_id}</strong>
         </div>
-        <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginBottom: 18, background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 8, padding: "8px 12px" }}>
-          Faktur ID: <strong style={{ color: "var(--ui-text-primary)" }}>{efaktur.pajak_express_id}</strong>&nbsp;·&nbsp;Ref: <strong style={{ color: "var(--ui-text-primary)" }}>{efaktur.no_invoice}</strong>
-        </div>
-        {error && <div style={{ marginBottom: 14, padding: "9px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, color: "var(--ui-status-rejected)", display: "flex", gap: 7 }}><AlertCircle size={13} />{error}</div>}
+        {error && <div style={{ marginBottom: 14, padding: "10px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, color: "var(--ui-status-rejected)", display: "flex", gap: 7 }}><AlertCircle size={13} />{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", display: "block", marginBottom: 6 }}>Tempat Penandatangan</label>
-            <input value={tempat} onChange={e => setTempat(e.target.value)} required style={{ width: "100%", padding: "10px 14px", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 9, fontSize: 13, color: "var(--ui-text-primary)", outline: "none" }} />
+            <label style={lbl}>Tempat Penandatangan</label>
+            <input value={tempat} onChange={e => setTempat(e.target.value)} required style={field} />
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", display: "block", marginBottom: 6 }}>NPWP / NIK Penandatangan</label>
-            <input value={npwkNik} onChange={e => setNpwkNik(e.target.value)} required placeholder="16 digit" style={{ width: "100%", padding: "10px 14px", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 9, fontSize: 13, color: "var(--ui-text-primary)", outline: "none", fontFamily: "monospace" }} />
+            <label style={lbl}>NPWP / NIK Penandatangan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></label>
+            <input value={npwpNik} onChange={e => setNpwpNik(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace" }} placeholder="16 digit" />
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+          <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
             <button type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Batal</button>
-            <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: "var(--ui-primary)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, minHeight: 44, opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
-              {loading ? <><Loader2 size={14} className="animate-spin" />Mengupload…</> : <><Upload size={14} />Upload ke DJP</>}
+            <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(34,197,94,0.5)" : "linear-gradient(135deg,#10b981,#059669)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+              {loading ? <><Loader2 size={14} className="animate-spin" />Mengirim…</> : <><Upload size={14} />Upload ke DJP</>}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }
 
-/* ─── VAT OUT Tab ────────────────────────────────────────────────── */
+/* ─── VatOutTab ──────────────────────────────────────────────────── */
 function VatOutTab({ company }: { company: any }) {
   const [efakturs, setEfakturs] = useState<EFaktur[]>([]);
   const [basts, setBasts] = useState<Bast[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"list" | "ready">("list");
+  const [subTab, setSubTab] = useState<"list" | "ready">("list");
+  const [issueBast, setIssueBast] = useState<Bast | null>(null);
   const [uploadTarget, setUploadTarget] = useState<EFaktur | null>(null);
-  const [issuingId, setIssuingId] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -136,193 +498,205 @@ function VatOutTab({ company }: { company: any }) {
       setLastPage(efRes.last_page || 1);
       setTotal(efRes.total || 0);
       setBasts(bastRes?.data || []);
-    } catch (err) { console.error(err); }
+    } catch { /* silent */ }
     finally { setLoading(false); }
   }, [company.id, page]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const readyBasts = basts.filter(b => b.status?.toLowerCase() === "completed" && !efakturs.some(ef => ef.bast_id === b.id));
+  const readyBasts = basts.filter(b =>
+    b.status?.toLowerCase() === "completed" && !efakturs.some(ef => ef.bast_id === b.id)
+  );
 
-  const handleIssue = async (bast: Bast) => {
-    const { value } = await Swal.fire({
-      title: "Terbitkan e-Faktur",
-      html: `<div style="text-align:left">
-        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px">Nama Penandatangan</label>
-        <input id="s-name" class="swal2-input" style="margin:0 0 12px;box-sizing:border-box;width:100%" value="${company.owner_name || "DIREKTUR"}">
-        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px">NPWP Penandatangan (16 digit)</label>
-        <input id="s-npwp" class="swal2-input" style="margin:0 0 12px;box-sizing:border-box;width:100;font-family:monospace" placeholder="16 digit">
-        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px">Kota Penandatangan</label>
-        <input id="s-kota" class="swal2-input" style="margin:0;box-sizing:border-box;width:100%" value="Jakarta">
-      </div>`,
-      focusConfirm: false, showCancelButton: true,
-      confirmButtonText: "Terbitkan", cancelButtonText: "Batal", confirmButtonColor: "#f97316",
-      preConfirm: () => ({
-        signer_name: (document.getElementById("s-name") as HTMLInputElement).value,
-        signer_npwp: (document.getElementById("s-npwp") as HTMLInputElement).value,
-        signer_kota: (document.getElementById("s-kota") as HTMLInputElement).value,
-      }),
-    });
-    if (!value) return;
-    setIssuingId(bast.id);
-    try {
-      const res = await issueEFaktur({ bast_id: bast.id, ...value });
-      Swal.fire({ icon: "success", title: "Berhasil!", text: `e-Faktur diterbitkan. NOFA: ${res.efaktur?.nofa || "Menunggu DJP"}`, confirmButtonColor: "#22c55e" });
-      setActiveTab("list"); setPage(1); fetchData(1);
-    } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
-    finally { setIssuingId(null); }
-  };
+  const approvedCount = efakturs.filter(e => e.status?.toUpperCase() === "APPROVED").length;
+  const draftCount = efakturs.filter(e => e.status?.toUpperCase() === "DRAFT").length;
+  const totalPpn = efakturs.filter(e => e.status?.toUpperCase() !== "CANCELLED").reduce((a, e) => a + Number(e.ppn), 0);
 
   const handleRefresh = async (id: string) => {
     setRefreshingId(id);
     try {
       const res = await getEFaktur(id);
       setEfakturs(prev => prev.map(ef => ef.id === id ? { ...ef, ...res.efaktur } : ef));
-      Swal.fire({ icon: "success", title: "Status diperbarui", text: `Status: ${res.efaktur?.status}`, timer: 1500, showConfirmButton: false });
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
     finally { setRefreshingId(null); }
   };
 
-  const handleCancel = async (id: string) => {
-    const ok = await Swal.fire({ title: "Batalkan e-Faktur?", icon: "warning", showCancelButton: true, confirmButtonColor: "#ef4444", confirmButtonText: "Ya, Batalkan", cancelButtonText: "Batal" });
+  const handleCancel = async (ef: EFaktur) => {
+    const ok = await Swal.fire({
+      title: "Batalkan e-Faktur?",
+      html: `<p style="font-size:14px;color:var(--ui-text-secondary)">NOFA: <strong>${ef.nofa}</strong></p>`,
+      icon: "warning", showCancelButton: true,
+      confirmButtonColor: "#ef4444", confirmButtonText: "Ya, Batalkan", cancelButtonText: "Kembali",
+    });
     if (!ok.isConfirmed) return;
-    setCancellingId(id);
+    setCancellingId(ef.id);
     try {
-      await cancelEFaktur(id);
-      Swal.fire({ icon: "success", title: "Dibatalkan!", timer: 1500, showConfirmButton: false });
+      await cancelEFaktur(ef.id);
+      Swal.fire({ icon: "success", title: "Dibatalkan", timer: 1500, showConfirmButton: false });
       fetchData();
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
     finally { setCancellingId(null); }
   };
 
   const handleDelete = async (id: string) => {
-    const ok = await Swal.fire({ title: "Hapus draft ini?", icon: "warning", showCancelButton: true, confirmButtonColor: "#ef4444", confirmButtonText: "Ya, Hapus", cancelButtonText: "Batal" });
+    const ok = await Swal.fire({ title: "Hapus Draft?", icon: "warning", showCancelButton: true, confirmButtonColor: "#ef4444", confirmButtonText: "Hapus", cancelButtonText: "Batal" });
     if (!ok.isConfirmed) return;
     setDeletingId(id);
     try {
       await deleteEFaktur(id);
-      Swal.fire({ icon: "success", title: "Dihapus!", timer: 1200, showConfirmButton: false });
+      Swal.fire({ icon: "success", title: "Dihapus", timer: 1200, showConfirmButton: false });
       fetchData();
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
     finally { setDeletingId(null); }
   };
 
-  const totalDpp = efakturs.reduce((a, e) => !e.status?.toUpperCase().includes("CANCEL") ? a + Number(e.dpp) : a, 0);
-  const totalPpn = efakturs.reduce((a, e) => !e.status?.toUpperCase().includes("CANCEL") ? a + Number(e.ppn) : a, 0);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+
+      {/* Stat strip */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
         {[
-          { label: "Total e-Faktur", value: total, icon: <ReceiptText size={22} />, color: "var(--ui-primary)", bg: "var(--ui-primary-muted)" },
-          { label: "Total DPP", value: `IDR ${totalDpp.toLocaleString()}`, icon: <CircleDollarSign size={22} />, color: "var(--ui-status-approved)", bg: "rgba(34,197,94,0.1)" },
-          { label: "Total PPN", value: `IDR ${totalPpn.toLocaleString()}`, icon: <FileText size={22} />, color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
-          { label: "BAST Siap Faktur", value: readyBasts.length, icon: <CheckCircle2 size={22} />, color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+          { label: "Total Faktur", value: total, icon: <ReceiptText size={18} />, accent: "var(--ui-primary)", bg: "var(--ui-primary-muted)" },
+          { label: "Approved", value: approvedCount, icon: <FileCheck2 size={18} />, accent: "var(--ui-status-approved)", bg: "rgba(34,197,94,0.10)" },
+          { label: "Draft", value: draftCount, icon: <FileClock size={18} />, accent: "#f59e0b", bg: "rgba(245,158,11,0.10)" },
+          { label: "Siap Faktur", value: readyBasts.length, icon: <CheckCircle2 size={18} />, accent: "#3b82f6", bg: "rgba(59,130,246,0.10)" },
+          { label: "Total PPN", value: `Rp ${totalPpn.toLocaleString("id")}`, icon: <TrendingUp size={18} />, accent: "var(--ui-text-primary)", bg: "var(--ui-bg-inset)" },
         ].map(s => (
-          <div key={s.label} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "var(--ui-glass-shadow)" }}>
-            <div style={{ width: 44, height: 44, borderRadius: 11, background: s.bg, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.icon}</div>
+          <div key={s.label} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 9, background: s.bg, color: s.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {s.icon}
+            </div>
             <div>
-              <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: "var(--ui-text-primary)", lineHeight: 1.2, marginTop: 2 }}>{s.value}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--ui-border)", gap: 24 }}>
-        <TabBtn active={activeTab === "list"} onClick={() => setActiveTab("list")}>Daftar e-Faktur ({total})</TabBtn>
-        <TabBtn active={activeTab === "ready"} onClick={() => setActiveTab("ready")}>Siap Diterbitkan ({readyBasts.length})</TabBtn>
+      {/* Sub-tabs */}
+      <div style={{ display: "flex", gap: 24, borderBottom: "1px solid var(--ui-border)" }}>
+        <Tab active={subTab === "list"} onClick={() => setSubTab("list")}>
+          Daftar Faktur Keluaran {total > 0 && <span style={{ fontSize: 11, background: "var(--ui-primary-muted)", color: "var(--ui-primary)", padding: "1px 7px", borderRadius: 20, marginLeft: 6 }}>{total}</span>}
+        </Tab>
+        <Tab active={subTab === "ready"} onClick={() => setSubTab("ready")}>
+          BAST Siap Faktur {readyBasts.length > 0 && <span style={{ fontSize: 11, background: "rgba(245,158,11,0.12)", color: "#f59e0b", padding: "1px 7px", borderRadius: 20, marginLeft: 6 }}>{readyBasts.length}</span>}
+        </Tab>
       </div>
 
       {loading ? (
-        <div style={{ padding: 48, display: "flex", justifyContent: "center" }}><Loader2 size={28} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
-      ) : activeTab === "list" ? (
+        <div style={{ padding: "60px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, color: "var(--ui-text-muted)" }}>
+          <Loader2 size={28} className="animate-spin" style={{ color: "var(--ui-primary)" }} />
+          <span style={{ fontSize: 13 }}>Memuat data…</span>
+        </div>
+      ) : subTab === "list" ? (
         efakturs.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14, color: "var(--ui-text-muted)" }}>
-            <ReceiptText size={36} style={{ marginBottom: 12, opacity: 0.4 }} />
-            <div style={{ fontWeight: 700 }}>Belum ada e-Faktur</div>
-            <div style={{ fontSize: 13, marginTop: 4 }}>Terbitkan dari tab "Siap Diterbitkan".</div>
+          <div style={{ textAlign: "center", padding: "60px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14 }}>
+            <ReceiptText size={40} style={{ color: "var(--ui-text-muted)", opacity: 0.35, marginBottom: 14 }} />
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ui-text-primary)" }}>Belum ada e-Faktur</div>
+            <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 6 }}>Pindah ke tab "BAST Siap Faktur" untuk menerbitkan.</div>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {efakturs.map(ef => (
-              <div key={ef.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
-                <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                      <StatusBadge status={ef.status} />
-                      {ef.nofa && <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>NOFA: {ef.nofa}</span>}
-                      {!ef.nofa && ef.pajak_express_id && <span style={{ fontSize: 11, color: "var(--ui-text-muted)", fontStyle: "italic" }}>Menunggu nomor dari DJP…</span>}
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {efakturs.map(ef => {
+                const isDraft = ef.status?.toUpperCase() === "DRAFT";
+                const isApproved = ef.status?.toUpperCase() === "APPROVED";
+                return (
+                  <div key={ef.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+                    {/* Card header */}
+                    <div style={{ padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
+                      {/* Left icon */}
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: isDraft ? "var(--ui-bg-inset)" : isApproved ? "rgba(34,197,94,0.10)" : "rgba(239,68,68,0.10)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "1px solid var(--ui-border)" }}>
+                        {isDraft ? <FileClock size={18} style={{ color: "var(--ui-text-muted)" }} /> : isApproved ? <FileCheck2 size={18} style={{ color: "var(--ui-status-approved)" }} /> : <FileX2 size={18} style={{ color: "var(--ui-status-rejected)" }} />}
+                      </div>
+                      {/* Main info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                          <StatusBadge status={ef.status} />
+                          {ef.nofa
+                            ? <span style={{ fontSize: 12, fontFamily: "monospace", color: "var(--ui-text-muted)", background: "var(--ui-bg-inset)", padding: "2px 8px", borderRadius: 6 }}>NOFA: {ef.nofa}</span>
+                            : <span style={{ fontSize: 11, color: "var(--ui-text-muted)", fontStyle: "italic" }}>Menunggu nomor dari DJP</span>
+                          }
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ui-text-primary)", marginBottom: 4 }}>{ef.no_invoice || "—"}</div>
+                        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12, color: "var(--ui-text-muted)" }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Calendar size={11} />{ef.tanggal_faktur || "—"}</span>
+                          <span>Masa {ef.masa_pajak}/{ef.tahun_pajak}</span>
+                          {ef.bast && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Building2 size={11} />{ef.bast.bast_number}</span>}
+                        </div>
+                      </div>
+                      {/* Amount */}
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 3 }}>PPN</div>
+                        <div style={{ fontSize: 18, fontWeight: 900, color: "var(--ui-primary)" }}>Rp {Number(ef.ppn).toLocaleString("id")}</div>
+                        <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>DPP Rp {Number(ef.dpp).toLocaleString("id")}</div>
+                      </div>
                     </div>
-                    <div style={{ fontWeight: 800, fontSize: 15, color: "var(--ui-text-primary)", marginBottom: 4 }}>{ef.no_invoice || "—"}</div>
-                    <div style={{ fontSize: 12, color: "var(--ui-text-muted)", display: "flex", gap: 12, flexWrap: "wrap" }}>
-                      <span><Calendar size={11} style={{ display: "inline", marginRight: 3 }} />{ef.tanggal_faktur || "—"}</span>
-                      <span>Masa/Tahun: {ef.masa_pajak}/{ef.tahun_pajak}</span>
-                      {ef.bast && <span>BAST: {ef.bast.bast_number}</span>}
+                    {/* Footer actions */}
+                    <div style={{ padding: "10px 16px", background: "var(--ui-bg-inset)", borderTop: "1px solid var(--ui-border)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end" }}>
+                      {isDraft && (
+                        <button onClick={() => setUploadTarget(ef)} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(34,197,94,0.10)", color: "var(--ui-status-approved)", border: "1px solid rgba(34,197,94,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                          <Upload size={12} /> Upload ke DJP
+                        </button>
+                      )}
+                      <button onClick={() => handleRefresh(ef.id)} disabled={refreshingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "transparent", color: "var(--ui-text-muted)", border: "1px solid var(--ui-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                        <RefreshCw size={12} className={refreshingId === ef.id ? "animate-spin" : ""} /> Refresh
+                      </button>
+                      {isApproved && ef.nofa && (
+                        <button onClick={() => handleCancel(ef)} disabled={cancellingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                          <X size={12} /> Batalkan
+                        </button>
+                      )}
+                      {isDraft && (
+                        <button onClick={() => handleDelete(ef.id)} disabled={deletingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                          <Trash2 size={12} /> Hapus Draft
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, marginBottom: 3 }}>PPN</div>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)" }}>IDR {Number(ef.ppn).toLocaleString()}</div>
-                    <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>DPP: IDR {Number(ef.dpp).toLocaleString()}</div>
-                  </div>
-                </div>
-                <div style={{ padding: "12px 18px", background: "var(--ui-bg-inset)", borderTop: "1px solid var(--ui-border)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>PE-ID: {ef.pajak_express_id || "—"}</span>
-                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-                    {ef.status?.toUpperCase() === "DRAFT" && (
-                      <button onClick={() => setUploadTarget(ef)} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(34,197,94,0.1)", color: "var(--ui-status-approved)", border: "1px solid rgba(34,197,94,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                        <Upload size={12} />Upload DJP
-                      </button>
-                    )}
-                    <button onClick={() => handleRefresh(ef.id)} disabled={refreshingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "var(--ui-bg-card)", color: "var(--ui-text-muted)", border: "1px solid var(--ui-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                      <RefreshCw size={12} className={refreshingId === ef.id ? "animate-spin" : ""} />Refresh
-                    </button>
-                    {ef.status?.toUpperCase() !== "CANCELLED" && ef.nofa && (
-                      <button onClick={() => handleCancel(ef.id)} disabled={cancellingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                        <X size={12} />Cancel
-                      </button>
-                    )}
-                    {ef.status?.toUpperCase() === "DRAFT" && (
-                      <button onClick={() => handleDelete(ef.id)} disabled={deletingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                        <Trash2 size={12} />Hapus
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
+            {/* Pagination */}
             {lastPage > 1 && (
-              <div style={{ display: "flex", justifyContent: "center", gap: 8, paddingTop: 4 }}>
-                <button onClick={() => { setPage(p => Math.max(1, p - 1)); fetchData(page - 1); }} disabled={page === 1} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</button>
-                <span style={{ fontSize: 12, color: "var(--ui-text-muted)", lineHeight: "30px" }}>{page} / {lastPage}</span>
-                <button onClick={() => { setPage(p => Math.min(lastPage, p + 1)); fetchData(page + 1); }} disabled={page === lastPage} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</button>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+                <button onClick={() => { const p = Math.max(1, page - 1); setPage(p); fetchData(p); }} disabled={page === 1} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</button>
+                <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{page} / {lastPage}</span>
+                <button onClick={() => { const p = Math.min(lastPage, page + 1); setPage(p); fetchData(p); }} disabled={page === lastPage} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</button>
               </div>
             )}
-          </div>
+          </>
         )
       ) : (
+        /* BAST Siap Faktur */
         readyBasts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14, color: "var(--ui-text-muted)" }}>
-            <CheckCircle2 size={36} style={{ marginBottom: 12, opacity: 0.4 }} />
-            <div style={{ fontWeight: 700 }}>Semua BAST sudah diproses</div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "60px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14 }}>
+            <CheckCircle2 size={40} style={{ color: "var(--ui-status-approved)", opacity: 0.4, marginBottom: 14 }} />
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ui-text-primary)" }}>Semua BAST sudah dibuatkan faktur</div>
+            <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 6 }}>Tidak ada BAST yang menunggu penerbitan e-Faktur.</div>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {readyBasts.map(bast => (
-              <div key={bast.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                <div>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(34,197,94,0.1)", color: "var(--ui-status-approved)", padding: "2px 9px", borderRadius: 6 }}>COMPLETED BAST</span>
+              <div key={bast.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(34,197,94,0.10)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <CheckCircle2 size={20} style={{ color: "var(--ui-status-approved)" }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-status-approved)", background: "rgba(34,197,94,0.10)", padding: "2px 8px", borderRadius: 6 }}>BAST Selesai</span>
                     <span style={{ fontSize: 12, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>{bast.bast_number}</span>
                   </div>
-                  <div style={{ fontWeight: 800, color: "var(--ui-text-primary)" }}>PO: {bast.purchase_order?.po_number || "N/A"}</div>
-                  <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 3 }}>Tanggal: {bast.bast_date}</div>
+                  <div style={{ fontWeight: 700, color: "var(--ui-text-primary)", fontSize: 14 }}>
+                    PO: {bast.purchase_order?.po_number || "—"}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                    <Calendar size={11} /> {bast.bast_date}
+                  </div>
                 </div>
-                <button onClick={() => handleIssue(bast)} disabled={issuingId === bast.id} style={{ padding: "10px 20px", borderRadius: 9, background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: "0 4px 16px rgba(249,115,22,0.25)", minHeight: 44 }}>
-                  {issuingId === bast.id ? <><Loader2 size={14} className="animate-spin" />Memproses…</> : <><Send size={14} />Terbitkan e-Faktur</>}
+                <button onClick={() => setIssueBast(bast)} style={{ padding: "10px 18px", borderRadius: 9, background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: "0 4px 14px rgba(249,115,22,0.25)", flexShrink: 0, minHeight: 42 }}>
+                  <Send size={14} /> Terbitkan e-Faktur
                 </button>
               </div>
             ))}
@@ -330,27 +704,30 @@ function VatOutTab({ company }: { company: any }) {
         )
       )}
 
+      {/* Modals */}
+      {issueBast && (
+        <IssueModal bast={issueBast} company={company} onClose={() => setIssueBast(null)} onDone={() => { setIssueBast(null); setSubTab("list"); fetchData(1); }} />
+      )}
       {uploadTarget && (
-        <UploadModal efaktur={uploadTarget} onClose={() => setUploadTarget(null)} onDone={() => { setUploadTarget(null); fetchData(); Swal.fire({ icon: "success", title: "Berhasil diupload ke DJP!", timer: 1800, showConfirmButton: false }); }} />
+        <UploadDJPModal efaktur={uploadTarget} onClose={() => setUploadTarget(null)} onDone={() => { setUploadTarget(null); fetchData(); Swal.fire({ icon: "success", title: "Berhasil!", text: "Faktur berhasil diupload ke DJP.", timer: 2000, showConfirmButton: false }); }} />
       )}
     </div>
   );
 }
 
-/* ─── VAT IN Tab ─────────────────────────────────────────────────── */
+/* ─── VatInTab ───────────────────────────────────────────────────── */
 function VatInTab() {
   const now = new Date();
+  const [subTab, setSubTab] = useState<"list" | "prepop">("list");
   const [periode, setPeriode] = useState(`${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`);
   const [vatInList, setVatInList] = useState<VatInItem[]>([]);
   const [prepopList, setPrepopList] = useState<PrepopulatedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [prepopLoading, setPrepopLoading] = useState(false);
-  const [subTab, setSubTab] = useState<"list" | "prepopulated">("list");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
 
-  // Prepop filters
   const [ppTahun, setPpTahun] = useState(String(now.getFullYear()));
   const [ppMasa, setPpMasa] = useState(String(now.getMonth() + 1).padStart(2, "0"));
   const [ppNpwp, setPpNpwp] = useState("");
@@ -362,11 +739,14 @@ function VatInTab() {
       const res = await getVatInList({ page: p, limit: 20, periode });
       setVatInList(res.data || []);
       setTotal(res.metaPage?.totalRow || 0);
-      setLastPage(Math.ceil((res.metaPage?.totalRow || 0) / 20) || 1);
+      const lp = Math.ceil((res.metaPage?.totalRow || 0) / 20) || 1;
+      setLastPage(lp);
       setPage(p);
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
     finally { setLoading(false); }
   }, [periode]);
+
+  useEffect(() => { if (subTab === "list") fetchList(1); }, [subTab, fetchList]);
 
   const fetchPrepop = async () => {
     setPrepopLoading(true);
@@ -377,76 +757,78 @@ function VatInTab() {
     finally { setPrepopLoading(false); }
   };
 
-  useEffect(() => { if (subTab === "list") fetchList(1); }, [subTab, fetchList]);
-
   const handleKredit = async (item: PrepopulatedItem) => {
     const masaPajak = item.TaxInvoiceDate ? String(new Date(item.TaxInvoiceDate).getMonth() + 1).padStart(2, "0") : ppMasa;
-    const ok = await Swal.fire({ title: "Kreditkan Faktur Ini?", text: `No. Faktur: ${item.TaxInvoiceNumber}`, icon: "question", showCancelButton: true, confirmButtonText: "Ya, Kreditkan", cancelButtonText: "Batal", confirmButtonColor: "#f97316" });
+    const ok = await Swal.fire({
+      title: "Kreditkan Faktur Ini?",
+      html: `<p style="font-size:13px;color:var(--ui-text-secondary)">No. Faktur: <strong>${item.TaxInvoiceNumber}</strong><br>Penjual: ${item.SellerTaxpayerName}</p>`,
+      icon: "question", showCancelButton: true,
+      confirmButtonText: "Ya, Kreditkan", cancelButtonText: "Batal", confirmButtonColor: "#f97316",
+    });
     if (!ok.isConfirmed) return;
     try {
       await uploadVatIn({ nomor_faktur: item.TaxInvoiceNumber, masa_pajak: masaPajak, tahun_pajak: item.TaxInvoiceYear, konfirmasi_pengkreditan: 1 });
       Swal.fire({ icon: "success", title: "Berhasil dikreditkan!", timer: 1800, showConfirmButton: false });
+      fetchPrepop();
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
   };
 
-  const inputStyle: React.CSSProperties = { padding: "8px 12px", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 8, fontSize: 12, color: "var(--ui-text-primary)", outline: "none", fontFamily: "monospace" };
+  const inputSm: React.CSSProperties = { ...field, padding: "8px 11px", fontSize: 12, fontFamily: "monospace" };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Sub-tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--ui-border)", gap: 20 }}>
-        <TabBtn active={subTab === "list"} onClick={() => setSubTab("list")}>Daftar Faktur Masukan</TabBtn>
-        <TabBtn active={subTab === "prepopulated"} onClick={() => setSubTab("prepopulated")}>Prepopulated DJP</TabBtn>
+      <div style={{ display: "flex", gap: 24, borderBottom: "1px solid var(--ui-border)" }}>
+        <Tab active={subTab === "list"} onClick={() => setSubTab("list")}>Daftar Faktur Masukan</Tab>
+        <Tab active={subTab === "prepop"} onClick={() => setSubTab("prepop")}>Inquiry Prepopulated DJP</Tab>
       </div>
 
       {subTab === "list" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Filter periode */}
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+          {/* Filter bar */}
+          <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", padding: "14px 16px", background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 10 }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5, textTransform: "uppercase" }}>Periode (MM/YYYY)</div>
-              <input value={periode} onChange={e => setPeriode(e.target.value)} placeholder="01/2025" style={{ ...inputStyle, width: 130 }} />
+              <div style={lbl}>Periode</div>
+              <input value={periode} onChange={e => setPeriode(e.target.value)} placeholder="MM/YYYY" style={{ ...inputSm, width: 120 }} />
             </div>
-            <button onClick={() => fetchList(1)} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 36 }}>
-              <Search size={13} />Tampilkan
+            <button onClick={() => fetchList(1)} disabled={loading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 38 }}>
+              {loading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />} Tampilkan
             </button>
           </div>
 
           {loading ? (
-            <div style={{ padding: 40, display: "flex", justifyContent: "center" }}><Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
+            <div style={{ padding: "48px 0", display: "flex", justifyContent: "center" }}><Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
           ) : vatInList.length === 0 ? (
-            <div style={{ padding: "40px 20px", textAlign: "center", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12, color: "var(--ui-text-muted)" }}>
-              <ArrowDownToLine size={32} style={{ marginBottom: 10, opacity: 0.4 }} />
-              <div style={{ fontWeight: 700 }}>Tidak ada faktur masukan</div>
-              <div style={{ fontSize: 13, marginTop: 4 }}>Coba ubah filter periode.</div>
+            <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12 }}>
+              <ArrowDownToLine size={36} style={{ color: "var(--ui-text-muted)", opacity: 0.35, marginBottom: 12 }} />
+              <div style={{ fontWeight: 700, color: "var(--ui-text-primary)" }}>Tidak ada faktur masukan</div>
+              <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 4 }}>Ubah filter periode lalu klik Tampilkan.</div>
             </div>
           ) : (
             <>
+              <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{total.toLocaleString("id")} faktur masukan ditemukan</div>
               <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
-                        {["No. Faktur", "Penjual", "Tgl Faktur", "DPP", "PPN", "Status", "Kredit"].map(h => (
-                          <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{h.toUpperCase()}</th>
+                        {["No. Faktur", "Penjual", "Tanggal", "DPP", "PPN", "Status", "Kredit"].map(h => (
+                          <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h.toUpperCase()}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {vatInList.map(item => (
-                        <tr key={item.id} style={{ borderBottom: "1px solid var(--ui-border)" }}
+                        <tr key={item.id} style={{ borderBottom: "1px solid var(--ui-border)", transition: "background 0.1s" }}
                           onMouseEnter={e => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
                           onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                           <td style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>{item.nomorfaktur}</td>
                           <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.namatokopenjual || item.npwppenjual}</td>
                           <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{item.tanggalfaktur ? new Date(item.tanggalfaktur).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}</td>
-                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-primary)", whiteSpace: "nowrap", fontWeight: 700 }}>Rp {Number(item.totaldpp).toLocaleString()}</td>
-                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-primary)", whiteSpace: "nowrap", fontWeight: 700 }}>Rp {Number(item.totalppn).toLocaleString()}</td>
+                          <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>Rp {Number(item.totaldpp).toLocaleString("id")}</td>
+                          <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-primary)", whiteSpace: "nowrap" }}>Rp {Number(item.totalppn).toLocaleString("id")}</td>
                           <td style={{ padding: "11px 14px" }}><StatusBadge status={item.statusfaktur} /></td>
                           <td style={{ padding: "11px 14px" }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: item.statuspembeli === "CREDITED" ? "rgba(34,197,94,0.1)" : "var(--ui-bg-input)", color: item.statuspembeli === "CREDITED" ? "var(--ui-status-approved)" : "var(--ui-text-muted)" }}>
-                              {item.statuspembeli || item.buyerstatus || "—"}
-                            </span>
+                            <StatusBadge status={item.statuspembeli || item.buyerstatus || undefined} />
                           </td>
                         </tr>
                       ))}
@@ -455,9 +837,9 @@ function VatInTab() {
                 </div>
               </div>
               {lastPage > 1 && (
-                <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
                   <button onClick={() => fetchList(Math.max(1, page - 1))} disabled={page === 1} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</button>
-                  <span style={{ fontSize: 12, color: "var(--ui-text-muted)", lineHeight: "28px" }}>{page} / {lastPage} · {total.toLocaleString()} total</span>
+                  <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{page} / {lastPage} · {total.toLocaleString("id")} total</span>
                   <button onClick={() => fetchList(Math.min(lastPage, page + 1))} disabled={page === lastPage} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</button>
                 </div>
               )}
@@ -467,48 +849,54 @@ function VatInTab() {
       ) : (
         /* Prepopulated DJP */
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", padding: "14px 16px", background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 10 }}>
-            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>TAHUN PAJAK</div><input value={ppTahun} onChange={e => setPpTahun(e.target.value)} style={{ ...inputStyle, width: 90 }} /></div>
-            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>MASA PAJAK</div><input value={ppMasa} onChange={e => setPpMasa(e.target.value)} placeholder="09" style={{ ...inputStyle, width: 70 }} /></div>
-            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>NPWP PENJUAL (opt.)</div><input value={ppNpwp} onChange={e => setPpNpwp(e.target.value)} placeholder="0623907…" style={{ ...inputStyle, width: 160 }} /></div>
-            <div><div style={{ fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", marginBottom: 5 }}>NO. FAKTUR (opt.)</div><input value={ppNofa} onChange={e => setPpNofa(e.target.value)} style={{ ...inputStyle, width: 160 }} /></div>
-            <button onClick={fetchPrepop} disabled={prepopLoading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 36 }}>
-              {prepopLoading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}Inquiry DJP
+          <div style={{ padding: "16px", background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 10, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div><div style={lbl}>Tahun Pajak</div><input value={ppTahun} onChange={e => setPpTahun(e.target.value)} style={{ ...inputSm, width: 90 }} /></div>
+            <div><div style={lbl}>Masa Pajak</div><input value={ppMasa} onChange={e => setPpMasa(e.target.value)} placeholder="09" style={{ ...inputSm, width: 70 }} /></div>
+            <div style={{ flex: 1, minWidth: 150 }}><div style={lbl}>NPWP Penjual (opsional)</div><input value={ppNpwp} onChange={e => setPpNpwp(e.target.value)} style={{ ...inputSm, width: "100%" }} /></div>
+            <div style={{ flex: 1, minWidth: 150 }}><div style={lbl}>No. Faktur (opsional)</div><input value={ppNofa} onChange={e => setPpNofa(e.target.value)} style={{ ...inputSm, width: "100%" }} /></div>
+            <button onClick={fetchPrepop} disabled={prepopLoading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 38 }}>
+              {prepopLoading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />} Inquiry DJP
             </button>
           </div>
 
-          {prepopList.length > 0 && (
+          {prepopList.length === 0 && !prepopLoading ? (
+            <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--ui-text-muted)", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12 }}>
+              <Search size={32} style={{ opacity: 0.3, marginBottom: 10 }} />
+              <div style={{ fontWeight: 700 }}>Isi filter lalu klik Inquiry DJP</div>
+              <div style={{ fontSize: 13, marginTop: 4 }}>Data prepopulated langsung dari sistem DJP.</div>
+            </div>
+          ) : prepopLoading ? (
+            <div style={{ padding: "48px 0", display: "flex", justifyContent: "center" }}><Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
+          ) : (
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
-                      {["No. Faktur", "Penjual", "Tgl Faktur", "DPP", "PPN", "Status DJP", "Buyer Status", "Aksi"].map(h => (
-                        <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{h}</th>
+                      {["No. Faktur", "Penjual", "Tanggal", "DPP", "PPN", "Status DJP", "Buyer Status", "Aksi"].map(h => (
+                        <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {prepopList.map((item, i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid var(--ui-border)" }}
+                      <tr key={i} style={{ borderBottom: "1px solid var(--ui-border)", transition: "background 0.1s" }}
                         onMouseEnter={e => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
                         onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                         <td style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{item.TaxInvoiceNumber}</td>
                         <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis" }}>{item.SellerTaxpayerName}</td>
                         <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{new Date(item.TaxInvoiceDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</td>
-                        <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700 }}>Rp {item.SellingPrice?.toLocaleString()}</td>
-                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-primary)", fontWeight: 700 }}>Rp {item.VAT?.toLocaleString()}</td>
+                        <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Rp {item.SellingPrice?.toLocaleString("id")}</td>
+                        <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-primary)", whiteSpace: "nowrap" }}>Rp {item.VAT?.toLocaleString("id")}</td>
                         <td style={{ padding: "11px 14px" }}><StatusBadge status={item.TaxInvoiceStatus} /></td>
+                        <td style={{ padding: "11px 14px" }}><StatusBadge status={item.BuyerStatus ?? undefined} /></td>
                         <td style={{ padding: "11px 14px" }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: item.BuyerStatus === "CREDITED" ? "rgba(34,197,94,0.1)" : "var(--ui-bg-input)", color: item.BuyerStatus === "CREDITED" ? "var(--ui-status-approved)" : "var(--ui-text-muted)" }}>
-                            {item.BuyerStatus || "—"}
-                          </span>
-                        </td>
-                        <td style={{ padding: "11px 14px" }}>
-                          {item.BuyerStatus !== "CREDITED" && (
-                            <button onClick={() => handleKredit(item)} style={{ padding: "5px 10px", borderRadius: 7, fontSize: 11, fontWeight: 700, background: "var(--ui-primary-muted)", color: "var(--ui-primary)", border: "1px solid var(--ui-primary-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                              <ArrowDownToLine size={11} />Kreditkan
+                          {item.BuyerStatus !== "CREDITED" ? (
+                            <button onClick={() => handleKredit(item)} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 11, fontWeight: 700, background: "var(--ui-primary-muted)", color: "var(--ui-primary)", border: "1px solid var(--ui-primary-border)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+                              <ArrowDownToLine size={11} /> Kreditkan
                             </button>
+                          ) : (
+                            <span style={{ fontSize: 11, color: "var(--ui-status-approved)" }}>✓ Sudah kredit</span>
                           )}
                         </td>
                       </tr>
@@ -527,39 +915,53 @@ function VatInTab() {
 /* ─── Main Page ──────────────────────────────────────────────────── */
 export default function EFakturPage() {
   const [company, setCompany] = useState<any>(null);
-  const [mainTab, setMainTab] = useState<"vat-out" | "vat-in">("vat-out");
+  const [mainTab, setMainTab] = useState<"out" | "in">("out");
 
   useEffect(() => {
     const stored = localStorage.getItem("active_company");
-    if (stored) {
-      try { setCompany(JSON.parse(stored)); } catch { /* ignore */ }
-    }
+    if (stored) { try { setCompany(JSON.parse(stored)); } catch { /* ignore */ } }
   }, []);
 
-  if (isModuleDisabledInDemo("efaktur")) {
-    return <DemoDisabledBanner module="efaktur" />;
-  }
+  if (isModuleDisabledInDemo("efaktur")) return <DemoDisabledBanner module="efaktur" />;
+
+  const isVendor = company?.type === "vendor";
+  const isBuyer  = company?.type === "buyer";
+
+  // Vendor: hanya Faktur Keluaran (VAT Out)
+  // Buyer:  hanya Faktur Masukan (VAT In)
+  // Kedua role: tampil sesuai konteks masing-masing
+  const subtitle = isVendor
+    ? "Sebagai penjual, Anda menerbitkan Faktur Pajak Keluaran (PPN) kepada pembeli."
+    : isBuyer
+    ? "Sebagai pembeli, Anda mencatat Faktur Pajak Masukan yang diterima dari penjual."
+    : "Kelola Faktur Pajak via PajakExpress.";
 
   return (
-    <Layout title="e-Faktur" subtitle="Faktur Pajak Keluaran & Masukan via PajakExpress">
+    <Layout title="e-Faktur" subtitle={subtitle}>
       <div style={{ width: "100%" }}>
         {!company ? (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ui-text-muted)" }}>
-            <AlertCircle size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--ui-text-muted)" }}>
+            <AlertCircle size={36} style={{ opacity: 0.3, marginBottom: 12 }} />
             <div style={{ fontWeight: 700 }}>Pilih perusahaan terlebih dahulu</div>
           </div>
+        ) : isVendor ? (
+          /* ── VENDOR: hanya lihat Faktur Keluaran ── */
+          <VatOutTab company={company} />
+        ) : isBuyer ? (
+          /* ── BUYER: hanya lihat Faktur Masukan ── */
+          <VatInTab />
         ) : (
+          /* ── Fallback: keduanya (admin / mixed) ── */
           <>
-            {/* Main tabs */}
-            <div style={{ display: "flex", borderBottom: "1px solid var(--ui-border)", gap: 28, marginBottom: 24 }}>
-              <TabBtn active={mainTab === "vat-out"} onClick={() => setMainTab("vat-out")}>
-                Pajak Keluaran (VAT Out)
-              </TabBtn>
-              <TabBtn active={mainTab === "vat-in"} onClick={() => setMainTab("vat-in")}>
-                Pajak Masukan (VAT In)
-              </TabBtn>
+            <div style={{ display: "flex", gap: 28, borderBottom: "1px solid var(--ui-border)", marginBottom: 24 }}>
+              <Tab active={mainTab === "out"} onClick={() => setMainTab("out")}>
+                Faktur Keluaran <span style={{ fontSize: 11, color: "var(--ui-text-muted)", marginLeft: 4 }}>VAT Out</span>
+              </Tab>
+              <Tab active={mainTab === "in"} onClick={() => setMainTab("in")}>
+                Faktur Masukan <span style={{ fontSize: 11, color: "var(--ui-text-muted)", marginLeft: 4 }}>VAT In</span>
+              </Tab>
             </div>
-            {mainTab === "vat-out" ? <VatOutTab company={company} /> : <VatInTab />}
+            {mainTab === "out" ? <VatOutTab company={company} /> : <VatInTab />}
           </>
         )}
       </div>

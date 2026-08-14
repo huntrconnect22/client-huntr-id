@@ -21,7 +21,7 @@ export default function AllRequests() {
     try {
       // Fetch all requests that are 'active' (published global RFQs)
       const res = await apiGet(`/api/rfqs?status=active`);
-      setRequests(res || []);
+      setRequests(Array.isArray(res) ? res : (res?.data ?? []));
     } catch (err) {
       console.error("Failed to fetch global RFQs", err);
     } finally {
