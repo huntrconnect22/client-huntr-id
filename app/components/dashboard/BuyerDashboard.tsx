@@ -7,7 +7,7 @@ import {
   LineChart as RechartsLineChart, Line, AreaChart, Area, CartesianGrid, XAxis, YAxis
 } from "recharts";
 import { 
-  Activity, AlertTriangle, Clock, DollarSign, TrendingDown, PieChart, LineChart, ArrowDownCircle, ClipboardList
+  Activity, AlertTriangle, Clock, DollarSign, TrendingDown, PieChart, LineChart, ArrowDownCircle, ClipboardList, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 const chartTooltipStyle = (accent?: string) => ({
@@ -22,8 +22,122 @@ const chartTooltipStyle = (accent?: string) => ({
 });
 
 import { getOrders } from "../../lib/api";
+import { useMediaQuery, MOBILE_BREAKPOINT } from "../../hooks/useMediaQuery";
+
+const DEPARTMENT_SPEND_PAGE_SIZE = 4;
+
+function DepartmentSpendMobileList({
+  data,
+  colors,
+  formatCurrency,
+  total,
+}: {
+  data: { name: string; value: number }[];
+  colors: string[];
+  formatCurrency: (v: number) => string;
+  total: number;
+}) {
+  const sorted = React.useMemo(() => [...data].sort((a, b) => b.value - a.value), [data]);
+  const [page, setPage] = React.useState(0);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / DEPARTMENT_SPEND_PAGE_SIZE));
+
+  React.useEffect(() => {
+    setPage(0);
+  }, [sorted.length]);
+
+  React.useEffect(() => {
+    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
+  }, [page, totalPages]);
+
+  const pageItems = sorted.slice(
+    page * DEPARTMENT_SPEND_PAGE_SIZE,
+    page * DEPARTMENT_SPEND_PAGE_SIZE + DEPARTMENT_SPEND_PAGE_SIZE,
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {pageItems.map((item, index) => {
+          const globalIndex = page * DEPARTMENT_SPEND_PAGE_SIZE + index;
+          const pct = total > 0 ? (item.value / total) * 100 : 0;
+          const color = colors[globalIndex % colors.length];
+          return (
+            <div key={item.name} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ui-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {item.name}
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)" }}>{formatCurrency(item.value)}</span>
+                  <span style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>{pct.toFixed(1)}%</span>
+                </div>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: "var(--ui-bg-input)", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 3, minWidth: pct > 0 ? 4 : 0 }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {totalPages > 1 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, paddingTop: 4, borderTop: "1px solid var(--ui-border)" }}>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            aria-label="Previous page"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: "1px solid var(--ui-border)",
+              background: "var(--ui-bg-input)",
+              color: page === 0 ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
+              cursor: page === 0 ? "not-allowed" : "pointer",
+              opacity: page === 0 ? 0.5 : 1,
+            }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-muted)" }}>
+            {page + 1} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            aria-label="Next page"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: "1px solid var(--ui-border)",
+              background: "var(--ui-bg-input)",
+              color: page >= totalPages - 1 ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
+              cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
+              opacity: page >= totalPages - 1 ? 0.5 : 1,
+            }}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompany: any }) {
+  const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const [realSpendData, setRealSpendData] = React.useState<{ name: string; value: number }[]>([]);
   const [totalRealSpend, setTotalRealSpend] = React.useState<number>(0);
   const [loadingOrders, setLoadingOrders] = React.useState<boolean>(true);
@@ -132,7 +246,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
 
   const handleDownloadSpendData = () => {
     const headers = ["Department", "Spend Amount (IDR)"];
-    const rows = spendData.map(item => [item.name, item.value]);
+    const rows = realSpendData.map(item => [item.name, item.value]);
     downloadCSV("Spend_Analysis_by_Department", headers, rows);
   };
 
@@ -174,11 +288,11 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
         
         {/* 1. Spend Analysis — stat cards compact, chart full width */}
         <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#fb923c" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0 }}>
+            <h2 style={{ margin: 0, fontSize: isMobile ? 14 : 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#fb923c" }}>
               <PieChart size={18} /> Analisis Pengeluaran (Spend Analysis)
             </h2>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button 
                 onClick={handleDownloadOverallStats} 
                 style={{ 
@@ -241,18 +355,25 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
             </div>
           </div>
           {/* Chart — full width */}
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "18px 20px" }}>
+          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: isMobile ? "14px 16px" : "18px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pengeluaran per Departemen</h3>
-            <div style={{ height: 260, width: "100%" }}>
-              {loadingOrders ? (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 12, color: "var(--ui-text-muted)" }}>
-                  Mengambil data PO...
-                </div>
-              ) : realSpendData.length === 0 || (realSpendData.length === 1 && realSpendData[0].value === 0) ? (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 12, color: "var(--ui-text-muted)" }}>
-                  Belum ada transaksi PO untuk dihitung pengeluarannya.
-                </div>
-              ) : (
+            {loadingOrders ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: isMobile ? 80 : 260, fontSize: 12, color: "var(--ui-text-muted)" }}>
+                Mengambil data PO...
+              </div>
+            ) : realSpendData.length === 0 || (realSpendData.length === 1 && realSpendData[0].value === 0) ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: isMobile ? 80 : 260, fontSize: 12, color: "var(--ui-text-muted)" }}>
+                Belum ada transaksi PO untuk dihitung pengeluarannya.
+              </div>
+            ) : isMobile ? (
+              <DepartmentSpendMobileList
+                data={realSpendData}
+                colors={COLORS}
+                formatCurrency={formatCurrency}
+                total={totalRealSpend}
+              />
+            ) : (
+              <div style={{ height: 260, width: "100%" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsPieChart>
                     <Pie data={realSpendData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
@@ -264,8 +385,8 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                     <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ui-chart-legend)" }} />
                   </RechartsPieChart>
                 </ResponsiveContainer>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </section>
 

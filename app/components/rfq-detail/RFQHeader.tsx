@@ -1,69 +1,47 @@
 import React from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useMediaQuery, MOBILE_BREAKPOINT } from "../../hooks/useMediaQuery";
+
+const btnGhost =
+  "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors";
 
 interface RFQHeaderProps {
   rfq: any;
   isTenderExpired: () => boolean;
+  onRefresh?: () => void;
 }
 
-export function RFQHeader({ rfq, isTenderExpired }: RFQHeaderProps) {
+export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
   const navigate = useNavigate();
-  const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
+  const expired = rfq ? isTenderExpired() : false;
+  const prShort = rfq?.id ? String(rfq.id).substring(0, 8).toUpperCase() : "";
 
   return (
-    <div style={{ 
-      display: "flex", 
-      justifyContent: "space-between", 
-      alignItems: isMobile ? "flex-start" : "center", 
-      marginBottom: 16,
-      flexDirection: isMobile ? "column" : "row",
-      gap: isMobile ? 12 : 0
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{
-            padding: "8px 16px",
-            borderRadius: 10,
-            background: "var(--ui-bg-card)",
-            border: "1px solid var(--ui-border)",
-            color: "var(--ui-text-primary)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 13,
-            fontWeight: 700,
-          }}
-        >
-          <ArrowLeft size={16} /> Back
+    <div className="flex items-center gap-2 flex-wrap">
+      <button type="button" onClick={() => navigate(-1)} className={btnGhost}>
+        <ArrowLeft size={14} /> Back
+      </button>
+      {onRefresh && (
+        <button type="button" onClick={onRefresh} className={btnGhost}>
+          <RefreshCw size={13} /> Refresh
         </button>
-      </div>
-      
+      )}
       {rfq && (
-         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: 6, 
-              padding: "6px 12px", 
-              borderRadius: 8, 
-              fontSize: isMobile ? 11 : 12, 
-              fontWeight: 600, 
-              background: isTenderExpired() ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)", 
-              color: isTenderExpired() ? "#ef4444" : "#22c55e", 
-              border: `1px solid ${isTenderExpired() ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)"}` 
-            }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: isTenderExpired() ? "#ef4444" : "#22c55e" }} />
-              {isTenderExpired() ? "CLOSED" : "ACTIVE"}
-            </div>
-            <div style={{ padding: "6px 12px", borderRadius: 8, fontSize: isMobile ? 11 : 12, fontWeight: 600, background: "var(--ui-bg-card)", color: "var(--ui-text-primary)", border: "1px solid var(--ui-border)" }}>
-              PR #{rfq.id ? String(rfq.id).substring(0, 8).toUpperCase() : ""}
-            </div>
-         </div>
+        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+          <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
+            #{prShort}
+          </span>
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${
+              expired
+                ? "bg-red-500/10 text-red-400"
+                : "bg-emerald-500/10 text-emerald-500"
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${expired ? "bg-red-400" : "bg-emerald-500"}`} />
+            {expired ? "Closed" : "Active"}
+          </span>
+        </div>
       )}
     </div>
   );

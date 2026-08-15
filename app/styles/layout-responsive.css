@@ -200,6 +200,73 @@
   flex-shrink: 0;
 }
 
+.huntr-user-menu-wrap {
+  position: relative;
+  padding-left: 8px;
+  border-left: 1px solid var(--ui-border);
+}
+
+.huntr-user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.huntr-user-menu-btn--open,
+.huntr-user-menu-btn:hover {
+  background: var(--ui-bg-input);
+  border-color: var(--ui-border);
+}
+
+.huntr-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.huntr-user-menu-label {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-width: 0;
+}
+
+.huntr-user-menu-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ui-text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.huntr-user-menu-email {
+  font-size: 10px;
+  color: var(--ui-text-muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
 .huntr-header-company-badge {
   display: flex;
   align-items: center;
@@ -379,9 +446,73 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    padding: 10px var(--ui-layout-padding);
+    min-height: auto;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
 
-  /* Page content scrolls with the document — no inner overflow scroll needed */
+  .huntr-header-leading {
+    align-items: center;
+    min-width: 0;
+    flex: 1;
+    gap: 8px;
+  }
+
+  .huntr-header-titles {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .huntr-header-titles h1 {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .huntr-header-titles p {
+    display: none;
+  }
+
+  .huntr-breadcrumb-scroll {
+    display: none;
+  }
+
+  .huntr-header-actions {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .huntr-menu-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .huntr-user-menu-wrap {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .huntr-user-menu-btn {
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .huntr-user-menu-btn--open,
+  .huntr-user-menu-btn:hover {
+    background: transparent;
+    border-color: transparent;
+  }
+
+  .huntr-user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
   .huntr-page-content {
     overflow: visible;
     overscroll-behavior-y: auto;
@@ -433,14 +564,6 @@
 
   .huntr-header-company-badge {
     display: none;
-  }
-
-  .huntr-main-header {
-    align-items: center;
-  }
-
-  .huntr-header-leading {
-    align-items: center;
   }
 
   .huntr-grid-stats {

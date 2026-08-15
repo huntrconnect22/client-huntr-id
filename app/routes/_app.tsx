@@ -831,31 +831,24 @@ export default function AppShell() {
 
             {/* User Profile Dropdown Topbar */}
             {user && (
-              <div ref={userMenuRef} style={{ position: "relative", paddingLeft: 8, borderLeft: "1px solid var(--ui-border)" }}>
+              <div ref={userMenuRef} className="huntr-user-menu-wrap">
                 <button
+                  type="button"
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   aria-expanded={showUserMenu}
                   aria-haspopup="true"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "4px 8px 4px 4px",
-                    borderRadius: 8,
-                    background: showUserMenu ? "var(--ui-bg-input)" : "transparent",
-                    border: "1px solid",
-                    borderColor: showUserMenu ? "var(--ui-border)" : "transparent",
-                    cursor: "pointer",
-                    transition: "all 0.15s"
-                  }}
+                  aria-label={`User menu, ${user.name}`}
+                  className={`huntr-user-menu-btn${showUserMenu ? " huntr-user-menu-btn--open" : ""}`}
                 >
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#ea580c,#f97316)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0, lineHeight: 1 }}>
+                  <div className="huntr-user-avatar">
                     {user.name?.[0]?.toUpperCase() || "U"}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }} className="hidden md:flex">
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-primary)", lineHeight: 1.2 }}>{user.name}</span>
-                    <span style={{ fontSize: 10, color: "var(--ui-text-muted)", lineHeight: 1.2 }}>{user.email || "No email"}</span>
-                  </div>
+                  {!isMobile && (
+                    <div className="huntr-user-menu-label">
+                      <span className="huntr-user-menu-name">{user.name}</span>
+                      <span className="huntr-user-menu-email">{user.email || "No email"}</span>
+                    </div>
+                  )}
                 </button>
 
                 {showUserMenu && (

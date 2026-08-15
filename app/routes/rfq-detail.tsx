@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import Layout from "../components/Layout";
 import { apiGet, apiPost } from "../lib/api";
@@ -6,12 +6,8 @@ import { aiRankProposals } from "../lib/api/ai";
 import { useEventBusListener } from "../lib/EventBus";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useAppShell } from "./_app";
-import { 
-  ArrowLeft, AlertCircle, Loader2, AlertTriangle
-} from "lucide-react";
+import { AlertCircle, Loader2, AlertTriangle, ArrowRight } from "lucide-react";
 import Swal from "sweetalert2";
-
-// Import our new components
 import { NegotiationModal } from "../components/rfq-detail/NegotiationModal";
 import { RFQHeader } from "../components/rfq-detail/RFQHeader";
 import { RFQDescription } from "../components/rfq-detail/RFQDescription";
@@ -19,6 +15,17 @@ import { RFQItemsTable } from "../components/rfq-detail/RFQItemsTable";
 import { ProposalRankings } from "../components/rfq-detail/ProposalRankings";
 import { AIAnalysisPanel } from "../components/rfq-detail/AIAnalysisPanel";
 import { RFQSidebar } from "../components/rfq-detail/RFQSidebar";
+
+function StatCell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-2 min-w-0">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] truncate">{label}</div>
+      <div className={`text-sm font-bold tabular-nums truncate mt-0.5 ${accent ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
 
 export default function RfqDetail() {
   const { id } = useParams<{ id: string }>();
@@ -31,75 +38,39 @@ export default function RfqDetail() {
   const [error, setError] = useState<string | null>(null);
   const [awardingProposal, setAwardingProposal] = useState<string | number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Double submit prevention
   const isProcessing = useRef(false);
 
-  const isBuyer = company?.type === 'buyer';
-  const isVendor = company?.type === 'vendor';
+  const isBuyer = company?.type === "buyer";
+  const isVendor = company?.type === "vendor";
   const isOwner = company?.owner_id === user?.id;
   const isManager = user?.role === "manager" || isOwner;
   const canApproveOrAward = isBuyer && isManager;
 
-  // Negotiation State
   const [showNegModal, setShowNegModal] = useState(false);
   const [selectedNegProposal, setSelectedNegProposal] = useState<any>(null);
-
-  // AI Ranking State
   const [aiRankings, setAiRankings] = useState<any>(null);
   const [aiRankLoading, setAiRankLoading] = useState(false);
   const [aiRankError, setAiRankError] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
-
-  // Invite Vendor State
   const [inviteWhatsapp, setInviteWhatsapp] = useState("");
   const [inviting, setInviting] = useState(false);
 
-  const handleInviteVendor = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteWhatsapp) return;
-    setInviting(true);
+  const fetchRankings = useCallback(async (rfqId: string | number) => {
     try {
-      const res = await apiPost(`/api/rfqs/${id}/invite-vendor`, { whatsapp: inviteWhatsapp });
-      if (res.whatsapp_link) {
-        window.open(res.whatsapp_link, '_blank');
-      }
-      Swal.fire({
-        icon: 'success',
-        title: 'Invitation Sent!',
-        text: 'WhatsApp will open to send the invitation to the vendor.',
-        timer: 3000,
-        showConfirmButton: false
-      });
-      setInviteWhatsapp("");
-    } catch (err: any) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: err.message || 'Failed to send invitation.'
-      });
-    } finally {
-      setInviting(false);
-    }
-  };
-  const handleAiRank = async () => {
-    if (!rfq?.id) return;
-    setAiRankLoading(true);
-    setAiRankError(null);
-    setShowAiPanel(true);
-    try {
-      const res = await aiRankProposals(rfq.id);
-      if (res.success) {
-        setAiRankings(res.data);
-      } else {
-        setAiRankError(res.error || 'AI ranking tidak tersedia.');
-      }
+      const data = await apiGet(`/api/rfqs/${rfqId}/rankings`);
+      setRankings(Array.isArray(data) ? data : data.rankings || []);
     } catch {
-      setAiRankError('Gagal menghubungi AI. Periksa koneksi Anda.');
-    } finally {
-      setAiRankLoading(false);
+      setRankings([]);
     }
-  };
+  }, []);
+
+  const loadRfq = useCallback(async (rfqId: string) => {
+    const response = await apiGet(`/api/rfqs/${rfqId}`);
+    const data = response?.rfq ?? response?.data ?? response;
+    setRfq(data);
+    if (data?.id) fetchRankings(data.id);
+    return data;
+  }, [fetchRankings]);
 
   useEffect(() => {
     if (!id || id === "NaN" || id === "undefined") {
@@ -107,327 +78,232 @@ export default function RfqDetail() {
       setLoading(false);
       return;
     }
-
     setLoading(true);
-    apiGet(`/api/rfqs/${id}`)
-      .then((response) => {
-        const data = response?.rfq ?? response?.data ?? response;
-        setRfq(data);
-        setError(null);
-        if (data?.id) {
-          fetchRankings(data.id);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Unable to load RFQ detail. Please try again.");
-      })
+    loadRfq(id)
+      .then(() => setError(null))
+      .catch(() => setError("Unable to load RFQ detail. Please try again."))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, loadRfq]);
 
-  const fetchRankings = async (rfqId: string | number) => {
+  const handleRefresh = () => {
+    if (!id) return;
+    setLoading(true);
+    loadRfq(id).finally(() => setLoading(false));
+  };
+
+  const handleInviteVendor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteWhatsapp || !id) return;
+    setInviting(true);
     try {
-      const data = await apiGet(`/api/rfqs/${rfqId}/rankings`);
-      setRankings(Array.isArray(data) ? data : data.rankings || []);
-    } catch (err) {
-      console.error("Failed to load RFQ rankings", err);
-      setRankings([]);
+      const res = await apiPost(`/api/rfqs/${id}/invite-vendor`, { whatsapp: inviteWhatsapp });
+      if (res.whatsapp_link) window.open(res.whatsapp_link, "_blank");
+      Swal.fire({ icon: "success", title: "Invitation Sent!", timer: 2500, showConfirmButton: false });
+      setInviteWhatsapp("");
+    } catch (err: any) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to send invitation." });
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleAiRank = async () => {
+    if (!rfq?.id) return;
+    setAiRankLoading(true);
+    setAiRankError(null);
+    setShowAiPanel(true);
+    try {
+      const res = await aiRankProposals(rfq.id);
+      if (res.success) setAiRankings(res.data);
+      else setAiRankError(res.error || "AI ranking unavailable.");
+    } catch {
+      setAiRankError("Failed to reach AI service.");
+    } finally {
+      setAiRankLoading(false);
     }
   };
 
   const handleAwardWinner = async (proposalId: string | number, rfqId: string | number) => {
-    // Prevent double submit
-    if (isProcessing.current) {
-      console.warn("Request already in progress");
-      return;
-    }
-
-    const userSession = localStorage.getItem("user_session");
-    const user = userSession ? JSON.parse(userSession) : null;
-
+    if (isProcessing.current || !user) return;
     isProcessing.current = true;
     setAwardingProposal(proposalId);
     setError(null);
     try {
-      const response = await apiPost(`/api/proposals/${proposalId}/award`, {
-        rfq_id: rfqId,
-        user_id: user?.id
-      });
-      
-      setSuccessMessage("✓ Proposal awarded! Sent to manager for approval.");
-      
-      if (id) {
-        // Refresh RFQ data completely
-        const rfqResponse = await apiGet(`/api/rfqs/${id}`);
-        const newRfqData = rfqResponse?.rfq ?? rfqResponse?.data ?? rfqResponse;
-        setRfq(newRfqData);
-        // Refresh rankings
-        fetchRankings(id);
-      }
-      
-      setTimeout(() => {
-        setSuccessMessage(null);
-        setAwardingProposal(null);
-      }, 3000);
+      await apiPost(`/api/proposals/${proposalId}/award`, { rfq_id: rfqId, user_id: user.id });
+      setSuccessMessage("Proposal awarded — sent to manager for approval.");
+      if (id) await loadRfq(id);
+      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
       setError(err.message || "Failed to award proposal");
-      setAwardingProposal(null);
     } finally {
-      // Reset processing state
-      setTimeout(() => {
-        isProcessing.current = false;
-      }, 500);
+      setAwardingProposal(null);
+      setTimeout(() => { isProcessing.current = false; }, 500);
     }
   };
 
-  const handleNegotiate = (proposal: any) => {
-    setSelectedNegProposal(proposal);
-    setShowNegModal(true);
-  };
-
-  const handleNegotiationSuccess = () => {
-    setShowNegModal(false);
-    setSelectedNegProposal(null);
-    if (id) {
-      // Refresh RFQ data and rankings after negotiation
-      apiGet(`/api/rfqs/${id}`).then((response) => {
-        const data = response?.rfq ?? response?.data ?? response;
-        setRfq(data);
-        fetchRankings(id);
-      });
-    }
-  };
-
-  // EventBus listener for negotiation responses
-  useEventBusListener(['negotiation.responded'], (event) => {
-    if (id) {
-      // Refresh RFQ and rankings when negotiation is responded to
-      apiGet(`/api/rfqs/${id}`).then((response) => {
-        const data = response?.rfq ?? response?.data ?? response;
-        setRfq(data);
-        fetchRankings(id);
-      });
-    }
+  useEventBusListener(["negotiation.responded"], () => {
+    if (id) loadRfq(id);
   });
-  const totalItems = rfq?.items?.reduce((sum: number, item: any) => {
-    return sum + (item.qty || 0);
-  }, 0);
+
+  const isTenderExpired = (): boolean => {
+    if (!rfq || rfq.status !== "active" || !rfq.approved_at) return false;
+    const duration = rfq.duration_days ?? 7;
+    const endsAt = new Date(rfq.approved_at);
+    endsAt.setDate(endsAt.getDate() + duration);
+    return Date.now() > endsAt.getTime();
+  };
 
   const getTenderSummary = (): string => {
     const duration = rfq?.duration_days ?? 7;
-    if (rfq?.status === 'active' && rfq.approved_at) {
+    if (rfq?.status === "active" && rfq.approved_at) {
       const endsAt = new Date(rfq.approved_at);
       endsAt.setDate(endsAt.getDate() + duration);
-      const now = new Date();
-      const diffMs = endsAt.getTime() - now.getTime();
-      if (diffMs <= 0) {
-        return 'Closed';
-      }
+      const diffMs = endsAt.getTime() - Date.now();
+      if (diffMs <= 0) return "Closed";
       const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      return `${daysLeft} day${daysLeft > 1 ? 's' : ''} left`;
+      return `${daysLeft} day${daysLeft !== 1 ? "s" : ""} left`;
     }
-
-    if (rfq?.status === 'draft' || rfq?.status === 'pending_approval') {
-      return `Tender length ${duration} days after approval`;
+    if (rfq?.status === "draft" || rfq?.status === "pending_approval") {
+      return `${duration}d after approval`;
     }
-
-    return `${duration} day${duration > 1 ? 's' : ''}`;
+    return `${duration} days`;
   };
 
-  // Helper function to check if tender is expired
-  const isTenderExpired = (): boolean => {
-    if (!rfq || rfq.status !== 'active' || !rfq.approved_at) {
-      return false; // If not active or no approval date, not expired yet
-    }
+  const canSubmitProposal = (): boolean =>
+    Boolean(rfq && isVendor && rfq.status === "active" && rfq.approved_at && !isTenderExpired());
 
-    const duration = rfq?.duration_days ?? 7;
-    const endsAt = new Date(rfq.approved_at);
-    endsAt.setDate(endsAt.getDate() + duration);
-    const now = new Date();
-    
-    return now.getTime() > endsAt.getTime();
-  };
+  const totalItems = rfq?.items?.reduce((sum: number, item: any) => sum + (item.qty || 0), 0) ?? 0;
+  const lineItems = rfq?.items?.length ?? 0;
+  const isRfqAlreadyAwarded = rankings.some(
+    (r) => r.is_winner || r.proposal?.winner_status === "awarded" || r.proposal?.winner_status === "approved"
+  );
+  const prShort = rfq?.id ? String(rfq.id).substring(0, 8).toUpperCase() : "";
 
-  // Helper function to check if proposals can be submitted
-  const canSubmitProposal = (): boolean => {
-    if (!rfq) return false;
-    
-    // Check if RFQ is active and approved
-    if (rfq.status !== 'active' || !rfq.approved_at) {
-      return false;
-    }
-    
-    // Check if tender hasn't expired
-    if (isTenderExpired()) {
-      return false;
-    }
-    
-    // Check if user is a vendor
-    if (!isVendor) {
-      return false;
-    }
-    
-    return true;
-  };
+  if (loading && !rfq) {
+    return (
+      <Layout title="RFQ Detail" subtitle="Loading...">
+        <div className="flex justify-center py-16">
+          <Loader2 size={22} className="animate-spin text-orange-500" />
+        </div>
+      </Layout>
+    );
+  }
 
-  const isRfqAlreadyAwarded = rankings.some(r => r.is_winner || r.proposal.winner_status === 'awarded' || r.proposal.winner_status === 'approved');
+  if (error && !rfq) {
+    return (
+      <Layout title="RFQ Detail" subtitle="Error">
+        <div className="flex flex-col items-center py-16 gap-3 text-center">
+          <AlertCircle size={28} className="text-red-500" />
+          <p className="text-sm font-semibold text-[var(--ui-text-primary)]">{error}</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!rfq) {
+    return (
+      <Layout title="RFQ Detail" subtitle="Not found">
+        <div className="py-16 text-center text-sm text-[var(--ui-text-muted)]">RFQ not found.</div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout title="RFQ Detail" subtitle="View technical specifications and company profile before submitting your proposal.">
-      <div style={{ width: "100%", paddingBottom: 60, padding: isMobile ? "0 16px 80px" : "0 0 60px" }}>
-        
-        {/* Navigation & Status Header */}
-        <RFQHeader rfq={rfq} isTenderExpired={isTenderExpired} />
+    <Layout
+      title={`RFQ #${prShort}`}
+      subtitle={isMobile ? undefined : rfq.title}
+    >
+      <div className="w-full flex flex-col gap-4 pb-20 lg:pb-4">
+        <RFQHeader rfq={rfq} isTenderExpired={isTenderExpired} onRefresh={handleRefresh} />
 
-        {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: 100 }}>
-            <Loader2 className="animate-spin" size={40} color="#f59e0b" />
-          </div>
-        ) : error ? (
-          <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: 12, color: "#ef4444", display: "flex", gap: 12, alignItems: "center" }}>
-            <AlertCircle size={20} />
-            <span style={{ fontWeight: 600 }}>{error}</span>
-          </div>
-        ) : rfq ? (
-          <div 
-            className="huntr-grid-2col"
-            style={{ 
-              display: "grid", 
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 360px", 
-              gap: 16, 
-              alignItems: "start" 
-            }}
-          >
-            
-            {/* Main Content Area (Left) */}
-            <div style={{ display: "grid", gap: 16 }}>
-              
-              {/* RFQ Header & Description */}
-              <RFQDescription rfq={rfq} successMessage={successMessage} />
-
-              {/* Proposal Rankings */}
-              <ProposalRankings
-                rankings={rankings}
-                canApproveOrAward={canApproveOrAward}
-                isRfqAlreadyAwarded={isRfqAlreadyAwarded}
-                awardingProposal={awardingProposal}
-                isProcessing={isProcessing.current}
-                onNegotiate={handleNegotiate}
-                onAward={handleAwardWinner}
-                onAIRank={handleAiRank}
-                aiRankLoading={aiRankLoading}
-                showAiPanel={showAiPanel}
-              />
-
-              {/* AI Analysis Panel */}
-              <AIAnalysisPanel
-                showAiPanel={showAiPanel}
-                aiRankLoading={aiRankLoading}
-                aiRankError={aiRankError}
-                aiRankings={aiRankings}
-              />
-
-              {/* Items Table */}
-              <RFQItemsTable rfq={rfq} />
-            </div>
-            {/* Sidebar Sticky (Right) */}
-            <RFQSidebar
-              rfq={rfq}
-              canSubmitProposal={canSubmitProposal}
-              canApproveOrAward={canApproveOrAward}
-              isTenderExpired={isTenderExpired}
-              isVendor={isVendor}
-              getTenderSummary={getTenderSummary}
-              totalItems={totalItems}
-              onNavigateToProposals={() => navigate("/proposals", { state: { rfqId: rfq.id } })}
-              onInviteVendor={handleInviteVendor}
-              inviteWhatsapp={inviteWhatsapp}
-              setInviteWhatsapp={setInviteWhatsapp}
-              inviting={inviting}
-            />
-          </div>
-        ) : (
-          <div style={{ color: "var(--ui-text-primary)", background: "var(--ui-bg-card)", padding: 60, borderRadius: 12, textAlign: "center", border: "1px solid var(--ui-border)" }}>
-            <AlertCircle size={40} color="var(--ui-text-muted)" style={{ marginBottom: 16 }} />
-            <div style={{ fontSize: 18, fontWeight: 600 }}>PR Record Not Found</div>
-            <div style={{ color: "var(--ui-text-muted)", fontSize: 14, marginTop: 4 }}>This request may have been closed or the ID is invalid.</div>
+        {error && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-500/25 bg-red-500/10 text-red-400 text-xs font-semibold">
+            <AlertCircle size={14} />
+            {error}
           </div>
         )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <StatCell label="Line Items" value={String(lineItems)} />
+          <StatCell label="Total Qty" value={`${totalItems} units`} />
+          <StatCell label="Proposals" value={String(rankings.length)} accent={rankings.length > 0} />
+          <StatCell label="Duration" value={`${rfq.duration_days ?? 7} days`} />
+          <StatCell label="Time Left" value={getTenderSummary()} />
+        </div>
+
+        <div className="grid lg:grid-cols-[1fr_260px] gap-4 items-start">
+          <div className="flex flex-col gap-4 min-w-0">
+            <RFQDescription rfq={rfq} successMessage={successMessage} />
+            <RFQItemsTable rfq={rfq} />
+            {rfq.status === "active" && (
+              <>
+                <ProposalRankings
+                  rankings={rankings}
+                  canApproveOrAward={canApproveOrAward}
+                  isRfqAlreadyAwarded={isRfqAlreadyAwarded}
+                  awardingProposal={awardingProposal}
+                  isProcessing={isProcessing.current}
+                  onNegotiate={(p) => { setSelectedNegProposal(p); setShowNegModal(true); }}
+                  onAward={handleAwardWinner}
+                  onAIRank={handleAiRank}
+                  aiRankLoading={aiRankLoading}
+                  showAiPanel={showAiPanel}
+                />
+                <AIAnalysisPanel
+                  showAiPanel={showAiPanel}
+                  aiRankLoading={aiRankLoading}
+                  aiRankError={aiRankError}
+                  aiRankings={aiRankings}
+                />
+              </>
+            )}
+          </div>
+
+          <RFQSidebar
+            rfq={rfq}
+            canSubmitProposal={canSubmitProposal}
+            canApproveOrAward={canApproveOrAward}
+            isTenderExpired={isTenderExpired}
+            isVendor={isVendor}
+            getTenderSummary={getTenderSummary}
+            totalItems={totalItems}
+            onNavigateToProposals={() => navigate("/proposals", { state: { rfqId: rfq.id } })}
+            onInviteVendor={handleInviteVendor}
+            inviteWhatsapp={inviteWhatsapp}
+            setInviteWhatsapp={setInviteWhatsapp}
+            inviting={inviting}
+          />
+        </div>
       </div>
 
-      {/* Mobile Floating Action Button for Vendors */}
-      {isMobile && canSubmitProposal() && rfq && (
+      {isMobile && canSubmitProposal() && (
         <button
+          type="button"
           onClick={() => navigate("/proposals", { state: { rfqId: rfq.id } })}
-          style={{
-            position: "fixed",
-            bottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
-            right: 20,
-            zIndex: 90,
-            padding: "16px 24px",
-            borderRadius: 8,
-            background: "linear-gradient(135deg,#f97316,#f59e0b)",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 15,
-            border: "none",
-            cursor: "pointer",
-            boxShadow: "0 8px 24px rgba(249,115,22,0.4)",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
+          className="fixed z-[90] left-4 right-4 bottom-[calc(72px+env(safe-area-inset-bottom,0px))] flex items-center justify-center gap-2 py-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold border border-[var(--ui-border)] lg:hidden"
         >
-          Submit Proposal <ArrowLeft size={18} style={{ transform: "rotate(180deg)" }} />
+          Submit Proposal <ArrowRight size={16} />
         </button>
       )}
-      {/* Mobile Tender Expired Message */}
-      {isMobile && isVendor && rfq && isTenderExpired() && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
-            left: 20,
-            right: 20,
-            zIndex: 90,
-            padding: "16px 20px",
-            borderRadius: 8,
-            background: "rgba(239,68,68,0.1)",
-            color: "#ef4444",
-            fontWeight: 700,
-            fontSize: 14,
-            border: "1px solid rgba(239,68,68,0.2)",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            textAlign: "center",
-            justifyContent: "center",
-          }}
-        >
-          <AlertTriangle size={18} />
-          Tender Period Ended - No More Proposals Accepted
+
+      {isMobile && isVendor && isTenderExpired() && (
+        <div className="fixed z-[90] left-4 right-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-red-500/25 bg-[var(--ui-bg-card)] text-red-400 text-xs font-semibold lg:hidden">
+          <AlertTriangle size={14} />
+          Tender period ended
         </div>
       )}
 
       {showNegModal && selectedNegProposal && (
-        <NegotiationModal 
-          proposal={selectedNegProposal} 
-          onClose={() => {
+        <NegotiationModal
+          proposal={selectedNegProposal}
+          onClose={() => { setShowNegModal(false); setSelectedNegProposal(null); }}
+          onSuccess={() => {
             setShowNegModal(false);
             setSelectedNegProposal(null);
+            if (id) fetchRankings(id);
           }}
-          onSuccess={handleNegotiationSuccess}
         />
       )}
-      
-      <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(-8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </Layout>
   );
 }

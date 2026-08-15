@@ -1,10 +1,13 @@
 import React from "react";
-import { 
-  ArrowLeft, Package, MapPin, ShieldCheck, User, Sparkles, 
-  Loader2, AlertTriangle 
+import {
+  ArrowRight, MapPin, ShieldCheck, User, Sparkles, Loader2, AlertTriangle,
 } from "lucide-react";
-import { getRfqDocumentUrl, getAssetUrl } from "../../lib/assets";
-import { useMediaQuery, MOBILE_BREAKPOINT } from "../../hooks/useMediaQuery";
+
+const btnPrimary =
+  "w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors";
+
+const inputClass =
+  "w-full px-3 py-2 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50";
 
 interface RFQSidebarProps {
   rfq: any;
@@ -21,11 +24,11 @@ interface RFQSidebarProps {
   inviting: boolean;
 }
 
-function SummaryRow({ label, value }: { label: string; value: any }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
-      <span style={{ color: "var(--ui-text-secondary)", fontWeight: 500 }}>{label}</span>
-      <span style={{ fontWeight: 600, color: "var(--ui-text-primary)" }}>{value}</span>
+    <div className="flex items-center justify-between text-xs py-1.5 border-b border-[var(--ui-border)] last:border-0">
+      <span className="text-[var(--ui-text-muted)]">{label}</span>
+      <span className="font-semibold text-[var(--ui-text-primary)] tabular-nums">{value}</span>
     </div>
   );
 }
@@ -42,179 +45,89 @@ export function RFQSidebar({
   onInviteVendor,
   inviteWhatsapp,
   setInviteWhatsapp,
-  inviting
+  inviting,
 }: RFQSidebarProps) {
-  const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
+  const expired = isTenderExpired();
 
   return (
-    <div 
-      className={isMobile ? "huntr-split-layout-aside--mobile-hidden" : ""}
-      style={{ 
-        position: isMobile ? "static" : "sticky", 
-        top: 24, 
-        display: "grid", 
-        gap: 16 
-      }}
-    >
-      
-      {/* Action Card */}
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: 28, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
-        <h3 style={{ margin: "0 0 20px", fontSize: 13, fontWeight: 600, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Tender Summary</h3>
-        
-        <div style={{ display: "grid", gap: 16 }}>
-          <SummaryRow label="Total Quantity" value={`${totalItems} Units`} />
-          <SummaryRow label="Tender Duration" value={`${rfq.duration_days ?? 7} day${(rfq.duration_days ?? 7) > 1 ? 's' : ''}`} />
-          <SummaryRow label="Time Remaining" value={getTenderSummary()} />
+    <aside className="flex flex-col gap-3 lg:sticky lg:top-2">
+      <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-2">
+          Tender Summary
         </div>
+        <Row label="Total quantity" value={`${totalItems} units`} />
+        <Row label="Duration" value={`${rfq.duration_days ?? 7} days`} />
+        <Row label="Time remaining" value={getTenderSummary()} />
 
         {canSubmitProposal() && (
-          <button
-            onClick={onNavigateToProposals}
-            style={{
-              width: "100%",
-              marginTop: 28,
-              padding: "16px",
-              borderRadius: 14,
-              background: "linear-gradient(135deg,#f97316,#f59e0b)",
-              color: "#fff",
-              fontWeight: 600,
-              fontSize: 15,
-              border: "none",
-              cursor: "pointer",
-              boxShadow: "0 8px 24px rgba(249,115,22,0.3)",
-              transition: "all 0.3s ease",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-            }}
-          >
-            Submit Proposal <ArrowLeft size={18} style={{ transform: "rotate(180deg)" }} />
+          <button type="button" onClick={onNavigateToProposals} className={`${btnPrimary} mt-3`}>
+            Submit Proposal <ArrowRight size={13} />
           </button>
         )}
 
-        {/* Tender Expired Message for Vendors */}
-        {isVendor && rfq && isTenderExpired() && (
-          <div style={{
-            width: "100%",
-            marginTop: 28,
-            padding: "16px",
-            borderRadius: 14,
-            background: "rgba(239,68,68,0.1)",
-            color: "#ef4444",
-            fontWeight: 700,
-            fontSize: 14,
-            border: "1px solid rgba(239,68,68,0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 10,
-            textAlign: "center",
-          }}>
-            <AlertTriangle size={18} />
-            Tender Period Ended
+        {isVendor && expired && (
+          <div className="mt-3 flex items-center gap-2 px-2.5 py-2 rounded-lg border border-red-500/25 bg-red-500/10 text-red-400 text-xs font-semibold">
+            <AlertTriangle size={13} />
+            Tender period ended
           </div>
         )}
 
-        {/* Not Vendor Message */}
-        {!isVendor && rfq && rfq.status === 'active' && !isTenderExpired() && (
-          <div style={{
-            width: "100%",
-            marginTop: 28,
-            padding: "16px",
-            borderRadius: 14,
-            background: "rgba(156,163,175,0.1)",
-            color: "var(--ui-text-muted)",
-            fontWeight: 600,
-            fontSize: 14,
-            border: "1px solid rgba(156,163,175,0.2)",
-            textAlign: "center",
-          }}>
+        {!isVendor && rfq?.status === "active" && !expired && (
+          <p className="mt-3 text-[11px] text-[var(--ui-text-muted)] text-center">
             Only vendors can submit proposals
-          </div>
+          </p>
         )}
       </div>
 
-
-
-      {/* Invite Vendor Card (Buyer Only) */}
-      {canApproveOrAward && rfq && (rfq.status === 'active' || rfq.status === 'draft') && !isTenderExpired() && (
-        <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: 24, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 16 }}>
-            <div style={{ background: "rgba(249,115,22,0.1)", color: "#f97316", padding: 8, borderRadius: 10 }}>
-              <User size={20} />
-            </div>
+      {canApproveOrAward && rfq && (rfq.status === "active" || rfq.status === "draft") && !expired && (
+        <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3">
+          <div className="flex items-start gap-2 mb-2">
+            <User size={14} className="text-orange-500 shrink-0 mt-0.5" />
             <div>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--ui-text-primary)" }}>Haven't found a vendor?</h3>
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--ui-text-secondary)", lineHeight: 1.4 }}>
-                Invite them to this platform and let them submit a proposal for your RFQ directly.
+              <p className="text-xs font-semibold text-[var(--ui-text-primary)]">Invite vendor</p>
+              <p className="text-[11px] text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
+                Send WhatsApp invite to submit a proposal.
               </p>
             </div>
           </div>
-          <form onSubmit={onInviteVendor} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <input 
+          <form onSubmit={onInviteVendor} className="flex flex-col gap-2">
+            <input
               type="tel"
               required
               placeholder="e.g. 628123456789"
               value={inviteWhatsapp}
-              onChange={e => setInviteWhatsapp(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "12px 14px",
-                borderRadius: 10,
-                border: "1px solid var(--ui-border-input)",
-                background: "var(--ui-bg-input)",
-                color: "var(--ui-text-primary)",
-                fontSize: 14,
-                outline: "none"
-              }}
+              onChange={(e) => setInviteWhatsapp(e.target.value)}
+              className={inputClass}
             />
             <button
               type="submit"
               disabled={inviting || !inviteWhatsapp}
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: 10,
-                background: inviting || !inviteWhatsapp ? "var(--ui-bg-input)" : "#f97316",
-                color: inviting || !inviteWhatsapp ? "var(--ui-text-muted)" : "#fff",
-                border: inviting || !inviteWhatsapp ? "1px solid var(--ui-border)" : "none",
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: inviting || !inviteWhatsapp ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                transition: "all 0.2s"
-              }}
+              className={`${btnPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {inviting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
-              {inviting ? "Sending Invite..." : "Invite Vendor"}
+              {inviting ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+              {inviting ? "Sending..." : "Invite Vendor"}
             </button>
           </form>
         </div>
       )}
 
-      {/* Delivery Point */}
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-          <MapPin size={14} /> Delivery Point
+      <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1.5">
+          <MapPin size={11} /> Delivery point
         </div>
-        <div style={{ fontSize: 13, color: "var(--ui-text-primary)", lineHeight: 1.6 }}>
+        <p className="text-xs text-[var(--ui-text-primary)] leading-relaxed">
           {rfq.delivery_point || rfq.company?.address || "Not specified"}
-        </div>
+        </p>
       </div>
 
-      {/* Security Box */}
-      <div style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 12, padding: 12 }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "start" }}>
-          <ShieldCheck size={20} color="#f59e0b" style={{ flexShrink: 0 }} />
-          <p style={{ margin: 0, fontSize: 12, color: "var(--ui-text-secondary)", lineHeight: 1.6 }}>
-            Your proposal is protected by Huntr's enterprise security. Only the target buyer can access your commercial data.
+      <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-3">
+        <div className="flex gap-2 items-start">
+          <ShieldCheck size={14} className="text-orange-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">
+            Proposals are protected. Only the target buyer can access commercial data.
           </p>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }
