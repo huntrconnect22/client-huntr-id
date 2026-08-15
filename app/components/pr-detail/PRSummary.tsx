@@ -1,93 +1,77 @@
-import React from 'react';
-import { Package, Calendar, User } from 'lucide-react';
+import React from "react";
+import { User, MapPin, CheckCircle2, FileText, Building2 } from "lucide-react";
+import { getAssetUrl } from "../../lib/assets";
 
 interface PRSummaryProps {
   request: any;
 }
 
-export function PRSummary({ request }: PRSummaryProps) {
-  const totalItems = request?.items?.reduce((sum: number, item: any) => {
-    return sum + (item.qty || 0);
-  }, 0) || 0;
+function MetaRow({
+  icon: Icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <div className="flex items-start gap-2 py-2 border-b border-[var(--ui-border)] last:border-0">
+      <Icon size={13} className="text-[var(--ui-text-muted)] shrink-0 mt-0.5" />
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{label}</div>
+        <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">{value}</div>
+        {sub && <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">{sub}</div>}
+      </div>
+    </div>
+  );
+}
 
-  const estimatedTotal = request?.items?.reduce((sum: number, item: any) => {
-    const price = item.catalogue?.estimated_price || item.estimated_price || 0;
-    const qty = item.qty || 0;
-    return sum + (price * qty);
-  }, 0) || 0;
+export function PRSummary({ request }: PRSummaryProps) {
+  const formatDt = (d?: string) =>
+    d
+      ? new Date(d).toLocaleString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "—";
 
   return (
-    <div style={{ 
-      padding: 16, 
-      borderRadius: 16, 
-      background: "var(--ui-bg-card)", 
-      border: `1px solid var(--ui-border)` 
-    }}>
-      <div style={{ 
-        fontSize: 11, 
-        fontWeight: 700, 
-        textTransform: "uppercase", 
-        letterSpacing: 1, 
-        color: "#9ca3af", 
-        marginBottom: 12 
-      }}>
-        PR Summary
+    <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
+        Audit & Details
       </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ color: "#9ca3af", fontSize: 11 }}>Line items</span>
-        <span style={{ color: "var(--ui-text-primary)", fontWeight: 700, fontSize: 12 }}>
-          {request.items?.length || 0}
-        </span>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ color: "#9ca3af", fontSize: 11 }}>Total quantity</span>
-        <span style={{ color: "var(--ui-text-primary)", fontWeight: 700, fontSize: 12 }}>
-          {totalItems} units
-        </span>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ color: "#9ca3af", fontSize: 11 }}>Estimated total</span>
-        <span style={{ color: "var(--ui-text-primary)", fontWeight: 700, fontSize: 12 }}>
-          Rp {estimatedTotal.toLocaleString()}
-        </span>
-      </div>
-
-      <div style={{ 
-        paddingTop: 8, 
-        borderTop: "1px solid var(--ui-border)", 
-        marginTop: 8 
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-          <User size={12} color="#9ca3af" />
-          <span style={{ color: "#9ca3af", fontSize: 11 }}>Requested by</span>
-        </div>
-        <div style={{ color: "var(--ui-text-primary)", fontWeight: 700, fontSize: 12 }}>
-          {request.user?.name || "Unknown"}
-        </div>
-      </div>
-
-      <div style={{ marginTop: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-          <Calendar size={12} color="#9ca3af" />
-          <span style={{ color: "#9ca3af", fontSize: 11 }}>Created</span>
-        </div>
-        <div style={{ color: "var(--ui-text-primary)", fontWeight: 700, fontSize: 12 }}>
-          {new Date(request.created_at).toLocaleDateString()}
-        </div>
-      </div>
-
+      <MetaRow icon={User} label="Requested by" value={request.user?.name || "Unknown"} sub={formatDt(request.created_at)} />
+      <MetaRow
+        icon={CheckCircle2}
+        label="Approved by"
+        value={request.approved_by || "Not yet approved"}
+        sub={request.approved_at ? formatDt(request.approved_at) : undefined}
+      />
+      {request.company?.name && (
+        <MetaRow icon={Building2} label="Company" value={request.company.name} />
+      )}
       {request.delivery_point && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <Package size={12} color="#9ca3af" />
-            <span style={{ color: "#9ca3af", fontSize: 11 }}>Delivery point</span>
-          </div>
-          <div style={{ color: "var(--ui-text-primary)", fontWeight: 700, fontSize: 12 }}>
-            {request.delivery_point}
-          </div>
+        <MetaRow icon={MapPin} label="Delivery point" value={request.delivery_point} />
+      )}
+      {request.rejection_reason && (
+        <MetaRow icon={FileText} label="Rejection reason" value={request.rejection_reason} />
+      )}
+      {(request.document_path || request.document_url) && (
+        <div className="pt-2 mt-1 border-t border-[var(--ui-border)]">
+          <a
+            href={request.document_url || getAssetUrl(request.document_path)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:underline"
+          >
+            <FileText size={12} /> View attachment
+          </a>
         </div>
       )}
     </div>

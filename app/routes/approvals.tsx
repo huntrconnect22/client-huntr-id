@@ -2,28 +2,74 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { apiGet, apiPost } from "../lib/api";
 import { getAssetUrl } from "../lib/assets";
-import { CheckCircle2, XCircle, Clock, Package, Calendar, User, Search, Loader2, AlertCircle, Trophy, Building2, DollarSign, FileText } from "lucide-react";
+import {
+  CheckCircle2, XCircle, Clock, Package, Calendar, User,
+  Loader2, Trophy, Building2, DollarSign, FileText, ExternalLink,
+} from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAppShell } from "../routes/_app";
 import Swal from "sweetalert2";
+
+const btnSecondary =
+  "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors disabled:opacity-50";
+
+const btnReject =
+  "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-500/25 bg-[var(--ui-bg-input)] text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50";
+
+const btnApprove =
+  "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-emerald-500/25 bg-[var(--ui-bg-input)] text-emerald-500 hover:bg-emerald-500/10 transition-colors disabled:opacity-50";
+
+const btnPrimary =
+  "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors disabled:opacity-50";
+
+function SectionHeader({
+  icon: Icon,
+  iconClass,
+  title,
+  count,
+}: {
+  icon: React.ElementType;
+  iconClass: string;
+  title: string;
+  count?: number;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <Icon size={15} className={iconClass} />
+      <h2 className="text-sm font-bold text-[var(--ui-text-primary)]">{title}</h2>
+      {typeof count === "number" && (
+        <span className="text-xs text-[var(--ui-text-muted)]">({count})</span>
+      )}
+    </div>
+  );
+}
+
+function EmptyBlock({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 gap-2 rounded-lg border border-dashed border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+      <Icon size={24} className="text-[var(--ui-text-muted)] opacity-25" />
+      <p className="text-xs text-[var(--ui-text-muted)]">{message}</p>
+    </div>
+  );
+}
 
 export default function Approvals() {
   const navigate = useNavigate();
   const { user, company: activeCompany } = useAppShell();
   const [requests, setRequests] = useState<any[]>([]);
+  const [awardedProposals, setAwardedProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // Role checking
   const isOwner = activeCompany?.owner_id === user?.id;
   const isManager = user?.role === "manager" || isOwner;
   const isBuyerRole = user?.role === "buyer";
   const isBuyerComp = activeCompany?.type === "buyer";
+  const canAct = isManager && !isBuyerRole;
 
   useEffect(() => {
     if (!user || !activeCompany) return;
-    
-    // Only managers and owners can access approvals, never buyers
+
     if (isBuyerRole || !isManager || !isBuyerComp) {
       navigate("/");
       return;
@@ -31,9 +77,7 @@ export default function Approvals() {
 
     fetchPendingRequests(activeCompany.id);
     fetchAwardedProposals(activeCompany.id);
-  }, [user, activeCompany, isManager, isBuyerRole, isBuyerComp]);
-
-  const [awardedProposals, setAwardedProposals] = useState<any[]>([]);
+  }, [user, activeCompany, isManager, isBuyerRole, isBuyerComp, navigate]);
 
   const fetchAwardedProposals = async (companyId: string) => {
     try {
@@ -44,22 +88,8 @@ export default function Approvals() {
     }
   };
 
-  const handleApproveWinner = async (proposalId: string) => {
-    if (!user) return;
-    setProcessingId(proposalId);
-    try {
-      await apiPost(`/api/proposals/${proposalId}/approve`, { user_id: user.id });
-      setAwardedProposals(prev => prev.filter(p => p.id !== proposalId));
-    } catch (err) {
-      console.error("Failed to approve winner", err);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   const fetchPendingRequests = async (companyId: string) => {
     try {
-      // Data Isolation: Fetch only for this company
       const res = await apiGet(`/api/rfqs?status=pending_approval&company_id=${companyId}`);
       setRequests(res || []);
     } catch (err) {
@@ -69,24 +99,29 @@ export default function Approvals() {
     }
   };
 
+  const handleApproveWinner = async (proposalId: string) => {
+    if (!user) return;
+    setProcessingId(proposalId);
+    try {
+      await apiPost(`/api/proposals/${proposalId}/approve`, { user_id: user.id });
+      setAwardedProposals((prev) => prev.filter((p) => p.id !== proposalId));
+    } catch (err) {
+      console.error("Failed to approve winner", err);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleApprove = async (rfqId: string) => {
     if (!user) return;
     setProcessingId(rfqId);
     try {
       await apiPost(`/api/rfqs/${rfqId}/approve`, {});
-      setRequests(prev => prev.filter(r => r.id !== rfqId));
-      Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'PR has been approved and published.'
-      });
+      setRequests((prev) => prev.filter((r) => r.id !== rfqId));
+      Swal.fire({ icon: "success", title: "Success!", text: "PR has been approved and published." });
     } catch (err) {
       console.error("Failed to approve PR", err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: "Failed to approve PR. Check console for details."
-      });
+      Swal.fire({ icon: "error", title: "Error!", text: "Failed to approve PR. Check console for details." });
     } finally {
       setProcessingId(null);
     }
@@ -94,253 +129,369 @@ export default function Approvals() {
 
   const handleReject = async (rfqId: string) => {
     if (!user) return;
-    
+
     const { value: reason } = await Swal.fire({
-      title: 'Reject Purchase Request',
-      input: 'textarea',
-      inputLabel: 'Reason for rejection',
-      inputPlaceholder: 'Please provide a reason for rejecting this PR...',
-      inputAttributes: {
-        'aria-label': 'Type your rejection reason here'
-      },
+      title: "Reject Purchase Request",
+      input: "textarea",
+      inputLabel: "Reason for rejection",
+      inputPlaceholder: "Please provide a reason for rejecting this PR...",
+      inputAttributes: { "aria-label": "Type your rejection reason here" },
       showCancelButton: true,
-      confirmButtonText: 'Reject',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
+      confirmButtonText: "Reject",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
       inputValidator: (value) => {
-        if (!value) {
-          return 'You need to provide a reason for rejection!';
-        }
-        if (value.length < 10) {
-          return 'Reason must be at least 10 characters long';
-        }
-      }
+        if (!value) return "You need to provide a reason for rejection!";
+        if (value.length < 10) return "Reason must be at least 10 characters long";
+      },
     });
 
     if (!reason) return;
 
     setProcessingId(rfqId);
     try {
-      await apiPost(`/api/rfqs/${rfqId}/reject`, { 
-        reason: reason 
-      });
-      setRequests(prev => prev.filter(r => r.id !== rfqId));
-      Swal.fire({
-        icon: 'success',
-        title: 'Rejected!',
-        text: 'PR has been rejected.'
-      });
+      await apiPost(`/api/rfqs/${rfqId}/reject`, { reason });
+      setRequests((prev) => prev.filter((r) => r.id !== rfqId));
+      Swal.fire({ icon: "success", title: "Rejected!", text: "PR has been rejected." });
     } catch (err) {
       console.error("Failed to reject PR", err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: "Failed to reject PR. Check console for details."
-      });
+      Swal.fire({ icon: "error", title: "Error!", text: "Failed to reject PR. Check console for details." });
     } finally {
       setProcessingId(null);
     }
   };
 
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+
   return (
-    <Layout title="Manager Approvals" subtitle="Review and approve purchase requisitions and awarded winners.">
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 40 }}>
-        
-        {/* Section 1: Pending PRs */}
+    <Layout title="Manager Approvals" subtitle="Review purchase requisitions and awarded winners.">
+      <div className="w-full flex flex-col gap-6">
+
+        {/* Pending PRs */}
         <section>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ padding: 10, borderRadius: 12, background: "rgba(249,115,22,0.1)", color: "var(--huntr-orange)" }}>
-              <Clock size={20} />
-            </div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "var(--ui-text-primary)" }}>Pending Purchase Requisitions</h2>
-          </div>
+          <SectionHeader
+            icon={Clock}
+            iconClass="text-orange-500"
+            title="Pending Purchase Requisitions"
+            count={requests.length}
+          />
 
           {loading ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-              <Loader2 className="animate-spin" size={32} color="var(--huntr-orange)" />
+            <div className="flex justify-center py-12">
+              <Loader2 size={22} className="animate-spin text-orange-500" />
             </div>
           ) : requests.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", background: "var(--ui-bg-input)", borderRadius: 32, border: "1px dashed var(--ui-border)" }}>
-              <CheckCircle2 size={32} style={{ opacity: 0.1, marginBottom: 16 }} />
-              <p style={{ margin: 0, fontSize: 14, color: "var(--ui-text-muted)" }}>No PRs awaiting approval.</p>
-            </div>
+            <EmptyBlock icon={CheckCircle2} message="No PRs awaiting approval." />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {requests.map(req => (
-                <div key={req.id} className="huntr-action-card" style={{
-                  background: "var(--ui-bg-card)", borderRadius: 24, border: "1px solid var(--ui-border)",
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ui-text-brand)", background: "var(--ui-bg-badge)", padding: "2px 8px", borderRadius: 6 }}>PR #{req.id ? String(req.id).substring(0, 8).toUpperCase() : ""}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ui-text-muted)" }}>
-                        <Calendar size={12} /> {new Date(req.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)" }}>{req.title}</h3>
-                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--ui-text-muted)" }}>
-                      <User size={13} /> Requested by: <span style={{ color: "var(--ui-text-secondary)" }}>{req.user?.name || "Unknown"}</span>
-                    </div>
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">PR ID</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Title</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[130px]">Requester</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[70px]">Items</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">Date</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">File</th>
+                      {canAct && (
+                        <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[220px]">Actions</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--ui-border)]">
+                    {requests.map((req) => (
+                      <tr key={req.id} className="hover:bg-[var(--ui-bg-input)] transition-colors">
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                            #{String(req.id ?? "").substring(0, 8).toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="font-semibold text-[var(--ui-text-primary)] text-sm line-clamp-1">{req.title}</div>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
+                            <User size={12} className="text-[var(--ui-text-muted)]" />
+                            {req.user?.name || "Unknown"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
+                            <Package size={12} className="text-[var(--ui-text-muted)]" />
+                            {req.items?.length || 0}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap text-xs text-[var(--ui-text-muted)]">
+                          {formatDate(req.created_at)}
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          {(req.document_path || req.document_url) ? (
+                            <a
+                              href={req.document_url || getAssetUrl(req.document_path)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500 hover:underline"
+                            >
+                              <FileText size={12} /> View
+                            </a>
+                          ) : (
+                            <span className="text-xs text-[var(--ui-text-muted)]">—</span>
+                          )}
+                        </td>
+                        {canAct && (
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              <button type="button" onClick={() => navigate(`/my-pr/${req.id}`)} className={btnSecondary}>
+                                <Package size={12} /> Details
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleReject(req.id)}
+                                disabled={processingId === req.id}
+                                className={btnReject}
+                              >
+                                <XCircle size={12} /> Reject
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(req.id)}
+                                disabled={processingId === req.id}
+                                className={btnApprove}
+                              >
+                                {processingId === req.id ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <CheckCircle2 size={12} />
+                                )}
+                                Approve
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                    {(req.document_path || req.document_url) && (
-                      <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "rgba(249, 115, 22, 0.05)", borderRadius: 8, border: "1px solid rgba(249, 115, 22, 0.1)" }}>
-                        <FileText size={16} color="#f97316" />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "#f97316" }}>Ada Lampiran</span>
-                        <a 
-                          href={req.document_url || getAssetUrl(req.document_path)} 
-                          target="_blank" 
+              {/* Mobile list */}
+              <div className="md:hidden flex flex-col gap-2">
+                {requests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                          #{String(req.id ?? "").substring(0, 8).toUpperCase()}
+                        </span>
+                        <p className="text-sm font-semibold text-[var(--ui-text-primary)] mt-1.5 leading-snug">{req.title}</p>
+                      </div>
+                      <span className="text-[10px] text-[var(--ui-text-muted)] shrink-0">{formatDate(req.created_at)}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--ui-text-muted)]">
+                      <span className="inline-flex items-center gap-1">
+                        <User size={11} /> {req.user?.name || "Unknown"}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Package size={11} /> {req.items?.length || 0} items
+                      </span>
+                      {(req.document_path || req.document_url) && (
+                        <a
+                          href={req.document_url || getAssetUrl(req.document_path)}
+                          target="_blank"
                           rel="noopener noreferrer"
-                          style={{ marginLeft: "auto", fontSize: 12, color: "#f97316", textDecoration: "underline", cursor: "pointer" }}
+                          className="inline-flex items-center gap-1 text-orange-500 font-semibold"
                         >
-                          Lihat
+                          <FileText size={11} /> Attachment
                         </a>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="huntr-action-card-meta" style={{ width: 180 }}>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Items to Purchase</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Package size={14} color="var(--ui-text-muted)" />
-                      <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ui-text-primary)" }}>{req.items?.length || 0} products</span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      <button type="button" onClick={() => navigate(`/my-pr/${req.id}`)} className={btnSecondary}>
+                        Details
+                      </button>
+                      {canAct && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleReject(req.id)}
+                            disabled={processingId === req.id}
+                            className={btnReject}
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(req.id)}
+                            disabled={processingId === req.id}
+                            className={btnApprove}
+                          >
+                            Approve
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-
-                  <div className="huntr-action-card-actions" style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <button 
-                      onClick={() => navigate(`/my-pr/${req.id}`)}
-                      style={{
-                        padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.05)",
-                        border: "1px solid var(--ui-border-input)", color: "var(--ui-text-secondary)", fontWeight: 700,
-                        fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                      }}
-                    >
-                      <Package size={14} /> View Details
-                    </button>
-                    {/* Only show approve/reject buttons for managers and owners */}
-                    {isManager && !isBuyerRole && (
-                      <>
-                        <button 
-                          onClick={() => handleReject(req.id)}
-                          disabled={processingId === req.id}
-                          style={{
-                            padding: "10px 16px", borderRadius: 12, background: "rgba(239,68,68,0.1)",
-                            border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontWeight: 700,
-                            fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                          }}
-                        >
-                          <XCircle size={14} /> Reject
-                        </button>
-                        <button 
-                          onClick={() => handleApprove(req.id)}
-                          disabled={processingId === req.id}
-                          style={{
-                            padding: "10px 20px", borderRadius: 12, background: "rgba(34,197,94,0.1)",
-                            border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", fontWeight: 700,
-                            fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8
-                          }}
-                        >
-                          {processingId === req.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Approve & Publish
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </section>
 
-        {/* Section 2: Awarded Winners */}
+        {/* Awarded winners */}
         <section>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ padding: 10, borderRadius: 12, background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
-              <Trophy size={20} />
-            </div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "var(--ui-text-primary)" }}>Awarded Winners Awaiting PO</h2>
-          </div>
+          <SectionHeader
+            icon={Trophy}
+            iconClass="text-emerald-500"
+            title="Awarded Winners Awaiting PO"
+            count={awardedProposals.length}
+          />
 
           {loading ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-              <Loader2 className="animate-spin" size={32} color="var(--huntr-orange)" />
+            <div className="flex justify-center py-12">
+              <Loader2 size={22} className="animate-spin text-orange-500" />
             </div>
           ) : awardedProposals.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", background: "var(--ui-bg-input)", borderRadius: 32, border: "1px dashed var(--ui-border)" }}>
-              <Trophy size={32} style={{ opacity: 0.1, marginBottom: 16 }} />
-              <p style={{ margin: 0, fontSize: 14, color: "var(--ui-text-muted)" }}>No winners awaiting PO approval.</p>
-            </div>
+            <EmptyBlock icon={Trophy} message="No winners awaiting PO approval." />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {awardedProposals.map(proposal => (
-                <div key={proposal.id} className="huntr-action-card" style={{
-                  background: "var(--ui-bg-card)", borderRadius: 24, border: "1px solid var(--ui-border)",
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: "#22c55e", background: "rgba(34,197,94,0.1)", padding: "2px 8px", borderRadius: 6 }}>AWARDED</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ui-text-muted)" }}>
-                        <Calendar size={12} /> {new Date(proposal.awarded_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)" }}>{proposal.rfq_title}</h3>
-                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ui-text-secondary)", fontWeight: 700 }}>
-                        <Building2 size={14} color="#22c55e" /> {proposal.company_name}
-                      </div>
-                      <div style={{ color: "var(--ui-border)", fontSize: 14 }}>•</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ui-text-brand)", fontWeight: 800 }}>
-                        <DollarSign size={14} /> IDR {Number(proposal.price_offer).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
+            <>
+              <div className="hidden md:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">Status</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">RFQ</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[140px]">Vendor</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Amount</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Terms</th>
+                      {canAct && (
+                        <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[240px]">Actions</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--ui-border)]">
+                    {awardedProposals.map((proposal) => (
+                      <tr key={proposal.id} className="hover:bg-[var(--ui-bg-input)] transition-colors">
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            AWARDED
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="font-semibold text-[var(--ui-text-primary)] text-sm line-clamp-1">{proposal.rfq_title}</div>
+                          <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">{formatDate(proposal.awarded_at)}</div>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
+                            <Building2 size={12} className="text-[var(--ui-text-muted)]" />
+                            {proposal.company_name}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap text-xs font-semibold text-[var(--ui-text-brand)]">
+                          IDR {Number(proposal.price_offer).toLocaleString("id-ID")}
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap text-xs text-[var(--ui-text-secondary)]">
+                          {proposal.delivery_days}d · {proposal.payment_term}
+                        </td>
+                        {canAct && (
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/compare-review/${proposal.rfq_id}`)}
+                                className={btnSecondary}
+                              >
+                                <ExternalLink size={12} /> Compare
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/rfq/${proposal.rfq_id}`)}
+                                className={btnSecondary}
+                              >
+                                <Package size={12} /> View PR
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleApproveWinner(proposal.id)}
+                                disabled={processingId === proposal.id}
+                                className={btnPrimary}
+                              >
+                                {processingId === proposal.id ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <CheckCircle2 size={12} />
+                                )}
+                                Generate PO
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                  <div className="huntr-action-card-meta" style={{ width: 150 }}>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Terms</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)" }}>{proposal.delivery_days} days delivery</div>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>{proposal.payment_term}</div>
-                  </div>
-
-                  <div className="huntr-action-card-actions" style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <button 
-                      onClick={() => navigate(`/compare-review/${proposal.rfq_id}`)}
-                      style={{
-                        padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.05)",
-                        border: "1px solid var(--ui-border-input)", color: "var(--ui-text-secondary)", fontWeight: 700,
-                        fontSize: 13, cursor: "pointer"
-                      }}
-                    >
-                      Compare & Review
-                    </button>
-                    <button 
-                      onClick={() => navigate(`/rfq/${proposal.rfq_id}`)}
-                      style={{
-                        padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.05)",
-                        border: "1px solid var(--ui-border-input)", color: "var(--ui-text-secondary)", fontWeight: 700,
-                        fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                      }}
-                    >
-                      <Package size={14} /> View PR
-                    </button>
-                    {/* Only show approve PO button for managers and owners */}
-                    {isManager && !isBuyerRole && (
-                      <button 
-                        onClick={() => handleApproveWinner(proposal.id)}
-                        disabled={processingId === proposal.id}
-                        style={{
-                          padding: "10px 20px", borderRadius: 12, background: "var(--huntr-orange)",
-                          border: "none", color: "#fff", fontWeight: 700,
-                          fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
-                          boxShadow: "0 4px 12px rgba(249,115,22,0.2)"
-                        }}
+              <div className="md:hidden flex flex-col gap-2">
+                {awardedProposals.map((proposal) => (
+                  <div
+                    key={proposal.id}
+                    className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                          AWARDED
+                        </span>
+                        <p className="text-sm font-semibold text-[var(--ui-text-primary)] mt-1.5 leading-snug">{proposal.rfq_title}</p>
+                      </div>
+                      <span className="text-[10px] text-[var(--ui-text-muted)] shrink-0">{formatDate(proposal.awarded_at)}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--ui-text-muted)]">
+                      <span className="inline-flex items-center gap-1">
+                        <Building2 size={11} /> {proposal.company_name}
+                      </span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-[var(--ui-text-brand)]">
+                        <DollarSign size={11} /> IDR {Number(proposal.price_offer).toLocaleString("id-ID")}
+                      </span>
+                      <span>{proposal.delivery_days}d · {proposal.payment_term}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/compare-review/${proposal.rfq_id}`)}
+                        className={btnSecondary}
                       >
-                        {processingId === proposal.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Approve & Generate PO
+                        Compare
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/rfq/${proposal.rfq_id}`)}
+                        className={btnSecondary}
+                      >
+                        View PR
+                      </button>
+                      {canAct && (
+                        <button
+                          type="button"
+                          onClick={() => handleApproveWinner(proposal.id)}
+                          disabled={processingId === proposal.id}
+                          className={btnPrimary}
+                        >
+                          Generate PO
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </section>
       </div>

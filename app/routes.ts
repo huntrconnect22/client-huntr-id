@@ -28,6 +28,7 @@ export default [
     route(":companySlug/marketplace", "routes/marketplace.tsx", { id: "company-marketplace" }),
     route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", { id: "company-marketplace-detail" }),
     route(":companySlug/cart", "routes/cart.tsx", { id: "company-cart" }),
+    // Cart page removed — cart is now inline sidebar on marketplace
     route(":companySlug/my-pr", "routes/my-pr.tsx", { id: "company-my-pr" }),
     route(":companySlug/my-pr/:id", "routes/my-pr-detail.tsx", { id: "company-my-pr-detail" }),
     route(":companySlug/compare-review/:id", "routes/compare-review.tsx", { id: "company-compare-review" }),
@@ -57,7 +58,7 @@ export default [
     // Fallback legacy paths
     route("marketplace", "routes/marketplace.tsx"),
     route("marketplace/:id", "routes/marketplace-detail.tsx"),
-    route("cart", "routes/cart.tsx"),
+    route("cart", "routes/cart.tsx"),  // kept for deep-link /cart?add= backwards compat
     route("my-pr", "routes/my-pr.tsx"),
     route("my-pr/:id", "routes/my-pr-detail.tsx"),
     route("compare-review/:id", "routes/compare-review.tsx"),

@@ -1,33 +1,62 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { apiGet } from "../lib/api";
-import { 
-  ClipboardList, User, Search, Loader2, 
-  Clock, CheckCircle2, XCircle, ChevronRight 
+import {
+  ClipboardList, User, Search, Loader2,
+  CheckCircle2, ChevronRight, Trophy, Building2,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+
+const STATUS_CFG: Record<string, { bg: string; color: string; dot: string; label: string }> = {
+  pending_approval: { bg: "bg-amber-500/10", color: "text-amber-500", dot: "bg-amber-500", label: "Pending Approval" },
+  approved:         { bg: "bg-emerald-500/10", color: "text-emerald-500", dot: "bg-emerald-500", label: "Approved" },
+  active:           { bg: "bg-orange-500/10", color: "text-orange-400", dot: "bg-orange-500", label: "Open Tender" },
+  rejected:         { bg: "bg-red-500/10", color: "text-red-400", dot: "bg-red-500", label: "Rejected" },
+};
+
+function getStatus(status: string) {
+  return STATUS_CFG[status] ?? {
+    bg: "bg-[var(--ui-bg-input)]",
+    color: "text-[var(--ui-text-muted)]",
+    dot: "bg-gray-400",
+    label: status,
+  };
+}
+
+function formatDateTime(d?: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDate(d?: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+}
 
 export default function PurchaseRequisitionAudit() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeCompany, setActiveCompany] = useState<any>(null);
-  // Map dari rfq.id ke proposal pemenang
   const [winnerMap, setWinnerMap] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const companySession = localStorage.getItem("active_company");
     if (companySession) {
       const comp = JSON.parse(companySession);
-      setActiveCompany(comp);
-      if (comp.type === 'vendor') {
+      if (comp.type === "vendor") {
         navigate("/");
         return;
       }
     }
     fetchMyRequests();
-  }, []);
+  }, [navigate]);
 
   const fetchMyRequests = async () => {
     const activeComp = localStorage.getItem("active_company");
@@ -40,17 +69,14 @@ export default function PurchaseRequisitionAudit() {
       const rfqs = Array.isArray(data) ? data : [];
       setRequests(rfqs);
 
-      // Fetch rankings untuk setiap RFQ lalu ambil pemenangnya
       const winnerEntries = await Promise.all(
         rfqs.map(async (rfq: any) => {
           try {
-            // Coba dari proposals dalam response dulu
             const fromProposals = (rfq.proposals || []).find(
               (p: any) => p.winner_status === "approved" || p.winner_status === "awarded"
             );
             if (fromProposals) return [String(rfq.id), fromProposals];
 
-            // Jika tidak ada, fetch dari rankings endpoint
             const rankings = await apiGet(`/api/rfqs/${rfq.id}/rankings`);
             const rankList: any[] = Array.isArray(rankings) ? rankings : (rankings?.rankings || []);
             const winnerRank = rankList.find(
@@ -75,196 +101,236 @@ export default function PurchaseRequisitionAudit() {
     }
   };
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "pending_approval": return { bg: "rgba(245,158,11,0.1)", color: "#f59e0b", icon: Clock, label: "Pending Approval" };
-      case "approved": return { bg: "rgba(34,197,94,0.1)", color: "#22c55e", icon: CheckCircle2, label: "Approved" };
-      case "active": return { bg: "rgba(249,115,22,0.1)", color: "#fb923c", icon: ClipboardList, label: "Open Tender" };
-      case "rejected": return { bg: "rgba(239,68,68,0.1)", color: "#f87171", icon: XCircle, label: "Rejected" };
-      default: return { bg: "rgba(107,114,128,0.1)", color: "#9ca3af", icon: Clock, label: status };
-    }
-  };
-
-  /** Cari proposal pemenang dari winnerMap atau proposals di request */
   const getWinner = (req: any) => {
-    // 1. Coba cari dari proposals yang di-load langsung di object req
     const winner = (req.proposals || []).find(
       (p: any) => p.winner_status === "approved" || p.winner_status === "awarded"
     );
     if (winner) return winner;
-
-    // 2. Fallback ke winnerMap jika ada
     return winnerMap[String(req.id)] || null;
   };
 
-  const filteredRequests = requests.filter(r => 
+  const filteredRequests = requests.filter((r) =>
     r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (r.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (r.approved_by?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (r.id ? String(r.id).toLowerCase().includes(searchTerm.toLowerCase()) : false)
+    r.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.approved_by?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(r.id ?? "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <Layout title="PR Audit Log" subtitle="Audit trail for all purchase requisitions with creator and approver information.">
-      <div style={{ width: "100%" }}>
-        
-        {/* Search & Filter */}
-        <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
-          <div style={{ flex: 1, position: "relative" }}>
-            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ui-text-muted)", transition: "color 0.3s ease" }} size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by PR title, ID, creator, or approver..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              style={{
-                width: "100%", padding: "12px 12px 12px 42px", borderRadius: 14,
-                background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)",
-                color: "var(--ui-text-primary)", outline: "none", fontSize: 14, transition: "all 0.3s ease",
-              }}
-            />
-          </div>
+    <Layout title="PR Audit Log" subtitle="Audit trail for purchase requisitions — creator, approver, and winner.">
+      <div className="w-full flex flex-col gap-4">
+
+        {/* Search */}
+        <div className="relative">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+          <input
+            type="text"
+            placeholder="Search by title, ID, creator, or approver..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50 transition-all"
+          />
         </div>
 
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: 80 }}>
-            <Loader2 className="animate-spin" size={32} color="#f59e0b" />
+          <div className="flex justify-center py-16">
+            <Loader2 size={22} className="animate-spin text-orange-500" />
           </div>
         ) : filteredRequests.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "100px 0", background: "var(--ui-bg-input)", borderRadius: 32, border: "1px dashed var(--ui-border)", transition: "all 0.3s ease" }}>
-            <ClipboardList size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
-            <h3 style={{ color: "var(--ui-text-secondary)", margin: 0, fontSize: 16, transition: "color 0.3s ease" }}>No purchase requisitions found for audit</h3>
+          <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-lg border border-dashed border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+            <ClipboardList size={24} className="text-[var(--ui-text-muted)] opacity-25" />
+            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">No purchase requisitions found</p>
+            <p className="text-xs text-[var(--ui-text-muted)]">Try adjusting your search.</p>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {filteredRequests.map(req => {
-              const status = getStatusStyle(req.status);
-              const StatusIcon = status.icon;
-              const winner = getWinner(req);
-              
-              return (
-                <div key={req.id} style={{
-                  background: "var(--ui-bg-card)", borderRadius: 20, border: "1px solid var(--ui-border)",
-                  padding: "24px", display: "flex", flexDirection: "column", gap: 20,
-                  transition: "all 0.3s ease", cursor: "pointer"
-                }} onClick={() => navigate(`/my-pr/${req.id}`)}>
-                  {/* Header Section */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.08em" }}>PR #{req.id ? String(req.id).substring(0, 8).toUpperCase() : ""}</span>
-                        <div style={{ 
-                          display: "inline-flex", alignItems: "center", gap: 6, 
-                          padding: "4px 10px", borderRadius: 999,
-                          background: status.bg, color: status.color, fontSize: 11, fontWeight: 800
-                        }}>
-                          <StatusIcon size={12} /> {status.label}
+          <>
+            {/* Desktop table */}
+            <div className="hidden lg:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                    <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">PR ID</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Title</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[130px]">Status</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[150px]">Created</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[150px]">Approved</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[160px]">Winner</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Company</th>
+                    <th className="px-4 py-2.5 w-[40px]" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--ui-border)]">
+                  {filteredRequests.map((req) => {
+                    const s = getStatus(req.status);
+                    const winner = getWinner(req);
+                    return (
+                      <tr
+                        key={req.id}
+                        onClick={() => navigate(`/my-pr/${req.id}`)}
+                        className="hover:bg-[var(--ui-bg-input)] transition-colors cursor-pointer group"
+                      >
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                            #{String(req.id ?? "").substring(0, 8).toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="font-semibold text-[var(--ui-text-primary)] text-sm line-clamp-1">{req.title}</div>
+                          <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
+                            {req.items?.length ?? 0} item{(req.items?.length ?? 0) !== 1 ? "s" : ""}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold ${s.bg} ${s.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                            {s.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="text-xs font-semibold text-[var(--ui-text-primary)]">{req.user?.name || "Unknown"}</div>
+                          <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">{formatDateTime(req.created_at)}</div>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="text-xs font-semibold text-[var(--ui-text-primary)]">
+                            {req.approved_by || "—"}
+                          </div>
+                          <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
+                            {req.approved_at ? formatDateTime(req.approved_at) : "Not approved"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {winner ? (
+                            <>
+                              <div className="text-xs font-semibold text-orange-400">
+                                {winner.company?.name || "Vendor"}
+                              </div>
+                              <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
+                                Rp {Number(winner.price_offer).toLocaleString("id-ID")}
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-xs text-[var(--ui-text-muted)]">
+                              {req.status === "active" ? "Tender open" : "No winner"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
+                            <Building2 size={12} className="text-[var(--ui-text-muted)]" />
+                            <span className="line-clamp-1">{req.company?.name || "—"}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <span className="w-7 h-7 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] inline-flex items-center justify-center text-[var(--ui-text-muted)] group-hover:text-orange-500 group-hover:border-orange-500/30 transition-all">
+                            <ChevronRight size={13} />
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <div className="px-4 py-2 border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                <span className="text-xs text-[var(--ui-text-muted)]">
+                  {filteredRequests.length} record{filteredRequests.length !== 1 ? "s" : ""}
+                  {searchTerm && ` matching "${searchTerm}"`}
+                </span>
+              </div>
+            </div>
+
+            {/* Mobile / tablet cards */}
+            <div className="lg:hidden flex flex-col gap-2">
+              {filteredRequests.map((req) => {
+                const s = getStatus(req.status);
+                const winner = getWinner(req);
+                return (
+                  <button
+                    key={req.id}
+                    type="button"
+                    onClick={() => navigate(`/my-pr/${req.id}`)}
+                    className="w-full text-left rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 hover:bg-[var(--ui-bg-input)] transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                            #{String(req.id ?? "").substring(0, 8).toUpperCase()}
+                          </span>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${s.bg} ${s.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                            {s.label}
+                          </span>
                         </div>
+                        <p className="text-sm font-semibold text-[var(--ui-text-primary)] mt-1.5 leading-snug">{req.title}</p>
                       </div>
-                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "var(--ui-text-primary)" }}>{req.title}</h3>
+                      <ChevronRight size={16} className="text-[var(--ui-text-muted)] shrink-0 mt-1" />
                     </div>
-                    <ChevronRight size={20} color="var(--ui-text-muted)" />
-                  </div>
 
-                  {/* Audit Details Grid */}
-                  <div style={{ 
-                    display: "grid", 
-                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
-                    gap: 16 
-                  }}>
-                    {/* Created By */}
-                    <AuditRow 
-                      icon={<User size={14} color="#9ca3af" />}
-                      label="Dibuat oleh"
-                      value={req.user?.name || "Unknown"}
-                      subValue={req.created_at ? new Date(req.created_at).toLocaleString() : "-"}
-                    />
-                    
-                    {/* Approved By */}
-                    <AuditRow 
-                      icon={<CheckCircle2 size={14} color="#9ca3af" />}
-                      label="Disetujui oleh"
-                      value={req.approved_by || "Belum disetujui"}
-                      subValue={req.approved_at ? new Date(req.approved_at).toLocaleString() : "-"}
-                      highlight={!!req.approved_by}
-                    />
-
-                    {/* Won By */}
-                    <AuditRow 
-                      icon={
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={winner ? "#f59e0b" : "#9ca3af"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                        </svg>
-                      }
-                      label="Dimenangkan oleh"
-                      value={
-                        winner
-                          ? (winner.company?.name || "Vendor Terpilih")
-                          : "Belum ada pemenang"
-                      }
-                      subValue={
-                        winner
-                          ? `Rp ${Number(winner.price_offer).toLocaleString("id-ID")} · ${winner.winner_status.toUpperCase()}`
-                          : req.status === "active" ? "Tender masih berlangsung" : "-"
-                      }
-                      highlight={!!winner}
-                      highlightColor={winner ? "amber" : undefined}
-                    />
-                    
-                    {/* Company */}
-                    <AuditRow 
-                      icon={<ClipboardList size={14} color="#9ca3af" />}
-                      label="Perusahaan"
-                      value={req.company?.name || "Unknown"}
-                      subValue={req.items?.length ? `${req.items.length} item` : "0 item"}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <AuditCell
+                        icon={<User size={11} />}
+                        label="Created"
+                        value={req.user?.name || "Unknown"}
+                        sub={formatDate(req.created_at)}
+                      />
+                      <AuditCell
+                        icon={<CheckCircle2 size={11} />}
+                        label="Approved"
+                        value={req.approved_by || "—"}
+                        sub={req.approved_at ? formatDate(req.approved_at) : "Pending"}
+                      />
+                      <AuditCell
+                        icon={<Trophy size={11} />}
+                        label="Winner"
+                        value={winner ? (winner.company?.name || "Vendor") : "—"}
+                        sub={
+                          winner
+                            ? `Rp ${Number(winner.price_offer).toLocaleString("id-ID")}`
+                            : req.status === "active" ? "Tender open" : "No winner"
+                        }
+                        accent={!!winner}
+                      />
+                      <AuditCell
+                        icon={<Building2 size={11} />}
+                        label="Company"
+                        value={req.company?.name || "—"}
+                        sub={`${req.items?.length ?? 0} items`}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </Layout>
   );
 }
 
-function AuditRow({ 
-  icon, 
-  label, 
-  value, 
-  subValue, 
-  highlight = false,
-  highlightColor = "green"
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  value: string; 
-  subValue: string; 
-  highlight?: boolean;
-  highlightColor?: "green" | "amber";
+function AuditCell({
+  icon,
+  label,
+  value,
+  sub,
+  accent = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+  accent?: boolean;
 }) {
-  const isAmber = highlightColor === "amber";
-  const highlightBg = isAmber ? "rgba(245,158,11,0.07)" : "rgba(34,197,94,0.06)";
-  const highlightBorder = isAmber ? "1px solid rgba(245,158,11,0.2)" : "1px solid rgba(34,197,94,0.15)";
-  const highlightTextColor = isAmber ? "#f59e0b" : "#22c55e";
-
   return (
-    <div style={{ 
-      display: "flex", 
-      alignItems: "flex-start", 
-      gap: 12, 
-      padding: "12px", 
-      borderRadius: 12, 
-      background: highlight ? highlightBg : "var(--ui-bg-input)",
-      border: highlight ? highlightBorder : "1px solid var(--ui-border-input)"
-    }}>
-      <div style={{ marginTop: 2 }}>{icon}</div>
-      <div>
-        <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{label}</div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: highlight ? highlightTextColor : "var(--ui-text-primary)", marginBottom: 2 }}>{value}</div>
-        {subValue && <div style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>{subValue}</div>}
+    <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-2">
+      <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+        <span className="text-[var(--ui-text-muted)]">{icon}</span>
+        {label}
       </div>
+      <div className={`text-xs font-semibold mt-1 truncate ${accent ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>
+        {value}
+      </div>
+      <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5 truncate">{sub}</div>
     </div>
   );
 }

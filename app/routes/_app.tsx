@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router";
 import {
   LayoutDashboard,
@@ -34,6 +34,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useEventBus } from "../lib/EventBus";
 import { isDemoMode, isNavItemDisabledInDemo } from "../lib/demo-mode";
+import GlobalCartPanel from "../components/GlobalCartPanel";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
 export interface AppShellContext {
@@ -137,6 +138,25 @@ export default function AppShell() {
   const navScrollRef = React.useRef<HTMLDivElement>(null);
   const notifButtonRef = React.useRef<HTMLButtonElement>(null);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
+  const headerRef = React.useRef<HTMLElement>(null);
+
+  const updateHeaderHeight = useCallback(() => {
+    const height = headerRef.current?.offsetHeight ?? 64;
+    document.documentElement.style.setProperty("--huntr-header-height", `${height}px`);
+  }, []);
+
+  useEffect(() => {
+    updateHeaderHeight();
+    window.addEventListener("resize", updateHeaderHeight);
+
+    const observer = new ResizeObserver(updateHeaderHeight);
+    if (headerRef.current) observer.observe(headerRef.current);
+
+    return () => {
+      window.removeEventListener("resize", updateHeaderHeight);
+      observer.disconnect();
+    };
+  }, [updateHeaderHeight, pageTitle, pageSubtitle]);
 
   // ── Auth guard ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -645,7 +665,7 @@ export default function AppShell() {
       </aside>
 
       <div className="huntr-main">
-        <header className="huntr-main-header">
+        <header ref={headerRef} className="huntr-main-header">
           <div className="huntr-header-leading">
             <button type="button" className="huntr-menu-btn" onClick={() => setSidebarOpen(true)} aria-label="Open navigation menu">
               <Menu size={20} />
@@ -658,12 +678,12 @@ export default function AppShell() {
           </div>
 
           <div className="huntr-header-actions">
-            {/* Cart Button (Desktop Only) */}
+            {/* Cart Button (Desktop Only) — dispatches toggle-cart event picked up by marketplace */}
             {!isMobile && (
               <button
                 type="button"
-                onClick={() => navigate("/cart")}
-                aria-label={`Go to cart, ${cartCount} items`}
+                onClick={() => window.dispatchEvent(new CustomEvent("huntr-toggle-cart"))}
+                aria-label={`View cart (${cartCount} items in cart)`}
                 style={{
                   position: "relative",
                   width: 34,
@@ -942,6 +962,8 @@ export default function AppShell() {
           )}
         </div>
       </div>
+
+      <GlobalCartPanel companyPrefix={companyPrefix} />
     </div>
   );
 }
