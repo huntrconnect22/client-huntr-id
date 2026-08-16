@@ -23,6 +23,7 @@ import {
   Briefcase,
   FileText,
   ShoppingCart,
+  Sparkles,
 } from "lucide-react";
 import { loadCart, getCartLineCount } from "../lib/cart";
 import Breadcrumb from "../components/Breadcrumb";
@@ -314,9 +315,8 @@ export default function AppShell() {
 
       // Procurement (Buyer)
       ...(isBuyerComp && (isManager || isBuyerRole) ? [
+        { to: `${companyPrefix}/agentic-procurement`, label: "AI Agentic Procurement", Icon: Sparkles, section: "procurement", isAi: true },
         { to: `${companyPrefix}/marketplace`, label: "Huntr Catalog", Icon: Package, section: "procurement" },
-      ] : []),
-      ...(isBuyerComp && (isManager || isBuyerRole) ? [
         { to: `${companyPrefix}/my-pr`, label: "My PR", Icon: ClipboardList, section: "procurement", badge: "pendingNewProposals" },
       ] : []),
       ...(canManageApprovals ? [
@@ -558,7 +558,7 @@ export default function AppShell() {
       <nav ref={navScrollRef} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3, padding: "0 10px", overflowY: "auto" }}>
         {(() => {
           let currentSection = "";
-          return NAV.map(({ to, label, Icon, section, badge, exact }: any) => {
+          return NAV.map(({ to, label, Icon, section, badge, exact, isAi }: any) => {
             const active = pathname === to || (!exact && to !== "/" && pathname.startsWith(to + "/"));
             const badgeCount = badge ? pendingCounts[badge] || 0 : 0;
             const showSection = section && section !== currentSection;
@@ -583,6 +583,11 @@ export default function AppShell() {
                 }}>
                   <Icon size={16} />
                   <span style={{ flex: 1 }}>{label}</span>
+                  {isAi && (
+                    <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 4, background: "linear-gradient(135deg, #f97316, #f59e0b)", color: "#fff", letterSpacing: "0.05em" }}>
+                      AI
+                    </span>
+                  )}
                   {badgeCount > 0 && (
                     <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: active ? "#f59e0b" : "rgba(249,115,22,0.15)", color: active ? "#fff" : "#f59e0b", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
                       {badgeCount > 99 ? "99+" : badgeCount}

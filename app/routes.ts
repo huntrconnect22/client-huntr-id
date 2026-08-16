@@ -17,6 +17,8 @@ export default [
   route("invite/accept", "routes/invite-accept.tsx"),
   route("track", "routes/tracking.tsx"),
   route("verify", "routes/verify.tsx"),
+  route("tender/:id", "routes/tender-public.tsx"),
+  route("t/:id", "routes/tender-public.tsx", { id: "tender-short" }),
 
   // ── Authenticated routes (inside persistent AppShell) ─────────────────────
   layout("routes/_app.tsx", [
@@ -25,6 +27,7 @@ export default [
     // Dynamic company slug prefixed routes (e.g. /micro-padma-nusantara, /micro-padma-nusantara/dashboard)
     route(":companySlug", "routes/home.tsx", { id: "company-home" }),
     route(":companySlug/dashboard", "routes/home.tsx", { id: "company-dashboard" }),
+    route(":companySlug/agentic-procurement", "routes/agentic-procurement.tsx", { id: "company-agentic-procurement" }),
     route(":companySlug/marketplace", "routes/marketplace.tsx", { id: "company-marketplace" }),
     route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", { id: "company-marketplace-detail" }),
     route(":companySlug/cart", "routes/cart.tsx", { id: "company-cart" }),
@@ -56,6 +59,7 @@ export default [
     route(":companySlug/tasks", "routes/tasks.tsx", { id: "company-tasks" }),
 
     // Fallback legacy paths
+    route("agentic-procurement", "routes/agentic-procurement.tsx"),
     route("marketplace", "routes/marketplace.tsx"),
     route("marketplace/:id", "routes/marketplace-detail.tsx"),
     route("cart", "routes/cart.tsx"),  // kept for deep-link /cart?add= backwards compat

@@ -193,22 +193,22 @@ export default function Toast({
         @keyframes toastSlideIn {
           from { 
             opacity: 0; 
-            transform: translateX(100%) ${positionStyles.transform || ''}; 
+            transform: translateX(100%) ${(positionStyles as any).transform || ''}; 
           }
           to { 
             opacity: 1; 
-            transform: translateX(0) ${positionStyles.transform || ''}; 
+            transform: translateX(0) ${(positionStyles as any).transform || ''}; 
           }
         }
         
         @keyframes toastSlideOut {
           from { 
             opacity: 1; 
-            transform: translateX(0) ${positionStyles.transform || ''}; 
+            transform: translateX(0) ${(positionStyles as any).transform || ''}; 
           }
           to { 
             opacity: 0; 
-            transform: translateX(100%) ${positionStyles.transform || ''}; 
+            transform: translateX(100%) ${(positionStyles as any).transform || ''}; 
           }
         }
       `}</style>

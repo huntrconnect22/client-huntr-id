@@ -3,8 +3,37 @@ import { apiGet, apiPost } from "../client";
 /**
  * AI API
  *
- * Endpoint untuk semua fitur AI di platform Huntr.
+ * Endpoint untuk semua fitur AI & Agentic Procurement di platform Huntr.
  */
+
+/**
+ * Full Autonomous Agentic Procurement Workflow.
+ * AI mencari produk relevan, membandingkan spesifikasi, dan membuat draft PR lengkap.
+ */
+export const runAgenticProcurement = (
+  query: string,
+  options?: {
+    company_id?: string;
+    auto_create_pr?: boolean;
+    catalogue_ids?: string[];
+  }
+) => apiPost("/api/ai/agentic-procurement/run", { query, ...options });
+
+/**
+ * Conversational multi-turn chat dengan Agentic Procurement AI.
+ */
+export const chatAgenticProcurement = (
+  messages: { role: "user" | "assistant" | "system"; content: string }[],
+  options?: { company_id?: string }
+) => apiPost("/api/ai/agentic-procurement/chat", { messages, ...options });
+
+/**
+ * 1-Click membuat PR ke sistem dari draft Agentic AI.
+ */
+export const createAgenticPr = (
+  companyId: string,
+  prDraft: any
+) => apiPost("/api/ai/agentic-procurement/create-pr", { company_id: companyId, pr_draft: prDraft });
 
 /**
  * Natural language search katalog.
@@ -44,13 +73,13 @@ export const aiGeneratePr = (query: string, catalogueIds?: string[]) =>
   });
 
 /**
- * Auto-fill metadata produk menggunakan Genkit AI berdasarkan nama produk.
+ * Auto-fill metadata produk menggunakan Genkit/OpenAI AI berdasarkan nama produk.
  */
 export const aiAutofillCatalogue = (name: string, category?: string) =>
   apiPost("/api/ai/autofill-catalogue", { name, category });
 
 /**
- * Batch enrichment / update massal produk menggunakan Genkit AI (max 10 item).
+ * Batch enrichment / update massal produk menggunakan Genkit/OpenAI AI (max 10 item).
  */
 export const aiBatchUpdateCatalogue = (items: { id: string | number; name: string; category?: string }[]) =>
   apiPost("/api/ai/batch-update-catalogue", { items });
@@ -77,4 +106,3 @@ export const isAiQuery = (query: string): boolean => {
   const lower = query.toLowerCase();
   return descriptiveWords.some((w) => lower.includes(w)) || query.trim().length > 25;
 };
-

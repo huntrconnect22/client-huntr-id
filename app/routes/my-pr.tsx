@@ -3,7 +3,7 @@ import Layout from "../components/Layout";
 import { apiGet } from "../lib/api";
 import {
   ClipboardList, Clock, CheckCircle2, XCircle, ChevronRight,
-  Package, Calendar, Search, Loader2, Plus, ArrowUpRight
+  Package, Calendar, Search, Loader2, Plus, ArrowUpRight, Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router";
 
@@ -76,13 +76,22 @@ export default function MyPurchaseRequisitions() {
               className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50 transition-all"
             />
           </div>
-          <button
-            onClick={() => navigate("/marketplace")}
-            style={{ color: 'white' }}
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-sm font-semibold transition-all flex-shrink-0"
-          >
-            <Plus size={15} /> New PR
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => navigate("/agentic-procurement")}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+            >
+              <Sparkles size={15} />
+              <span>AI Agent Procurement</span>
+            </button>
+            <button
+              onClick={() => navigate("/marketplace")}
+              style={{ color: 'white' }}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] hover:bg-[var(--ui-border)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-sm font-semibold transition-all cursor-pointer"
+            >
+              <Plus size={15} /> New PR (Manual)
+            </button>
+          </div>
         </div>
 
         {/* Content */}
