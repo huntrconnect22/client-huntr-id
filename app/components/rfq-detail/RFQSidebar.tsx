@@ -57,6 +57,7 @@ export function RFQSidebar({
         </div>
         <Row label="Total quantity" value={`${totalItems} units`} />
         <Row label="Duration" value={`${rfq.duration_days ?? 7} days`} />
+        {rfq.department && <Row label="Department" value={rfq.department} />}
         <Row label="Time remaining" value={getTenderSummary()} />
 
         {canSubmitProposal() && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { createRfq } from "../lib/api";
-import { ClipboardList, CheckCircle2, ArrowLeft, Loader2, Package, AlertCircle, FileText, Calendar, Paperclip, MapPin } from "lucide-react";
+import { ClipboardList, CheckCircle2, ArrowLeft, Loader2, Package, AlertCircle, FileText, Calendar, Paperclip, MapPin, Building } from "lucide-react";
 import { useNavigate } from "react-router";
 import { getAssetUrl } from "../lib/assets";
 
@@ -16,6 +16,7 @@ export default function Checkout() {
   const [prTitle, setPrTitle] = useState("");
   const [prDesc, setPrDesc] = useState("");
   const [prDuration, setPrDuration] = useState(7);
+  const [prDepartment, setPrDepartment] = useState("General Procurement");
   const [prDocument, setPrDocument] = useState<File | null>(null);
   const [deliveryPoint, setDeliveryPoint] = useState("");
   const [companyAddresses, setCompanyAddresses] = useState<{ id: string; label: string; value: string }[]>([]);
@@ -136,6 +137,7 @@ export default function Checkout() {
       formData.append("duration_days", prDuration.toString());
       formData.append("status", "pending_approval");
       formData.append("delivery_point", deliveryPoint);
+      formData.append("department", prDepartment);
       
       if (prDocument) {
         const maxSize = 10 * 1024 * 1024;
@@ -291,15 +293,37 @@ export default function Checkout() {
               </h3>
 
               <div className="space-y-3 text-xs">
-                <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">PR Title *</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Office Supplies for Q3 2026" 
-                    value={prTitle}
-                    onChange={e => setPrTitle(e.target.value)}
-                    className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">PR Title *</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Office Supplies for Q3 2026" 
+                      value={prTitle}
+                      onChange={e => setPrTitle(e.target.value)}
+                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
+                      <Building size={12} /> Department *
+                    </label>
+                    <select
+                      value={prDepartment}
+                      onChange={e => setPrDepartment(e.target.value)}
+                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
+                    >
+                      <option value="General Procurement">General Procurement</option>
+                      <option value="Information Technology">Information Technology (IT)</option>
+                      <option value="Operations & Logistics">Operations & Logistics</option>
+                      <option value="General Affairs (GA)">General Affairs (GA)</option>
+                      <option value="Finance & Accounting">Finance & Accounting</option>
+                      <option value="Human Resources (HR)">Human Resources (HR)</option>
+                      <option value="Marketing & Sales">Marketing & Sales</option>
+                      <option value="Engineering & Maintenance">Engineering & Maintenance</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-1">

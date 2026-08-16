@@ -63,19 +63,12 @@ export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps)
   return (
     <>
       {cartOpen && !isMobile && (
-        <>
-          <div
-            className="huntr-cart-backdrop"
-            onClick={() => setCartOpen(false)}
-            aria-hidden="true"
-          />
-          <CartSidebar
-            cart={cart}
-            onCartChange={setCart}
-            companyPrefix={companyPrefix}
-            onClose={() => setCartOpen(false)}
-          />
-        </>
+        <CartSidebar
+          cart={cart}
+          onCartChange={setCart}
+          companyPrefix={companyPrefix}
+          onClose={() => setCartOpen(false)}
+        />
       )}
 
       {isMobile && (
@@ -98,11 +91,6 @@ export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps)
 
       {cartOpen && isMobile && (
         <div className="huntr-cart-mobile-sheet md:hidden">
-          <div
-            className="huntr-cart-mobile-backdrop"
-            onClick={() => setCartOpen(false)}
-            aria-hidden="true"
-          />
           <div className="huntr-cart-mobile-panel">
             <div className="w-12 h-1.5 bg-[var(--ui-border)] rounded-full mx-auto mt-3 mb-2 flex-shrink-0" />
             <CartSidebar

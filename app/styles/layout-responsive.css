@@ -62,10 +62,13 @@
 .huntr-cart-backdrop {
   position: fixed;
   left: 0;
-  right: 0;
+  /* Only cover area to the left of the cart panel (288px wide) */
+  right: 288px;
   bottom: 0;
   top: var(--huntr-header-height, 64px);
   z-index: 98;
+  /* Transparent — only catches pointer events on empty space */
+  background: transparent;
 }
 
 .huntr-cart-fab {

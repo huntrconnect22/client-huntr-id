@@ -15,6 +15,7 @@ import { RFQItemsTable } from "../components/rfq-detail/RFQItemsTable";
 import { ProposalRankings } from "../components/rfq-detail/ProposalRankings";
 import { AIAnalysisPanel } from "../components/rfq-detail/AIAnalysisPanel";
 import { RFQSidebar } from "../components/rfq-detail/RFQSidebar";
+import { isDemoMode } from "../lib/demo-mode";
 
 function StatCell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
@@ -54,6 +55,7 @@ export default function RfqDetail() {
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [inviteWhatsapp, setInviteWhatsapp] = useState("");
   const [inviting, setInviting] = useState(false);
+  const [generatingBots, setGeneratingBots] = useState(false);
 
   const fetchRankings = useCallback(async (rfqId: string | number) => {
     try {
@@ -63,6 +65,29 @@ export default function RfqDetail() {
       setRankings([]);
     }
   }, []);
+
+  const handleTriggerDemoBots = async () => {
+    if (!rfq?.id) return;
+    setGeneratingBots(true);
+    try {
+      const res = await apiPost(`/api/demo/rfq/${rfq.id}/generate-bots`, {});
+      Swal.fire({
+        icon: "success",
+        title: "5 AI Vendor Bots Participated!",
+        text: res?.message || "5 AI Vendor bots have submitted unique tenders using ChatGPT API.",
+        confirmButtonColor: "#f97316"
+      });
+      fetchRankings(rfq.id);
+    } catch (err: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err?.message || "Failed to generate AI bot bids.",
+      });
+    } finally {
+      setGeneratingBots(false);
+    }
+  };
 
   const loadRfq = useCallback(async (rfqId: string) => {
     const response = await apiGet(`/api/rfqs/${rfqId}`);
@@ -235,8 +260,34 @@ export default function RfqDetail() {
           <div className="flex flex-col gap-4 min-w-0">
             <RFQDescription rfq={rfq} successMessage={successMessage} />
             <RFQItemsTable rfq={rfq} />
-            {rfq.status === "active" && (
+            {rfq.status === "active" && isDemoMode() && (
               <>
+                {/* Demo Mode AI Vendor Bot Control Banner */}
+                <div className="bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/10 border border-orange-500/20 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-orange-500/20 flex items-center justify-center text-lg shrink-0">
+                      🤖
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-bold text-[var(--ui-text-primary)] uppercase tracking-wider">Demo Mode: AI Vendor Bots</h4>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-orange-500 text-white">ChatGPT API</span>
+                      </div>
+                      <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">
+                        Setiap PR dilayani 5 AI Vendor Bots (Tender, Negosiasi, & PO Confirm) dengan penawaran unik.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={generatingBots}
+                    onClick={handleTriggerDemoBots}
+                    className="px-3.5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white text-xs font-bold rounded-lg flex items-center gap-2 shrink-0 transition shadow-sm"
+                  >
+                    {generatingBots ? <Loader2 size={14} className="animate-spin" /> : "🤖 Trigger 5 AI Vendor Bids"}
+                  </button>
+                </div>
+
                 <ProposalRankings
                   rankings={rankings}
                   canApproveOrAward={canApproveOrAward}

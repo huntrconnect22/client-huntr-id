@@ -14,7 +14,7 @@ interface RfqItem {
 export default function Rfq() {
   const [user, setUser] = useState<any>(null);
   const [activeCompany, setActiveCompany] = useState<any>(null);
-  const [form, setForm] = useState({ title: "", description: "", duration_days: "7" });
+  const [form, setForm] = useState({ title: "", description: "", duration_days: "7", department: "General Procurement" });
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +156,7 @@ export default function Rfq() {
       formData.append("description", form.description || "");
       formData.append("duration_days", (form.duration_days || "7").toString());
       formData.append("delivery_point", selectedDeliveryPoint);
+      formData.append("department", form.department || "General Procurement");
       
       // Add items as JSON string
       const itemsData = cartItems.map(it => ({
@@ -215,6 +216,24 @@ export default function Rfq() {
 
                 <Field label="RFQ Title" value={form.title} onChange={v => setF("title", v)} placeholder="e.g. Pengadaan Laptop Divisi IT Q3" required />
                 
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={lbl}>Department</label>
+                  <select
+                    value={form.department}
+                    onChange={e => setF("department", e.target.value)}
+                    style={inputStyle}
+                  >
+                    <option value="General Procurement">General Procurement</option>
+                    <option value="Information Technology">Information Technology (IT)</option>
+                    <option value="Operations & Logistics">Operations & Logistics</option>
+                    <option value="General Affairs (GA)">General Affairs (GA)</option>
+                    <option value="Finance & Accounting">Finance & Accounting</option>
+                    <option value="Human Resources (HR)">Human Resources (HR)</option>
+                    <option value="Marketing & Sales">Marketing & Sales</option>
+                    <option value="Engineering & Maintenance">Engineering & Maintenance</option>
+                  </select>
+                </div>
+
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <label style={lbl}>Justification / Description</label>
                   <textarea value={form.description} onChange={e => setF("description", e.target.value)}

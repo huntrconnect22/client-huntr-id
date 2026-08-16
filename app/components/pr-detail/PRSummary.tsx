@@ -56,6 +56,9 @@ export function PRSummary({ request }: PRSummaryProps) {
       {request.company?.name && (
         <MetaRow icon={Building2} label="Company" value={request.company.name} />
       )}
+      {request.department && (
+        <MetaRow icon={Building2} label="Department" value={request.department} />
+      )}
       {request.delivery_point && (
         <MetaRow icon={MapPin} label="Delivery point" value={request.delivery_point} />
       )}

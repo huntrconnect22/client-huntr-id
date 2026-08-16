@@ -119,11 +119,11 @@ export default function CartSidebar({
               onClick={onClose}
               title="Close cart"
               aria-label="Close cart"
-              className={`flex items-center justify-center rounded-lg text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] transition-all touch-manipulation ${
-                mobile ? "w-11 h-11" : "w-6 h-6"
+              className={`flex items-center justify-center rounded-lg text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] border border-transparent hover:border-[var(--ui-border)] transition-all touch-manipulation cursor-pointer ${
+                mobile ? "w-11 h-11" : "w-7 h-7"
               }`}
             >
-              <X size={mobile ? 20 : 13} />
+              <X size={mobile ? 20 : 15} />
             </button>
           )}
         </div>

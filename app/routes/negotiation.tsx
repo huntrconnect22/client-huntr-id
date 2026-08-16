@@ -5,9 +5,10 @@ import { apiGet, apiPost } from "../lib/api";
 import { 
   MessageSquare, Loader2, RefreshCw, Briefcase, 
   DollarSign, Clock, ShieldCheck, X, AlertCircle, 
-  CheckCircle2, FileText, ChevronRight
+  CheckCircle2, FileText, ChevronRight, Bot
 } from "lucide-react";
 import Swal from "sweetalert2";
+import { isDemoMode } from "../lib/demo-mode";
 
 // Negotiation Response Modal for Vendor
 function NegotiationResponseModal({ negotiation, onClose, onSuccess }: { negotiation: any, onClose: () => void, onSuccess: () => void }) {
@@ -129,6 +130,7 @@ export default function Negotiation() {
   const [loading, setLoading] = useState(true);
   const [selectedNeg, setSelectedNeg] = useState<any>(null);
   const [showRespondModal, setShowRespondModal] = useState(false);
+  const [triggeringBotId, setTriggeringBotId] = useState<string | null>(null);
 
   const getCompanyPrefix = (comp?: any) => {
     const c = comp ?? activeCompany;
@@ -179,6 +181,26 @@ export default function Negotiation() {
       console.error("Failed to fetch negotiations", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTriggerBotNegotiation = async (negotiationId: string) => {
+    setTriggeringBotId(negotiationId);
+    try {
+      await apiPost(`/api/demo/negotiation/${negotiationId}/respond`, {});
+      Swal.fire({
+        icon: 'success',
+        title: '🤖 AI Bot Merespons!',
+        text: 'AI Bot vendor telah menyetujui negosiasi Anda.',
+        timer: 2500,
+        timerProgressBar: true,
+        showConfirmButton: false,
+      });
+      if (activeCompany) fetchNegotiations(activeCompany.id);
+    } catch (err: any) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Gagal trigger AI Bot' });
+    } finally {
+      setTriggeringBotId(null);
     }
   };
 
@@ -255,6 +277,18 @@ export default function Negotiation() {
                       className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-bold transition-all"
                     >
                       Review & Respond
+                    </button>
+                  )}
+                  {isBuyer && neg.status === 'pending' && isDemoMode() && (
+                    <button
+                      onClick={() => handleTriggerBotNegotiation(neg.id)}
+                      disabled={triggeringBotId === neg.id}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-xs font-bold text-white transition-all disabled:opacity-60"
+                    >
+                      {triggeringBotId === neg.id
+                        ? <Loader2 size={12} className="animate-spin" />
+                        : <Bot size={12} />}
+                      🤖 AI Bot Respond
                     </button>
                   )}
                   {isBuyer && neg.status === 'accepted' && (

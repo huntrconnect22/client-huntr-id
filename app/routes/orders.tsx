@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import {
   FileText, RefreshCw, ChevronDown, ChevronRight, Loader2,
   Calendar, Building, CheckCircle2, ChevronLeft, Package, Clock,
-  UploadCloud, FileSpreadsheet, Search, Truck
+  UploadCloud, FileSpreadsheet, Search, Truck, Bot
 } from "lucide-react";
 import {
   getOrders, importHistoricalPo, importCatalogue,
@@ -15,6 +15,7 @@ import {
 import PaymentModal from "../components/PaymentModal";
 import { ImportModal } from "../features/orders/components/ImportModal";
 import { PoExpandedDetails } from "../features/orders/components/PoExpandedDetails";
+import { isDemoMode } from "../lib/demo-mode";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@ export default function Orders() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [issuingBastId, setIssuingBastId] = useState<string | null>(null);
+  const [triggeringBotPoId, setTriggeringBotPoId] = useState<string | null>(null);
 
   // Import
   const [showImportModal, setShowImportModal] = useState(false);
@@ -205,6 +207,20 @@ export default function Orders() {
       fetchOrders(company.id, currentPage);
     } catch (err: any) { setError(err.message || "Failed to confirm PO"); }
     finally { setConfirmingId(null); }
+  };
+
+  const handleBotConfirmPo = async (poId: string) => {
+    if (!company) return;
+    setTriggeringBotPoId(poId);
+    try {
+      await apiPost(`/api/demo/po/${poId}/confirm`, {});
+      showSuccess("🤖 AI Bot vendor telah mengkonfirmasi PO!");
+      fetchOrders(company.id, currentPage);
+    } catch (err: any) {
+      setError(err.message || 'Gagal trigger AI Bot confirm PO');
+    } finally {
+      setTriggeringBotPoId(null);
+    }
   };
 
   const handleArrangeDelivery = async (poId: string, buyerAddress?: string) => {
@@ -471,6 +487,15 @@ export default function Orders() {
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-[11px] font-bold transition-all disabled:opacity-60"
                         >
                           {confirmingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <CheckCircle2 size={11}/>} Confirm
+                        </button>
+                      )}
+                      {company.type === 'buyer' && po.status === 'issued' && isDemoMode() && (
+                        <button
+                          onClick={() => handleBotConfirmPo(po.id)}
+                          disabled={triggeringBotPoId === po.id}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-[11px] font-bold text-white transition-all disabled:opacity-60"
+                        >
+                          {triggeringBotPoId === po.id ? <Loader2 size={11} className="animate-spin"/> : <Bot size={11}/>} 🤖 Bot Confirm PO
                         </button>
                       )}
                       {company.type === 'vendor' && po.status === 'paid' && (
