@@ -36,7 +36,9 @@ import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useEventBus } from "../lib/EventBus";
 import { isDemoMode, isNavItemDisabledInDemo } from "../lib/demo-mode";
 import { isAgenticProcurementEnabled } from "../lib/features";
+import { getTrialInfo } from "../lib/trial";
 import GlobalCartPanel from "../components/GlobalCartPanel";
+import TrialBanner from "../components/TrialBanner";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
 export interface AppShellContext {
@@ -666,6 +668,9 @@ export default function AppShell() {
   // Context passed down to child Layout wrappers
   const shellContext: AppShellContext = { setPageTitle, setPageSubtitle, user, company: activeCompany };
 
+  // Trial status calculation
+  const trialInfo = getTrialInfo(user);
+
   const isGuestRoute = pathname === "/" || pathname.startsWith("/marketplace/");
   
   if (!isClient) {
@@ -701,6 +706,60 @@ export default function AppShell() {
           </div>
 
           <div className="huntr-header-actions">
+            {/* Trial Status Chip (Desktop & Tablet) */}
+            {trialInfo.hasTrial && !isMobile && (
+              <button
+                type="button"
+                onClick={() => navigate(`${companyPrefix}/account`)}
+                title={`Masa trial berakhir pada ${trialInfo.formattedEndDate}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "5px 10px",
+                  borderRadius: 6,
+                  background: trialInfo.isExpired
+                    ? "rgba(239, 68, 68, 0.12)"
+                    : trialInfo.isUrgent
+                    ? "rgba(249, 115, 22, 0.15)"
+                    : "var(--ui-bg-input)",
+                  border: trialInfo.isExpired
+                    ? "1px solid rgba(239, 68, 68, 0.3)"
+                    : trialInfo.isUrgent
+                    ? "1px solid rgba(249, 115, 22, 0.35)"
+                    : "1px solid var(--ui-border)",
+                  color: trialInfo.isExpired
+                    ? "#ef4444"
+                    : trialInfo.isUrgent
+                    ? "#f97316"
+                    : "var(--ui-text-secondary)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                className="hover:border-orange-500/50"
+              >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: trialInfo.isExpired ? "#ef4444" : trialInfo.isUrgent ? "#f97316" : "#10b981",
+                    display: "inline-block",
+                  }}
+                  className={trialInfo.isUrgent ? "animate-pulse" : ""}
+                />
+                <span>
+                  {trialInfo.isExpired
+                    ? "Trial Berakhir"
+                    : trialInfo.isExpiringSoon
+                    ? `Trial: Sisa ${trialInfo.daysRemaining} Hari`
+                    : `Trial: ${trialInfo.daysRemaining} Hari`}
+                </span>
+              </button>
+            )}
+
             {/* Cart Button (Desktop Only) — dispatches toggle-cart event picked up by marketplace */}
             {!isMobile && (
               <button
@@ -949,6 +1008,9 @@ export default function AppShell() {
 
           </div>
         </header>
+
+        {/* Trial Expiring / Expired Warning Banner */}
+        <TrialBanner trial={trialInfo} />
 
         {/* Child routes render here — only this area changes on navigation */}
         <div className="huntr-page-content">
