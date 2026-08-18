@@ -35,6 +35,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useEventBus } from "../lib/EventBus";
 import { isDemoMode, isNavItemDisabledInDemo } from "../lib/demo-mode";
+import { isAgenticProcurementEnabled } from "../lib/features";
 import GlobalCartPanel from "../components/GlobalCartPanel";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
@@ -71,6 +72,21 @@ export default function AppShell() {
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
   const [roleSwitching, setRoleSwitching] = useState(false); // For role switch loading state
   const [cartCount, setCartCount] = useState(0);
+  const [agenticEnabled, setAgenticEnabled] = useState(false);
+
+  // Sync and listen for Feature Flags updates
+  useEffect(() => {
+    setAgenticEnabled(isAgenticProcurementEnabled());
+    const handleFeatureUpdate = () => {
+      setAgenticEnabled(isAgenticProcurementEnabled());
+    };
+    window.addEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+    window.addEventListener("storage", handleFeatureUpdate);
+    return () => {
+      window.removeEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+      window.removeEventListener("storage", handleFeatureUpdate);
+    };
+  }, []);
 
   // Update cart count when cart changes
   useEffect(() => {
@@ -315,7 +331,9 @@ export default function AppShell() {
 
       // Procurement (Buyer)
       ...(isBuyerComp && (isManager || isBuyerRole) ? [
-        { to: `${companyPrefix}/agentic-procurement`, label: "AI Agentic Procurement", Icon: Sparkles, section: "procurement", isAi: true },
+        ...(agenticEnabled ? [
+          { to: `${companyPrefix}/agentic-procurement`, label: "AI Agentic Procurement", Icon: Sparkles, section: "procurement", isAi: true },
+        ] : []),
         { to: `${companyPrefix}/marketplace`, label: "Huntr Catalog", Icon: Package, section: "procurement" },
         { to: `${companyPrefix}/my-pr`, label: "My PR", Icon: ClipboardList, section: "procurement", badge: "pendingNewProposals" },
       ] : []),

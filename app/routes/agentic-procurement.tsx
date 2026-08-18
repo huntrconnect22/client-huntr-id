@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Layout from "../components/Layout";
 import { runAgenticProcurement, chatAgenticProcurement, createAgenticPr } from "../lib/api/ai";
+import { isAgenticProcurementEnabled, setAgenticProcurementEnabled } from "../lib/features";
 import {
   Sparkles,
   Bot,
@@ -76,6 +77,7 @@ export default function AgenticProcurementPage() {
   const [result, setResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"pr" | "comparison" | "catalogues" | "chat">("pr");
   const [isCreatingPr, setIsCreatingPr] = useState(false);
+  const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
 
   // Real-time animated steps
   const [workflowSteps, setWorkflowSteps] = useState<StepStatus[]>([
@@ -92,6 +94,31 @@ export default function AgenticProcurementPage() {
   const [chatInput, setChatInput] = useState("");
   const [isChatSending, setIsChatSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsFeatureEnabled(isAgenticProcurementEnabled());
+    const handleFeatureUpdate = () => {
+      setIsFeatureEnabled(isAgenticProcurementEnabled());
+    };
+    window.addEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+    window.addEventListener("storage", handleFeatureUpdate);
+    return () => {
+      window.removeEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+      window.removeEventListener("storage", handleFeatureUpdate);
+    };
+  }, []);
+
+  const handleActivateFeature = () => {
+    setAgenticProcurementEnabled(true);
+    setIsFeatureEnabled(true);
+    Swal.fire({
+      icon: "success",
+      title: "Fitur Diaktifkan!",
+      text: "AI Agentic Procurement telah diaktifkan dan ditambahkan ke sidebar navigasi.",
+      timer: 2000,
+      showConfirmButton: false,
+    });
+  };
 
   useEffect(() => {
     const compStr = localStorage.getItem("active_company");
@@ -375,6 +402,33 @@ export default function AgenticProcurementPage() {
       subtitle="Autonomous Procurement Agent untuk pencarian katalog, komparasi produk, dan penyusunan PR otomatis."
     >
       <div className="flex flex-col gap-4 max-w-7xl mx-auto pb-12">
+        {/* Inactive Feature Notice Banner */}
+        {!isFeatureEnabled && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400">
+            <div className="flex items-center gap-2.5">
+              <Sparkles size={18} className="flex-shrink-0 text-orange-500" />
+              <div className="text-xs text-[var(--ui-text-primary)]">
+                <span className="font-bold text-orange-500">Fitur Belum Aktif di Sidebar:</span> AI Agentic Procurement saat ini nonaktif di pengaturan tampilan Anda.
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={handleActivateFeature}
+                className="px-3 py-1.5 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+              >
+                <Zap size={13} />
+                <span>Aktifkan Sekarang</span>
+              </button>
+              <button
+                onClick={() => navigate(`${getCompanyPrefix()}/account`)}
+                className="px-3 py-1.5 rounded-md bg-[var(--ui-bg-input)] hover:bg-[var(--ui-border)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] font-semibold transition-all cursor-pointer"
+              >
+                Buka Pengaturan
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Disclaimer Hint Banner (Beta) */}
         <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs">
           <AlertCircle size={15} className="flex-shrink-0 mt-0.5 text-amber-500" />

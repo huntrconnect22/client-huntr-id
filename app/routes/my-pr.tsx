@@ -6,6 +6,7 @@ import {
   Package, Calendar, Search, Loader2, Plus, ArrowUpRight, Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { isAgenticProcurementEnabled } from "../lib/features";
 
 const STATUS_CFG: Record<string, { bg: string; color: string; dot: string; label: string }> = {
   pending_approval: { bg: "bg-amber-500/10",  color: "text-amber-500",  dot: "bg-amber-500",  label: "Pending Approval" },
@@ -77,13 +78,15 @@ export default function MyPurchaseRequisitions() {
             />
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => navigate("/agentic-procurement")}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 transition-all cursor-pointer"
-            >
-              <Sparkles size={15} />
-              <span>AI Agent Procurement</span>
-            </button>
+            {isAgenticProcurementEnabled() && (
+              <button
+                onClick={() => navigate("/agentic-procurement")}
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+              >
+                <Sparkles size={15} />
+                <span>AI Agent Procurement</span>
+              </button>
+            )}
             <button
               onClick={() => navigate("/marketplace")}
               style={{ color: 'white' }}

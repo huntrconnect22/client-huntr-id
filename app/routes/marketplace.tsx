@@ -17,6 +17,7 @@ import {
   loadCart, addItemToCart as addItemToCartLib,
   type CartItem,
 } from "../lib/cart";
+import { isAgenticProcurementEnabled } from "../lib/features";
 
 const CATEGORY_CONFIG: { label: string; Icon: LucideIcon }[] = [
   { label: "All", Icon: LayoutGrid },
@@ -252,30 +253,32 @@ export default function Marketplace() {
         className="w-full space-y-4 transition-all duration-300"
         style={{ paddingRight: cartPanelOpen ? 296 : 0 }}
       >
-        {/* Agentic Procurement Quick Launch Banner */}
-        <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-orange-500 text-white flex items-center justify-center shadow-sm flex-shrink-0">
-              <Sparkles size={14} />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5">
-                <span>Butuh pengadaan otomatis dari deskripsi kebutuhan?</span>
-                <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">Baru</span>
+        {/* Agentic Procurement Quick Launch Banner (Only visible when feature is enabled in Settings) */}
+        {isAgenticProcurementEnabled() && (
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-md bg-orange-500 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                <Sparkles size={14} />
               </div>
-              <p className="text-[11px] text-[var(--ui-text-muted)]">
-                Gunakan <b>AI Agentic Procurement</b> untuk mencari katalog, komparasi produk, dan menyusun PR otomatis.
-              </p>
+              <div>
+                <div className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5">
+                  <span>Butuh pengadaan otomatis dari deskripsi kebutuhan?</span>
+                  <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">Baru</span>
+                </div>
+                <p className="text-[11px] text-[var(--ui-text-muted)]">
+                  Gunakan <b>AI Agentic Procurement</b> untuk mencari katalog, komparasi produk, dan menyusun PR otomatis.
+                </p>
+              </div>
             </div>
+            <button
+              onClick={() => navigate(`${getCompanyPrefix()}/agentic-procurement`)}
+              className="px-2.5 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0"
+            >
+              <span>Buka Procurement Agent</span>
+              <ArrowRight size={12} />
+            </button>
           </div>
-          <button
-            onClick={() => navigate(`${getCompanyPrefix()}/agentic-procurement`)}
-            className="px-2.5 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0"
-          >
-            <span>Buka Procurement Agent</span>
-            <ArrowRight size={12} />
-          </button>
-        </div>
+        )}
 
         {/* Search */}
         <div className="flex items-center gap-3">
