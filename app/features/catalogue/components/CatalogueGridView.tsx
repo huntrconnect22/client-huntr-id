@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import { getAssetUrl } from "../../../lib/assets";
 import { type CatalogueItem } from "../types";
 
@@ -8,6 +8,7 @@ interface CatalogueGridViewProps {
   selectedItemIds: (string | number)[];
   onToggleSelectItem: (id: string | number) => void;
   onEditItem: (item: CatalogueItem) => void;
+  onDeleteItem?: (item: CatalogueItem) => void;
 }
 
 export default function CatalogueGridView({
@@ -15,6 +16,7 @@ export default function CatalogueGridView({
   selectedItemIds,
   onToggleSelectItem,
   onEditItem,
+  onDeleteItem,
 }: CatalogueGridViewProps) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
@@ -102,23 +104,49 @@ export default function CatalogueGridView({
               <span style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>
                 UOM: <strong style={{ color: "var(--ui-text-secondary)" }}>{item.uom}</strong>
               </span>
-              <button
-                type="button"
-                onClick={() => onEditItem(item)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--ui-text-brand)",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                Edit <ChevronRight size={13} />
-              </button>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => onEditItem(item)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--ui-text-brand)",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  Edit <ChevronRight size={13} />
+                </button>
+                {onDeleteItem && (
+                  <button
+                    type="button"
+                    onClick={() => onDeleteItem(item)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#ef4444",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      opacity: 0.85,
+                      transition: "opacity 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.85")}
+                    title="Delete product"
+                  >
+                    <Trash2 size={13} /> Delete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         );

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { useSearchParams } from "react-router";
+import Swal from "sweetalert2";
 import { 
   importCatalogue, 
   getCatalogues, 
   createCatalogue, 
   updateCatalogue, 
+  deleteCatalogue,
   getCsrfCookie 
 } from "../lib/api";
 import { Sparkles, Loader2, Package } from "lucide-react";
@@ -341,6 +343,40 @@ export default function Catalogue() {
     });
   };
 
+  const handleDeleteItem = async (item: CatalogueItem) => {
+    const confirm = await Swal.fire({
+      icon: "warning",
+      title: "Hapus Produk?",
+      text: `Apakah Anda yakin ingin menghapus produk "${item.name}" dari katalog?`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#ef4444",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      await deleteCatalogue(item.id);
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Produk berhasil dihapus dari katalog.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      if (company?.id) {
+        fetchItems(company.id, currentPage, searchTerm);
+      }
+    } catch (err: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal!",
+        text: err.message || "Gagal menghapus produk.",
+      });
+    }
+  };
+
   return (
     <Layout title="Company Catalogue" subtitle="Manage your products, add new items manually, or import from Excel/CSV.">
       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
@@ -423,6 +459,7 @@ export default function Catalogue() {
               selectedItemIds={selectedItemIds}
               onToggleSelectItem={toggleSelectItem}
               onEditItem={handleEditItem}
+              onDeleteItem={handleDeleteItem}
             />
           ) : (
             <CatalogueTableView
@@ -431,6 +468,7 @@ export default function Catalogue() {
               onToggleSelectItem={toggleSelectItem}
               onToggleSelectAll={toggleSelectAll}
               onEditItem={handleEditItem}
+              onDeleteItem={handleDeleteItem}
             />
           )}
 

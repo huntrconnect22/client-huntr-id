@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiPostForm } from "../client";
+import { apiGet, apiPost, apiPut, apiPostForm, apiDelete } from "../client";
 
 /**
  * Catalogue API
@@ -13,6 +13,9 @@ export const updateCatalogue = (id: string | number, formData: FormData) => {
   formData.append("_method", "PUT");
   return apiPostForm(`/api/catalogues/${id}`, formData);
 };
+
+export const deleteCatalogue = (id: string | number) =>
+  apiDelete(`/api/catalogues/${id}`);
 
 export const importCatalogue = (formData: FormData) =>
   apiPostForm("/api/catalogues/import", formData);
