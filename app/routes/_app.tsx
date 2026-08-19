@@ -706,8 +706,8 @@ export default function AppShell() {
           </div>
 
           <div className="huntr-header-actions">
-            {/* Trial Status Chip (Desktop & Tablet) */}
-            {trialInfo.hasTrial && !isMobile && (
+            {/* Trial Status Chip (Desktop & Tablet - Buyer Purchasing Only) */}
+            {trialInfo.hasTrial && isBuyerComp && !isMobile && (
               <button
                 type="button"
                 onClick={() => navigate(`${companyPrefix}/account`)}
@@ -1009,8 +1009,8 @@ export default function AppShell() {
           </div>
         </header>
 
-        {/* Trial Expiring / Expired Warning Banner */}
-        <TrialBanner trial={trialInfo} />
+        {/* Trial Expiring / Expired Warning Banner (Buyer Purchasing Only) */}
+        {isBuyerComp && <TrialBanner trial={trialInfo} />}
 
         {/* Child routes render here — only this area changes on navigation */}
         <div className="huntr-page-content">
