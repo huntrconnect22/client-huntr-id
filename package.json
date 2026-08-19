@@ -21,7 +21,8 @@
     "react-dom": "^19.2.6",
     "react-router": "7.15.1",
     "recharts": "^3.8.1",
-    "sweetalert2": "^11.26.25"
+    "sweetalert2": "^11.26.25",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@react-router/dev": "7.15.1",

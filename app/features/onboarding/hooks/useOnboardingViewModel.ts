@@ -1,7 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
+import * as XLSX from "xlsx";
 import { OnboardingController } from "../services/onboardingController";
 import type { CompanyFormData, UploadedDoc, NpwpVerifiedData } from "../types";
+
+export interface ParsedDataState {
+  headers: string[];
+  rows: any[];
+  totalRows: number;
+  validRowsCount: number;
+  invalidRowsCount: number;
+  summary: {
+    totalPoCount?: number;
+    totalItems?: number;
+    totalAmount?: number;
+    categoriesCount?: number;
+  };
+}
 
 /**
  * useOnboardingViewModel
@@ -35,7 +50,17 @@ export const useOnboardingViewModel = () => {
   const [npwpVerifiedData, setNpwpVerifiedData] = useState<NpwpVerifiedData | null>(null);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  
+  // --- State: Import Data & Parsing (Step 5) ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isParsingFile, setIsParsingFile] = useState(false);
+  const [parseProgress, setParseProgress] = useState(0);
+  const [parsedData, setParsedData] = useState<ParsedDataState | null>(null);
+
+  // --- State: Import Status Progress Bar ---
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importStatusText, setImportStatusText] = useState("");
 
   // --- State: Terms & Conditions ---
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -58,6 +83,12 @@ export const useOnboardingViewModel = () => {
     setNpwpVerifiedData(null);
     setUploadedDocs([]);
     setSelectedFile(null);
+    setParsedData(null);
+    setIsParsingFile(false);
+    setParseProgress(0);
+    setIsImporting(false);
+    setImportProgress(0);
+    setImportStatusText("");
   }, [user]);
 
   // --- Inisialisasi Sesi User ---
@@ -121,27 +152,22 @@ export const useOnboardingViewModel = () => {
       const data = await OnboardingController.verifyTaxId(formData.tax_id, formData.country);
       setNpwpVerifiedData(data);
       
-      // Auto-fill form berdasarkan data NPWP yang valid
-      // Data NPWP sudah memiliki semua field yang dibutuhkan
       setFormData(prev => ({
         ...prev,
         company_name: prev.company_name || data.nama || "",
         email: prev.email || data.email || user?.email || "",
         phone: prev.phone || data.phone || user?.whatsapp || "",
         industry_type: prev.industry_type || data.industry_type || "",
-        // Address fields
         address: prev.address || data.alamat || "",
         provincy_country: prev.provincy_country || data.provincy_country || "",
         city: prev.city || data.city || "",
         regency: prev.regency || data.regency || "",
         zip_code: prev.zip_code || data.zip_code || "",
-        // Banking fields
         bank_name: prev.bank_name || data.bank_name || "",
         bank_account: prev.bank_account || data.bank_account || "",
         bank_account_name: prev.bank_account_name || data.bank_account_name || "",
         keywords: prev.keywords || (Array.isArray((data as any).keywords) ? (data as any).keywords.join(", ") : ((data as any).keywords || "")),
-        // Country tetap sama (tidak diubah dari NPWP)
-        country: prev.country || "ID", // Default ke Indonesia jika belum diisi
+        country: prev.country || "ID",
       }));
     } catch (err: any) {
       setError(err.message);
@@ -167,23 +193,142 @@ export const useOnboardingViewModel = () => {
   };
 
   /**
-   * Finalisasi proses onboarding
+   * Menangani pemilihn & parsing file data (Excel/CSV) untuk Step 5
+   */
+  const handleFileSelect = async (file: File | null) => {
+    setSelectedFile(file);
+    if (!file) {
+      setParsedData(null);
+      setParseProgress(0);
+      setIsParsingFile(false);
+      return;
+    }
+
+    setIsParsingFile(true);
+    setParseProgress(15);
+    setError(null);
+
+    try {
+      // Delay kecil agar animasi progress bar terlihat mulus
+      await new Promise(r => setTimeout(r, 200));
+      setParseProgress(40);
+
+      const buffer = await file.arrayBuffer();
+      setParseProgress(70);
+
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+
+      const rawJson = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { defval: "" });
+      setParseProgress(90);
+
+      if (!rawJson || rawJson.length === 0) {
+        throw new Error("File Excel/CSV kosong atau tidak dapat dibaca.");
+      }
+
+      // Ambil seluruh nama kolom unik
+      const headers = Array.from(
+        new Set(rawJson.flatMap(row => Object.keys(row)))
+      );
+
+      const rows: Array<{ _id: number; _isValid: boolean; [key: string]: any }> = rawJson.map((row, idx) => {
+        const keys = Object.keys(row);
+        const hasValue = keys.some(k => row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== "");
+        return {
+          _id: idx + 1,
+          _isValid: hasValue,
+          ...row
+        };
+      });
+
+      const totalRows = rows.length;
+      const validRows = rows.filter(r => r._isValid);
+
+      let summary: any = {};
+      if (formData.type === "buyer") {
+        const poNumbers = new Set(
+          rows.map(r => {
+            return r['Order No'] || r['Order no'] || r['PO Number'] || r['PO number'] || r['order_no'] || '';
+          }).filter(Boolean)
+        );
+
+        let totalAmount = 0;
+        rows.forEach(r => {
+          const rawAmt = r['Amount in original currency'] || r['amount'] || r['Total Amount'] || r['total_amount'] || 0;
+          const amt = parseFloat(String(rawAmt).replace(/[^\d.-]/g, ''));
+          if (!isNaN(amt)) totalAmount += amt;
+        });
+
+        summary = {
+          totalPoCount: poNumbers.size,
+          totalItems: totalRows,
+          totalAmount
+        };
+      } else {
+        const itemCodes = new Set(
+          rows.map(r => r['Inventory Code'] || r['inventory code'] || r['Item Code'] || r['item_code'] || '').filter(Boolean)
+        );
+        const categories = new Set(
+          rows.map(r => r['Category'] || r['category'] || r['Purchase Category'] || '').filter(Boolean)
+        );
+
+        summary = {
+          totalItems: itemCodes.size || totalRows,
+          categoriesCount: categories.size
+        };
+      }
+
+      await new Promise(r => setTimeout(r, 150));
+      setParseProgress(100);
+      setParsedData({
+        headers,
+        rows,
+        totalRows,
+        validRowsCount: validRows.length,
+        invalidRowsCount: totalRows - validRows.length,
+        summary
+      });
+    } catch (err: any) {
+      console.error("Error parsing file:", err);
+      setError(`Gagal membaca file: ${err.message || "Format file tidak dapat diparsing."}`);
+      setParsedData(null);
+    } finally {
+      setIsParsingFile(false);
+    }
+  };
+
+  /**
+   * Finalisasi proses onboarding & import data
    */
   const handleCompanySubmit = async () => {
     setIsLoading(true);
+    setIsImporting(true);
+    setImportProgress(20);
+    setImportStatusText("Mendaftarkan akun perusahaan...");
     setError(null);
     try {
+      setImportProgress(50);
+      setImportStatusText("Mengunggah dokumen legalitas & file data...");
+
       const { company, allCompanies } = await OnboardingController.completeOnboarding({
         formData, user, uploadedDocs, selectedFile
       });
 
+      setImportProgress(90);
+      setImportStatusText("Menyiapkan workspace perusahaan...");
+
       setCompanies(allCompanies);
       setSelectedCompany(allCompanies[0] || company);
+
+      setImportProgress(100);
+      setImportStatusText("Selesai!");
       setSlide(7); // Pindah ke slide sukses
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);
+      setIsImporting(false);
     }
   };
 
@@ -197,6 +342,8 @@ export const useOnboardingViewModel = () => {
     uploadedDocs, setUploadedDocs,
     isUploadingDoc,
     selectedFile, setSelectedFile,
+    isParsingFile, parseProgress, parsedData,
+    isImporting, importProgress, importStatusText,
     companies, selectedCompany, setSelectedCompany,
     termsAccepted, setTermsAccepted,
     user,
@@ -208,7 +355,9 @@ export const useOnboardingViewModel = () => {
     removeHqAddress,
     handleVerifyNpwp,
     handleDocUpload,
+    handleFileSelect,
     handleCompanySubmit,
     resetForm,
   };
 };
+

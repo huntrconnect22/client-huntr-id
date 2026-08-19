@@ -2,11 +2,359 @@ import React from "react";
 import { 
   Building2, MapPin, CreditCard, UploadCloud, FileText, 
   LogIn, AlertCircle, Loader2, CheckCircle2, X, Plus, 
-  FileSpreadsheet, MapPinPlus, ScrollText
+  FileSpreadsheet, MapPinPlus, ScrollText, Table, FileCheck, Search, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { SlideSection, Field, FormLabel } from "./OnboardingUI";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { LocationStep } from "./LocationStep";
+
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+const formatCurrency = (val?: number) => {
+  if (!val) return "Rp 0";
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
+};
+
+const Step5Content = ({ vm }: { vm: any }) => {
+  const { 
+    formData, selectedFile, handleFileSelect, 
+    isParsingFile, parseProgress, parsedData,
+    isImporting, importProgress, importStatusText 
+  } = vm;
+
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 8;
+
+  const filteredRows = React.useMemo(() => {
+    if (!parsedData?.rows) return [];
+    if (!searchTerm.trim()) return parsedData.rows;
+    const term = searchTerm.toLowerCase();
+    return parsedData.rows.filter((row: any) => {
+      return Object.values(row).some((val: any) => 
+        String(val).toLowerCase().includes(term)
+      );
+    });
+  }, [parsedData, searchTerm]);
+
+  const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
+  const paginatedRows = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, currentPage, pageSize]);
+
+  return (
+    <SlideSection title="Upload Data" subtitle="Import Initial Data & Verification" icon={<UploadCloud size={22} className="text-emerald-500" />} accentColor="#10b981">
+      {/* Penjelasan upload data berdasarkan tipe perusahaan */}
+      <div className="p-5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] mb-6">
+        <p className="text-sm text-[var(--ui-text-primary)] font-medium">
+          {formData.type === "buyer" 
+            ? "Silahkan upload historical purchase order anda disini untuk proses pembuatan analisa laporan pembelian anda dan proses migrasi data yang lebih cepat."
+            : "Silahkan upload List product catalog anda disini untuk proses pembuatan online catalog dan proses migrasi data yang lebih cepat."
+          }
+        </p>
+      </div>
+
+      {/* Template Excel Download */}
+      <div className="mb-6">
+        <h4 className="text-sm font-bold text-[var(--ui-text-primary)] mb-3">Template Standard Excel</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <a 
+            href="/assets/templates/buyer-purchase-order-template.xlsx" 
+            download
+            className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] hover:border-[var(--ui-border-input-focus)] transition-all flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <FileSpreadsheet size={20} className="text-emerald-500" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-[var(--ui-text-primary)]">Template Purchase Order (Buyer)</div>
+              <div className="text-xs text-[var(--ui-text-muted)]">Format Excel/CSV untuk data pembelian</div>
+            </div>
+          </a>
+          <a 
+            href="/assets/templates/vendor-catalog-template.xlsx" 
+            download
+            className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] hover:border-[var(--ui-border-input-focus)] transition-all flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <FileSpreadsheet size={20} className="text-blue-500" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-[var(--ui-text-primary)]">Template Product Catalog (Vendor)</div>
+              <div className="text-xs text-[var(--ui-text-muted)]">Format Excel/CSV untuk katalog produk</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      {/* Import Submission Progress Bar */}
+      {isImporting && (
+        <div className="mb-6 p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Loader2 className="animate-spin text-emerald-400" size={18} />
+              <span className="text-sm font-bold text-emerald-400">{importStatusText || "Mengimpor data..."}</span>
+            </div>
+            <span className="text-sm font-extrabold text-emerald-400">{importProgress}%</span>
+          </div>
+          <div className="w-full bg-[var(--ui-bg-input)] rounded-full h-3 overflow-hidden border border-emerald-500/20">
+            <div 
+              className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-300 shadow-md shadow-emerald-500/20"
+              style={{ width: `${importProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* File Parsing Progress Bar */}
+      {isParsingFile && (
+        <div className="mb-6 p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 animate-pulse">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Loader2 className="animate-spin text-emerald-400" size={18} />
+              <span className="text-sm font-bold text-emerald-400">Membaca & Memparsing File...</span>
+            </div>
+            <span className="text-sm font-extrabold text-emerald-400">{parseProgress}%</span>
+          </div>
+          <div className="w-full bg-[var(--ui-bg-input)] rounded-full h-3 overflow-hidden border border-emerald-500/20">
+            <div 
+              className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+              style={{ width: `${parseProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-[var(--ui-text-muted)] mt-2 text-center">
+            Memverifikasi struktur kolom & ekstrak baris data
+          </p>
+        </div>
+      )}
+
+      {/* State 1: File Dropzone (no file selected or cleared) */}
+      {!selectedFile && !isParsingFile && (
+        <div className="p-8 md:p-12 border-2 border-dashed border-[var(--ui-border-input)] rounded-3xl text-center bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] transition-all group">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--ui-bg-input)] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform border border-[var(--ui-border-input)]">
+            <FileSpreadsheet size={32} className="text-emerald-500" />
+          </div>
+          <p className="text-sm font-semibold text-[var(--ui-text-primary)] mb-1">Pilih File Excel (.xlsx, .xls, .ods) atau CSV</p>
+          <p className="text-xs text-[var(--ui-text-muted)] mb-6">Data akan diparsing dan ditinjau terlebih dahulu secara otomatis</p>
+          <label className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold cursor-pointer transition-all shadow-md shadow-emerald-500/20">
+            <UploadCloud size={18} />
+            Choose File
+            <input 
+              type="file" 
+              accept=".csv, .xlsx, .xls, .xlsm, .ods" 
+              onChange={e => {
+                const f = e.target.files?.[0] || null;
+                handleFileSelect(f);
+                e.target.value = '';
+              }} 
+              className="hidden" 
+            />
+          </label>
+        </div>
+      )}
+
+      {/* State 2: File Parsed and Ready with Preview */}
+      {selectedFile && !isParsingFile && parsedData && (
+        <div className="flex flex-col gap-6">
+          {/* File Information Card */}
+          <div className="p-4 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                <FileCheck size={22} />
+              </div>
+              <div className="truncate">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-[var(--ui-text-primary)] truncate">{selectedFile.name}</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    Parsed
+                  </span>
+                </div>
+                <div className="text-xs text-[var(--ui-text-muted)] mt-0.5">
+                  Ukuran: {formatFileSize(selectedFile.size)} • Total Baris: {parsedData.totalRows}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => handleFileSelect(null)}
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all shrink-0 flex items-center gap-1.5"
+            >
+              <X size={14} /> Ganti File
+            </button>
+          </div>
+
+          {/* Data Summary Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 flex flex-col justify-between">
+              <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Baris Data</span>
+              <div className="mt-2">
+                <span className="text-2xl font-black text-emerald-400">{parsedData.totalRows}</span>
+                <span className="text-xs text-[var(--ui-text-secondary)] ml-2">baris</span>
+              </div>
+              <div className="mt-1 text-[11px] text-emerald-400/80 flex items-center gap-1">
+                <CheckCircle2 size={12} /> {parsedData.validRowsCount} baris valid
+              </div>
+            </div>
+
+            {formData.type === "buyer" ? (
+              <>
+                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/15 flex flex-col justify-between">
+                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Purchase Orders</span>
+                  <div className="mt-2">
+                    <span className="text-2xl font-black text-blue-400">{parsedData.summary.totalPoCount || 0}</span>
+                    <span className="text-xs text-[var(--ui-text-secondary)] ml-2">PO</span>
+                  </div>
+                  <div className="mt-1 text-[11px] text-blue-400/80">
+                    Terdeteksi dari kolom Order No
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 flex flex-col justify-between">
+                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Estimasi Nominal</span>
+                  <div className="mt-2">
+                    <span className="text-xl font-black text-amber-400">{formatCurrency(parsedData.summary.totalAmount)}</span>
+                  </div>
+                  <div className="mt-1 text-[11px] text-amber-400/80">
+                    Kalkulasi total nilai transaksi
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/15 flex flex-col justify-between">
+                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Produk</span>
+                  <div className="mt-2">
+                    <span className="text-2xl font-black text-blue-400">{parsedData.summary.totalItems || parsedData.totalRows}</span>
+                    <span className="text-xs text-[var(--ui-text-secondary)] ml-2">item</span>
+                  </div>
+                  <div className="mt-1 text-[11px] text-blue-400/80">
+                    Item katalog terdeteksi
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/15 flex flex-col justify-between">
+                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Kategori</span>
+                  <div className="mt-2">
+                    <span className="text-2xl font-black text-purple-400">{parsedData.summary.categoriesCount || 0}</span>
+                    <span className="text-xs text-[var(--ui-text-secondary)] ml-2">kategori</span>
+                  </div>
+                  <div className="mt-1 text-[11px] text-purple-400/80">
+                    Kategori produk unik
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Preview Table Header & Search */}
+          <div className="flex flex-col gap-3 pt-2 border-t border-[var(--ui-border-input)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Table size={18} className="text-emerald-500" />
+                <h4 className="text-sm font-bold text-[var(--ui-text-primary)]">Hasil Parsing Data (Preview)</h4>
+              </div>
+
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+                <input 
+                  type="text" 
+                  placeholder="Cari data..."
+                  value={searchTerm}
+                  onChange={e => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-8 pr-3 py-1.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-xs text-[var(--ui-text-primary)] outline-none w-full sm:w-56"
+                />
+              </div>
+            </div>
+
+            {/* Scrollable Table */}
+            <div className="border border-[var(--ui-border-input)] rounded-2xl overflow-hidden bg-[var(--ui-bg-input)] shadow-inner">
+              <div className="overflow-x-auto max-h-[320px] scrollbar-thin scrollbar-thumb-[var(--ui-border-input)]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[var(--ui-bg-page)] text-[var(--ui-text-secondary)] font-bold sticky top-0 border-b border-[var(--ui-border-input)] z-10">
+                    <tr>
+                      <th className="p-3 w-12 text-center">#</th>
+                      <th className="p-3 w-20 text-center">Status</th>
+                      {parsedData.headers.slice(0, 7).map((h: string, idx: number) => (
+                        <th key={idx} className="p-3 whitespace-nowrap">{h}</th>
+                      ))}
+                      {parsedData.headers.length > 7 && (
+                        <th className="p-3 text-[var(--ui-text-muted)] whitespace-nowrap">+{parsedData.headers.length - 7} Kolom Lainnya</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--ui-border-input)] text-[var(--ui-text-primary)]">
+                    {paginatedRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={parsedData.headers.length + 2} className="p-6 text-center text-[var(--ui-text-muted)]">
+                          Tidak ada data yang cocok dengan pencarian.
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedRows.map((row: any, rIdx: number) => (
+                        <tr key={rIdx} className="hover:bg-emerald-500/5 transition-colors">
+                          <td className="p-3 text-center text-[var(--ui-text-muted)] font-medium">
+                            {(currentPage - 1) * pageSize + rIdx + 1}
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <CheckCircle2 size={10} /> Valid
+                            </span>
+                          </td>
+                          {parsedData.headers.slice(0, 7).map((h: string, cIdx: number) => (
+                            <td key={cIdx} className="p-3 whitespace-nowrap max-w-[200px] truncate text-[var(--ui-text-secondary)]">
+                              {String(row[h] ?? '')}
+                            </td>
+                          ))}
+                          {parsedData.headers.length > 7 && (
+                            <td className="p-3 text-[var(--ui-text-muted)] italic text-[11px]">...</td>
+                          )}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="p-3 bg-[var(--ui-bg-page)] border-t border-[var(--ui-border-input)] flex items-center justify-between text-xs text-[var(--ui-text-secondary)]">
+                <div>
+                  Menampilkan <strong>{Math.min((currentPage - 1) * pageSize + 1, filteredRows.length)}</strong> - <strong>{Math.min(currentPage * pageSize, filteredRows.length)}</strong> dari <strong>{filteredRows.length}</strong> data
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                    className="px-2.5 py-1 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--ui-bg-input-focus)]"
+                  >
+                    Prev
+                  </button>
+                  <span>{currentPage} / {totalPages}</span>
+                  <button
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                    className="px-2.5 py-1 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--ui-bg-input-focus)]"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </SlideSection>
+  );
+};
 
 /**
  * SlideContent Component
@@ -235,7 +583,6 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
           <input ref={docInputRef} type="file" className="hidden" onChange={e => {
             if (e.target.files?.[0]) {
               handleDocUpload(e.target.files[0], docType);
-              // Reset input file agar bisa upload file yang sama lagi
               e.target.value = '';
             }
           }} />
@@ -287,64 +634,7 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
       );
 
     case 5:
-      return (
-        <SlideSection title="Upload Data" subtitle="Import Initial Data" icon={<UploadCloud size={22} className="text-emerald-500" />} accentColor="#10b981">
-          {/* Penjelasan upload data berdasarkan tipe perusahaan */}
-          <div className="p-5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] mb-6">
-            <p className="text-sm text-[var(--ui-text-primary)] font-medium">
-              {formData.type === "buyer" 
-                ? "Silahkan upload historical purchase order anda disini untuk proses pembuatan analisa laporan pembelian anda dan proses migrasi data yang lebih cepat."
-                : "Silahkan upload List product catalog anda disini untuk proses pembuatan online catalog dan proses migrasi data yang lebih cepat."
-              }
-            </p>
-          </div>
-          
-          {/* Template Excel Download */}
-          <div className="mb-6">
-            <h4 className="text-sm font-bold text-[var(--ui-text-primary)] mb-3">Template Standard Excel</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <a 
-                href="/assets/templates/buyer-purchase-order-template.xlsx" 
-                download
-                className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] hover:border-[var(--ui-border-input-focus)] transition-all flex items-center gap-3 group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                  <FileSpreadsheet size={20} className="text-emerald-500" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-[var(--ui-text-primary)]">Template Purchase Order (Buyer)</div>
-                  <div className="text-xs text-[var(--ui-text-muted)]">Format Excel/CSV untuk data pembelian</div>
-                </div>
-              </a>
-              <a 
-                href="/assets/templates/vendor-catalog-template.xlsx" 
-                download
-                className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] hover:border-[var(--ui-border-input-focus)] transition-all flex items-center gap-3 group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <FileSpreadsheet size={20} className="text-blue-500" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-[var(--ui-text-primary)]">Template Product Catalog (Vendor)</div>
-                  <div className="text-xs text-[var(--ui-text-muted)]">Format Excel/CSV untuk katalog produk</div>
-                </div>
-              </a>
-            </div>
-          </div>
-          
-          {/* Upload Area */}
-          <div className="p-8 md:p-12 border-2 border-dashed border-[var(--ui-border-input)] rounded-3xl text-center bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] transition-all group">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--ui-bg-input)] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <FileSpreadsheet size={32} className="text-[var(--ui-text-muted)]" />
-            </div>
-            <p className="text-sm text-[var(--ui-text-secondary)] mb-6">{selectedFile ? selectedFile.name : "Select an Excel or CSV file to import"}</p>
-            <label className="inline-flex items-center px-6 py-3 bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] border border-[var(--ui-border-input)] rounded-xl text-sm font-bold text-[var(--ui-text-primary)] cursor-pointer transition-all">
-              Choose File
-              <input type="file" accept=".csv, .xlsx, .xls, .xlsm, .ods" onChange={e => setSelectedFile(e.target.files?.[0] || null)} className="hidden" />
-            </label>
-          </div>
-        </SlideSection>
-      );
+      return <Step5Content vm={vm} />;
 
     case 6:
       return (

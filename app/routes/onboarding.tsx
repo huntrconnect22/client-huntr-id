@@ -70,8 +70,19 @@ export default function Onboarding() {
         return `Beberapa dokumen gagal diupload (${docsWithoutFilePath.length} dokumen). Silahkan hapus dan upload ulang dokumen tersebut.`;
       }
     }
-    if (vm.slide === 5 && !vm.selectedFile) {
-      return "Pilih file CSV atau Excel untuk diimport.";
+    if (vm.slide === 5) {
+      if (!vm.selectedFile) {
+        return "Pilih file CSV atau Excel untuk diimport.";
+      }
+      if (vm.isParsingFile) {
+        return "Tunggu proses parsing file selesai terlebih dahulu.";
+      }
+      if (!vm.parsedData || vm.parsedData.totalRows === 0) {
+        return "File yang dipilih kosong atau tidak dapat diparsing. Harap pilih file dengan data yang valid.";
+      }
+      if (vm.parsedData.validRowsCount === 0) {
+        return "Tidak ada baris data valid yang ditemukan dalam file ini.";
+      }
     }
     if (vm.slide === 6 && !vm.termsAccepted) {
       return "Anda harus menyetujui Ketentuan Penggunaan Platform HUNTR untuk melanjutkan.";

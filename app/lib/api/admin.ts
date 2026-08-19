@@ -73,3 +73,11 @@ export const adminGetUsers = (params?: { page?: number; per_page?: number; searc
 
 export const adminDeleteUser = (userId: string) =>
   apiDelete(`/api/admin/users/${userId}`);
+
+export const adminGetCompanyImports = (companyId: string, params?: { page?: number; per_page?: number }) => {
+  const query = new URLSearchParams();
+  if (params?.page) query.append("page", params.page.toString());
+  if (params?.per_page) query.append("per_page", params.per_page.toString());
+  const queryString = query.toString();
+  return apiGet(`/api/admin/companies/${companyId}/imports${queryString ? `?${queryString}` : ""}`);
+};
