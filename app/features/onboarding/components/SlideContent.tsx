@@ -553,29 +553,34 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
             <p className="text-xs text-[var(--ui-text-muted)] mt-2">Upload minimal satu dokumen untuk verifikasi perusahaan</p>
           </div>
           
-          <div className="flex gap-2">
-            <select 
-              value={docType} 
-              onChange={e => setDocType(e.target.value)} 
-              className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none"
-            >
-              {[
-                "NPWP", 
-                "SIUP", 
-                "NIB", 
-                "KTP Direktur", 
-                "Akta Perusahaan", 
-                "TDP (Tanda Daftar Perusahaan)",
-                "SKDP (Surat Keterangan Domisili Perusahaan)",
-                "Surat Izin Usaha Perdagangan (SIUP)",
-                "Surat Izin Usaha Industri (SIUI)",
-                "Other"
-              ].map(t => <option key={t} value={t} className="bg-[var(--ui-bg-page)]">{t}</option>)}
-            </select>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1 min-w-0 z-0">
+              <select 
+                value={docType} 
+                onChange={e => setDocType(e.target.value)} 
+                className="w-full px-4 pr-10 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none truncate"
+              >
+                {[
+                  "NPWP", 
+                  "SIUP", 
+                  "NIB", 
+                  "KTP Direktur", 
+                  "Akta Perusahaan", 
+                  "TDP (Tanda Daftar Perusahaan)",
+                  "SKDP (Surat Keterangan Domisili Perusahaan)",
+                  "Surat Izin Usaha Perdagangan (SIUP)",
+                  "Surat Izin Usaha Industri (SIUI)",
+                  "Other"
+                ].map(t => <option key={t} value={t} className="bg-[var(--ui-bg-page)] text-sm">{t}</option>)}
+              </select>
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]">
+                <ChevronRight size={16} className="rotate-90" />
+              </div>
+            </div>
             <button 
               onClick={() => docInputRef.current?.click()} 
               disabled={isUploadingDoc}
-              className={`w-12 h-12 rounded-xl text-white flex items-center justify-center transition-colors shrink-0 ${isUploadingDoc ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
+              className={`w-full sm:w-12 h-12 rounded-xl text-white flex items-center justify-center transition-colors sm:shrink-0 z-10 ${isUploadingDoc ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
             >
               {isUploadingDoc ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
             </button>
