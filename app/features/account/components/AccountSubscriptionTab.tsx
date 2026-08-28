@@ -1,7 +1,8 @@
-import React from "react";
-import { Zap, Clock, ShieldCheck, PhoneCall, ArrowRight } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Zap, Clock, ShieldCheck, PhoneCall, ArrowRight, Bot, RefreshCw, Cpu } from "lucide-react";
 import Swal from "sweetalert2";
 import { getTrialInfo } from "../../../lib/trial";
+import { getAiUsage } from "../../../lib/api/ai";
 
 interface AccountSubscriptionTabProps {
   user: any;
@@ -13,6 +14,32 @@ export function AccountSubscriptionTab({
   activeCompany,
 }: AccountSubscriptionTabProps) {
   const trial = getTrialInfo(user);
+  const [usageData, setUsageData] = useState<{
+    total_requests: number;
+    total_tokens: number;
+    total_cost_usd: number;
+    month: string;
+  } | null>(null);
+  const [loadingUsage, setLoadingUsage] = useState(false);
+
+  const fetchUsage = async () => {
+    if (!activeCompany?.id) return;
+    setLoadingUsage(true);
+    try {
+      const res: any = await getAiUsage(activeCompany.id);
+      if (res && res.success && res.data) {
+        setUsageData(res.data);
+      }
+    } catch (e) {
+      console.error("Failed to load AI usage", e);
+    } finally {
+      setLoadingUsage(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsage();
+  }, [activeCompany?.id]);
 
   const handleContactSales = () => {
     Swal.fire({
@@ -48,8 +75,60 @@ export function AccountSubscriptionTab({
       <div>
         <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">Subscription & Trial Plan</h2>
         <p className="text-sm text-[var(--ui-text-muted)] mt-1">
-          Pantau masa aktif paket percobaan (trial) dan kelola lisensi akun enterprise Anda.
+          Pantau masa aktif paket percobaan (trial), kuota pemakaian AI, dan kelola lisensi akun enterprise Anda.
         </p>
+      </div>
+
+      {/* AI Usage Card Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
+            <Bot size={13} className="text-orange-500" />
+            Penggunaan AI & Credit ({usageData?.month || "Bulan Ini"})
+          </span>
+          <button
+            onClick={fetchUsage}
+            disabled={loadingUsage}
+            className="text-[11px] text-orange-500 hover:text-orange-600 flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={11} className={loadingUsage ? "animate-spin" : ""} />
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
+              <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
+                <Cpu size={12} className="text-orange-500" /> Total Request AI
+              </span>
+              <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
+                {usageData?.total_requests?.toLocaleString("id-ID") ?? 0}
+                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">calls</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
+              <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
+                <Zap size={12} className="text-amber-500" /> Token Dikonsumsi
+              </span>
+              <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
+                {usageData?.total_tokens?.toLocaleString("id-ID") ?? 0}
+                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">tokens</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
+              <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
+                <ShieldCheck size={12} className="text-emerald-500" /> Status Kuota
+              </span>
+              <div className="text-sm font-bold text-emerald-500 mt-1 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                Trial Unlimited
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3">

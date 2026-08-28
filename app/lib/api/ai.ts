@@ -73,6 +73,13 @@ export const aiGeneratePr = (query: string, catalogueIds?: string[]) =>
   });
 
 /**
+ * Ambil ringkasan penggunaan AI bulan ini per company.
+ * Memerlukan auth.
+ */
+export const getAiUsage = (companyId: string) =>
+  apiGet(`/api/ai/usage?company_id=${encodeURIComponent(companyId)}`);
+
+/**
  * Auto-fill metadata produk menggunakan Genkit/OpenAI AI berdasarkan nama produk.
  */
 export const aiAutofillCatalogue = (name: string, category?: string) =>
