@@ -123,27 +123,20 @@ export default function CatalogueModalForm({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* Genkit AI Autofill Trigger */}
+            {/* ChatGPT AI Autofill Trigger */}
             <button
               type="button"
               onClick={onAiAutofill}
               disabled={aiAutofilling}
+              className="text-xs text-orange-500 hover:text-orange-600 font-semibold flex items-center gap-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 rounded-lg px-2.5 py-1.5 transition-all shadow-xs"
               style={{
-                padding: "5px 12px",
-                borderRadius: 6,
-                border: "1px solid rgba(249,115,22,0.3)",
-                backgroundColor: "rgba(249,115,22,0.08)",
-                color: "var(--huntr-orange)",
-                fontSize: 11,
-                fontWeight: 700,
                 cursor: aiAutofilling ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
+                opacity: aiAutofilling ? 0.7 : 1,
               }}
+              title="Gunakan ChatGPT AI untuk mencari spesifikasi, merek, kategori & gambar produk secara otomatis"
             >
               {aiAutofilling ? <Loader2 className="animate-spin" size={13} /> : <Sparkles size={13} />}
-              Genkit AI Auto-fill
+              <span>{aiAutofilling ? "Menganalisis..." : "ChatGPT AI Auto-fill"}</span>
             </button>
 
             <button

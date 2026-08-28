@@ -143,17 +143,17 @@ export default function Catalogue() {
     }
   };
 
-  // Genkit AI Single Product Auto-fill
+  // ChatGPT AI Single Product Auto-fill
   const handleAiAutofill = async () => {
     if (!formData.name.trim()) {
-      setError("Isi nama produk terlebih dahulu agar Genkit AI dapat mencari referensi, spesifikasi & gambar secara akurat.");
+      setError("Isi nama produk terlebih dahulu agar ChatGPT AI dapat mencari referensi, spesifikasi & gambar secara akurat.");
       return;
     }
     setAiAutofilling(true);
     setError(null);
     try {
-      setAiStatusMessage(`Genkit AI sedang mencari spesifikasi teknis & gambar produk untuk "${formData.name}"...`);
-      const info = await fetchProductKnowledge(formData.name);
+      setAiStatusMessage(`ChatGPT AI sedang menganalisis spesifikasi & meng-generate foto studio produk untuk "${formData.name}"...`);
+      const info = await fetchProductKnowledge(formData.name, formData.category, company?.id);
 
       setFormData((prev) => ({
         ...prev,
@@ -168,53 +168,54 @@ export default function Catalogue() {
         setProductImage(info.imageFile);
       }
 
-      setAiStatusMessage("Formulir & Gambar produk berhasil dicari & diisi otomatis oleh Genkit AI!");
+      setAiStatusMessage("Formulir & Gambar produk berhasil di-generate otomatis oleh AI!");
       setTimeout(() => setAiStatusMessage(null), 4000);
     } catch (err: any) {
-      setError(err.message || "Gagal mengisi data dengan Genkit AI.");
+      setError(err.message || "Gagal mengisi data dengan ChatGPT AI.");
     } finally {
       setAiAutofilling(false);
     }
   };
 
-  // Genkit AI Image Search Helper
+  // ChatGPT AI Image Search Helper
   const handleAiImageSearch = async () => {
     if (!formData.name.trim()) return;
     setAiImageSearching(true);
-    setAiStatusMessage(`Mencari gambar untuk "${formData.name}"...`);
+    setAiStatusMessage(`AI sedang meng-generate gambar produk untuk "${formData.name}"...`);
     try {
-      const fileRes = await fetchProductImage(formData.name, formData.category);
+      const fileRes = await fetchProductImage(formData.name, formData.category, formData.brand, company?.id);
       if (fileRes) {
         setProductImage(fileRes);
-        setAiStatusMessage("Gambar produk berhasil ditemukan & dipasang otomatis!");
+        setAiStatusMessage("Gambar produk AI berhasil digenerate & dipasang otomatis!");
       } else {
-        setAiStatusMessage("Gambar tidak ditemukan, coba nama produk yang lebih spesifik.");
+        setAiStatusMessage("Gambar tidak dapat di-generate, silakan upload manual.");
       }
       setTimeout(() => setAiStatusMessage(null), 3500);
     } catch {
-      setAiStatusMessage("Gagal mencari gambar.");
+      setAiStatusMessage("Gagal generate gambar.");
       setTimeout(() => setAiStatusMessage(null), 3000);
     } finally {
       setAiImageSearching(false);
     }
   };
 
-  // Genkit AI Batch Mass Update for SELECTED products (max 10)
+
+  // ChatGPT AI Batch Mass Update for SELECTED products (max 10)
   const handleBatchAiUpdate = async () => {
     if (!company?.id) return;
     if (selectedItemIds.length === 0) {
-      setError("Pilih setidaknya 1 produk (maksimal 10) untuk diperbarui oleh Genkit AI.");
+      setError("Pilih setidaknya 1 produk (maksimal 10) untuk diperbarui oleh ChatGPT AI.");
       return;
     }
 
     const selectedProducts = items.filter((item) => selectedItemIds.includes(item.id)).slice(0, 10);
     setAiBatchUpdating(true);
     setError(null);
-    setAiStatusMessage(`Memproses pencarian referensi spesifikasi Genkit AI untuk ${selectedProducts.length} produk terpilih...`);
+    setAiStatusMessage(`ChatGPT AI sedang memproses spesifikasi untuk ${selectedProducts.length} produk terpilih...`);
 
     try {
       for (const p of selectedProducts) {
-        const info = await fetchProductKnowledge(p.name);
+        const info = await fetchProductKnowledge(p.name, p.category);
 
         const fd = new FormData();
         fd.append("company_id", company.id.toString());
@@ -234,12 +235,12 @@ export default function Catalogue() {
         await updateCatalogue(p.id, fd);
       }
 
-      setAiStatusMessage(`Sukses! ${selectedProducts.length} produk terpilih telah diperbarui massal dengan spesifikasi & merek akurat oleh Genkit AI.`);
+      await fetchItems(company.id);
       setSelectedItemIds([]);
-      fetchItems(company.id);
+      setAiStatusMessage(`Sukses! ${selectedProducts.length} produk terpilih telah diperbarui massal oleh ChatGPT AI.`);
       setTimeout(() => setAiStatusMessage(null), 4000);
     } catch (err: any) {
-      setError(err.message || "Gagal melakukan batch update Genkit AI.");
+      setError(err.message || "Gagal melakukan batch update ChatGPT AI.");
     } finally {
       setAiBatchUpdating(false);
     }

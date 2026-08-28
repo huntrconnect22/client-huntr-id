@@ -80,10 +80,21 @@ export const getAiUsage = (companyId: string) =>
   apiGet(`/api/ai/usage?company_id=${encodeURIComponent(companyId)}`);
 
 /**
- * Auto-fill metadata produk menggunakan Genkit/OpenAI AI berdasarkan nama produk.
+ * Auto-fill metadata produk menggunakan OpenAI ChatGPT berdasarkan nama produk.
  */
 export const aiAutofillCatalogue = (name: string, category?: string) =>
   apiPost("/api/ai/autofill-catalogue", { name, category });
+
+/**
+ * Generate gambar produk menggunakan OpenAI DALL-E.
+ */
+export const aiGenerateProductImage = (params: {
+  name: string;
+  category?: string;
+  brand?: string;
+  company_id?: string;
+}) => apiPost("/api/ai/generate-image", params);
+
 
 /**
  * Batch enrichment / update massal produk menggunakan Genkit/OpenAI AI (max 10 item).

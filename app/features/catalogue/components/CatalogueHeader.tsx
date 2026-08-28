@@ -47,7 +47,7 @@ export default function CatalogueHeader({
           <Plus size={16} /> Add New Item
         </button>
 
-        {/* Genkit AI Batch Update Button */}
+        {/* ChatGPT AI Batch Update Button */}
         <button
           onClick={onBatchAiUpdate}
           disabled={aiBatchUpdating || selectedCount === 0}
@@ -72,8 +72,9 @@ export default function CatalogueHeader({
           ) : (
             <Wand2 size={15} color="var(--huntr-orange)" />
           )}
-          Genkit AI Mass Update {selectedCount > 0 ? `(${selectedCount} Terpilih)` : "(Pilih Produk)"}
+          ChatGPT AI Mass Update {selectedCount > 0 ? `(${selectedCount} Terpilih)` : "(Pilih Produk)"}
         </button>
+
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, maxWidth: 560 }}>
