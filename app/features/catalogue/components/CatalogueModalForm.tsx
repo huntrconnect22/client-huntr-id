@@ -237,69 +237,54 @@ export default function CatalogueModalForm({
             </select>
           </div>
 
-          <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
             <label style={lbl}>Product Image</label>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full">
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => setProductImage(e.target.files?.[0] || null)}
+                className="w-full text-xs"
                 style={{
                   ...inputStyle,
                   padding: "8px 12px",
                   cursor: "pointer",
                   flex: 1,
+                  minWidth: 0,
                 }}
               />
               <button
                 type="button"
                 disabled={aiImageSearching || !formData.name.trim()}
                 onClick={onAiImageSearch}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "9px 14px",
-                  borderRadius: 8,
-                  border: "1px solid var(--huntr-orange)",
-                  background: "#fff7ed",
-                  color: "var(--huntr-orange)",
-                  cursor: aiImageSearching || !formData.name.trim() ? "not-allowed" : "pointer",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  opacity: !formData.name.trim() ? 0.5 : 1,
-                }}
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-orange-500/40 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                title="Generate foto studio produk AI otomatis"
               >
                 {aiImageSearching ? <Loader2 size={13} className="animate-spin" /> : <ImageIcon size={13} />}
-                {aiImageSearching ? "Mencari..." : "Cari Gambar AI"}
+                <span>{aiImageSearching ? "Meng-generate..." : "Generate Foto AI"}</span>
               </button>
             </div>
             {productImage && (
-              <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="mt-2 flex items-center gap-2.5 p-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] min-w-0 max-w-full">
                 <img
                   src={URL.createObjectURL(productImage)}
                   alt="Preview"
-                  style={{
-                    width: 64,
-                    height: 48,
-                    objectFit: "cover",
-                    borderRadius: 6,
-                    border: "1px solid var(--ui-border)",
-                  }}
+                  className="w-12 h-12 object-cover rounded-md border border-[var(--ui-border)] flex-shrink-0"
                 />
-                <span style={{ fontSize: 12, color: "var(--ui-text-secondary)" }}>{productImage.name}</span>
+                <span className="text-xs text-[var(--ui-text-secondary)] truncate flex-1 font-medium">
+                  {productImage.name}
+                </span>
                 <button
                   type="button"
                   onClick={() => setProductImage(null)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: 12 }}
+                  className="text-xs text-red-500 hover:text-red-600 font-semibold px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 border-none cursor-pointer flex-shrink-0"
                 >
                   ✕ Hapus
                 </button>
               </div>
             )}
           </div>
+
           <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={lbl}>Specifications</label>
             <textarea
