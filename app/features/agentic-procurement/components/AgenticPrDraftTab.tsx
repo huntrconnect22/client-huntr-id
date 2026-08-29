@@ -84,7 +84,8 @@ export default function AgenticPrDraftTab({
               Line Items ({prDraft.suggested_items?.length || 0})
             </span>
 
-            <div className="overflow-x-auto rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-[var(--ui-bg-input)] border-b border-[var(--ui-border)] text-[var(--ui-text-muted)] font-semibold">
@@ -131,6 +132,38 @@ export default function AgenticPrDraftTab({
                   </tr>
                 </tfoot>
               </table>
+            </div>
+
+            {/* Mobile Card List View */}
+            <div className="sm:hidden flex flex-col gap-2">
+              {prDraft.suggested_items?.map((item: any, idx: number) => {
+                const subtotal = (item.qty || 1) * (item.estimated_price || 0);
+                return (
+                  <div key={idx} className="p-3 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex flex-col gap-1.5 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-bold text-[var(--ui-text-primary)] leading-tight">
+                        {item.name}
+                      </div>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 flex-shrink-0">
+                        {item.qty} {item.uom || "unit"}
+                      </span>
+                    </div>
+                    {item.detailed_specs && (
+                      <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">
+                        {item.detailed_specs}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between pt-1 border-t border-[var(--ui-border)] text-[11px]">
+                      <span className="text-[var(--ui-text-muted)]">
+                        @ {formatRupiah(item.estimated_price)}
+                      </span>
+                      <span className="font-bold font-mono text-orange-400">
+                        {formatRupiah(subtotal)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

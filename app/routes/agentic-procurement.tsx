@@ -387,18 +387,19 @@ export default function AgenticProcurementPage() {
         {result && (
           <div className="flex flex-col gap-3">
             {/* Navigation Tabs & Header Actions */}
-            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[var(--ui-border)] pb-2">
-              <div className="flex items-center gap-1.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[var(--ui-border)] pb-2.5">
+              {/* Tab pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
                 <button
                   onClick={() => setActiveTab("pr")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
                     activeTab === "pr"
                       ? "bg-orange-500 text-white shadow-sm"
                       : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
                   }`}
                 >
                   <FileText size={13} />
-                  <span>Draft PR Resmi</span>
+                  <span>Draft PR</span>
                   <span className="text-[10px] px-1 rounded bg-white/20">
                     {result.pr_draft?.suggested_items?.length || 0}
                   </span>
@@ -406,14 +407,14 @@ export default function AgenticProcurementPage() {
 
                 <button
                   onClick={() => setActiveTab("comparison")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
                     activeTab === "comparison"
                       ? "bg-orange-500 text-white shadow-sm"
                       : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
                   }`}
                 >
                   <Layers size={13} />
-                  <span>Matriks Komparasi</span>
+                  <span>Komparasi</span>
                   {result.comparison?.comparison_matrix?.length ? (
                     <span className="text-[10px] px-1 rounded bg-white/20">
                       {result.comparison.comparison_matrix.length}
@@ -423,7 +424,7 @@ export default function AgenticProcurementPage() {
 
                 <button
                   onClick={() => setActiveTab("catalogues")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
                     activeTab === "catalogues"
                       ? "bg-orange-500 text-white shadow-sm"
                       : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
@@ -435,7 +436,7 @@ export default function AgenticProcurementPage() {
 
                 <button
                   onClick={() => setActiveTab("chat")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
                     activeTab === "chat"
                       ? "bg-orange-500 text-white shadow-sm"
                       : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
@@ -447,10 +448,10 @@ export default function AgenticProcurementPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleExportToCart}
-                  className="px-3 py-1.5 rounded-md bg-[var(--ui-bg-card)] hover:bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                  className="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg bg-[var(--ui-bg-card)] hover:bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
                 >
                   <ShoppingBag size={13} />
                   <span>Checkout</span>
@@ -459,7 +460,7 @@ export default function AgenticProcurementPage() {
                 <button
                   onClick={handleCreatePrNow}
                   disabled={isCreatingPr}
-                  className="px-3.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  className="flex-1 sm:flex-initial justify-center px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isCreatingPr ? (
                     <>
@@ -469,7 +470,7 @@ export default function AgenticProcurementPage() {
                   ) : (
                     <>
                       <CheckCircle2 size={13} />
-                      <span>Buat PR Resmi (1-Click)</span>
+                      <span>Buat PR (1-Click)</span>
                     </>
                   )}
                 </button>

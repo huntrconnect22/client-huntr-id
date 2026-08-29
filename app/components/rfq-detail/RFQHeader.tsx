@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, RefreshCw, Share2, Copy, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Share2, Copy, Check, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router";
 
 const btnGhost =
@@ -39,11 +39,6 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
       <button type="button" onClick={() => navigate(-1)} className={btnGhost}>
         <ArrowLeft size={14} /> Back
       </button>
-      {onRefresh && (
-        <button type="button" onClick={onRefresh} className={btnGhost}>
-          <RefreshCw size={13} /> Refresh
-        </button>
-      )}
       {rfq && (
         <div className="flex items-center gap-1.5 ml-auto flex-wrap">
           <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">

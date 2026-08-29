@@ -162,9 +162,9 @@ export default function Login() {
                   type="text"
                   inputMode="email"
                   autoComplete="username"
-                  placeholder="nama@perusahaan.com / 08xxxxxxxxxx"
+                  placeholder="Email atau nomor WhatsApp"
                   required
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
+                  className="w-full pl-11 pr-4 py-3 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-2 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
                 />
                 <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
               </div>
@@ -183,7 +183,7 @@ export default function Login() {
                   autoComplete="current-password"
                   placeholder="••••••••"
                   required
-                  className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
+                  className="w-full pl-11 pr-12 py-3 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-2 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
                 />
                 <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
                 <button
@@ -221,7 +221,7 @@ export default function Login() {
           </div>
 
           {error && (
-            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5 animate-in fade-in">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5 animate-in fade-in">
               <span className="shrink-0 text-base">⚠️</span>
               <span>{error}</span>
             </div>
@@ -231,7 +231,7 @@ export default function Login() {
           <button 
             type="submit" 
             disabled={loading} 
-            className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-lg shadow-orange-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-md shadow-orange-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -257,8 +257,8 @@ export default function Login() {
       ) : (
         <form onSubmit={handle2FASubmit} className="flex flex-col gap-6">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
-              <ShieldCheck size={28} />
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-md shadow-emerald-500/10">
+              <ShieldCheck size={24} />
             </div>
             <h1 className="text-2xl font-black text-[var(--ui-text-primary)]">
               Verifikasi 2FA
@@ -281,12 +281,12 @@ export default function Login() {
               autoComplete="one-time-code"
               placeholder={useRecovery ? "87654321" : "123456"}
               required
-              className="w-full px-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-center text-xl font-bold tracking-[0.2em] outline-none focus:border-emerald-500/60 focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:tracking-normal placeholder:text-sm placeholder:font-normal"
+              className="w-full px-4 py-3 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-center text-xl font-bold tracking-[0.2em] outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 transition-all placeholder:tracking-normal placeholder:text-sm placeholder:font-normal"
             />
           </div>
 
           {error && (
-            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5">
               <span>⚠️</span>
               <span>{error}</span>
             </div>
@@ -295,7 +295,7 @@ export default function Login() {
           <button 
             type="submit" 
             disabled={loading} 
-            className="w-full py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 px-6 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-md shadow-emerald-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : "Verifikasi & Lanjutkan"}
           </button>

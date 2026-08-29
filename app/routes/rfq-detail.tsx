@@ -6,7 +6,7 @@ import { aiRankProposals } from "../lib/api/ai";
 import { useEventBusListener } from "../lib/EventBus";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useAppShell } from "./_app";
-import { AlertCircle, Loader2, AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 import { NegotiationModal } from "../components/rfq-detail/NegotiationModal";
 import { RFQHeader } from "../components/rfq-detail/RFQHeader";
@@ -326,23 +326,6 @@ export default function RfqDetail() {
           />
         </div>
       </div>
-
-      {isMobile && canSubmitProposal() && (
-        <button
-          type="button"
-          onClick={() => navigate("/proposals", { state: { rfqId: rfq.id } })}
-          className="fixed z-[90] left-4 right-4 bottom-[calc(72px+env(safe-area-inset-bottom,0px))] flex items-center justify-center gap-2 py-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold border border-[var(--ui-border)] lg:hidden"
-        >
-          Submit Proposal <ArrowRight size={16} />
-        </button>
-      )}
-
-      {isMobile && isVendor && isTenderExpired() && (
-        <div className="fixed z-[90] left-4 right-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-red-500/25 bg-[var(--ui-bg-card)] text-red-400 text-xs font-semibold lg:hidden">
-          <AlertTriangle size={14} />
-          Tender period ended
-        </div>
-      )}
 
       {showNegModal && selectedNegProposal && (
         <NegotiationModal

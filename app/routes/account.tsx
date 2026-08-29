@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import {
   AccountSidebarNav,
   AccountSecurityTab,
@@ -12,10 +13,21 @@ import {
   type AccountTabType,
 } from "../features/account";
 
+const TAB_TITLES: Record<AccountTabType, { title: string; subtitle: string }> = {
+  security: { title: "Security & Password", subtitle: "Manage authentication and password security" },
+  profile: { title: "WhatsApp Profile", subtitle: "Manage WhatsApp number and notification settings" },
+  subscription: { title: "Subscription & Trial", subtitle: "Manage active subscription plan and limits" },
+  appearance: { title: "Appearance", subtitle: "Customize theme and display preferences" },
+  features: { title: "Feature Flags", subtitle: "Configure experimental and advanced features" },
+  sessions: { title: "Active Sessions", subtitle: "Monitor active devices and login sessions" },
+};
+
 export default function AccountSettings() {
+  const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const [user, setUser] = useState<any>(null);
   const [activeCompany, setActiveCompany] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<AccountTabType>("security");
+  const [activeTab, setActiveTab] = useState<AccountTabType | null>("security");
+  const [mobileSelectedTab, setMobileSelectedTab] = useState<AccountTabType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -34,9 +46,36 @@ export default function AccountSettings() {
     setUser(updatedUser);
   };
 
+  const currentTab = isMobile ? mobileSelectedTab : (activeTab || "security");
+
+  const pageTitle = isMobile && mobileSelectedTab
+    ? TAB_TITLES[mobileSelectedTab]?.title || "Account Settings"
+    : "Account Settings";
+
+  const pageSubtitle = isMobile && mobileSelectedTab
+    ? TAB_TITLES[mobileSelectedTab]?.subtitle
+    : isMobile
+    ? "Manage your account preferences"
+    : "Manage your security, profile, appearance, and active sessions";
+
   return (
-    <Layout title="Account Settings" subtitle="Manage your security, profile, appearance, and active sessions">
+    <Layout title={pageTitle} subtitle={pageSubtitle}>
       <div className="w-full space-y-6">
+        {/* Mobile Back Button when inside a tab */}
+        {isMobile && mobileSelectedTab && (
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setSuccess(null);
+              setMobileSelectedTab(null);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors"
+          >
+            <ArrowLeft size={14} /> Back to Settings Menu
+          </button>
+        )}
+
         {/* Feedback messages */}
         {error && (
           <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-semibold flex items-center gap-3">
@@ -49,53 +88,62 @@ export default function AccountSettings() {
           </div>
         )}
 
-        {/* Seamless macOS Settings Layout */}
+        {/* Layout */}
         <div className="flex flex-col md:flex-row gap-8 items-start min-h-[520px]">
-          {/* Left Navigation Sidebar */}
-          <AccountSidebarNav
-            activeTab={activeTab}
-            onSelectTab={(tab) => {
-              setError(null);
-              setSuccess(null);
-              setActiveTab(tab);
-            }}
-          />
-
-          {/* Right Content Area */}
-          <div className="flex-1 w-full space-y-6">
-            {activeTab === "security" && (
-              <AccountSecurityTab
-                user={user}
-                onUserUpdate={handleUserUpdate}
-                onError={setError}
-                onSuccess={setSuccess}
+          {/* Navigation Sidebar: On mobile, shown only when NO sub-tab is selected */}
+          {(!isMobile || !mobileSelectedTab) && (
+            <div className="w-full md:w-64 flex-shrink-0">
+              <AccountSidebarNav
+                activeTab={activeTab || "security"}
+                onSelectTab={(tab) => {
+                  setError(null);
+                  setSuccess(null);
+                  setActiveTab(tab);
+                  if (isMobile) {
+                    setMobileSelectedTab(tab);
+                  }
+                }}
               />
-            )}
+            </div>
+          )}
 
-            {activeTab === "profile" && (
-              <AccountProfileTab
-                user={user}
-                onUserUpdate={handleUserUpdate}
-                onError={setError}
-                onSuccess={setSuccess}
-              />
-            )}
+          {/* Content Area: On mobile, shown only when a tab is selected. On desktop, always shown */}
+          {(!isMobile || mobileSelectedTab) && (
+            <div className="flex-1 w-full space-y-6">
+              {currentTab === "security" && (
+                <AccountSecurityTab
+                  user={user}
+                  onUserUpdate={handleUserUpdate}
+                  onError={setError}
+                  onSuccess={setSuccess}
+                />
+              )}
 
-            {activeTab === "subscription" && (
-              <AccountSubscriptionTab
-                user={user}
-                activeCompany={activeCompany}
-              />
-            )}
+              {currentTab === "profile" && (
+                <AccountProfileTab
+                  user={user}
+                  onUserUpdate={handleUserUpdate}
+                  onError={setError}
+                  onSuccess={setSuccess}
+                />
+              )}
 
-            {activeTab === "appearance" && <AccountAppearanceTab />}
+              {currentTab === "subscription" && (
+                <AccountSubscriptionTab
+                  user={user}
+                  activeCompany={activeCompany}
+                />
+              )}
 
-            {activeTab === "features" && (
-              <AccountFeaturesTab onSuccess={setSuccess} />
-            )}
+              {currentTab === "appearance" && <AccountAppearanceTab />}
 
-            {activeTab === "sessions" && <AccountSessionsTab />}
-          </div>
+              {currentTab === "features" && (
+                <AccountFeaturesTab onSuccess={setSuccess} />
+              )}
+
+              {currentTab === "sessions" && <AccountSessionsTab />}
+            </div>
+          )}
         </div>
       </div>
     </Layout>

@@ -12,20 +12,20 @@ export default function AgenticWorkflowSteps({
   isRunning,
 }: AgenticWorkflowStepsProps) {
   return (
-    <div className="p-3 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col gap-2 shadow-sm">
+    <div className="p-3 sm:p-3.5 rounded-xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col gap-2 shadow-sm">
       <div className="flex items-center justify-between text-xs">
-        <span className="font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+        <span className="font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5 text-[11px] sm:text-xs">
           <Bot size={13} className="text-orange-400" />
           Tahapan Autonomous AI Agent
         </span>
         {isRunning && (
-          <span className="text-orange-400 font-medium flex items-center gap-1.5 animate-pulse text-[11px]">
+          <span className="text-orange-400 font-medium flex items-center gap-1.5 animate-pulse text-[10px] sm:text-[11px]">
             <Loader2 size={11} className="animate-spin" /> Menganalisis...
           </span>
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
         {workflowSteps.map((step, i) => {
           const isDone = step.status === "completed";
           const isCurr = step.status === "running";
@@ -34,7 +34,7 @@ export default function AgenticWorkflowSteps({
           return (
             <div
               key={i}
-              className={`p-2.5 rounded-md border text-xs transition-all flex flex-col gap-1 ${
+              className={`p-2.5 rounded-lg border text-xs transition-all flex flex-col gap-1 ${
                 isDone
                   ? "bg-emerald-500/5 border-emerald-500/30 text-emerald-400"
                   : isCurr
