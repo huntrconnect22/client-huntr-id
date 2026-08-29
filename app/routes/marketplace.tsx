@@ -19,6 +19,7 @@ import {
 } from "../lib/cart";
 import { isAgenticProcurementEnabled } from "../lib/features";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
+import Toast from "../components/Toast";
 
 const CATEGORY_CONFIG: { label: string; Icon: LucideIcon }[] = [
   { label: "All", Icon: LayoutGrid },
@@ -42,6 +43,7 @@ const CATEGORY_CONFIG: { label: string; Icon: LucideIcon }[] = [
 export default function Marketplace() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
+  const [cartToast, setCartToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: "" });
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchTerm = searchParams.get("search") || "";
@@ -236,7 +238,12 @@ export default function Marketplace() {
     e.stopPropagation();
     const updated = addItemToCartLib(item, 1);
     setCart(updated);
-    window.dispatchEvent(new CustomEvent("huntr-open-cart"));
+    if (isMobile) {
+      // On mobile: only show a toast — don't open the cart panel
+      setCartToast({ visible: true, message: `${item.name ?? "Item"} ditambahkan ke keranjang` });
+    } else {
+      window.dispatchEvent(new CustomEvent("huntr-open-cart"));
+    }
     // Flash animation on button
     if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
     setAddedId(item.id);
@@ -556,6 +563,16 @@ export default function Marketplace() {
           onAddToCart={item => { handleAddToCart(item, { stopPropagation: () => { } } as any); setShowCompareModal(false); }}
         />
       )}
+      {/* Mobile add-to-cart toast */}
+      <Toast
+        message={cartToast.message}
+        type="success"
+        isVisible={cartToast.visible}
+        onClose={() => setCartToast(prev => ({ ...prev, visible: false }))}
+        position="bottom-center"
+        duration={2500}
+      />
     </Layout>
+
   );
 }
