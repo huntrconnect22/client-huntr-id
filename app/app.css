@@ -137,23 +137,52 @@ body {
   background-clip: text;
 }
 
-/* Smooth Scrollbar */
+/* Smooth & Thin Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--ui-scrollbar-track);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--ui-scrollbar-thumb);
-  border-radius: 4px;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--huntr-orange);
+}
+
+/* Thin horizontal scrollbar utility */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 2.5px;
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.35);
+  border-radius: 9999px;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(249, 115, 22, 0.35) transparent;
+}
+
+/* Hide scrollbar completely utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom Interactive Micro-animations */
