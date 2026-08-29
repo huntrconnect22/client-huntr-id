@@ -255,27 +255,27 @@ export default function Marketplace() {
       >
         {/* Agentic Procurement Quick Launch Banner (Only visible when feature is enabled in Settings) */}
         {isAgenticProcurementEnabled() && (
-          <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-orange-500 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-2.5 rounded-xl sm:rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30">
+            <div className="flex items-start sm:items-center gap-2.5">
+              <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-lg sm:rounded-md bg-orange-500 text-white flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 sm:mt-0">
                 <Sparkles size={14} />
               </div>
               <div>
-                <div className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5">
+                <div className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5 flex-wrap">
                   <span>Butuh pengadaan otomatis dari deskripsi kebutuhan?</span>
-                  <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">Baru</span>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">Baru</span>
                 </div>
-                <p className="text-[11px] text-[var(--ui-text-muted)]">
+                <p className="text-[11px] text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
                   Gunakan <b>AI Agentic Procurement</b> untuk mencari katalog, komparasi produk, dan menyusun PR otomatis.
                 </p>
               </div>
             </div>
             <button
               onClick={() => navigate(`${getCompanyPrefix()}/agentic-procurement`)}
-              className="px-2.5 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0"
+              className="w-full sm:w-auto justify-center px-3 py-2 sm:py-1 rounded-lg sm:rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
             >
               <span>Buka Procurement Agent</span>
-              <ArrowRight size={12} />
+              <ArrowRight size={13} />
             </button>
           </div>
         )}
