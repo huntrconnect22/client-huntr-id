@@ -18,6 +18,7 @@ import {
   type CartItem,
 } from "../lib/cart";
 import { isAgenticProcurementEnabled } from "../lib/features";
+import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 
 const CATEGORY_CONFIG: { label: string; Icon: LucideIcon }[] = [
   { label: "All", Icon: LayoutGrid },
@@ -40,6 +41,7 @@ const CATEGORY_CONFIG: { label: string; Icon: LucideIcon }[] = [
 
 export default function Marketplace() {
   const navigate = useNavigate();
+  const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchTerm = searchParams.get("search") || "";
@@ -248,10 +250,10 @@ export default function Marketplace() {
 
   return (
     <Layout title="Huntr Catalog" subtitle="Standardized corporate procurement catalog">
-      {/* ── Product area — padding-right when cart is open to avoid overlap ── */}
+      {/* ── Product area — padding-right when cart is open to avoid overlap on desktop only ── */}
       <div
         className="w-full space-y-4 transition-all duration-300"
-        style={{ paddingRight: cartPanelOpen ? 296 : 0 }}
+        style={{ paddingRight: cartPanelOpen && !isMobile ? 296 : 0 }}
       >
         {/* Agentic Procurement Quick Launch Banner (Only visible when feature is enabled in Settings) */}
         {isAgenticProcurementEnabled() && (
