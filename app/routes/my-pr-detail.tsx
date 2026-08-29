@@ -5,6 +5,7 @@ import { getRfq, apiGet, apiPost } from "../lib/api";
 import { getAssetUrl } from "../lib/assets";
 import {
   ArrowLeft, Package, Loader2, AlertCircle, RefreshCw, BarChart3,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useAppShell } from "../routes/_app";
@@ -37,6 +38,7 @@ export default function MyPurchaseRequisitionDetail() {
   const [showNegModal, setShowNegModal] = useState(false);
   const [selectedNegProposal, setSelectedNegProposal] = useState<any>(null);
   const [awardingProposal, setAwardingProposal] = useState<string | number | null>(null);
+  const [itemPage, setItemPage] = useState(1);
 
   const fetchRankings = useCallback(async (rfqId: string | number) => {
     try {
@@ -137,6 +139,14 @@ export default function MyPurchaseRequisitionDetail() {
   }, 0);
   const proposalCount = rankings.length;
 
+  // ── Pagination ──
+  const MOBILE_PER_PAGE = 5;
+  const DESKTOP_PER_PAGE = 10;
+  const mobilePageCount = Math.ceil(lineItems / MOBILE_PER_PAGE);
+  const desktopPageCount = Math.ceil(lineItems / DESKTOP_PER_PAGE);
+  const mobileItems = items.slice((itemPage - 1) * MOBILE_PER_PAGE, itemPage * MOBILE_PER_PAGE);
+  const desktopItems = items.slice((itemPage - 1) * DESKTOP_PER_PAGE, itemPage * DESKTOP_PER_PAGE);
+
   return (
     <Layout title={`PR #${prShort}`} subtitle={request.title}>
       <div className="w-full flex flex-col gap-4">
@@ -208,7 +218,86 @@ export default function MyPurchaseRequisitionDetail() {
                   No items in this PR.
                 </div>
               ) : (
-                <div className="rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
+                <>
+                  {/* ── Mobile card list (< sm) ── */}
+                  <div className="flex flex-col gap-2 sm:hidden">
+                    {mobileItems.map((item: any, idx: number) => {
+                      const index = (itemPage - 1) * MOBILE_PER_PAGE + idx;
+                      const cat = item.catalogue;
+                      const unitPrice = item.estimated_price || cat?.estimated_price || 0;
+                      const lineTotal = unitPrice * (item.qty || 0);
+                      return (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 flex gap-3 items-start"
+                        >
+                          <div className="w-10 h-10 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center shrink-0 overflow-hidden">
+                            {cat?.image_path ? (
+                              <img src={getAssetUrl(cat.image_path)} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                            ) : (
+                              <Package size={14} className="text-[var(--ui-text-muted)] opacity-40" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {cat?.category && (
+                              <div className="text-[10px] font-bold uppercase text-orange-400 truncate">{cat.category}</div>
+                            )}
+                            <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
+                              {cat?.name || "Unknown Item"}
+                            </div>
+                            {cat?.item_code && (
+                              <div className="text-[10px] text-[var(--ui-text-muted)]">{cat.item_code}</div>
+                            )}
+                            <div className="flex items-center justify-between mt-2 gap-2">
+                              <span className="text-[11px] text-[var(--ui-text-secondary)]">
+                                {item.qty} {cat?.uom || "pcs"} &times; Rp {Number(unitPrice).toLocaleString("id-ID")}
+                              </span>
+                              <span className="text-xs font-bold text-orange-400 shrink-0">
+                                Rp {Number(lineTotal).toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Mobile: total row + pagination */}
+                    <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                      <span className="text-xs text-[var(--ui-text-muted)]">
+                        {totalQty} units · {lineItems} SKU{lineItems !== 1 ? "s" : ""}
+                      </span>
+                      <span className="text-xs font-bold text-[var(--ui-text-primary)]">
+                        Rp {estimatedTotal.toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                    {mobilePageCount > 1 && (
+                      <div className="flex items-center justify-between px-1">
+                        <button
+                          type="button"
+                          disabled={itemPage === 1}
+                          onClick={() => setItemPage(p => p - 1)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
+                        >
+                          <ChevronLeft size={13} /> Prev
+                        </button>
+                        <span className="text-[11px] text-[var(--ui-text-muted)]">
+                          {itemPage} / {mobilePageCount}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={itemPage === mobilePageCount}
+                          onClick={() => setItemPage(p => p + 1)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
+                        >
+                          Next <ChevronRight size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+
+                  {/* ── Desktop table (≥ sm) ── */}
+                  <div className="hidden sm:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
                   <table className="w-full text-sm border-collapse">
                     <thead>
                       <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
@@ -220,7 +309,8 @@ export default function MyPurchaseRequisitionDetail() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--ui-border)]">
-                      {items.map((item: any, index: number) => {
+                      {desktopItems.map((item: any, idx: number) => {
+                        const index = (itemPage - 1) * DESKTOP_PER_PAGE + idx;
                         const cat = item.catalogue;
                         const unitPrice = item.estimated_price || cat?.estimated_price || 0;
                         const lineTotal = unitPrice * (item.qty || 0);
@@ -276,9 +366,37 @@ export default function MyPurchaseRequisitionDetail() {
                           Rp {estimatedTotal.toLocaleString("id-ID")}
                         </td>
                       </tr>
+                      {desktopPageCount > 1 && (
+                        <tr className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                          <td colSpan={5} className="px-3 py-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <button
+                                type="button"
+                                disabled={itemPage === 1}
+                                onClick={() => setItemPage(p => p - 1)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
+                              >
+                                <ChevronLeft size={13} /> Prev
+                              </button>
+                              <span className="text-[11px] text-[var(--ui-text-muted)]">
+                                Page {itemPage} of {desktopPageCount} &nbsp;·&nbsp; {lineItems} items total
+                              </span>
+                              <button
+                                type="button"
+                                disabled={itemPage === desktopPageCount}
+                                onClick={() => setItemPage(p => p + 1)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
+                              >
+                                Next <ChevronRight size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                     </tfoot>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
             </section>
 
