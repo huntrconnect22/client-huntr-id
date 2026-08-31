@@ -5,6 +5,8 @@ import { BuyerDashboard } from "../components/dashboard/BuyerDashboard";
 import { VendorEbiddingDashboard } from "../components/dashboard/VendorEbiddingDashboard";
 import { GuestMarketplaceView } from "../components/dashboard/GuestMarketplaceView";
 
+import { isVendorBuyerMode, VENDOR_BUYER_MODE_EVENT } from "../lib/viewMode";
+
 export const meta: MetaFunction = () => {
   return [
     { title: "Huntr.id - Enterprise B2B E-Procurement Ecosystem" },
@@ -30,13 +32,25 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [vendorBuyerActive, setVendorBuyerActive] = useState(false);
 
   useEffect(() => {
     const userSession = localStorage.getItem("user_session");
     const companySession = localStorage.getItem("active_company");
     if (userSession) setUser(JSON.parse(userSession));
     if (companySession) setActiveCompany(JSON.parse(companySession));
+    setVendorBuyerActive(isVendorBuyerMode());
     setLoading(false);
+
+    const handleModeChange = (e: any) => {
+      setVendorBuyerActive(e?.detail?.enabled ?? isVendorBuyerMode());
+    };
+    window.addEventListener(VENDOR_BUYER_MODE_EVENT, handleModeChange);
+    window.addEventListener("storage", handleModeChange);
+    return () => {
+      window.removeEventListener(VENDOR_BUYER_MODE_EVENT, handleModeChange);
+      window.removeEventListener("storage", handleModeChange);
+    };
   }, []);
 
   if (loading) {
@@ -44,7 +58,7 @@ export default function Home() {
   }
 
   if (user && activeCompany) {
-    if (activeCompany.type === "buyer") {
+    if (activeCompany.type === "buyer" || vendorBuyerActive) {
       return <BuyerDashboard user={user} activeCompany={activeCompany} />;
     }
     return <VendorEbiddingDashboard user={user} activeCompany={activeCompany} />;

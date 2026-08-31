@@ -18,6 +18,7 @@ import {
   type CartItem,
 } from "../lib/cart";
 import { isAgenticProcurementEnabled } from "../lib/features";
+import { isVendorBuyerMode } from "../lib/viewMode";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import Toast from "../components/Toast";
 
@@ -115,7 +116,7 @@ export default function Marketplace() {
     if (companySession) {
       const comp = JSON.parse(companySession);
       setActiveCompany(comp);
-      if (comp.type === "vendor") navigate("/");
+      if (comp.type === "vendor" && !isVendorBuyerMode()) navigate("/");
     }
   }, []);
 

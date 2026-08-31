@@ -36,6 +36,7 @@ import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useEventBus } from "../lib/EventBus";
 import { isDemoMode, isNavItemDisabledInDemo } from "../lib/demo-mode";
 import { isAgenticProcurementEnabled } from "../lib/features";
+import { isVendorBuyerMode, setVendorBuyerMode, VENDOR_BUYER_MODE_EVENT } from "../lib/viewMode";
 import { getTrialInfo } from "../lib/trial";
 import GlobalCartPanel from "../components/GlobalCartPanel";
 import TrialBanner from "../components/TrialBanner";
@@ -75,6 +76,21 @@ export default function AppShell() {
   const [roleSwitching, setRoleSwitching] = useState(false); // For role switch loading state
   const [cartCount, setCartCount] = useState(0);
   const [agenticEnabled, setAgenticEnabled] = useState(false);
+  const [vendorBuyerActive, setVendorBuyerActive] = useState(false);
+
+  // Sync and listen for Vendor Buyer Mode state
+  useEffect(() => {
+    setVendorBuyerActive(isVendorBuyerMode());
+    const handleModeChange = (e: any) => {
+      setVendorBuyerActive(e?.detail?.enabled ?? isVendorBuyerMode());
+    };
+    window.addEventListener(VENDOR_BUYER_MODE_EVENT, handleModeChange);
+    window.addEventListener("storage", handleModeChange);
+    return () => {
+      window.removeEventListener(VENDOR_BUYER_MODE_EVENT, handleModeChange);
+      window.removeEventListener("storage", handleModeChange);
+    };
+  }, []);
 
   // Sync and listen for Feature Flags updates
   useEffect(() => {
@@ -317,6 +333,10 @@ export default function AppShell() {
   
   // Only true managers (not buyer, not finance) can approve
   const canManageApprovals = isBuyerComp && (user?.role === "manager" || isOwner) && !isFinance && !isBuyerRole;
+  
+  // Buyer capability is available if it's a buyer company OR vendor in buyer mode
+  const showBuyerProcurement = (isBuyerComp && (isManager || isBuyerRole)) || (isVendorComp && vendorBuyerActive);
+  const showVendorMenu = isVendorComp && !vendorBuyerActive;
 
   // ── Nav items ─────────────────────────────────────────────────────────────
   const isPendingCompany = activeCompany?.status === "pending";
@@ -331,8 +351,8 @@ export default function AppShell() {
       { to: `${companyPrefix || "/"}`, label: "Dashboard", Icon: LayoutDashboard, section: "main", exact: true },
       { to: `${companyPrefix}/tasks`, label: "Tasks", Icon: ListTodo, section: "main", badge: "totalUnread" },
 
-      // Procurement (Buyer)
-      ...(isBuyerComp && (isManager || isBuyerRole) ? [
+      // Procurement (Buyer & Vendor Buyer Mode)
+      ...(showBuyerProcurement ? [
         ...(agenticEnabled ? [
           { to: `${companyPrefix}/agentic-procurement`, label: "AI Agentic Procurement", Icon: Sparkles, section: "procurement", isAi: true },
         ] : []),
@@ -342,19 +362,19 @@ export default function AppShell() {
       ...(canManageApprovals ? [
         { to: `${companyPrefix}/approvals`, label: "Approvals", Icon: CheckCircle2, section: "procurement", badge: "pendingApprovals" },
       ] : []),
-      ...(isBuyerComp && (isManager || isBuyerRole) ? [
+      ...(showBuyerProcurement ? [
         { to: `${companyPrefix}/pr-audit`, label: "PR Audit Log", Icon: History, section: "procurement" },
       ] : []),
 
-      // Vendor
-      ...(isVendorComp ? [
+      // Vendor (Only in Vendor Mode)
+      ...(showVendorMenu ? [
         { to: `${companyPrefix}/all-requests`, label: "All Request", Icon: Lightbulb, section: "vendor", badge: "opportunities" },
       ] : []),
-      ...(isVendorComp && (isManager || isAdminRole) ? [
+      ...(showVendorMenu && (isManager || isAdminRole) ? [
         { to: `${companyPrefix}/catalogue`, label: "Catalogue", Icon: List, section: "vendor", badge: "catalogueAlerts" },
         { to: `${companyPrefix}/proposals`, label: "Proposals", Icon: Trophy, section: "vendor", badge: "pendingProposals" },
       ] : []),
-      ...(isVendorComp && (isManager || isAdminRole) ? [
+      ...(showVendorMenu && (isManager || isAdminRole) ? [
         { to: `${companyPrefix}/my-rank`, label: "My Rank", Icon: Medal, section: "vendor", badge: "rankAlerts" },
       ] : []),
 
@@ -631,7 +651,7 @@ export default function AppShell() {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                 {(() => {
                   const buyerRoles = ["manager", "buyer", "finance"];
-                  const vendorRoles = ["manager", "admin", "finance"];
+                  const vendorRoles = ["manager", "admin", "finance", "buyer"];
                   const roles = isBuyerComp ? buyerRoles : vendorRoles;
                   return roles.map((role) => (
                     <button key={role} onClick={() => handleRoleSwitch(role)} disabled={roleSwitching || user.role === role}
@@ -651,10 +671,58 @@ export default function AppShell() {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{activeCompany.name}</div>
-                <div style={{ fontSize: 9, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 1 }}>{activeCompany.type}</div>
+                <div style={{ fontSize: 9, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 1, display: "flex", alignItems: "center", gap: 4 }}>
+                  <span>{activeCompany.type}</span>
+                  {isVendorComp && vendorBuyerActive && (
+                    <span style={{ background: "rgba(249, 115, 22, 0.15)", color: "#f97316", padding: "1px 5px", borderRadius: 4, fontWeight: 700, fontSize: 8 }}>
+                      BUYER MODE
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-            <div style={{ marginTop: 8 }}>
+
+            {/* Vendor Mode / Buyer Mode Switcher for Vendors */}
+            {isVendorComp && (
+              <div style={{ marginTop: 8 }}>
+                <button
+                  onClick={() => {
+                    const nextMode = !vendorBuyerActive;
+                    setVendorBuyerMode(nextMode);
+                    if (nextMode) {
+                      navigate(`${companyPrefix}/marketplace`);
+                    } else {
+                      navigate(companyPrefix || "/");
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "6px 8px",
+                    borderRadius: 6,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    background: vendorBuyerActive
+                      ? "linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(245, 158, 11, 0.15))"
+                      : "var(--ui-bg-input)",
+                    border: vendorBuyerActive
+                      ? "1px solid rgba(249, 115, 22, 0.35)"
+                      : "1px solid var(--ui-border)",
+                    color: vendorBuyerActive ? "#f97316" : "var(--ui-text-primary)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <ShoppingCart size={11} />
+                  <span>{vendorBuyerActive ? "Mode: Buyer (Belanja)" : "Beralih ke Buyer Mode"}</span>
+                </button>
+              </div>
+            )}
+
+            <div style={{ marginTop: 6 }}>
               <button onClick={handleSwitchCompany} style={{ width: "100%", padding: "6px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: "pointer", background: "var(--ui-switch-bg)", border: "1px solid var(--ui-switch-border)", color: "var(--ui-switch-text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "all 0.15s" }}>
                 <ArrowLeftRight size={10} /> Switch Company
               </button>
@@ -956,6 +1024,41 @@ export default function AppShell() {
                       <div style={{ fontSize: 11, color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
                     </div>
 
+                    {/* Vendor Mode / Buyer Mode toggle in user menu */}
+                    {isVendorComp && (
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          const nextMode = !vendorBuyerActive;
+                          setVendorBuyerMode(nextMode);
+                          if (nextMode) {
+                            navigate(`${companyPrefix}/marketplace`);
+                          } else {
+                            navigate(companyPrefix || "/");
+                          }
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          width: "100%",
+                          padding: "8px 10px",
+                          borderRadius: 6,
+                          border: "none",
+                          background: vendorBuyerActive ? "rgba(249,115,22,0.12)" : "transparent",
+                          color: vendorBuyerActive ? "#f97316" : "var(--ui-text-primary)",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                        className="hover:bg-[var(--ui-bg-input)]"
+                      >
+                        <ShoppingCart size={14} className={vendorBuyerActive ? "text-orange-500" : "text-[var(--ui-text-muted)]"} />
+                        <span>{vendorBuyerActive ? "Switch to Vendor Mode" : "Switch to Buyer Mode"}</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => { setShowUserMenu(false); navigate("/account"); }}
                       style={{
@@ -1011,6 +1114,49 @@ export default function AppShell() {
 
         {/* Trial Expiring / Expired Warning Banner (Buyer Purchasing Only) */}
         {isBuyerComp && <TrialBanner trial={trialInfo} />}
+
+        {/* Vendor Buyer Mode Active Banner */}
+        {isVendorComp && vendorBuyerActive && (
+          <div
+            style={{
+              background: "linear-gradient(90deg, rgba(249, 115, 22, 0.12), rgba(245, 158, 11, 0.08))",
+              borderBottom: "1px solid rgba(249, 115, 22, 0.25)",
+              padding: "8px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              fontSize: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#f97316", fontWeight: 600 }}>
+              <ShoppingCart size={15} />
+              <span>
+                <strong>Buyer Mode Aktif:</strong> Anda sedang menjelajah Huntr Catalog dan dapat membuat PR untuk kebutuhan perusahaan vendor Anda.
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setVendorBuyerMode(false);
+                navigate(companyPrefix || "/");
+              }}
+              style={{
+                padding: "4px 10px",
+                borderRadius: 6,
+                background: "rgba(249, 115, 22, 0.15)",
+                border: "1px solid rgba(249, 115, 22, 0.35)",
+                color: "#f97316",
+                fontWeight: 600,
+                fontSize: 11,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.15s ease",
+              }}
+            >
+              Kembali ke Vendor Mode
+            </button>
+          </div>
+        )}
 
         {/* Child routes render here — only this area changes on navigation */}
         <div className="huntr-page-content">

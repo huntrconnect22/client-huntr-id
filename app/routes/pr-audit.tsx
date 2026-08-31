@@ -6,6 +6,7 @@ import {
   CheckCircle2, ChevronRight, Trophy, Building2,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { isVendorBuyerMode } from "../lib/viewMode";
 
 const STATUS_CFG: Record<string, { bg: string; color: string; dot: string; label: string }> = {
   pending_approval: { bg: "bg-amber-500/10", color: "text-amber-500", dot: "bg-amber-500", label: "Pending Approval" },
@@ -50,7 +51,7 @@ export default function PurchaseRequisitionAudit() {
     const companySession = localStorage.getItem("active_company");
     if (companySession) {
       const comp = JSON.parse(companySession);
-      if (comp.type === "vendor") {
+      if (comp.type === "vendor" && !isVendorBuyerMode()) {
         navigate("/");
         return;
       }

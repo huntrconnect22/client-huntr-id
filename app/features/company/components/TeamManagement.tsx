@@ -116,7 +116,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
       return [
         { value: 'admin', label: 'Admin' },
         { value: 'manager', label: 'Manager (Full Access)' },
-        { value: 'finance', label: 'Finance' }
+        { value: 'finance', label: 'Finance' },
+        { value: 'buyer', label: 'Buyer (Procurement)' }
       ];
     }
     return [];
@@ -127,7 +128,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
       {process.env.NODE_ENV === 'development' && (
         <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 text-xs">
           <strong>Debug Info:</strong> Company Type: {company?.type || 'Unknown'} | 
-          Valid Roles: {company?.type === 'buyer' ? 'buyer, manager, finance' : 'admin, manager, finance'}
+          Valid Roles: {company?.type === 'buyer' ? 'buyer, manager, finance' : 'admin, manager, finance, buyer'}
         </div>
       )}
 
@@ -190,6 +191,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               ) : company?.type === 'vendor' ? (
                 <>
                   <option value="admin">Admin</option>
+                  <option value="buyer">Buyer (Procurement)</option>
                   <option value="finance">Finance</option>
                 </>
               ) : (
@@ -307,7 +309,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                         // Highlight invalid role combinations in development
                         process.env.NODE_ENV === 'development' && (
                           (company?.type === 'buyer' && !['buyer', 'manager', 'finance'].includes(member.role)) ||
-                          (company?.type === 'vendor' && !['admin', 'manager', 'finance'].includes(member.role))
+                          (company?.type === 'vendor' && !['admin', 'manager', 'finance', 'buyer'].includes(member.role))
                         ) ? 'bg-red-500/20 text-red-600 border border-red-500/30' : 'bg-orange-500/10 text-orange-500'
                       }`}>
                         {member.role}
