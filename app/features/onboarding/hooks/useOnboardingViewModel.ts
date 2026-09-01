@@ -204,7 +204,8 @@ export const useOnboardingViewModel = () => {
             const list: any[] = Array.isArray(data?.companies) ? data.companies : [];
             const match = (c: any) => {
               const norm = (c.tax_id || "").replace(/[^a-zA-Z0-9]/g, "");
-              return norm === normalized;
+              // Only approved/pending active companies block registration; rejected ones can be re-applied
+              return norm === normalized && c.status !== "rejected";
             };
             const vendor = list.find((c) => match(c) && c.type === "vendor") ?? null;
             const buyer  = list.find((c) => match(c) && c.type === "buyer")  ?? null;
