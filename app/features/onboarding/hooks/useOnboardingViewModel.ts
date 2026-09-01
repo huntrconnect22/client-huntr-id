@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import * as XLSX from "xlsx";
 import { OnboardingController } from "../services/onboardingController";
+import { getMyCompanies } from "../../../lib/api/company";
 import type { CompanyFormData, UploadedDoc, NpwpVerifiedData } from "../types";
 
 export interface ParsedDataState {
@@ -69,6 +70,9 @@ export const useOnboardingViewModel = () => {
   const [companies, setCompanies] = useState<any[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
 
+  // --- State: NPWP Conflict Detection ---
+  const [npwpConflict, setNpwpConflict] = useState<null | { vendor: any; buyer: any }>(null);
+
   // --- Reset Form State ---
   const resetForm = useCallback(() => {
     setSlide(1);
@@ -91,6 +95,8 @@ export const useOnboardingViewModel = () => {
     setImportStatusText("");
   }, [user]);
 
+  const [searchParams] = useSearchParams();
+
   // --- Inisialisasi Sesi User ---
   useEffect(() => {
     const session = localStorage.getItem("user_session");
@@ -100,19 +106,104 @@ export const useOnboardingViewModel = () => {
     }
     const u = JSON.parse(session);
     setUser(u);
-    setFormData(prev => ({
-      ...prev,
-      email: u.email || prev.email,
-      phone: u.whatsapp || prev.phone
-    }));
-  }, [navigate]);
+
+    const paramType = searchParams.get("type");         // "buyer" | "vendor"
+    const fromCompanyId = searchParams.get("from_company"); // existing company id
+
+    // Apply URL-specified type lock
+    const initialUpdates: Partial<CompanyFormData> = {
+      email: u.email || "",
+      phone: u.whatsapp || "",
+    };
+    if (paramType === "buyer" || paramType === "vendor") {
+      initialUpdates.type = paramType;
+    }
+
+    if (fromCompanyId) {
+      // Pre-fill from source company
+      getMyCompanies()
+        .then((data) => {
+          const list: any[] = Array.isArray(data?.companies) ? data.companies : [];
+          const src = list.find((c) => c.id === fromCompanyId);
+          if (src) {
+            setFormData(prev => ({
+              ...prev,
+              ...initialUpdates,
+              company_name: src.name || "",
+              tax_id: src.tax_id || "",
+              country: src.country || "ID",
+              email: src.email || u.email || "",
+              phone: src.phone || u.whatsapp || "",
+              industry_type: src.industry_type || "",
+              address: src.address || "",
+              provincy_country: src.provincy_country || "",
+              city: src.city || "",
+              regency: src.regency || "",
+              zip_code: src.zip_code || "",
+              bank_name: src.bank_name || "",
+              bank_account: src.bank_account || "",
+              bank_account_name: src.bank_account_name || "",
+              region: src.region || "",
+            }));
+
+            // If the source company already had tax_id and was registered/verified, pre-populate npwpVerifiedData
+            if (src.tax_id) {
+              setNpwpVerifiedData({
+                npwp: src.tax_id,
+                nama: src.name || "",
+                alamat: src.address || "",
+                statusWp: "VALID",
+                statusSpt: "VALID",
+                city: src.city,
+                regency: src.regency,
+                zip_code: src.zip_code,
+                provincy_country: src.provincy_country,
+                bank_name: src.bank_name,
+                bank_account: src.bank_account,
+                bank_account_name: src.bank_account_name,
+                industry_type: src.industry_type,
+              });
+            }
+          } else {
+            setFormData(prev => ({ ...prev, ...initialUpdates }));
+          }
+        })
+        .catch(() => {
+          setFormData(prev => ({ ...prev, ...initialUpdates }));
+        });
+    } else {
+      setFormData(prev => ({ ...prev, ...initialUpdates }));
+    }
+  }, [navigate, searchParams]);
 
   /**
    * Mengupdate field form secara dinamis
    */
   const updateField = useCallback((k: keyof CompanyFormData, v: string) => {
     setFormData(prev => ({ ...prev, [k]: v }));
+
+    // Realtime NPWP conflict check: fire when tax_id has enough digits
+    if (k === "tax_id") {
+      const normalized = v.replace(/[^a-zA-Z0-9]/g, "");
+      if (normalized.length >= 15) {
+        getMyCompanies()
+          .then((data) => {
+            const list: any[] = Array.isArray(data?.companies) ? data.companies : [];
+            const match = (c: any) => {
+              const norm = (c.tax_id || "").replace(/[^a-zA-Z0-9]/g, "");
+              return norm === normalized;
+            };
+            const vendor = list.find((c) => match(c) && c.type === "vendor") ?? null;
+            const buyer  = list.find((c) => match(c) && c.type === "buyer")  ?? null;
+            setNpwpConflict((vendor || buyer) ? { vendor, buyer } : null);
+          })
+          .catch(() => {/* silent */});
+      } else {
+        setNpwpConflict(null);
+      }
+    }
   }, []);
+
 
   /**
    * Mengupdate HQ Addresses array secara dinamis
@@ -333,6 +424,8 @@ export const useOnboardingViewModel = () => {
   };
 
   // --- API Public ViewModel ---
+  const lockedType = searchParams.get("type") as "buyer" | "vendor" | null;
+
   return {
     // State
     slide, setSlide,
@@ -347,6 +440,8 @@ export const useOnboardingViewModel = () => {
     companies, selectedCompany, setSelectedCompany,
     termsAccepted, setTermsAccepted,
     user,
+    npwpConflict, setNpwpConflict,
+    lockedType,
 
     // Actions
     updateField,
@@ -360,4 +455,3 @@ export const useOnboardingViewModel = () => {
     resetForm,
   };
 };
-

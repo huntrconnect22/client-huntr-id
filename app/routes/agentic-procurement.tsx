@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Layout from "../components/Layout";
 import { runAgenticProcurement, chatAgenticProcurement, createAgenticPr } from "../lib/api/ai";
 import { isAgenticProcurementEnabled, setAgenticProcurementEnabled } from "../lib/features";
-import { isVendorBuyerMode } from "../lib/viewMode";
+
 import {
   FileText,
   Layers,

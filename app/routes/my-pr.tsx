@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { isAgenticProcurementEnabled } from "../lib/features";
-import { isVendorBuyerMode } from "../lib/viewMode";
+
 
 const STATUS_CFG: Record<string, { bg: string; color: string; dot: string; label: string }> = {
   pending_approval: { bg: "bg-amber-500/10",  color: "text-amber-500",  dot: "bg-amber-500",  label: "Pending Approval" },
@@ -34,7 +34,8 @@ export default function MyPurchaseRequisitions() {
     const companySession = localStorage.getItem("active_company");
     if (companySession) {
       const comp = JSON.parse(companySession);
-      if (comp.type === "vendor" && !isVendorBuyerMode()) { navigate("/"); return; }
+      // My PR is buyer-only. Vendors must switch to their buyer workspace.
+      if (comp.type === "vendor") { navigate("/"); return; }
     }
     fetchMyRequests();
 

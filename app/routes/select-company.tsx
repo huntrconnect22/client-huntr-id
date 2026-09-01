@@ -138,6 +138,14 @@ export default function SelectCompany() {
                   {companies.map(c => {
                     const isSelected = selected?.id === c.id;
                     const meta = getMeta(c.status);
+                    const isBuyer = c.type === "buyer";
+                    const typeColor = isBuyer ? "#818cf8" : "#f97316";
+                    const typeBg = isBuyer ? "rgba(99,102,241,0.15)" : "rgba(249,115,22,0.15)";
+                    const gradientBg = isBuyer
+                      ? "linear-gradient(135deg,#6366f1,#8b5cf6)"
+                      : "linear-gradient(135deg,#f97316,#f59e0b)";
+                    const selectedBorderColor = isBuyer ? "rgba(99,102,241,0.4)" : "rgba(249,115,22,0.4)";
+                    const selectedBg = isBuyer ? "rgba(99,102,241,0.07)" : "rgba(249,115,22,0.07)";
                     return (
                       <button
                         key={c.id}
@@ -145,45 +153,62 @@ export default function SelectCompany() {
                         onClick={() => setSelected(c)}
                         className={`
                           p-3 rounded-lg text-left transition-all border flex items-center gap-3 group
-                          ${isSelected 
-                            ? "bg-orange-500/10 border-orange-500/40 shadow-sm shadow-orange-500/10" 
+                          ${isSelected
+                            ? ""
                             : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-orange-500/30"
                           }
                         `}
+                        style={isSelected ? { background: selectedBg, borderColor: selectedBorderColor } : {}}
                       >
                         {/* Avatar */}
-                        <div className={`
-                          w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all
-                          ${isSelected 
-                            ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white" 
-                            : "bg-[var(--ui-bg-input-focus)] text-[var(--ui-text-muted)]"
-                          }
-                        `}>
-                          <Building2 size={17} />
+                        <div
+                          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all"
+                          style={{ background: isSelected ? gradientBg : "var(--ui-bg-input-focus)" }}
+                        >
+                          <Building2 size={17} color={isSelected ? "#fff" : "var(--ui-text-muted)"} />
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className={`text-sm font-semibold truncate ${isSelected ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>
+                          <div className="text-sm font-semibold truncate" style={{ color: isSelected ? typeColor : "var(--ui-text-primary)" }}>
                             {c.name}
                           </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span 
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            {/* Workspace type badge */}
+                            <span
+                              className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
+                              style={{ color: typeColor, background: typeBg }}
+                            >
+                              {isBuyer ? "BUYER" : "VENDOR"}
+                            </span>
+                            {/* Status badge */}
+                            <span
                               className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
                               style={{ color: meta.color, background: meta.bg }}
                             >
                               {meta.label}
                             </span>
+                            {/* NPWP Verified Badge */}
+                            {(c.formatted_tax_id || c.tax_id) && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                                title={`NPWP: ${c.formatted_tax_id || c.tax_id} (Terverifikasi)`}
+                              >
+                                <CheckCircle2 size={10} className="text-sky-400 shrink-0" />
+                                <span>NPWP Terverifikasi</span>
+                              </span>
+                            )}
                           </div>
                         </div>
 
                         {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: typeColor }}>
                             <CheckCircle2 size={12} className="text-white" />
                           </div>
                         )}
                       </button>
                     );
                   })}
+
                 </div>
 
                 <div className="flex flex-col gap-2.5">

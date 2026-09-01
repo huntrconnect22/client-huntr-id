@@ -36,7 +36,7 @@ import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useEventBus } from "../lib/EventBus";
 import { isDemoMode, isNavItemDisabledInDemo } from "../lib/demo-mode";
 import { isAgenticProcurementEnabled } from "../lib/features";
-import { isVendorBuyerMode, setVendorBuyerMode, VENDOR_BUYER_MODE_EVENT } from "../lib/viewMode";
+import { getMyCompanies, switchActiveCompany } from "../lib/api/company";
 import { getTrialInfo } from "../lib/trial";
 import GlobalCartPanel from "../components/GlobalCartPanel";
 import TrialBanner from "../components/TrialBanner";
@@ -76,21 +76,24 @@ export default function AppShell() {
   const [roleSwitching, setRoleSwitching] = useState(false); // For role switch loading state
   const [cartCount, setCartCount] = useState(0);
   const [agenticEnabled, setAgenticEnabled] = useState(false);
-  const [vendorBuyerActive, setVendorBuyerActive] = useState(false);
+  const [allUserCompanies, setAllUserCompanies] = useState<any[]>([]);
+  const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
 
-  // Sync and listen for Vendor Buyer Mode state
-  useEffect(() => {
-    setVendorBuyerActive(isVendorBuyerMode());
-    const handleModeChange = (e: any) => {
-      setVendorBuyerActive(e?.detail?.enabled ?? isVendorBuyerMode());
-    };
-    window.addEventListener(VENDOR_BUYER_MODE_EVENT, handleModeChange);
-    window.addEventListener("storage", handleModeChange);
-    return () => {
-      window.removeEventListener(VENDOR_BUYER_MODE_EVENT, handleModeChange);
-      window.removeEventListener("storage", handleModeChange);
-    };
+  // Load all user companies to power the workspace switcher
+  const loadUserCompanies = useCallback(async () => {
+    try {
+      const data = await getMyCompanies();
+      const list = Array.isArray(data?.companies) ? data.companies : [];
+      setAllUserCompanies(list);
+    } catch {
+      // silent
+    }
   }, []);
+
+  useEffect(() => {
+    const userSession = localStorage.getItem("user_session");
+    if (userSession) loadUserCompanies();
+  }, [loadUserCompanies]);
 
   // Sync and listen for Feature Flags updates
   useEffect(() => {
@@ -330,13 +333,27 @@ export default function AppShell() {
   const isAdminRole = user?.role === "admin";
   const isBuyerComp = activeCompany?.type === "buyer";
   const isVendorComp = activeCompany?.type === "vendor";
-  
+
   // Only true managers (not buyer, not finance) can approve
   const canManageApprovals = isBuyerComp && (user?.role === "manager" || isOwner) && !isFinance && !isBuyerRole;
-  
-  // Buyer capability is available if it's a buyer company OR vendor in buyer mode
-  const showBuyerProcurement = (isBuyerComp && (isManager || isBuyerRole)) || (isVendorComp && vendorBuyerActive);
-  const showVendorMenu = isVendorComp && !vendorBuyerActive;
+
+  // Procurement visibility based purely on active workspace type
+  const showBuyerProcurement = isBuyerComp && (isManager || isBuyerRole);
+  const showVendorMenu = isVendorComp;
+
+  // Find linked counterpart workspace (same NPWP, different type)
+  const normalizeNpwp = (t: string) => (t || "").replace(/[^a-zA-Z0-9]/g, "");
+  const activeNpwp = normalizeNpwp(activeCompany?.tax_id || "");
+  const counterpartVendor = isBuyerComp
+    ? allUserCompanies.find(
+        (c) => c.type === "vendor" && normalizeNpwp(c.tax_id || "") === activeNpwp
+      )
+    : null;
+  const counterpartBuyer = isVendorComp
+    ? allUserCompanies.find(
+        (c) => c.type === "buyer" && normalizeNpwp(c.tax_id || "") === activeNpwp
+      )
+    : null;
 
   // ── Nav items ─────────────────────────────────────────────────────────────
   const isPendingCompany = activeCompany?.status === "pending";
@@ -540,6 +557,34 @@ export default function AppShell() {
     }
   };
 
+  /**
+   * Switch to a different workspace (Buyer ↔ Vendor).
+   * Calls backend to update user.company_id, then refreshes local session.
+   */
+  const handleSwitchWorkspace = async (targetCompany: any) => {
+    if (!targetCompany) return;
+    setSwitchingWorkspace(true);
+    try {
+      const res = await switchActiveCompany(targetCompany.id);
+      // Update localStorage session with new company and refreshed user
+      localStorage.setItem("active_company", JSON.stringify(targetCompany));
+      if (res?.user) {
+        const current = JSON.parse(localStorage.getItem("user_session") || "{}");
+        localStorage.setItem("user_session", JSON.stringify({ ...current, ...res.user }));
+        setUser({ ...current, ...res.user });
+      }
+      setActiveCompany(targetCompany);
+      await loadUserCompanies();
+      const slug = targetCompany.slug || targetCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      navigate(`/${slug}`);
+    } catch (err: any) {
+      console.error("Failed to switch workspace", err);
+      alert("Gagal beralih workspace. Silakan coba lagi.");
+    } finally {
+      setSwitchingWorkspace(false);
+    }
+  };
+
   const closeSidebar = () => setSidebarOpen(false);
   const handleNavClick = () => { if (isMobile) closeSidebar(); };
 
@@ -666,61 +711,102 @@ export default function AppShell() {
           <div style={{ background: "var(--ui-bg-badge)", border: "1px solid var(--ui-border-badge)", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
             <div style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 5, textTransform: "uppercase" }}>Active Workspace</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 26, height: 26, borderRadius: 6, background: "linear-gradient(135deg,#f97316,#f59e0b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: 6,
+                background: isBuyerComp
+                  ? "linear-gradient(135deg,#6366f1,#8b5cf6)"
+                  : "linear-gradient(135deg,#f97316,#f59e0b)",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+              }}>
                 <Building2 size={13} color="#fff" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{activeCompany.name}</div>
-                <div style={{ fontSize: 9, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 1, display: "flex", alignItems: "center", gap: 4 }}>
-                  <span>{activeCompany.type}</span>
-                  {isVendorComp && vendorBuyerActive && (
-                    <span style={{ background: "rgba(249, 115, 22, 0.15)", color: "#f97316", padding: "1px 5px", borderRadius: 4, fontWeight: 700, fontSize: 8 }}>
-                      BUYER MODE
+                <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                  <span style={{
+                    padding: "1px 6px", borderRadius: 4, fontWeight: 800, fontSize: 8,
+                    background: isBuyerComp ? "rgba(99,102,241,0.15)" : "rgba(249,115,22,0.15)",
+                    color: isBuyerComp ? "#818cf8" : "#f97316",
+                  }}>
+                    {isBuyerComp ? "BUYER" : "VENDOR"}
+                  </span>
+                  {(activeCompany.formatted_tax_id || activeCompany.tax_id) && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "2px",
+                        padding: "1px 5px",
+                        borderRadius: "4px",
+                        fontWeight: 700,
+                        fontSize: "8px",
+                        background: "rgba(56, 189, 248, 0.15)",
+                        color: "#38bdf8",
+                        border: "1px solid rgba(56, 189, 248, 0.25)",
+                      }}
+                      title="NPWP Terverifikasi"
+                    >
+                      <CheckCircle2 size={8} className="text-sky-400" />
+                      <span>NPWP VERIFIED</span>
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Vendor Mode / Buyer Mode Switcher for Vendors */}
-            {isVendorComp && (
+            {/* Real Workspace Switcher */}
+            {(isVendorComp || isBuyerComp) && (
               <div style={{ marginTop: 8 }}>
-                <button
-                  onClick={() => {
-                    const nextMode = !vendorBuyerActive;
-                    setVendorBuyerMode(nextMode);
-                    if (nextMode) {
-                      navigate(`${companyPrefix}/marketplace`);
-                    } else {
-                      navigate(companyPrefix || "/");
-                    }
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "6px 8px",
-                    borderRadius: 6,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    background: vendorBuyerActive
-                      ? "linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(245, 158, 11, 0.15))"
-                      : "var(--ui-bg-input)",
-                    border: vendorBuyerActive
-                      ? "1px solid rgba(249, 115, 22, 0.35)"
-                      : "1px solid var(--ui-border)",
-                    color: vendorBuyerActive ? "#f97316" : "var(--ui-text-primary)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <ShoppingCart size={11} />
-                  <span>{vendorBuyerActive ? "Mode: Buyer (Belanja)" : "Beralih ke Buyer Mode"}</span>
-                </button>
+                {/* Has counterpart workspace: direct 1-click switch */}
+                {(isVendorComp ? counterpartBuyer : counterpartVendor) ? (
+                  <button
+                    disabled={switchingWorkspace}
+                    onClick={() => handleSwitchWorkspace(isVendorComp ? counterpartBuyer : counterpartVendor)}
+                    style={{
+                      width: "100%", padding: "6px 8px", borderRadius: 6, fontSize: 10,
+                      fontWeight: 700, cursor: switchingWorkspace ? "not-allowed" : "pointer",
+                      background: "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12))",
+                      border: "1px solid rgba(99,102,241,0.3)",
+                      color: "#818cf8",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "all 0.15s ease", opacity: switchingWorkspace ? 0.6 : 1,
+                    }}
+                  >
+                    <ArrowLeftRight size={11} />
+                    <span>
+                      {switchingWorkspace
+                        ? "Beralih..."
+                        : isVendorComp
+                        ? `Beralih ke Buyer Workspace`
+                        : `Beralih ke Vendor Workspace`}
+                    </span>
+                  </button>
+                ) : (
+                  /* No counterpart: prompt to create one */
+                  <button
+                    onClick={() => {
+                      const type = isVendorComp ? "buyer" : "vendor";
+                      navigate(`/onboarding?type=${type}&from_company=${activeCompany.id}`);
+                    }}
+                    style={{
+                      width: "100%", padding: "6px 8px", borderRadius: 6, fontSize: 10,
+                      fontWeight: 700, cursor: "pointer",
+                      background: "var(--ui-bg-input)",
+                      border: "1px solid var(--ui-border)",
+                      color: "var(--ui-text-muted)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <ShoppingCart size={11} />
+                    <span>
+                      {isVendorComp ? "Aktifkan Buyer Mode" : "Daftar sebagai Vendor"}
+                    </span>
+                  </button>
+                )}
               </div>
             )}
+
 
             <div style={{ marginTop: 6 }}>
               <button onClick={handleSwitchCompany} style={{ width: "100%", padding: "6px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: "pointer", background: "var(--ui-switch-bg)", border: "1px solid var(--ui-switch-border)", color: "var(--ui-switch-text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "all 0.15s" }}>
@@ -1024,17 +1110,18 @@ export default function AppShell() {
                       <div style={{ fontSize: 11, color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
                     </div>
 
-                    {/* Vendor Mode / Buyer Mode toggle in user menu */}
-                    {isVendorComp && (
+                    {/* Real Workspace Switcher in user menu */}
+                    {(isVendorComp || isBuyerComp) && (
                       <button
+                        disabled={switchingWorkspace}
                         onClick={() => {
                           setShowUserMenu(false);
-                          const nextMode = !vendorBuyerActive;
-                          setVendorBuyerMode(nextMode);
-                          if (nextMode) {
-                            navigate(`${companyPrefix}/marketplace`);
+                          const counterpart = isVendorComp ? counterpartBuyer : counterpartVendor;
+                          if (counterpart) {
+                            handleSwitchWorkspace(counterpart);
                           } else {
-                            navigate(companyPrefix || "/");
+                            const type = isVendorComp ? "buyer" : "vendor";
+                            navigate(`/onboarding?type=${type}&from_company=${activeCompany?.id}`);
                           }
                         }}
                         style={{
@@ -1045,17 +1132,32 @@ export default function AppShell() {
                           padding: "8px 10px",
                           borderRadius: 6,
                           border: "none",
-                          background: vendorBuyerActive ? "rgba(249,115,22,0.12)" : "transparent",
-                          color: vendorBuyerActive ? "#f97316" : "var(--ui-text-primary)",
+                          background: (isVendorComp ? counterpartBuyer : counterpartVendor)
+                            ? "rgba(99,102,241,0.08)"
+                            : "transparent",
+                          color: (isVendorComp ? counterpartBuyer : counterpartVendor)
+                            ? "#818cf8"
+                            : "var(--ui-text-primary)",
                           fontSize: 12,
                           fontWeight: 600,
-                          cursor: "pointer",
+                          cursor: switchingWorkspace ? "not-allowed" : "pointer",
                           textAlign: "left",
+                          opacity: switchingWorkspace ? 0.6 : 1,
                         }}
                         className="hover:bg-[var(--ui-bg-input)]"
                       >
-                        <ShoppingCart size={14} className={vendorBuyerActive ? "text-orange-500" : "text-[var(--ui-text-muted)]"} />
-                        <span>{vendorBuyerActive ? "Switch to Vendor Mode" : "Switch to Buyer Mode"}</span>
+                        <ArrowLeftRight size={14} style={{ color: (isVendorComp ? counterpartBuyer : counterpartVendor) ? "#818cf8" : "var(--ui-text-muted)" }} />
+                        <span>
+                          {switchingWorkspace
+                            ? "Beralih..."
+                            : (isVendorComp ? counterpartBuyer : counterpartVendor)
+                            ? isVendorComp
+                              ? "Beralih ke Buyer Workspace"
+                              : "Beralih ke Vendor Workspace"
+                            : isVendorComp
+                            ? "Aktifkan Buyer Mode"
+                            : "Daftar sebagai Vendor"}
+                        </span>
                       </button>
                     )}
 
@@ -1115,48 +1217,6 @@ export default function AppShell() {
         {/* Trial Expiring / Expired Warning Banner (Buyer Purchasing Only) */}
         {isBuyerComp && <TrialBanner trial={trialInfo} />}
 
-        {/* Vendor Buyer Mode Active Banner */}
-        {isVendorComp && vendorBuyerActive && (
-          <div
-            style={{
-              background: "linear-gradient(90deg, rgba(249, 115, 22, 0.12), rgba(245, 158, 11, 0.08))",
-              borderBottom: "1px solid rgba(249, 115, 22, 0.25)",
-              padding: "8px 20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              fontSize: 12,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#f97316", fontWeight: 600 }}>
-              <ShoppingCart size={15} />
-              <span>
-                <strong>Buyer Mode Aktif:</strong> Anda sedang menjelajah Huntr Catalog dan dapat membuat PR untuk kebutuhan perusahaan vendor Anda.
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                setVendorBuyerMode(false);
-                navigate(companyPrefix || "/");
-              }}
-              style={{
-                padding: "4px 10px",
-                borderRadius: 6,
-                background: "rgba(249, 115, 22, 0.15)",
-                border: "1px solid rgba(249, 115, 22, 0.35)",
-                color: "#f97316",
-                fontWeight: 600,
-                fontSize: 11,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                transition: "all 0.15s ease",
-              }}
-            >
-              Kembali ke Vendor Mode
-            </button>
-          </div>
-        )}
 
         {/* Child routes render here — only this area changes on navigation */}
         <div className="huntr-page-content">

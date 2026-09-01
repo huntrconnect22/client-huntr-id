@@ -110,9 +110,20 @@ export default function CompanyDetails() {
                       {active && <CheckCircle2 size={16} className="text-orange-500 flex-shrink-0" />}
                     </div>
                     {/* Meta */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-[var(--ui-text-muted)] truncate">{c.formatted_tax_id || c.tax_id || "—"}</span>
-                      <div className={`flex items-center gap-1 text-xs font-semibold capitalize ${cfg.cls.split(' ')[0]}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs text-[var(--ui-text-muted)] truncate">{c.formatted_tax_id || c.tax_id || "—"}</span>
+                        {(c.formatted_tax_id || c.tax_id) && (
+                          <span
+                            className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0"
+                            title="NPWP Terverifikasi"
+                          >
+                            <CheckCircle2 size={10} className="text-sky-400" />
+                            <span>Verified</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className={`flex items-center gap-1 text-xs font-semibold capitalize shrink-0 ${cfg.cls.split(' ')[0]}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                         {c.status}
                       </div>
@@ -325,9 +336,18 @@ export default function CompanyDetails() {
                     </div>
                   )}
                   {(vm.company.formatted_tax_id || vm.company.tax_id) && (
-                    <div className="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
-                      <Hash size={11} className="text-orange-500 flex-shrink-0" />
-                      <span>{vm.company.formatted_tax_id || vm.company.tax_id}</span>
+                    <div className="flex items-center justify-between gap-1 text-xs text-[var(--ui-text-muted)]">
+                      <div className="flex items-center gap-2 truncate">
+                        <Hash size={11} className="text-orange-500 flex-shrink-0" />
+                        <span className="truncate">{vm.company.formatted_tax_id || vm.company.tax_id}</span>
+                      </div>
+                      <span
+                        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0"
+                        title="NPWP Terverifikasi"
+                      >
+                        <CheckCircle2 size={10} className="text-sky-400" />
+                        <span>Verified</span>
+                      </span>
                     </div>
                   )}
                   {vm.company.industry_type && (

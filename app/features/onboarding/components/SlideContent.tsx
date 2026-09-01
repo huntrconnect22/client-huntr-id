@@ -363,7 +363,15 @@ const Step5Content = ({ vm }: { vm: any }) => {
  * Memisahkan logika render yang panjang dari file route utama.
  */
 export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLoginAsCompany }: any) => {
-  const { slide, formData, updateField, isVerifyingNpwp, npwpVerifiedData, handleVerifyNpwp, uploadedDocs, setUploadedDocs, isUploadingDoc, handleDocUpload, selectedFile, setSelectedFile, companies, selectedCompany, setSelectedCompany, termsAccepted, setTermsAccepted } = vm;
+  const {
+    slide, formData, updateField, isVerifyingNpwp, npwpVerifiedData, handleVerifyNpwp,
+    uploadedDocs, setUploadedDocs, isUploadingDoc, handleDocUpload,
+    selectedFile, setSelectedFile, companies, selectedCompany, setSelectedCompany,
+    termsAccepted, setTermsAccepted,
+    lockedType,         // "buyer" | "vendor" | null — locked when coming from workspace switcher
+    npwpConflict,       // { vendor, buyer } — detected conflicts
+    setNpwpConflict,
+  } = vm;
 
   /**
    * Check if country is Indonesia
@@ -379,30 +387,47 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
         <SlideSection title="Profil Perusahaan" subtitle="Informasi dasar & identitas" icon={<Building2 size={22} className="text-orange-500" />} accentColor="#f97316">
           <div className="flex flex-col gap-2">
             <FormLabel>Business Type *</FormLabel>
-            <div className="grid grid-cols-2 gap-3">
-              {[{ v: "buyer", l: "Buyer" }, { v: "vendor", l: "Vendor" }].map(opt => (
-                <button
-                  key={opt.v}
-                  type="button"
-                  onClick={() => updateField("type", opt.v)}
-                  className={`
-                    py-3 rounded-xl font-bold text-sm transition-all border-2
-                    ${formData.type === opt.v
-                      ? "bg-orange-500/10 border-orange-500/40 text-orange-400"
-                      : "bg-[var(--ui-bg-input)] border-[var(--ui-border-subtle)] text-[var(--ui-text-muted)] hover:border-[var(--ui-border-input)]"
-                    }
-                  `}
-                >
-                  {opt.l}
-                </button>
-              ))}
-            </div>
+
+            {/* If type is locked (coming from workspace switch), show read-only badge */}
+            {lockedType ? (
+              <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-orange-500/40 bg-orange-500/10">
+                <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={16} className="text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-orange-400 capitalize">{lockedType}</div>
+                  <div className="text-[10px] text-[var(--ui-text-muted)]">Tipe dikunci dari workspace sebelumnya</div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {[{ v: "buyer", l: "Buyer" }, { v: "vendor", l: "Vendor" }].map(opt => (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => updateField("type", opt.v)}
+                    className={`
+                      py-3 rounded-xl font-bold text-sm transition-all border-2
+                      ${formData.type === opt.v
+                        ? "bg-orange-500/10 border-orange-500/40 text-orange-400"
+                        : "bg-[var(--ui-bg-input)] border-[var(--ui-border-subtle)] text-[var(--ui-text-muted)] hover:border-[var(--ui-border-input)]"
+                      }
+                    `}
+                  >
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {!formData.type && (
               <p className="text-[11px] text-amber-400/80 flex items-center gap-1 mt-0.5">
                 <AlertCircle size={11} /> Pilih Business Type terlebih dahulu
               </p>
             )}
           </div>
+
+
 
           <div className="flex flex-col gap-2">
             <FormLabel>Negara & Tax ID{isIndonesia() ? " (NPWP) *" : ""}</FormLabel>
@@ -458,9 +483,44 @@ export const SlideContent = ({ vm, docType, setDocType, docInputRef, handleLogin
                 </div>
               </div>
             )}
+
+            {/* NPWP Conflict Banner */}
+            {npwpConflict && formData.type && (() => {
+              const duplicate = formData.type === "vendor" ? npwpConflict.vendor : npwpConflict.buyer;
+              const crossType = formData.type === "vendor" ? npwpConflict.buyer : npwpConflict.vendor;
+              if (duplicate) {
+                return (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
+                    <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-sm font-bold text-red-400">NPWP sudah terdaftar sebagai {formData.type === "vendor" ? "Vendor" : "Buyer"}</div>
+                      <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5">
+                        Anda tidak dapat mendaftar dua kali dengan tipe yang sama. Masuk ke workspace yang sudah ada: <strong className="text-red-300">{duplicate.name}</strong>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              if (crossType) {
+                return (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+                    <CheckCircle2 size={16} className="text-indigo-400 mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-sm font-bold text-indigo-300">NPWP ditemukan di workspace lain</div>
+                      <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5">
+                        NPWP ini terdaftar sebagai <strong className="text-indigo-300">{crossType.type === "vendor" ? "Vendor" : "Buyer"}</strong>: <em>{crossType.name}</em>. Anda boleh mendaftarkan sisi {formData.type === "vendor" ? "Vendor" : "Buyer"}-nya.
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           <Field label="Nama Perusahaan *" value={formData.company_name} onChange={(v:any) => updateField("company_name", v)} placeholder="Contoh: PT Tunas Global Teknologi" />
+
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="flex flex-col gap-1.5">
