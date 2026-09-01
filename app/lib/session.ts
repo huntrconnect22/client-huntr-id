@@ -12,6 +12,10 @@ type ActiveCompany = {
   type: string;
   status: string;
   owner_id: string | number;
+  slug?: string;
+  tax_id?: string;
+  verification_notes?: string;
+  [key: string]: any;
 };
 
 type OtpSession = {

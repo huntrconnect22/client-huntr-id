@@ -176,13 +176,13 @@ export default function AppShell() {
     }
   }, []);
 
-  // Nav refresh when route changes
+  // Nav guard when route changes — reads via SessionManager to stay in sync
   useEffect(() => {
-    const userSession = localStorage.getItem("user_session");
-    const companySession = localStorage.getItem("active_company");
+    const u = SessionManager.getUser();
+    const c = SessionManager.getCompany();
     const isGuestRoute = pathname === "/";
 
-    if (!userSession) {
+    if (!u) {
       if (isGuestRoute) {
         setUser(null);
         setActiveCompany(null);
@@ -191,17 +191,13 @@ export default function AppShell() {
       navigate("/login");
       return;
     }
-    if (!companySession) {
+    if (!c) {
       if (isGuestRoute) return;
       navigate("/select-company");
       return;
     }
-    
-    const u = JSON.parse(userSession);
-    const c = JSON.parse(companySession);
-    setUser(u);
-    setActiveCompany(c);
-
+    // Do NOT overwrite state here — syncSession (subscribed to SessionManager) already keeps state in sync.
+    // Only handle redirect for root path.
     const slug = c?.slug || (c?.name ? c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : "");
     if (slug && pathname === "/") {
       navigate(`/${slug}`, { replace: true });
@@ -379,15 +375,16 @@ export default function AppShell() {
     setSwitchingWorkspace(true);
     try {
       const res = await switchActiveCompany(targetCompany.id);
-      localStorage.setItem("active_company", JSON.stringify(targetCompany));
+      // Use the server response company if available (has latest data), fallback to targetCompany
+      const freshCompany = res?.company ?? targetCompany;
+      // Use SessionManager so all subscribers (syncSession) are notified immediately
+      SessionManager.setCompany(freshCompany);
       if (res?.user) {
-        const current = JSON.parse(localStorage.getItem("user_session") || "{}");
-        localStorage.setItem("user_session", JSON.stringify({ ...current, ...res.user }));
-        setUser({ ...current, ...res.user });
+        const current = SessionManager.getUser() ?? {};
+        SessionManager.setUser({ ...current, ...res.user });
       }
-      setActiveCompany(targetCompany);
       await loadUserCompanies();
-      const slug = targetCompany.slug || targetCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const slug = freshCompany.slug || freshCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
       navigate(`/${slug}`);
     } catch (err: any) {
       console.error("Failed to switch workspace", err);

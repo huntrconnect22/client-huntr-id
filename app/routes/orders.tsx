@@ -600,6 +600,109 @@ export default function Orders() {
           </div>
         )}
 
+        {/* ── Pagination ── */}
+        {lastPage > 1 && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "12px",
+            marginTop: "20px",
+            paddingTop: "16px",
+            borderTop: "1px solid var(--ui-border)",
+          }}>
+            {/* Summary */}
+            <span style={{ fontSize: "12px", color: "var(--ui-text-muted)" }}>
+              Menampilkan halaman <strong style={{ color: "var(--ui-text-secondary)" }}>{currentPage}</strong> dari{" "}
+              <strong style={{ color: "var(--ui-text-secondary)" }}>{lastPage}</strong> &mdash;{" "}
+              <strong style={{ color: "var(--ui-text-secondary)" }}>{totalOrders}</strong> PO total
+            </span>
+
+            {/* Page buttons */}
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              {/* Prev */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1 || refreshing}
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: "5px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: 600,
+                  border: "1px solid var(--ui-border)",
+                  background: currentPage <= 1 ? "transparent" : "var(--ui-bg-input)",
+                  color: currentPage <= 1 ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
+                  cursor: currentPage <= 1 ? "not-allowed" : "pointer",
+                  opacity: currentPage <= 1 ? 0.4 : 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                <ChevronLeft size={13} /> Prev
+              </button>
+
+              {/* Page pills */}
+              {(() => {
+                const pages: (number | "...")[] = [];
+                const delta = 2;
+                const left = currentPage - delta;
+                const right = currentPage + delta;
+
+                for (let i = 1; i <= lastPage; i++) {
+                  if (i === 1 || i === lastPage || (i >= left && i <= right)) {
+                    pages.push(i);
+                  } else if (
+                    (i === left - 1 && left > 2) ||
+                    (i === right + 1 && right < lastPage - 1)
+                  ) {
+                    pages.push("...");
+                  }
+                }
+
+                return pages.map((p, idx) =>
+                  p === "..." ? (
+                    <span key={`ellipsis-${idx}`} style={{ padding: "0 4px", color: "var(--ui-text-muted)", fontSize: "12px" }}>…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => handlePageChange(p as number)}
+                      disabled={refreshing}
+                      style={{
+                        width: "30px", height: "30px", borderRadius: "8px",
+                        fontSize: "12px", fontWeight: p === currentPage ? 700 : 500,
+                        border: "1px solid",
+                        borderColor: p === currentPage ? "#f97316" : "var(--ui-border)",
+                        background: p === currentPage ? "rgba(249,115,22,0.12)" : "var(--ui-bg-input)",
+                        color: p === currentPage ? "#f97316" : "var(--ui-text-secondary)",
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {p}
+                    </button>
+                  )
+                );
+              })()}
+
+              {/* Next */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= lastPage || refreshing}
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: "5px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: 600,
+                  border: "1px solid var(--ui-border)",
+                  background: currentPage >= lastPage ? "transparent" : "var(--ui-bg-input)",
+                  color: currentPage >= lastPage ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
+                  cursor: currentPage >= lastPage ? "not-allowed" : "pointer",
+                  opacity: currentPage >= lastPage ? 0.4 : 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                Next <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Payment Modal */}
         {showPaymentModal && selectedInvoice && (
           <PaymentModal
@@ -612,3 +715,4 @@ export default function Orders() {
     </Layout>
   );
 }
+
