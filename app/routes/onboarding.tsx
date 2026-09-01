@@ -118,9 +118,17 @@ export default function Onboarding() {
   /**
    * Handle action to enter workspace after successful onboarding
    */
-  const handleLoginAsCompany = () => {
+  const handleLoginAsCompany = async () => {
     if (!vm.selectedCompany) return;
     localStorage.setItem("active_company", JSON.stringify(vm.selectedCompany));
+
+    try {
+      const { switchActiveCompany } = await import("../lib/api/company");
+      await switchActiveCompany(vm.selectedCompany.id);
+    } catch (e) {
+      console.warn("Failed to switch active company on server, continuing locally:", e);
+    }
+
     vm.resetForm();
     const slug = vm.selectedCompany.slug || vm.selectedCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     navigate(`/${slug}`);

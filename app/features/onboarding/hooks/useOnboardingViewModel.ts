@@ -146,8 +146,8 @@ export const useOnboardingViewModel = () => {
               region: src.region || "",
             }));
 
-            // If the source company already had tax_id and was registered/verified, pre-populate npwpVerifiedData
-            if (src.tax_id) {
+            // Only pre-populate NPWP verified data if source company is actually approved (not rejected/pending)
+            if (src.tax_id && src.status === "approved") {
               setNpwpVerifiedData({
                 npwp: src.tax_id,
                 nama: src.name || "",
@@ -163,6 +163,19 @@ export const useOnboardingViewModel = () => {
                 bank_account_name: src.bank_account_name,
                 industry_type: src.industry_type,
               });
+            }
+
+            // If source company already has documents and is approved, copy them over
+            if (src.status === "approved" && Array.isArray(src.documents) && src.documents.length > 0) {
+              const copiedDocs = src.documents.map((d: any) => ({
+                name: d.name || d.type || "Document",
+                type: d.type || "Document",
+                file_path: d.file_path,
+              })).filter((d: any) => !!d.file_path);
+
+              if (copiedDocs.length > 0) {
+                setUploadedDocs(copiedDocs);
+              }
             }
           } else {
             setFormData(prev => ({ ...prev, ...initialUpdates }));
@@ -410,7 +423,9 @@ export const useOnboardingViewModel = () => {
       setImportStatusText("Menyiapkan workspace perusahaan...");
 
       setCompanies(allCompanies);
-      setSelectedCompany(allCompanies[0] || company);
+      // Prefer newly registered company, fallback to list match
+      const currentRegistered = allCompanies.find((c: any) => c.id === company.id) || company;
+      setSelectedCompany(currentRegistered);
 
       setImportProgress(100);
       setImportStatusText("Selesai!");
