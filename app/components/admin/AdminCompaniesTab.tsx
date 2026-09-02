@@ -3,10 +3,10 @@ import {
   Building2, CheckCircle2, XCircle, Clock, FileText,
   Search, Loader2, X, Eye, AlertCircle, Table, Package, TrendingUp, FileSpreadsheet, ChevronLeft, ChevronRight
 } from "lucide-react";
-import { adminGetCompanies, adminGetCompanyImports } from "../../lib/api";
+import { adminActivateCompanySubscription, adminGetCompanies, adminGetCompanyImports, adminGetCompanySubscription } from "../../lib/api";
 import { getAssetUrl } from "../../lib/assets";
 import AuditModal from "./AuditModal";
-import { thStyle, tdStyle, buildPageList, getImageUrl } from "./shared";
+import { thStyle, tdStyle, buildPageList, getImageUrl, inp, lbl } from "./shared";
 import type { Company } from "./shared";
 
 /* ─── Status meta ─────────────────────────────────────────────────── */
@@ -271,6 +271,86 @@ function ImportDataTab({ companyId, companyType }: { companyId: string; companyT
   );
 }
 
+function SubscriptionTab({ company }: { company: Company }) {
+  const [subscription, setSubscription] = useState<any>(null);
+  const [gmvLimit, setGmvLimit] = useState("");
+  const [strategy, setStrategy] = useState<"transaction_fee" | "renewal_required">("transaction_fee");
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const response = await adminGetCompanySubscription(company.id);
+      setSubscription(response?.subscription ?? null);
+    } catch (error: any) {
+      setMessage(error.message || "Gagal memuat subscription.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [company.id]);
+
+  const activate = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const limit = Number(gmvLimit);
+    if (!limit || !paymentVerified) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await adminActivateCompanySubscription(company.id, {
+        gmv_limit: limit, overflow_strategy: strategy, payment_verified: true,
+      });
+      setSubscription(response.subscription);
+      setGmvLimit("");
+      setPaymentVerified(false);
+      setMessage("Subscription aktif selama satu tahun.");
+    } catch (error: any) {
+      setMessage(error.message || "Aktivasi gagal.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (company.type !== "buyer") {
+    return <div style={{ fontSize: 13, color: "var(--ui-text-muted)" }}>Subscription GMV hanya tersedia untuk perusahaan buyer.</div>;
+  }
+  if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: 28 }}><Loader2 className="animate-spin" size={22} /></div>;
+
+  const format = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+  return (
+    <form onSubmit={activate} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {subscription && (
+        <div style={{ padding: 14, borderRadius: 10, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", fontSize: 12 }}>
+          <div style={{ fontWeight: 800, color: "#10b981", marginBottom: 7 }}>SUBSCRIPTION {subscription.status?.toUpperCase()}</div>
+          <div>Realisasi: <b>{format(subscription.current_realized_gmv)}</b> dari {format(subscription.gmv_limit)}</div>
+          <div style={{ marginTop: 3 }}>Sisa quota: <b>{format(subscription.available_gmv)}</b></div>
+        </div>
+      )}
+      <div style={{ fontSize: 12, color: "var(--ui-text-muted)", lineHeight: 1.55 }}>Aktivasi baru menggantikan kontrak aktif sebelumnya. Biaya upfront otomatis dihitung 1,5% dari quota GMV dan berlaku selama 1 tahun.</div>
+      <label style={lbl}>Quota GMV Tahunan (Rp)</label>
+      <input value={gmvLimit} onChange={(event) => setGmvLimit(event.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="Contoh: 1000000000" style={inp} required />
+      {gmvLimit && <div style={{ fontSize: 12, color: "var(--ui-primary)", fontWeight: 700 }}>Upfront 1,5%: {format(Number(gmvLimit) * 0.015)}</div>}
+      <label style={lbl}>Jika quota terlewati</label>
+      <select value={strategy} onChange={(event) => setStrategy(event.target.value as typeof strategy)} style={inp}>
+        <option value="transaction_fee">Kembali ke fee per transaksi (2–5%)</option>
+        <option value="renewal_required">Tahan transaksi, wajib renewal</option>
+      </select>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12, color: "var(--ui-text-secondary)", cursor: "pointer" }}>
+        <input type="checkbox" checked={paymentVerified} onChange={(event) => setPaymentVerified(event.target.checked)} />
+        Saya telah memverifikasi pembayaran upfront dari perusahaan.
+      </label>
+      {message && <div style={{ fontSize: 12, color: message.includes("aktif") ? "#10b981" : "#ef4444" }}>{message}</div>}
+      <button disabled={!paymentVerified || !gmvLimit || saving} style={{ padding: "10px 14px", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer", background: "linear-gradient(135deg,#f59e0b,#ea580c)", color: "#fff", opacity: !paymentVerified || !gmvLimit || saving ? 0.55 : 1 }}>
+        {saving ? "Mengaktifkan…" : subscription ? "Renew / Ganti Subscription" : "Aktifkan Subscription"}
+      </button>
+    </form>
+  );
+}
+
 /* ─── Company View Modal ──────────────────────────────────────────── */
 function CompanyViewModal({
   company,
@@ -281,7 +361,7 @@ function CompanyViewModal({
   onClose: () => void;
   onAudit: (action: "approve" | "decline") => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"details" | "imports">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "imports" | "subscription">("details");
   const sm = STATUS_META[company.status] ?? STATUS_META.pending;
   const logoDoc = company.documents?.find((d) => d.type === "logo");
   const otherDocs = company.documents?.filter((d) => d.type !== "logo") ?? [];
@@ -316,6 +396,7 @@ function CompanyViewModal({
   const TABS = [
     { key: "details" as const, label: "Detail Perusahaan", icon: <Building2 size={13} /> },
     { key: "imports" as const, label: "Data Import", icon: <Table size={13} /> },
+    { key: "subscription" as const, label: "Subscription GMV", icon: <TrendingUp size={13} /> },
   ];
 
   return (
@@ -526,6 +607,8 @@ function CompanyViewModal({
           {activeTab === "imports" && (
             <ImportDataTab companyId={company.id} companyType={company.type} />
           )}
+
+          {activeTab === "subscription" && <SubscriptionTab company={company} />}
         </div>
 
         {/* Modal footer — audit actions */}

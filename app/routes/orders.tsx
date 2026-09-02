@@ -548,10 +548,21 @@ export default function Orders() {
 
                   {/* Fee Breakdown — inset */}
                   {!po.is_historical && base > 0 && (() => {
-                    const { platFeeRate, platFee, ppnPlatform, adminBank, pph23, biayaLayanan, ppn, grandTotal } = calcFees(base);
+                    const invoice = po.invoices?.find((item: any) => item.type === "proforma");
+                    const calculated = calcFees(base);
+                    const platformFee = Number(invoice?.platform_fee ?? calculated.platFee);
+                    const ppnPlatform = Number(invoice?.ppn_platform ?? calculated.ppnPlatform);
+                    const adminBank = Number(invoice?.midtrans_fee ?? calculated.adminBank);
+                    const pph23 = Number(invoice?.pph23 ?? calculated.pph23);
+                    const ppn = Number(invoice?.ppn_fee ?? calculated.ppn);
+                    const biayaLayanan = platformFee + ppnPlatform + adminBank - pph23;
+                    const grandTotal = Number(invoice?.total_amount ?? base + biayaLayanan + ppn);
+                    const platformLabel = invoice?.billing_mode === "subscription_quota"
+                      ? "Platform Fee (Ditanggung Subscription GMV)"
+                      : `Platform Fee + PPN (${(calculated.platFeeRate * 100).toFixed(0)}% + 11%)`;
                     const feeRows = [
                       { label: "Subtotal Barang", value: base },
-                      { label: `Platform Fee + PPN (${(platFeeRate*100).toFixed(0)}% + 11%)`, value: platFee + ppnPlatform },
+                      { label: platformLabel, value: platformFee + ppnPlatform },
                       { label: "Admin Bank", value: adminBank },
                       { label: "PPH 23 (2%)", value: pph23 },
                       { label: "Biaya Layanan", value: biayaLayanan },
@@ -715,4 +726,3 @@ export default function Orders() {
     </Layout>
   );
 }
-

@@ -20,6 +20,7 @@ import { UserMenuDropdown } from "../components/app-shell/UserMenuDropdown";
 import { StatusGate } from "../components/app-shell/StatusGate";
 import { buildNavItems } from "../components/app-shell/navigation";
 import { calculateNotificationCounts } from "../components/app-shell/notificationCounts";
+import { isAgenticProcurementEnabled } from "../lib/features";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
 export interface AppShellContext {
@@ -76,7 +77,6 @@ export default function AppShell() {
 
   // Sync and listen for Feature Flags updates
   useEffect(() => {
-    const { isAgenticProcurementEnabled } = require("../lib/features");
     setAgenticEnabled(isAgenticProcurementEnabled());
     const handleFeatureUpdate = () => {
       setAgenticEnabled(isAgenticProcurementEnabled());

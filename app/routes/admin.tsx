@@ -41,6 +41,7 @@ export default function AdminPortal() {
 
   const handleLogout = () => {
     sessionStorage.removeItem("admin_session");
+    sessionStorage.removeItem("admin_session_token");
     setAdmin(null);
     setView("login");
     navigate("/admin", { replace: true });

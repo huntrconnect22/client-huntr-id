@@ -27,6 +27,7 @@ export default function AdminLogin({ onLogin }: Props) {
     setError(null);
     try {
       const res = await adminLogin({ email, password });
+      sessionStorage.setItem("admin_session_token", res.token);
       onLogin(res.admin);
     } catch (err: any) {
       setError(err.message || "Invalid credentials.");

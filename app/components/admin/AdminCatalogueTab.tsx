@@ -9,12 +9,12 @@ import {
 } from "../../lib/api";
 import { lbl, inp, thStyle, tdStyle, buildPageList } from "./shared";
 
-/* Bottom-sheet modal wrapper */
+/* Modal wrapper styled cleanly and uniformly like the vendor catalogue modal */
 function SheetModal({
   onClose,
   title,
   children,
-  maxWidth = 560,
+  maxWidth = 600,
 }: {
   onClose: () => void;
   title: string;
@@ -26,11 +26,12 @@ function SheetModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "var(--ui-bg-overlay)",
+        backgroundColor: "rgba(0, 0, 0, 0.55)",
         zIndex: 1000,
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: "center",
         justifyContent: "center",
+        padding: 16,
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -39,14 +40,14 @@ function SheetModal({
       <div
         style={{
           background: "var(--ui-bg-card)",
-          padding: "20px 20px 28px",
-          borderRadius: "16px 16px 0 0",
+          borderRadius: 12,
           width: "100%",
           maxWidth,
-          maxHeight: "92dvh",
+          maxHeight: "90vh",
           overflowY: "auto",
           border: "1px solid var(--ui-border)",
-          borderBottom: "none",
+          boxShadow: "0 20px 60px -12px rgba(0,0,0,0.35)",
+          position: "relative",
         }}
       >
         <div
@@ -54,13 +55,14 @@ function SheetModal({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 20,
+            padding: "14px 18px",
+            borderBottom: "1px solid var(--ui-border)",
           }}
         >
           <div
             style={{
-              fontSize: 16,
-              fontWeight: 800,
+              fontSize: 14,
+              fontWeight: 700,
               color: "var(--ui-text-primary)",
             }}
           >
@@ -68,21 +70,35 @@ function SheetModal({
           </div>
           <button
             onClick={onClose}
+            type="button"
             style={{
-              background: "var(--ui-bg-input)",
-              border: "1px solid var(--ui-border-input)",
-              borderRadius: 8,
-              cursor: "pointer",
+              width: 30,
+              height: 30,
+              borderRadius: 6,
+              border: "1px solid var(--ui-border)",
+              background: "transparent",
               color: "var(--ui-text-muted)",
-              padding: "4px 6px",
+              cursor: "pointer",
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--ui-bg-input)";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--ui-text-primary)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--ui-text-muted)";
             }}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
-        {children}
+        <div style={{ padding: 18 }}>
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -181,76 +197,172 @@ export default function AdminCatalogueTab() {
     }
   };
 
-  /* Shared form fields */
-  const renderFormFields = (item?: any) => (
-    <>
-      <div>
-        <label style={lbl}>Product Name</label>
-        <input name="name" required defaultValue={item?.name || ""} style={{ ...inp, marginTop: 6 }} />
-      </div>
-      {item && (
-        <div>
-          <label style={lbl}>Item Code</label>
-          <input name="item_code" defaultValue={item?.item_code || ""} style={{ ...inp, marginTop: 6 }} />
+  /* Shared form fields styled identical to vendor modal */
+  const renderFormFields = (item?: any) => {
+    const fieldStyle: React.CSSProperties = {
+      padding: "9px 12px",
+      borderRadius: 8,
+      border: "1px solid var(--ui-border-input)",
+      background: "var(--ui-bg-input)",
+      color: "var(--ui-text-primary)",
+      fontSize: 13,
+      outline: "none",
+      width: "100%",
+    };
+    const fieldLabelStyle: React.CSSProperties = {
+      fontSize: 12,
+      fontWeight: 600,
+      color: "var(--ui-text-secondary)",
+    };
+
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 14,
+        }}
+      >
+        {item && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={fieldLabelStyle}>Item Code</label>
+            <input
+              name="item_code"
+              defaultValue={item?.item_code || ""}
+              placeholder="e.g. HTR-123456"
+              style={fieldStyle}
+            />
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={fieldLabelStyle}>Product Name *</label>
+          <input
+            name="name"
+            required
+            defaultValue={item?.name || ""}
+            placeholder="e.g. Hydraulic Pump"
+            style={fieldStyle}
+          />
         </div>
-      )}
-      <div>
-        <label style={lbl}>Category {!item && "(Optional)"}</label>
-        {item ? (
-          <input name="category" defaultValue={item?.category || ""} style={{ ...inp, marginTop: 6 }} />
-        ) : (
-          <select name="category" style={{ ...inp, marginTop: 6, cursor: "pointer" }}>
-            <option value="">Select Category…</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={fieldLabelStyle}>Category</label>
+          {item ? (
+            <input
+              name="category"
+              defaultValue={item?.category || ""}
+              placeholder="Select or enter category..."
+              style={fieldStyle}
+            />
+          ) : (
+            <select name="category" style={{ ...fieldStyle, cursor: "pointer" }}>
+              <option value="">Select Category…</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={fieldLabelStyle}>Brand (Optional)</label>
+          <input
+            name="brand"
+            placeholder="e.g. Bosch, Siemens"
+            defaultValue={item?.brand || ""}
+            style={fieldStyle}
+          />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={fieldLabelStyle}>UOM *</label>
+          {item ? (
+            <input
+              name="uom"
+              required
+              defaultValue={item?.uom || "Pc"}
+              style={fieldStyle}
+            />
+          ) : (
+            <select
+              name="uom"
+              required
+              defaultValue="Pc"
+              style={{ ...fieldStyle, cursor: "pointer" }}
+            >
+              {UOMS.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={fieldLabelStyle}>Keywords / Tags</label>
+          <input
+            name="keywords"
+            placeholder="e.g. pump, hydraulic, industrial"
+            defaultValue={
+              item
+                ? Array.isArray(item?.keywords)
+                  ? item.keywords.join(", ")
+                  : item?.keywords || ""
+                : undefined
+            }
+            style={fieldStyle}
+          />
+        </div>
+
+        <div
+          style={{
+            gridColumn: "1 / -1",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <label style={fieldLabelStyle}>
+            {item ? "Replace Image (Optional)" : "Product Image (Optional)"}
+          </label>
+          <input
+            name="image"
+            type="file"
+            accept="image/*"
+            style={{ ...fieldStyle, padding: "8px 12px", cursor: "pointer" }}
+          />
+        </div>
+
+        <div
+          style={{
+            gridColumn: "1 / -1",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <label style={fieldLabelStyle}>Specifications (Optional)</label>
+          <textarea
+            name="specifications"
+            placeholder="Detailed description..."
+            rows={4}
+            defaultValue={item?.specifications || ""}
+            style={{
+              ...fieldStyle,
+              minHeight: 90,
+              resize: "vertical",
+              fontFamily: "inherit",
+              lineHeight: 1.5,
+            }}
+          />
+        </div>
       </div>
-      <div>
-        <label style={lbl}>Brand {!item && "(Optional)"}</label>
-        <input name="brand" placeholder="e.g. Bosch, Siemens" defaultValue={item?.brand || ""} style={{ ...inp, marginTop: 6 }} />
-      </div>
-      <div>
-        <label style={lbl}>UOM</label>
-        {item ? (
-          <input name="uom" required defaultValue={item?.uom || "Pc"} style={{ ...inp, marginTop: 6 }} />
-        ) : (
-          <select name="uom" required style={{ ...inp, marginTop: 6, cursor: "pointer" }}>
-            <option value="">Select UOM…</option>
-            {UOMS.map((u) => <option key={u} value={u}>{u}</option>)}
-          </select>
-        )}
-      </div>
-      <div>
-        <label style={lbl}>Keywords / Tags {!item && "(Optional)"}</label>
-        <textarea
-          name="keywords"
-          rows={3}
-          placeholder="e.g. pump, hydraulic, industrial"
-          defaultValue={
-            item
-              ? Array.isArray(item?.keywords)
-                ? item.keywords.join(", ")
-                : item?.keywords || ""
-              : undefined
-          }
-          style={{ ...inp, marginTop: 6, resize: "vertical" }}
-        />
-      </div>
-      <div>
-        <label style={lbl}>Specifications {!item && "(Optional)"}</label>
-        <textarea
-          name="specifications"
-          rows={3}
-          defaultValue={item?.specifications || ""}
-          style={{ ...inp, marginTop: 6, resize: "vertical" }}
-        />
-      </div>
-      <div>
-        <label style={lbl}>{item ? "Replace Image" : "Image (Optional)"}</label>
-        <input name="image" type="file" accept="image/*" style={{ ...inp, marginTop: 6 }} />
-      </div>
-    </>
-  );
+    );
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -875,20 +987,19 @@ export default function AdminCatalogueTab() {
             style={{ display: "flex", flexDirection: "column", gap: 14 }}
           >
             {renderFormFields()}
-            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--ui-border)" }}>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
                 style={{
-                  flex: 1,
-                  padding: "11px",
+                  padding: "9px 18px",
                   borderRadius: 8,
-                  background: "transparent",
                   border: "1px solid var(--ui-border)",
-                  color: "var(--ui-text-muted)",
+                  background: "var(--ui-bg-input)",
+                  color: "var(--ui-text-secondary)",
                   cursor: "pointer",
-                  fontWeight: 700,
-                  minHeight: 44,
+                  fontSize: 13,
+                  fontWeight: 600,
                 }}
               >
                 Cancel
@@ -896,15 +1007,14 @@ export default function AdminCatalogueTab() {
               <button
                 type="submit"
                 style={{
-                  flex: 2,
-                  padding: "11px",
+                  padding: "9px 18px",
                   borderRadius: 8,
+                  border: "none",
                   background: "var(--ui-primary)",
                   color: "#fff",
-                  border: "none",
-                  cursor: "pointer",
+                  fontSize: 13,
                   fontWeight: 700,
-                  minHeight: 44,
+                  cursor: "pointer",
                 }}
               >
                 Add Product
@@ -925,20 +1035,19 @@ export default function AdminCatalogueTab() {
             style={{ display: "flex", flexDirection: "column", gap: 14 }}
           >
             {renderFormFields(editingItem)}
-            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--ui-border)" }}>
               <button
                 type="button"
                 onClick={() => setEditingItem(null)}
                 style={{
-                  flex: 1,
-                  padding: "11px",
+                  padding: "9px 18px",
                   borderRadius: 8,
-                  background: "transparent",
                   border: "1px solid var(--ui-border)",
-                  color: "var(--ui-text-muted)",
+                  background: "var(--ui-bg-input)",
+                  color: "var(--ui-text-secondary)",
                   cursor: "pointer",
-                  fontWeight: 700,
-                  minHeight: 44,
+                  fontSize: 13,
+                  fontWeight: 600,
                 }}
               >
                 Cancel
@@ -946,15 +1055,14 @@ export default function AdminCatalogueTab() {
               <button
                 type="submit"
                 style={{
-                  flex: 2,
-                  padding: "11px",
+                  padding: "9px 18px",
                   borderRadius: 8,
+                  border: "none",
                   background: "var(--ui-primary)",
                   color: "#fff",
-                  border: "none",
-                  cursor: "pointer",
+                  fontSize: 13,
                   fontWeight: 700,
-                  minHeight: 44,
+                  cursor: "pointer",
                 }}
               >
                 Save Changes

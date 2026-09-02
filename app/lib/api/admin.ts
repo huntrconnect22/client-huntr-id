@@ -26,6 +26,15 @@ export const adminGetCompanies = (params?: { page?: number; per_page?: number; s
 export const adminAuditCompany = (id: string | number, payload: { action: "approve" | "decline"; notes?: string }) =>
   apiPost(`/api/admin/companies/${id}/audit`, payload);
 
+export const adminGetCompanySubscription = (companyId: string) =>
+  apiGet(`/api/admin/companies/${companyId}/subscription`);
+
+export const adminActivateCompanySubscription = (companyId: string, payload: {
+  gmv_limit: number;
+  overflow_strategy: "transaction_fee" | "renewal_required";
+  payment_verified: true;
+}) => apiPost(`/api/admin/companies/${companyId}/subscription`, payload);
+
 // Catalogue
 export const adminGetCatalogue = (params?: { page?: number; per_page?: number; search?: string }) => {
   const query = new URLSearchParams();

@@ -3,6 +3,7 @@ import { Zap, Clock, ShieldCheck, PhoneCall, ArrowRight, Bot, RefreshCw, Cpu } f
 import Swal from "sweetalert2";
 import { getTrialInfo } from "../../../lib/trial";
 import { getAiUsage } from "../../../lib/api/ai";
+import { getCompanySubscription, type GmvSubscriptionSummary } from "../../../lib/api/subscription";
 
 interface AccountSubscriptionTabProps {
   user: any;
@@ -21,6 +22,7 @@ export function AccountSubscriptionTab({
     month: string;
   } | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(false);
+  const [subscription, setSubscription] = useState<GmvSubscriptionSummary | null>(null);
 
   const fetchUsage = async () => {
     if (!activeCompany?.id) return;
@@ -40,6 +42,22 @@ export function AccountSubscriptionTab({
   useEffect(() => {
     fetchUsage();
   }, [activeCompany?.id]);
+
+  useEffect(() => {
+    if (!activeCompany?.id) {
+      setSubscription(null);
+      return;
+    }
+
+    getCompanySubscription(activeCompany.id)
+      .then((response: any) => setSubscription(response?.subscription ?? null))
+      .catch(() => setSubscription(null));
+  }, [activeCompany?.id]);
+
+  const formatRupiah = (value: number) => `Rp ${value.toLocaleString("id-ID")}`;
+  const quotaPercent = subscription
+    ? Math.min(100, ((subscription.current_realized_gmv + subscription.reserved_gmv) / subscription.gmv_limit) * 100)
+    : 0;
 
   const handleContactSales = () => {
     Swal.fire({
@@ -130,6 +148,37 @@ export function AccountSubscriptionTab({
           </div>
         </div>
       </div>
+
+      {subscription && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
+              <Zap size={13} className="text-orange-500" /> Kuota GMV Subscription
+            </span>
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${subscription.status === "active" ? "text-emerald-500 bg-emerald-500/10" : "text-amber-500 bg-amber-500/10"}`}>
+              {subscription.status === "active" ? "AKTIF" : "PERLU PERPANJANGAN"}
+            </span>
+          </div>
+          <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 text-xs">
+              <div>
+                <p className="m-0 text-[var(--ui-text-muted)]">GMV terealisasi + teralokasi</p>
+                <p className="m-0 mt-1 text-base font-bold text-[var(--ui-text-primary)]">
+                  {formatRupiah(subscription.current_realized_gmv + subscription.reserved_gmv)}
+                  <span className="font-normal text-[var(--ui-text-muted)]"> / {formatRupiah(subscription.gmv_limit)}</span>
+                </p>
+              </div>
+              <span className="font-semibold text-orange-500">Sisa {formatRupiah(subscription.available_gmv)}</span>
+            </div>
+            <div className="w-full h-2.5 rounded-full bg-[var(--ui-bg-card)] overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all" style={{ width: `${quotaPercent}%` }} />
+            </div>
+            <p className="m-0 text-[11px] text-[var(--ui-text-muted)]">
+              Biaya di muka: {formatRupiah(subscription.upfront_fee)} (1,5% dari kuota GMV), berlaku sampai {new Date(subscription.ends_at).toLocaleDateString("id-ID")}. {subscription.overflow_strategy === "transaction_fee" ? "Setelah kuota terlampaui, transaksi berikutnya memakai tarif per transaksi." : "Saat kuota terlampaui, kontrak baru diperlukan."}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">

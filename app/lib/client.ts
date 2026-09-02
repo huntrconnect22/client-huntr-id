@@ -15,6 +15,11 @@ function resolveBaseUrl(): string {
 
 const BASE_URL = resolveBaseUrl();
 
+function getAdminHeaders(): Record<string, string> {
+  const token = sessionStorage.getItem("admin_session_token");
+  return token ? { "X-Admin-Authorization": token } : {};
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   const text = await res.text();
   let data: any = {};
@@ -60,7 +65,7 @@ export async function apiGet<T = any>(path: string): Promise<T> {
   console.log(`[API] GET ${path}`);
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
-      headers: getAuthHeaders(),
+      headers: { ...getAuthHeaders(), ...getAdminHeaders() },
       credentials: "include",
     });
     return handleResponse<T>(res);
@@ -91,6 +96,7 @@ export async function apiPost<T = any>(path: string, body: Record<string, any>):
       headers: {
         "Content-Type": "application/json",
         ...getAuthHeaders(),
+        ...getAdminHeaders(),
       },
       body: JSON.stringify(body),
       credentials: "include",
@@ -113,6 +119,7 @@ export async function apiPut<T = any>(path: string, body: Record<string, any>): 
       headers: {
         "Content-Type": "application/json",
         ...getAuthHeaders(),
+        ...getAdminHeaders(),
       },
       body: JSON.stringify(body),
       credentials: "include",
@@ -132,7 +139,7 @@ export async function apiDelete<T = any>(path: string): Promise<T> {
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
       method: "DELETE",
-      headers: getAuthHeaders(),
+      headers: { ...getAuthHeaders(), ...getAdminHeaders() },
       credentials: "include",
     });
     return handleResponse<T>(res);
@@ -148,7 +155,7 @@ export async function apiDelete<T = any>(path: string): Promise<T> {
 export async function apiPostForm<T = any>(path: string, formData: FormData): Promise<T> {
   console.log(`[API] POST Form ${path}`);
   try {
-    const headers = getAuthHeaders();
+    const headers = { ...getAuthHeaders(), ...getAdminHeaders() };
     // Remove Content-Type header to let browser set it automatically with boundary
     delete headers['Content-Type'];
     
