@@ -254,8 +254,8 @@ export default function AgenticProcurementPage() {
         <div class="text-left text-xs">
           <p class="font-semibold text-gray-800 dark:text-gray-200 mb-1">${result.pr_draft.title}</p>
           <p class="text-gray-600 dark:text-gray-400 mb-2">${result.pr_draft.suggested_items?.length || 0} item line akan dibuat dan diajukan ke Approval Manager.</p>
-          <div class="bg-orange-50 dark:bg-orange-950/40 p-2 rounded border border-orange-200 dark:border-orange-800 font-mono text-orange-800 dark:text-orange-300">
-            Total Anggaran: <b>Rp ${totalBudget.toLocaleString("id-ID")}</b>
+          <div class="bg-orange-50 dark:bg-orange-950/40 p-2.5 rounded border border-orange-200 dark:border-orange-800 font-mono text-orange-800 dark:text-orange-300">
+            Total Anggaran: <b>${totalBudget > 0 ? `Rp ${totalBudget.toLocaleString("id-ID")}` : "TBD (Menunggu Penawaran Vendor)"}</b>
           </div>
         </div>
       `,

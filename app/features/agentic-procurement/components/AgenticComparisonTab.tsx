@@ -112,7 +112,7 @@ export default function AgenticComparisonTab({
                 <div className="pt-2 border-t border-[var(--ui-border)] flex items-center justify-between text-xs">
                   <span className="text-[var(--ui-text-muted)] text-[11px]">Estimasi:</span>
                   <span className="font-bold font-mono text-[var(--ui-text-primary)]">
-                    {formatRupiah(item.estimated_price_idr || 0)}
+                    {(item.estimated_price_idr || 0) > 0 ? formatRupiah(item.estimated_price_idr) : "Perlu Penawaran"}
                   </span>
                 </div>
               </div>

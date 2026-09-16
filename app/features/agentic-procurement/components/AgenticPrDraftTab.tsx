@@ -97,25 +97,67 @@ export default function AgenticPrDraftTab({
                 </thead>
                 <tbody className="divide-y divide-[var(--ui-border)]">
                   {prDraft.suggested_items?.map((item: any, idx: number) => {
-                    const subtotal = (item.qty || 1) * (item.estimated_price || 0);
+                    const price = item.estimated_price || 0;
+                    const subtotal = (item.qty || 1) * price;
+                    const status = item.price_status || (price > 0 ? (item.catalogue_id ? "verified_catalogue" : "buyer_budget") : "rfq_required");
+
                     return (
                       <tr key={idx} className="hover:bg-[var(--ui-bg-input)]/50 transition-colors">
                         <td className="px-3 py-2.5">
-                          <div className="font-semibold text-[var(--ui-text-primary)]">
-                            {item.name}
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-[var(--ui-text-primary)]">
+                              {item.name}
+                            </span>
+                            {status === "verified_catalogue" && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                ✓ Katalog Terdaftar
+                              </span>
+                            )}
+                            {status === "market_estimate" && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                                Estimasi Pasar (HPS)
+                              </span>
+                            )}
+                            {status === "buyer_budget" && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                                Target Pagu Buyer
+                              </span>
+                            )}
+                            {status === "rfq_required" && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                                Butuh Penawaran Vendor
+                              </span>
+                            )}
                           </div>
-                          <div className="text-[11px] text-[var(--ui-text-muted)]">
+                          <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5">
                             {item.detailed_specs || item.reason || "-"}
                           </div>
+                          {item.item_code && (
+                            <div className="text-[10px] text-[var(--ui-text-muted)] opacity-70 font-mono mt-0.5">
+                              Kode: {item.item_code}
+                            </div>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 text-center font-medium text-[var(--ui-text-primary)]">
                           {item.qty} {item.uom || "unit"}
                         </td>
                         <td className="px-3 py-2.5 text-right font-mono text-[var(--ui-text-secondary)]">
-                          {formatRupiah(item.estimated_price)}
+                          {price > 0 ? (
+                            formatRupiah(price)
+                          ) : (
+                            <span className="text-[11px] text-amber-400 italic">
+                              Perlu Penawaran
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 text-right font-mono font-bold text-orange-400">
-                          {formatRupiah(subtotal)}
+                          {price > 0 ? (
+                            formatRupiah(subtotal)
+                          ) : (
+                            <span className="text-[11px] text-amber-400 font-medium">
+                              TBD (Tender)
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -127,7 +169,11 @@ export default function AgenticPrDraftTab({
                       Total Anggaran (IDR):
                     </td>
                     <td className="px-3 py-2 text-right font-mono text-xs text-orange-400">
-                      {formatRupiah(totalBudget)}
+                      {totalBudget > 0 ? (
+                        formatRupiah(totalBudget)
+                      ) : (
+                        <span className="text-amber-400 font-semibold">TBD via Tender RFQ</span>
+                      )}
                     </td>
                   </tr>
                 </tfoot>
@@ -137,7 +183,10 @@ export default function AgenticPrDraftTab({
             {/* Mobile Card List View */}
             <div className="sm:hidden flex flex-col gap-2">
               {prDraft.suggested_items?.map((item: any, idx: number) => {
-                const subtotal = (item.qty || 1) * (item.estimated_price || 0);
+                const price = item.estimated_price || 0;
+                const subtotal = (item.qty || 1) * price;
+                const status = item.price_status || (price > 0 ? (item.catalogue_id ? "verified_catalogue" : "buyer_budget") : "rfq_required");
+
                 return (
                   <div key={idx} className="p-3 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex flex-col gap-1.5 text-xs">
                     <div className="flex items-start justify-between gap-2">
@@ -148,6 +197,30 @@ export default function AgenticPrDraftTab({
                         {item.qty} {item.uom || "unit"}
                       </span>
                     </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {status === "verified_catalogue" && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          ✓ Terdaftar
+                        </span>
+                      )}
+                      {status === "market_estimate" && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                          Estimasi Pasar
+                        </span>
+                      )}
+                      {status === "buyer_budget" && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                          Pagu Buyer
+                        </span>
+                      )}
+                      {status === "rfq_required" && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                          Butuh Penawaran
+                        </span>
+                      )}
+                    </div>
+
                     {item.detailed_specs && (
                       <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">
                         {item.detailed_specs}
@@ -155,10 +228,10 @@ export default function AgenticPrDraftTab({
                     )}
                     <div className="flex items-center justify-between pt-1 border-t border-[var(--ui-border)] text-[11px]">
                       <span className="text-[var(--ui-text-muted)]">
-                        @ {formatRupiah(item.estimated_price)}
+                        {price > 0 ? `@ ${formatRupiah(price)}` : "Perlu Penawaran"}
                       </span>
                       <span className="font-bold font-mono text-orange-400">
-                        {formatRupiah(subtotal)}
+                        {price > 0 ? formatRupiah(subtotal) : "TBD"}
                       </span>
                     </div>
                   </div>
@@ -180,8 +253,13 @@ export default function AgenticPrDraftTab({
           <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex flex-col">
             <span className="text-[10px] text-emerald-400 font-semibold">Total Estimasi Anggaran</span>
             <span className="text-lg font-black font-mono text-emerald-400">
-              {formatRupiah(totalBudget)}
+              {totalBudget > 0 ? formatRupiah(totalBudget) : "TBD (Tender RFQ)"}
             </span>
+            {totalBudget === 0 && (
+              <span className="text-[10px] text-amber-400 mt-0.5">
+                Menunggu penawaran harga resmi dari vendor
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-2 text-xs divide-y divide-[var(--ui-border)]">

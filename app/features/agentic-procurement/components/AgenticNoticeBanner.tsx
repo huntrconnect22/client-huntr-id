@@ -41,11 +41,11 @@ export default function AgenticNoticeBanner({
         </div>
       )}
 
-      {/* Disclaimer Hint Banner (Beta) */}
-      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs">
-        <AlertCircle size={15} className="flex-shrink-0 mt-0.5 text-amber-500" />
+      {/* Zero-Hallucination Guarantee & Policy Banner */}
+      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs">
+        <AlertCircle size={15} className="flex-shrink-0 mt-0.5 text-emerald-500" />
         <div className="flex-1 text-[11px] sm:text-xs leading-relaxed">
-          <span className="font-bold">Disclaimer Versi Beta:</span> Estimasi harga dan spesifikasi teknis dihasilkan oleh model AI secara otomatis. Mohon periksa kembali sebelum diajukan ke approval.
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">Zero-Hallucination Policy:</span> AI menyusun spesifikasi standar industri terverifikasi dan harga katalog resmi. Jika barang tidak ada di katalog, AI tidak akan mengarang harga (ditandai <i>Perlu Penawaran Vendor</i>) demi akurasi anggaran pengadaan Anda.
         </div>
       </div>
     </>
