@@ -194,8 +194,13 @@ export default function RfqDetail() {
     return `${duration} days`;
   };
 
+  // Check if current vendor company has already submitted a proposal
+  const hasAlreadySubmitted = isVendor && rankings.some(
+    (r) => String(r.proposal?.company_id) === String(company?.id)
+  );
+
   const canSubmitProposal = (): boolean =>
-    Boolean(rfq && isVendor && rfq.status === "active" && rfq.approved_at && !isTenderExpired());
+    Boolean(rfq && isVendor && rfq.status === "active" && rfq.approved_at && !isTenderExpired() && !hasAlreadySubmitted);
 
   const totalItems = rfq?.items?.reduce((sum: number, item: any) => sum + (item.qty || 0), 0) ?? 0;
   const lineItems = rfq?.items?.length ?? 0;
@@ -315,6 +320,7 @@ export default function RfqDetail() {
           <RFQSidebar
             rfq={rfq}
             canSubmitProposal={canSubmitProposal}
+            hasAlreadySubmitted={hasAlreadySubmitted}
             canApproveOrAward={canApproveOrAward}
             isTenderExpired={isTenderExpired}
             isVendor={isVendor}

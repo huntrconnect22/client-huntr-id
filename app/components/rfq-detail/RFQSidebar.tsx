@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  ArrowRight, MapPin, ShieldCheck, User, Sparkles, Loader2, AlertTriangle,
+  ArrowRight, MapPin, ShieldCheck, User, Sparkles, Loader2, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 
 const btnPrimary =
@@ -12,6 +12,7 @@ const inputClass =
 interface RFQSidebarProps {
   rfq: any;
   canSubmitProposal: () => boolean;
+  hasAlreadySubmitted?: boolean;
   canApproveOrAward: boolean;
   isTenderExpired: () => boolean;
   isVendor: boolean;
@@ -36,6 +37,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export function RFQSidebar({
   rfq,
   canSubmitProposal,
+  hasAlreadySubmitted = false,
   canApproveOrAward,
   isTenderExpired,
   isVendor,
@@ -64,6 +66,14 @@ export function RFQSidebar({
           <button type="button" onClick={onNavigateToProposals} className={`${btnPrimary} mt-3`}>
             Submit Proposal <ArrowRight size={13} />
           </button>
+        )}
+
+        {/* Already submitted — disabled state */}
+        {hasAlreadySubmitted && !expired && (
+          <div className="mt-3 flex items-center gap-2 px-2.5 py-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
+            <CheckCircle2 size={13} className="shrink-0" />
+            Proposal sudah disubmit
+          </div>
         )}
 
         {isVendor && expired && (
