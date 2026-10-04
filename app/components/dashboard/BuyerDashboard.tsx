@@ -23,6 +23,7 @@ const chartTooltipStyle = (accent?: string) => ({
 
 import { getOrders } from "../../lib/api";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../../hooks/useMediaQuery";
+import { useLanguage } from "../../context/LanguageContext";
 
 const DEPARTMENT_SPEND_PAGE_SIZE = 4;
 
@@ -137,6 +138,7 @@ function DepartmentSpendMobileList({
 }
 
 export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompany: any }) {
+  const { t } = useLanguage();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const [realSpendData, setRealSpendData] = React.useState<{ name: string; value: number }[]>([]);
   const [totalRealSpend, setTotalRealSpend] = React.useState<number>(0);
@@ -278,7 +280,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
   };
 
   return (
-    <Layout title="Procurement Dashboard" subtitle="Overview of your organization's spend, supplier performance, and operational efficiency.">
+    <Layout title={t("dashboard.buyer.title")} subtitle={t("dashboard.buyer.subtitle")}>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 40, boxSizing: "border-box", width: "100%" }}>
         {/* Weather + Currency compact row */}
         <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, alignItems: "stretch" }}>
@@ -290,7 +292,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
         <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0 }}>
             <h2 style={{ margin: 0, fontSize: isMobile ? 14 : 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#fb923c" }}>
-              <PieChart size={18} /> Analisis Pengeluaran (Spend Analysis)
+              <PieChart size={18} /> {t("dashboard.buyer.spendAnalysisTitle")}
             </h2>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button 
@@ -309,7 +311,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                   gap: 6
                 }}
               >
-                <ArrowDownCircle size={14} /> Download Metrics
+                <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadMetrics")}
               </button>
               <button 
                 onClick={handleDownloadSpendData} 
@@ -327,43 +329,43 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                   gap: 6
                 }}
               >
-                <ArrowDownCircle size={14} /> Download Spend Excel
+                <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadSpend")}
               </button>
             </div>
           </div>
           {/* Stat cards row — compact, small */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Total Spend</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.totalSpend")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{formatCurrency(totalRealSpend)}</div>
-              <div style={{ fontSize: 10, color: "#34d399", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}><TrendingDown size={10}/> Real PO Aggregation</div>
+              <div style={{ fontSize: 10, color: "#34d399", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}><TrendingDown size={10}/> {t("dashboard.buyer.realPoAgg")}</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Maverick Spend</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.maverickSpend")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>0%</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Off-contract purchases</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.offContract")}</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Defect Rate</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.defectRate")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#22c55e", marginTop: 4, lineHeight: 1 }}>0.0%</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Target: &lt;2.0%</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.defectTarget")}</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Lead Time Avg</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.leadTimeAvg")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#60a5fa", marginTop: 4, lineHeight: 1 }}>7.0 Days</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>PO → Goods Receipt</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.leadTimeSub")}</div>
             </div>
           </div>
           {/* Chart — full width */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: isMobile ? "14px 16px" : "18px 20px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pengeluaran per Departemen</h3>
+            <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("dashboard.buyer.spendPerDept")}</h3>
             {loadingOrders ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: isMobile ? 80 : 260, fontSize: 12, color: "var(--ui-text-muted)" }}>
-                Mengambil data PO...
+                {t("dashboard.buyer.loadingPo")}
               </div>
             ) : realSpendData.length === 0 || (realSpendData.length === 1 && realSpendData[0].value === 0) ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: isMobile ? 80 : 260, fontSize: 12, color: "var(--ui-text-muted)" }}>
-                Belum ada transaksi PO untuk dihitung pengeluarannya.
+                {t("dashboard.buyer.noPo")}
               </div>
             ) : isMobile ? (
               <DepartmentSpendMobileList
@@ -394,7 +396,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
         <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#60a5fa" }}>
-              <Activity size={18} /> Efisiensi Operasional
+              <Activity size={18} /> {t("dashboard.buyer.opEffTitle")}
             </h2>
             <button 
               onClick={handleDownloadCycleTimeData} 
@@ -412,30 +414,30 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                 gap: 6
               }}
             >
-              <ArrowDownCircle size={14} /> Download Cycle Time Excel
+              <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadCycleTime")}
             </button>
           </div>
           {/* Stat cards row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Active PO</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.activePo")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#fb923c", marginTop: 4, lineHeight: 1 }}>8</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>In-Transit</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.inTransit")}</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Unprocessed PRs</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.unprocessedPrs")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>24</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Needs review</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.needsReview")}</div>
             </div>
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>POs/Staff/Mo</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.posPerStaff")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#f472b6", marginTop: 4, lineHeight: 1 }}>45</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Average</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.average")}</div>
             </div>
           </div>
           {/* Line chart — full width */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Rata-rata Waktu Siklus PO (Hari)</h3>
+            <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("dashboard.buyer.cyclePo")}</h3>
             <div style={{ height: 260, width: "100%" }}>
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsLineChart data={cycleTimeData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -454,7 +456,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
         <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#fbbf24" }}>
-              <LineChart size={18} /> Keuangan &amp; Penghematan
+              <LineChart size={18} /> {t("dashboard.buyer.finTitle")}
             </h2>
             <button 
               onClick={handleDownloadSavingsData} 
@@ -472,7 +474,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                 gap: 6
               }}
             >
-              <ArrowDownCircle size={14} /> Download Savings Excel
+              <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadSavings")}
             </button>
           </div>
           {/* Stat card */}
@@ -480,12 +482,12 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
             <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #34d399" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>PPV</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: "#34d399", marginTop: 4, lineHeight: 1 }}>{formatCurrency(-450000000)}</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Favorable variance</div>
+              <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.favorableVariance")}</div>
             </div>
           </div>
           {/* Area chart — full width */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Kumulatif Penghematan Cost (YTD)</h3>
+            <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("dashboard.buyer.savingsYtd")}</h3>
             <div style={{ height: 260, width: "100%" }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={savingsData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>

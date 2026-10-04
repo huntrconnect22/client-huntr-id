@@ -7,6 +7,7 @@ import { SummaryWidget, MiniStat } from "./SummaryWidget";
 import { TrendingSearchWidget } from "./TrendingSearchWidget";
 import { apiGet } from "../../lib/api";
 import { ClipboardList, Trophy, Timer } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 const VENDOR_DASHBOARD_HINTS = [
   "Monitoring tender aktif",
@@ -46,6 +47,7 @@ function formatCountdown(ms: number): string {
 }
 
 export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, activeCompany: any }) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [openRfqs, setOpenRfqs] = useState<any[]>([]);
@@ -100,7 +102,7 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
     .filter((value: number | null): value is number => typeof value === "number")
     .sort((a: number, b: number) => a - b);
   const nearestDeadline = deadlines[0] || null;
-  const countdown = nearestDeadline ? formatCountdown(nearestDeadline - now) : "Belum ada tender aktif";
+  const countdown = nearestDeadline ? formatCountdown(nearestDeadline - now) : t("dashboard.vendor.noActiveTender");
 
   const tableRows = [...openRfqs]
     .filter((rfq: any) => !isRfqExpired(rfq, now)) // Filter out expired RFQs from table
@@ -175,7 +177,7 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
   };
 
   return (
-    <Layout title="Vendor E-Bidding Dashboard" subtitle="Pantau tender aktif, draft proposal, dan submisi yang sedang berjalan.">
+    <Layout title={t("dashboard.vendor.title")} subtitle={t("dashboard.vendor.subtitle")}>
       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24, boxSizing: "border-box" }}>
 
         {/* Weather + Currency compact row */}
@@ -186,7 +188,7 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
 
         {/* Stats Section Header with Download */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0, fontSize: 12, fontWeight: 800, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Statistik Performa Vendor</h3>
+          <h3 style={{ margin: 0, fontSize: 12, fontWeight: 800, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("dashboard.vendor.statsTitle")}</h3>
           <button 
             onClick={handleDownloadStats} 
             style={{ 
@@ -203,7 +205,7 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
               gap: 6
             }}
           >
-            Download Stats Excel
+            {t("dashboard.vendor.downloadStats")}
           </button>
         </div>
 
@@ -211,45 +213,45 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
         <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
           {/* Company */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Company</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.companyLabel")}</div>
             <div style={{ fontSize: 13, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeCompany?.name || "—"}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 3 }}>{user?.name}</div>
           </div>
           {/* Total Tender */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Total Diikuti</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.totalJoined")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : String(participatedCount)}</div>
-            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Tender unik</div>
+            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.uniqueTenders")}</div>
           </div>
           {/* Wins */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Menang</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.wins")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#34d399", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : `${wins}`}</div>
-            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{winRate}% win rate</div>
+            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.winRate", { rate: winRate })}</div>
           </div>
           {/* Deadline */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Deadline Terdekat</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.nearestDeadline")}</div>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#60a5fa", marginTop: 4, lineHeight: 1.2 }}>{loading ? "..." : countdown}</div>
-            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>RFQ aktif</div>
+            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.activeRfq")}</div>
           </div>
           {/* Open Tenders */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Open Tenders</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.openTenders")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#fb923c", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : openRfqs.filter((rfq: any) => !isRfqExpired(rfq, now)).length}</div>
-            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Aktif saat ini</div>
+            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.activeNow")}</div>
           </div>
           {/* Submitted */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Submitted</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.submitted")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#a78bfa", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : vendorProposals.length}</div>
-            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Proposal terkirim</div>
+            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.proposalSent")}</div>
           </div>
           {/* Drafts */}
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Drafts</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.drafts")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : Math.max(openRfqs.filter((rfq: any) => !isRfqExpired(rfq, now)).length - vendorProposals.length, 0)}</div>
-            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>Belum disubmit</div>
+            <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.notSubmitted")}</div>
           </div>
         </section>
 
@@ -263,8 +265,8 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
           <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--ui-border)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Modul E-Bidding</div>
-                <h2 style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 700, color: "var(--ui-text-primary)" }}>Draft dan Pengajuan Proposal</h2>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("dashboard.vendor.eBiddingModule")}</div>
+                <h2 style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 700, color: "var(--ui-text-primary)" }}>{t("dashboard.vendor.draftAndProposals")}</h2>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <button 
@@ -283,10 +285,10 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
                     gap: 6
                   }}
                 >
-                  Download Proposals Excel
+                  {t("dashboard.vendor.downloadProposals")}
                 </button>
                 <div style={{ display: "flex", gap: 6 }}>
-                  {VENDOR_DASHBOARD_HINTS.map((item) => (
+                  {[t("dashboard.vendor.hintMonitor"), t("dashboard.vendor.hintDraft"), t("dashboard.vendor.hintDeadline")].map((item) => (
                     <span key={item} style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(249,115,22,0.1)", color: "#f59e0b", fontSize: 10, fontWeight: 700 }}>
                       {item}
                     </span>
@@ -299,102 +301,109 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ textAlign: "left", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ui-text-muted)" }}>
-                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>Tender</th>
-                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>Buyer</th>
-                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>Status</th>
-                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>Submisi</th>
-                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>Deadline</th>
+                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColTender")}</th>
+                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColBuyer")}</th>
+                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColStatus")}</th>
+                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColSubmission")}</th>
+                    <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColDeadline")}</th>
                     <th style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }} />
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>Memuat tender aktif...</td>
+                      <td colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>{t("dashboard.vendor.loadingTenders")}</td>
                     </tr>
                   ) : tableRows.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>Belum ada tender aktif yang bisa dipantau.</td>
+                      <td colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>{t("dashboard.vendor.noActiveTenders")}</td>
                     </tr>
                   ) : (
-                    tableRows.map(({ rfq, proposal, ranking, submittedAt, deadlineText, status, isExpired }) => (
-                      <tr key={rfq.id} style={{ borderBottom: "1px solid var(--ui-border-subtle)" }}>
-                        <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                          <div style={{ fontWeight: 800, color: "var(--ui-text-primary)", lineHeight: 1.4, fontSize: 13 }}>{rfq.title}</div>
-                          <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>{rfq.items?.length || 0} item</div>
-                        </td>
-                        <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                          <div style={{ fontWeight: 700, color: "var(--ui-text-primary)", fontSize: 13 }}>{rfq.company?.name || "Buyer"}</div>
-                          <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>RFQ {String(rfq.id).slice(0, 8)}</div>
-                        </td>
-                        <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                          <span style={{
-                            padding: "4px 8px",
-                            borderRadius: 999,
-                            fontSize: 10,
-                            fontWeight: 800,
-                            background: status === "Draft" ? "rgba(59,130,246,0.12)" 
-                                      : status === "Submitted" ? "rgba(249,115,22,0.12)" 
-                                      : status === "Expired" ? "rgba(239,68,68,0.12)"
-                                      : "rgba(34,197,94,0.12)",
-                            color: status === "Draft" ? "#60a5fa" 
-                                 : status === "Submitted" ? "#f59e0b" 
-                                 : status === "Expired" ? "#ef4444"
-                                 : "#34d399",
-                          }}>
-                            {status}
-                          </span>
-                          <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 6 }}>
-                            {proposal ? `Winner: ${proposal.winner_status || "submitted"}` : isExpired ? "Deadline passed" : "No proposal"}
-                          </div>
-                        </td>
-                        <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                          <div style={{ fontWeight: 700, color: "var(--ui-text-primary)", fontSize: 13 }}>{proposal ? `Rp ${Number(proposal.price_offer || 0).toLocaleString("id-ID")}` : isExpired ? "N/A" : "Draft"}</div>
-                          <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
-                            {ranking ? `Rank #${ranking.rank}` : submittedAt === "-" ? (isExpired ? "Expired" : "Not submitted") : `Sent ${submittedAt}`}
-                          </div>
-                        </td>
-                        <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                          <div style={{ fontWeight: 700, color: isExpired ? "#ef4444" : "var(--ui-text-primary)", fontSize: 13 }}>{deadlineText}</div>
-                          <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
-                            {isExpired ? "Closed" : proposal ? `Sent ${submittedAt}` : "Ready"}
-                          </div>
-                        </td>
-                        <td style={{ padding: "12px 14px", verticalAlign: "top", textAlign: "right" }}>
-                          {isExpired ? (
+                    tableRows.map(({ rfq, proposal, ranking, submittedAt, deadlineText, status, isExpired }) => {
+                      const displayStatus = status === "Draft" ? t("dashboard.vendor.statusDraft")
+                        : status === "Submitted" ? t("dashboard.vendor.statusSubmitted")
+                        : status === "Expired" ? t("dashboard.vendor.statusExpired")
+                        : t("dashboard.vendor.statusAwarded");
+
+                      return (
+                        <tr key={rfq.id} style={{ borderBottom: "1px solid var(--ui-border-subtle)" }}>
+                          <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                            <div style={{ fontWeight: 800, color: "var(--ui-text-primary)", lineHeight: 1.4, fontSize: 13 }}>{rfq.title}</div>
+                            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>{rfq.items?.length || 0} items</div>
+                          </td>
+                          <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                            <div style={{ fontWeight: 700, color: "var(--ui-text-primary)", fontSize: 13 }}>{rfq.company?.name || "Buyer"}</div>
+                            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>RFQ {String(rfq.id).slice(0, 8)}</div>
+                          </td>
+                          <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
                             <span style={{
-                              padding: "6px 10px",
-                              borderRadius: 8,
-                              border: "1px solid rgba(239,68,68,0.22)",
-                              background: "rgba(239,68,68,0.08)",
-                              color: "#ef4444",
-                              fontSize: 11,
+                              padding: "4px 8px",
+                              borderRadius: 999,
+                              fontSize: 10,
                               fontWeight: 800,
-                              cursor: "default",
+                              background: status === "Draft" ? "rgba(59,130,246,0.12)" 
+                                        : status === "Submitted" ? "rgba(249,115,22,0.12)" 
+                                        : status === "Expired" ? "rgba(239,68,68,0.12)"
+                                        : "rgba(34,197,94,0.12)",
+                              color: status === "Draft" ? "#60a5fa" 
+                                   : status === "Submitted" ? "#f59e0b" 
+                                   : status === "Expired" ? "#ef4444"
+                                   : "#34d399",
                             }}>
-                              Closed
+                              {displayStatus}
                             </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => navigate("/proposals", { state: { rfqId: rfq.id } })}
-                              style={{
+                            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 6 }}>
+                              {proposal ? `Winner: ${proposal.winner_status || "submitted"}` : isExpired ? t("dashboard.vendor.deadlinePassed") : t("dashboard.vendor.noProposal")}
+                            </div>
+                          </td>
+                          <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                            <div style={{ fontWeight: 700, color: "var(--ui-text-primary)", fontSize: 13 }}>{proposal ? `Rp ${Number(proposal.price_offer || 0).toLocaleString("id-ID")}` : isExpired ? "N/A" : t("dashboard.vendor.statusDraft")}</div>
+                            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
+                              {ranking ? `Rank #${ranking.rank}` : submittedAt === "-" ? (isExpired ? t("dashboard.vendor.expired") : t("dashboard.vendor.notSubmittedShort")) : `Sent ${submittedAt}`}
+                            </div>
+                          </td>
+                          <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                            <div style={{ fontWeight: 700, color: isExpired ? "#ef4444" : "var(--ui-text-primary)", fontSize: 13 }}>{deadlineText}</div>
+                            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
+                              {isExpired ? t("dashboard.vendor.closed") : proposal ? `Sent ${submittedAt}` : t("dashboard.vendor.ready")}
+                            </div>
+                          </td>
+                          <td style={{ padding: "12px 14px", verticalAlign: "top", textAlign: "right" }}>
+                            {isExpired ? (
+                              <span style={{
                                 padding: "6px 10px",
                                 borderRadius: 8,
-                                border: "1px solid rgba(249,115,22,0.22)",
-                                background: "rgba(249,115,22,0.08)",
-                                color: "#f59e0b",
+                                border: "1px solid rgba(239,68,68,0.22)",
+                                background: "rgba(239,68,68,0.08)",
+                                color: "#ef4444",
                                 fontSize: 11,
                                 fontWeight: 800,
-                                cursor: "pointer",
-                              }}
-                            >
-                              {proposal ? "Lihat" : "Buka"}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                                cursor: "default",
+                              }}>
+                                {t("dashboard.vendor.closed")}
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => navigate("/proposals", { state: { rfqId: rfq.id } })}
+                                style={{
+                                  padding: "6px 10px",
+                                  borderRadius: 8,
+                                  border: "1px solid rgba(249,115,22,0.22)",
+                                  background: "rgba(249,115,22,0.08)",
+                                  color: "#f59e0b",
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {proposal ? t("dashboard.vendor.view") : t("dashboard.vendor.open")}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
