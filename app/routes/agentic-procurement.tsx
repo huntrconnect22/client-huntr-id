@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router";
 import Swal from "sweetalert2";
+import { useLanguage } from "../context/LanguageContext";
 import {
   type StepStatus,
   type ChatMessage,
@@ -30,6 +31,7 @@ import {
 export default function AgenticProcurementPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
@@ -41,19 +43,49 @@ export default function AgenticProcurementPage() {
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
   const [selectedWinner, setSelectedWinner] = useState<any>(null);
 
-  // Real-time animated workflow steps
-  const [workflowSteps, setWorkflowSteps] = useState<StepStatus[]>([
-    { step: "intent_analysis", title: "1. Analisis Kebutuhan", status: "pending" },
-    { step: "catalogue_discovery", title: "2. Pencarian Katalog", status: "pending" },
-    { step: "product_comparison", title: "3. Komparasi Opsi", status: "pending" },
-    { step: "pr_formulation", title: "4. Formulasi PR Lengkap", status: "pending" },
-  ]);
+  // Real-time animated workflow steps (title translated on each render via t() and buildSteps)
+  function buildSteps(statuses?: { step: string; status: string; summary?: string }[]): StepStatus[] {
+    if (statuses) {
+      return statuses.map((s) => ({
+        step: s.step as StepStatus["step"],
+        title: getStepTitle(s.step),
+        status: s.status as StepStatus["status"],
+        summary: s.summary,
+      }));
+    }
+    return [
+      { step: "intent_analysis",    title: getStepTitle("intent_analysis"),    status: "pending" },
+      { step: "catalogue_discovery", title: getStepTitle("catalogue_discovery"), status: "pending" },
+      { step: "product_comparison",  title: getStepTitle("product_comparison"),  status: "pending" },
+      { step: "pr_formulation",      title: getStepTitle("pr_formulation"),      status: "pending" },
+    ];
+  }
+  function getStepTitle(step: string): string {
+    switch (step) {
+      case "intent_analysis":    return t("agentic.workflow.steps.intentAnalysis");
+      case "web_search":         return t("agentic.workflow.steps.webSearch");
+      case "catalogue_discovery": return t("agentic.workflow.steps.catalogueDiscovery");
+      case "product_comparison":  return t("agentic.workflow.steps.productComparison");
+      case "pr_formulation":      return t("agentic.workflow.steps.prFormulation");
+      default: return step;
+    }
+  }
+
+  const [workflowSteps, setWorkflowSteps] = useState<StepStatus[]>(buildSteps());
 
   // Chat refinement state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatSending, setIsChatSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Sync workflow step titles whenever locale changes
+  useEffect(() => {
+    setWorkflowSteps((prev) =>
+      prev.map((s) => ({ ...s, title: getStepTitle(s.step) }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t]);
 
   // Sync feature flag state
   useEffect(() => {
@@ -74,8 +106,8 @@ export default function AgenticProcurementPage() {
     setIsFeatureEnabled(true);
     Swal.fire({
       icon: "success",
-      title: "Fitur Diaktifkan!",
-      text: "AI Agentic Procurement telah diaktifkan dan ditambahkan ke sidebar navigasi.",
+      title: t("agentic.banner.activateSuccessTitle"),
+      text: t("agentic.banner.activateSuccessText"),
       timer: 2000,
       showConfirmButton: false,
     });
@@ -102,6 +134,7 @@ export default function AgenticProcurementPage() {
       setPrompt(initialQuery);
       handleExecuteWorkflow(initialQuery);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -131,11 +164,11 @@ export default function AgenticProcurementPage() {
     setResult(null);
 
     setWorkflowSteps([
-      { step: "intent_analysis",    title: "1. Analisis Kebutuhan",          status: "running" },
-      { step: "web_search",          title: "2. Brave Search Real-time",       status: "pending" },
-      { step: "catalogue_discovery", title: "3. Pencarian Katalog",            status: "pending" },
-      { step: "product_comparison",  title: "4. Komparasi Opsi",              status: "pending" },
-      { step: "pr_formulation",      title: "5. Formulasi PR Lengkap",        status: "pending" },
+      { step: "intent_analysis",    title: getStepTitle("intent_analysis"),    status: "running" },
+      { step: "web_search",          title: getStepTitle("web_search"),          status: "pending" },
+      { step: "catalogue_discovery", title: getStepTitle("catalogue_discovery"), status: "pending" },
+      { step: "product_comparison",  title: getStepTitle("product_comparison"),  status: "pending" },
+      { step: "pr_formulation",      title: getStepTitle("pr_formulation"),      status: "pending" },
     ]);
 
     try {
@@ -189,8 +222,8 @@ export default function AgenticProcurementPage() {
         // Bangun summary web_search dari response
         const webSearchCount = res.web_search ? Object.keys(res.web_search).length : 0;
         const webSearchFound = webSearchCount > 0
-          ? `Brave menemukan ${webSearchCount} produk dengan harga & spesifikasi terkini`
-          : (res.workflow_steps?.find((s: any) => s.step === "web_search")?.summary || "Brave Search selesai");
+          ? t("agentic.workflow.braveFoundSummary", { count: webSearchCount })
+          : (res.workflow_steps?.find((s: any) => s.step === "web_search")?.summary || t("agentic.workflow.brandsFound"));
 
         // Kumpulkan semua sumber URL Brave dari web_search results
         const rawWebSources: any[] = [];
@@ -221,13 +254,13 @@ export default function AgenticProcurementPage() {
         setWorkflowSteps([
           {
             step: "intent_analysis",
-            title: "1. Analisis Kebutuhan",
+            title: getStepTitle("intent_analysis"),
             status: "completed",
             summary: res.intent?.ai_summary,
           },
           {
             step: "web_search",
-            title: "2. Brave Search Real-time",
+            title: getStepTitle("web_search"),
             status: "completed",
             summary: webSearchFound,
             // @ts-ignore — extra fields for source panel
@@ -236,35 +269,34 @@ export default function AgenticProcurementPage() {
           },
           {
             step: "catalogue_discovery",
-            title: "3. Pencarian Katalog",
+            title: getStepTitle("catalogue_discovery"),
             status: "completed",
-            summary: `Ditemukan ${res.catalogues?.length || 0} kandidat katalog`,
+            summary: t("agentic.workflow.catalogueFoundSummary", { count: res.catalogues?.length || 0 }),
           },
           {
             step: "product_comparison",
-            title: "4. Komparasi Opsi",
+            title: getStepTitle("product_comparison"),
             status: "completed",
-            summary: res.comparison?.executive_summary || "Evaluasi komparasi produk selesai",
+            summary: res.comparison?.executive_summary || t("agentic.workflow.comparisonDoneSummary"),
           },
           {
             step: "pr_formulation",
-            title: "5. Formulasi PR Lengkap",
+            title: getStepTitle("pr_formulation"),
             status: "completed",
             summary: res.pr_draft?.title,
           },
         ]);
 
+        const prTitle = res.pr_draft?.title || t("agentic.prDraft.headerTitle");
         setChatMessages([
           {
             role: "assistant",
-            content: `Halo! Saya telah selesai menganalisis kebutuhan dan merumuskan Purchase Requisition (PR) **"${
-              res.pr_draft?.title || "PR Pengadaan"
-            }"**.\n\nAnda dapat meninjau rincian item, perbandingan alternatif di tab **Matriks Komparasi**, atau meminta revisi langsung di sini.`,
+            content: t("agentic.chat.introMessage", { title: prTitle }),
           },
         ]);
         setActiveTab("pr");
       } else {
-        throw new Error(res?.error || "Gagal memproses pengadaan.");
+        throw new Error(res?.error || t("agentic.error.swalProcessFailedTitle"));
       }
     } catch (err: any) {
       console.error("Agentic procurement error:", err);
@@ -276,8 +308,8 @@ export default function AgenticProcurementPage() {
       );
       Swal.fire({
         icon: "error",
-        title: "Gagal Memproses",
-        text: err?.message || "Terjadi kesalahan saat memproses kebutuhan pengadaan dengan AI.",
+        title: t("agentic.error.swalProcessFailedTitle"),
+        text: err?.message || t("agentic.error.swalProcessFailedText"),
       });
     } finally {
       setIsRunning(false);
@@ -307,25 +339,29 @@ export default function AgenticProcurementPage() {
     const totalBudget = getPrTotalBudget(result.pr_draft, result.intent);
     const department = config?.department || result.pr_draft.department || "Procurement";
     const tenderDays = config?.tenderDays || result.pr_draft.duration_days || 14;
+    const countItems = result.pr_draft.suggested_items?.length || 0;
+    const winnerName = selectedWinner?.product_name || selectedWinner?.name;
+    const winnerHtml = winnerName
+      ? t("agentic.prDraft.actions.winnerLabel", { name: winnerName })
+      : "";
+    const budgetLabel = totalBudget > 0 ? `Rp ${totalBudget.toLocaleString("id-ID")}` : t("agentic.prDraft.needVendorOffer");
 
     const confirm = await Swal.fire({
-      title: "Buat Purchase Requisition?",
-      html: `
-        <div class="text-left text-xs">
-          <p class="font-semibold text-gray-800 dark:text-gray-200 mb-1">${result.pr_draft.title}</p>
-          <p class="text-gray-600 dark:text-gray-400 mb-2">${result.pr_draft.suggested_items?.length || 0} item line — Departemen: <b>${department}</b> — Tender: <b>${tenderDays} hari</b></p>
-          ${selectedWinner ? `<p class="text-blue-600 dark:text-blue-400 mb-2">Produk dipilih: <b>${selectedWinner.product_name || selectedWinner.name}</b></p>` : ""}
-          <div class="bg-orange-50 dark:bg-orange-950/40 p-2.5 rounded border border-orange-200 dark:border-orange-800 font-mono text-orange-800 dark:text-orange-300">
-            Total Anggaran: <b>${totalBudget > 0 ? `Rp ${totalBudget.toLocaleString("id-ID")}` : "Perlu Penawaran Vendor"}</b>
-          </div>
-        </div>
-      `,
+      title: t("agentic.prDraft.actions.confirmTitle"),
+      html: t("agentic.prDraft.actions.confirmHtml", {
+        title: result.pr_draft.title,
+        countItems,
+        dept: department,
+        tenderDays,
+        winnerHtml,
+        budget: budgetLabel,
+      }),
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#f97316",
       cancelButtonColor: "#6b7280",
-      confirmButtonText: "Ya, Buat PR",
-      cancelButtonText: "Batal",
+      confirmButtonText: t("agentic.prDraft.actions.confirmYes"),
+      cancelButtonText: t("agentic.prDraft.actions.cancel"),
     });
 
     if (!confirm.isConfirmed) return;
@@ -343,23 +379,26 @@ export default function AgenticProcurementPage() {
         clearCart();
         await Swal.fire({
           icon: "success",
-          title: "PR Berhasil Dibuat!",
-          text: `PR '${result.pr_draft.title}' telah tercatat dengan ID ${res.rfq.id}.`,
+          title: t("agentic.prDraft.actions.successTitle"),
+          text: t("agentic.prDraft.actions.successText", {
+            title: result.pr_draft.title,
+            id: res.rfq.id,
+          }),
           confirmButtonColor: "#f97316",
-          confirmButtonText: "Lihat PR",
+          confirmButtonText: t("agentic.prDraft.actions.successButton"),
         });
 
         const prefix = getCompanyPrefix();
         navigate(`${prefix}/my-pr/${res.rfq.id}`);
       } else {
-        throw new Error(res?.error || "Gagal membuat PR.");
+        throw new Error(res?.error || t("agentic.prDraft.actions.errorTitle"));
       }
     } catch (err: any) {
       console.error("Create PR error:", err);
       Swal.fire({
         icon: "error",
-        title: "Gagal Membuat PR",
-        text: err?.message || "Terjadi kendala saat menyimpan PR.",
+        title: t("agentic.prDraft.actions.errorTitle"),
+        text: err?.message || t("agentic.prDraft.actions.errorText"),
       });
     } finally {
       setIsCreatingPr(false);
@@ -369,14 +408,13 @@ export default function AgenticProcurementPage() {
   const handleExportToCart = () => {
     if (!result?.pr_draft?.suggested_items) return;
 
-
     const items = result.pr_draft.suggested_items.map((item: any) => ({
       id: item.catalogue_id || item.id || `ai-${Math.random().toString(36).substr(2, 9)}`,
-      name: item.name || "Item Pengadaan",
-      item_code: item.item_code || "PR-ITEM",
-      category: item.category || "General",
+      name: item.name || t("agentic.itemGenericName"),
+      item_code: item.item_code || t("agentic.itemGenericCode"),
+      category: item.category || t("agentic.itemGenericCategory"),
       brand: item.brand || "",
-      uom: item.uom || "unit",
+      uom: item.uom || t("agentic.itemGenericUom"),
       qty: item.qty || 1,
       estimated_price: item.estimated_price || 0,
       image_path: item.image_url || null,
@@ -424,10 +462,24 @@ export default function AgenticProcurementPage() {
     return `Rp ${Number(num || 0).toLocaleString("id-ID")}`;
   };
 
+  // Tab pills label (translated reactively)
+  const tabBadgeCount = (tab: "pr" | "comparison" | "catalogues" | "chat") => {
+    if (tab === "pr") return result?.pr_draft?.suggested_items?.length || 0;
+    if (tab === "comparison") return result?.comparison?.comparison_matrix?.length || 0;
+    if (tab === "catalogues") return result?.catalogues?.length || 0;
+    return chatMessages.length;
+  };
+  const TABS: { key: "pr" | "comparison" | "catalogues" | "chat"; label: string; icon: React.ReactNode; showBadge: boolean }[] = [
+    { key: "pr",           label: t("agentic.tabs.prDraft"),      icon: <FileText size={13} />, showBadge: true },
+    { key: "comparison",   label: t("agentic.tabs.comparison"),   icon: <Layers size={13} />,   showBadge: true },
+    { key: "catalogues",   label: t("agentic.tabs.catalogues"),   icon: <Package size={13} />,  showBadge: true },
+    { key: "chat",         label: t("agentic.tabs.chat"),         icon: <Bot size={13} />,      showBadge: false },
+  ];
+
   return (
     <Layout
-      title="Agentic AI Procurement"
-      subtitle="Autonomous Procurement Agent untuk pencarian katalog, komparasi produk, dan penyusunan PR otomatis."
+      title={t("agentic.page.title")}
+      subtitle={t("agentic.page.subtitle")}
     >
       <div className="flex flex-col gap-4 max-w-7xl mx-auto pb-12">
         {/* Notice & Disclaimer Banners */}
@@ -479,61 +531,26 @@ export default function AgenticProcurementPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[var(--ui-border)] pb-2.5">
               {/* Tab pills */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-                <button
-                  onClick={() => setActiveTab("pr")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
-                    activeTab === "pr"
-                      ? "bg-orange-500 text-white shadow-sm"
-                      : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
-                  }`}
-                >
-                  <FileText size={13} />
-                  <span>Draft PR</span>
-                  <span className="text-[10px] px-1 rounded bg-white/20">
-                    {result.pr_draft?.suggested_items?.length || 0}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("comparison")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
-                    activeTab === "comparison"
-                      ? "bg-orange-500 text-white shadow-sm"
-                      : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
-                  }`}
-                >
-                  <Layers size={13} />
-                  <span>Komparasi</span>
-                  {result.comparison?.comparison_matrix?.length ? (
-                    <span className="text-[10px] px-1 rounded bg-white/20">
-                      {result.comparison.comparison_matrix.length}
-                    </span>
-                  ) : null}
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("catalogues")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
-                    activeTab === "catalogues"
-                      ? "bg-orange-500 text-white shadow-sm"
-                      : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
-                  }`}
-                >
-                  <Package size={13} />
-                  <span>Katalog ({result.catalogues?.length || 0})</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("chat")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
-                    activeTab === "chat"
-                      ? "bg-orange-500 text-white shadow-sm"
-                      : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
-                  }`}
-                >
-                  <Bot size={13} />
-                  <span>Asisten AI</span>
-                </button>
+                {TABS.map((tab) => {
+                  const count = tabBadgeCount(tab.key);
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
+                        activeTab === tab.key
+                          ? "bg-orange-500 text-white shadow-sm"
+                          : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+                      }`}
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                      {tab.showBadge && count > 0 && (
+                        <span className="text-[10px] px-1 rounded bg-white/20">{count}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Action Buttons */}
@@ -543,7 +560,7 @@ export default function AgenticProcurementPage() {
                   className="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg bg-[var(--ui-bg-card)] hover:bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
                 >
                   <ShoppingBag size={13} />
-                  <span>Checkout</span>
+                  <span>{t("agentic.tabs.checkout")}</span>
                 </button>
 
                 <button
@@ -554,12 +571,12 @@ export default function AgenticProcurementPage() {
                   {isCreatingPr ? (
                     <>
                       <Loader2 size={13} className="animate-spin" />
-                      <span>Menyimpan...</span>
+                      <span>{t("agentic.tabs.saving")}</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle2 size={13} />
-                      <span>Buat PR (1-Click)</span>
+                      <span>{t("agentic.tabs.createPr")}</span>
                     </>
                   )}
                 </button>

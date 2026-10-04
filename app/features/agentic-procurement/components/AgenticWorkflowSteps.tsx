@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Bot, Loader2, CheckCircle2, AlertCircle, Globe, ChevronDown, ChevronUp, ExternalLink, Tag } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 import { type StepStatus } from "../types";
 
 interface BraveSource {
@@ -34,6 +35,7 @@ export default function AgenticWorkflowSteps({
   webSearchSources = [],
   brandRecommendations = [],
 }: AgenticWorkflowStepsProps) {
+  const { t } = useLanguage();
   const [showSources, setShowSources] = useState(false);
 
   return (
@@ -43,11 +45,11 @@ export default function AgenticWorkflowSteps({
         <div className="flex items-center justify-between text-xs">
           <span className="font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5 text-[11px] sm:text-xs">
             <Bot size={13} className="text-orange-400" />
-            Tahapan Autonomous AI Agent
+            {t("agentic.workflow.header")}
           </span>
           {isRunning && (
             <span className="text-orange-400 font-medium flex items-center gap-1.5 animate-pulse text-[10px] sm:text-[11px]">
-              <Loader2 size={11} className="animate-spin" /> Menganalisis...
+              <Loader2 size={11} className="animate-spin" /> {t("agentic.workflow.analyzing")}
             </span>
           )}
         </div>
@@ -98,7 +100,7 @@ export default function AgenticWorkflowSteps({
                     className="mt-0.5 text-[9px] font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-0.5 transition-colors"
                   >
                     <Globe size={9} />
-                    {webSearchSources.length} URL dikunjungi
+                    {t("agentic.workflow.urlsVisited", { count: webSearchSources.length })}
                     {showSources ? <ChevronUp size={9} /> : <ChevronDown size={9} />}
                   </button>
                 )}
@@ -115,9 +117,9 @@ export default function AgenticWorkflowSteps({
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
               <Globe size={11} />
-              Sumber Referensi Brave Search
+              {t("agentic.workflow.sourcesHeader")}
               <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300">
-                {webSearchSources.length} URL
+                {t("agentic.workflow.urlCount", { count: webSearchSources.length })}
               </span>
             </span>
             <button
@@ -125,7 +127,7 @@ export default function AgenticWorkflowSteps({
               onClick={() => setShowSources(false)}
               className="text-[9px] text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-colors"
             >
-              Tutup
+              {t("agentic.workflow.close")}
             </button>
           </div>
 
@@ -134,7 +136,7 @@ export default function AgenticWorkflowSteps({
             <div className="flex flex-col gap-1">
               <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1">
                 <Tag size={9} />
-                Merek yang Ditemukan Brave
+                {t("agentic.workflow.brandsFound")}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {brandRecommendations.map((br, i) => (
@@ -212,12 +214,10 @@ export default function AgenticWorkflowSteps({
           </div>
 
           <p className="text-[9px] text-[var(--ui-text-muted)] text-center">
-            Data di atas adalah hasil nyata dari Brave Search API — bukan halusinasi AI
+            {t("agentic.workflow.notAiHallucination")}
           </p>
         </div>
       )}
     </div>
   );
 }
-
-

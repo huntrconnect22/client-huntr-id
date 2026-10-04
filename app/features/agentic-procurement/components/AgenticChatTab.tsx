@@ -1,5 +1,6 @@
 import React from "react";
 import { Bot, Send, Loader2 } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 import { type ChatMessage } from "../types";
 
 interface AgenticChatTabProps {
@@ -19,12 +20,14 @@ export default function AgenticChatTab({
   onSendMessage,
   chatEndRef,
 }: AgenticChatTabProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="p-4 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-3 h-[460px]">
       <div className="border-b border-[var(--ui-border)] pb-2 flex items-center gap-2">
         <Bot size={15} className="text-orange-400" />
         <span className="font-bold text-xs text-[var(--ui-text-primary)]">
-          Chat & Refinement PR
+          {t("agentic.chat.header")}
         </span>
       </div>
 
@@ -56,7 +59,7 @@ export default function AgenticChatTab({
         {isChatSending && (
           <div className="flex items-center gap-1.5 text-xs text-orange-400">
             <Loader2 size={13} className="animate-spin" />
-            <span>AI sedang memproses...</span>
+            <span>{t("agentic.chat.aiThinking")}</span>
           </div>
         )}
         <div ref={chatEndRef} />
@@ -70,7 +73,7 @@ export default function AgenticChatTab({
           onKeyDown={(e) => {
             if (e.key === "Enter") onSendMessage();
           }}
-          placeholder="Tanyakan atau minta revisi (misal: kurangi laptop jadi 8 unit)..."
+          placeholder={t("agentic.chat.typingPlaceholder")}
           disabled={isChatSending}
           className="flex-1 px-3 py-2 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500 transition-all"
         />
@@ -80,7 +83,7 @@ export default function AgenticChatTab({
           className="px-3 py-2 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1"
         >
           <Send size={13} />
-          <span>Kirim</span>
+          <span>{t("agentic.chat.send")}</span>
         </button>
       </div>
     </div>

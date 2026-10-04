@@ -1,5 +1,6 @@
 import React from "react";
 import { Sparkles, Zap, AlertCircle } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface AgenticNoticeBannerProps {
   isFeatureEnabled: boolean;
@@ -12,6 +13,8 @@ export default function AgenticNoticeBanner({
   onActivateFeature,
   onOpenSettings,
 }: AgenticNoticeBannerProps) {
+  const { t } = useLanguage();
+
   return (
     <>
       {/* Inactive Feature Notice Banner */}
@@ -20,7 +23,10 @@ export default function AgenticNoticeBanner({
           <div className="flex items-start sm:items-center gap-2.5">
             <Sparkles size={18} className="flex-shrink-0 text-orange-500 mt-0.5 sm:mt-0" />
             <div className="text-xs text-[var(--ui-text-primary)] leading-relaxed">
-              <span className="font-bold text-orange-500">Fitur Belum Aktif di Sidebar:</span> AI Agentic Procurement saat ini nonaktif di pengaturan navigasi Anda.
+              <span className="font-bold text-orange-500">
+                {t("agentic.banner.inactiveTitle")}
+              </span>{" "}
+              {t("agentic.banner.inactiveDesc")}
             </div>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -29,13 +35,13 @@ export default function AgenticNoticeBanner({
               className="flex-1 sm:flex-initial justify-center px-3 py-2 sm:py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
             >
               <Zap size={13} />
-              <span>Aktifkan</span>
+              <span>{t("agentic.banner.activate")}</span>
             </button>
             <button
               onClick={onOpenSettings}
               className="flex-1 sm:flex-initial justify-center px-3 py-2 sm:py-1.5 rounded-lg bg-[var(--ui-bg-input)] hover:bg-[var(--ui-border)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] font-semibold transition-all cursor-pointer text-center"
             >
-              Pengaturan
+              {t("agentic.banner.settings")}
             </button>
           </div>
         </div>
@@ -45,7 +51,14 @@ export default function AgenticNoticeBanner({
       <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs">
         <AlertCircle size={15} className="flex-shrink-0 mt-0.5 text-emerald-500" />
         <div className="flex-1 text-[11px] sm:text-xs leading-relaxed">
-          <span className="font-bold text-emerald-600 dark:text-emerald-400">Zero-Hallucination Policy:</span> AI menyusun spesifikasi standar industri terverifikasi dan harga katalog resmi. Jika barang tidak ada di katalog, AI tidak akan mengarang harga (ditandai <i>Perlu Penawaran Vendor</i>) demi akurasi anggaran pengadaan Anda.
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+            {t("agentic.banner.zeroHallucinationTitle")}
+          </span>{" "}
+          <span
+            dangerouslySetInnerHTML={{
+              __html: t("agentic.banner.zeroHallucinationDesc"),
+            }}
+          />
         </div>
       </div>
     </>

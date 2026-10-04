@@ -1,5 +1,6 @@
 import React from "react";
 import { Tag, Package } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface AgenticCatalogueTabProps {
   catalogues: any[];
@@ -16,12 +17,14 @@ const formatRupiah = (val: number) =>
   val > 0 ? `Rp ${Number(val).toLocaleString("id-ID")}` : "—";
 
 export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabProps) {
+  const { t } = useLanguage();
+
   if (!catalogues || catalogues.length === 0) {
     return (
       <div className="p-6 text-center rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-muted)]">
         <Package size={28} className="mx-auto mb-2 opacity-40" />
-        <p>Tidak ada katalog yang ditemukan.</p>
-        <p className="mt-1 opacity-70">Spesifikasi standar industri akan digenerate untuk ditenderkan ke vendor.</p>
+        <p>{t("agentic.catalogue.empty")}</p>
+        <p className="mt-1 opacity-70">{t("agentic.catalogue.emptyHint")}</p>
       </div>
     );
   }
@@ -29,9 +32,10 @@ export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabP
   return (
     <div className="flex flex-col gap-3">
       {/* Sorting info */}
-      <p className="text-[11px] text-[var(--ui-text-muted)] px-1">
-        Menampilkan <b>{catalogues.length}</b> katalog, diurutkan berdasarkan AI Match Score tertinggi.
-      </p>
+      <p
+        className="text-[11px] text-[var(--ui-text-muted)] px-1"
+        dangerouslySetInnerHTML={{ __html: t("agentic.catalogue.sortingHint", { count: catalogues.length }) }}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {catalogues.map((cat: any, idx: number) => {
@@ -53,11 +57,11 @@ export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabP
                   <span
                     className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeClass}`}
                   >
-                    Match {score}%
+                    {t("agentic.catalogue.matchScore", { score })}
                   </span>
                 </div>
                 <span className="text-[10px] text-[var(--ui-text-muted)] truncate max-w-[80px]">
-                  {cat.category || "General"}
+                  {cat.category || t("agentic.itemGenericCategory")}
                 </span>
               </div>
 
@@ -70,12 +74,12 @@ export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabP
                 {cat.brand && (
                   <span className="text-[10px] text-orange-400 font-semibold flex items-center gap-1">
                     <Tag size={9} />
-                    {cat.brand}
+                    {t("agentic.catalogue.vendorPrefix")}{cat.brand}
                   </span>
                 )}
 
                 <p className="text-[11px] text-[var(--ui-text-muted)] line-clamp-2 leading-relaxed">
-                  {cat.specifications || "Spesifikasi vendor"}
+                  {cat.specifications || t("agentic.catalogue.specVendor")}
                 </p>
 
                 {/* Fit reason dari AI */}
@@ -101,7 +105,7 @@ export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabP
                       {formatRupiah(price)}
                     </span>
                   )}
-                  <span className="text-[10px] text-[var(--ui-text-muted)]">/{cat.uom || "unit"}</span>
+                  <span className="text-[10px] text-[var(--ui-text-muted)]">/{cat.uom || t("agentic.itemGenericUom")}</span>
                 </div>
               </div>
             </div>

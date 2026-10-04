@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Sparkles, CheckCircle2, Check, Award, BarChart2,
   Radar as RadarIcon, ExternalLink, Globe, Image as ImageIcon,
-  TrendingUp, Tag,
+  Tag,
 } from "lucide-react";
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
@@ -10,6 +10,7 @@ import {
 } from "recharts";
 
 import { MousePointerClick } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface AgenticComparisonTabProps {
   comparison: any;
@@ -44,8 +45,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-function ProductThumbnail({ src, alt }: { src?: string | null; alt: string }) {
+function ProductThumbnail({ src, alt, fallback }: { src?: string | null; alt: string; fallback?: string }) {
   const [failed, setFailed] = useState(false);
+  const altText = alt || fallback || "";
   if (!src || failed) {
     return (
       <div className="w-full h-32 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex items-center justify-center">
@@ -56,7 +58,7 @@ function ProductThumbnail({ src, alt }: { src?: string | null; alt: string }) {
   return (
     <img
       src={src}
-      alt={alt}
+      alt={altText}
       onError={() => setFailed(true)}
       className="w-full h-32 object-contain rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)]"
     />
@@ -69,6 +71,7 @@ export default function AgenticComparisonTab({
   onSelectWinner,
   selectedWinnerId,
 }: AgenticComparisonTabProps) {
+  const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [expandedSources, setExpandedSources] = useState<Record<number, boolean>>({});
   const [localSelected, setLocalSelected] = useState<string | null>(selectedWinnerId ?? null);
@@ -84,35 +87,40 @@ export default function AgenticComparisonTab({
   const winnerId = comparison.winner_id ?? null;
   const matrix: any[] = comparison.comparison_matrix || [];
 
-  // ── Radar chart data ──
-  const radarDimensions = ["Score", "Kelebihan", "Kekurangan (inv)"];
-  const radarData = radarDimensions.map((dim) => {
+  const radarDimKeys = [
+    "chartDimensions.score",
+    "chartDimensions.pros",
+    "chartDimensions.consInv",
+  ] as const;
+  const radarDimensions = radarDimKeys.map((k) => t(`agentic.comparison.${k}`));
+  const productFallback = t("agentic.comparison.productFallback");
+  const radarData = radarDimensions.map((dim, dimIdx) => {
     const entry: any = { subject: dim };
     matrix.forEach((item) => {
-      const name = item.product_name?.substring(0, 18) ?? `Produk ${item.catalogue_id}`;
-      if (dim === "Score") entry[name] = item.score ?? 75;
-      if (dim === "Kelebihan") entry[name] = Math.min((item.pros?.length ?? 0) * 20, 100);
-      if (dim === "Kekurangan (inv)") entry[name] = Math.max(100 - (item.cons?.length ?? 0) * 25, 0);
+      const name = item.product_name?.substring(0, 18) ?? `${productFallback} ${item.catalogue_id}`;
+      if (radarDimKeys[dimIdx] === "chartDimensions.score") entry[name] = item.score ?? 75;
+      if (radarDimKeys[dimIdx] === "chartDimensions.pros") entry[name] = Math.min((item.pros?.length ?? 0) * 20, 100);
+      if (radarDimKeys[dimIdx] === "chartDimensions.consInv") entry[name] = Math.max(100 - (item.cons?.length ?? 0) * 25, 0);
     });
     return entry;
   });
 
-  // ── Bar chart ──
+  const barWebPriceKey = t("agentic.comparison.chartData.webPrice");
   const barData = matrix.map((item) => ({
-    name: item.product_name?.substring(0, 18) ?? `Produk ${item.catalogue_id}`,
-    "Harga Web": Math.round(item.web_price_avg || 0),
+    name: item.product_name?.substring(0, 18) ?? `${productFallback} ${item.catalogue_id}`,
+    [barWebPriceKey]: Math.round(item.web_price_avg || 0),
     Score: item.score ?? 75,
     isWinner: winnerId !== null && String(item.catalogue_id) === String(winnerId),
   }));
 
   const productNames = matrix.map(
-    (item) => item.product_name?.substring(0, 18) ?? `Produk ${item.catalogue_id}`
+    (item) => item.product_name?.substring(0, 18) ?? `${productFallback} ${item.catalogue_id}`
   );
 
   const viewButtons: { key: ViewMode; label: string; icon: React.ReactNode }[] = [
-    { key: "cards", label: "Kartu", icon: <Award size={12} /> },
-    { key: "radar", label: "Radar", icon: <RadarIcon size={12} /> },
-    { key: "bar", label: "Grafik", icon: <BarChart2 size={12} /> },
+    { key: "cards", label: t("agentic.comparison.viewCards"), icon: <Award size={12} /> },
+    { key: "radar", label: t("agentic.comparison.viewRadar"), icon: <RadarIcon size={12} /> },
+    { key: "bar", label: t("agentic.comparison.viewBar"), icon: <BarChart2 size={12} /> },
   ];
 
   return (
@@ -123,7 +131,7 @@ export default function AgenticComparisonTab({
         <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30 flex flex-col gap-1.5 text-xs">
           <span className="font-bold text-orange-400 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
             <Sparkles size={12} />
-            Analisis &amp; Rekomendasi AI
+            {t("agentic.comparison.aiAnalysis")}
           </span>
           <p className="text-[var(--ui-text-primary)] leading-relaxed">
             {comparison.executive_summary}
@@ -132,7 +140,7 @@ export default function AgenticComparisonTab({
             <div className="mt-1 text-[11px] p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-start gap-1.5">
               <CheckCircle2 size={13} className="flex-shrink-0 mt-0.5" />
               <span>
-                <b>Rekomendasi Utama:</b> {comparison.winner_reason}
+                <b>{t("agentic.comparison.topRecommendation")}</b> {comparison.winner_reason}
               </span>
             </div>
           )}
@@ -143,7 +151,7 @@ export default function AgenticComparisonTab({
       {matrix.length > 0 && (
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mr-1">
-            Tampilan:
+            {t("agentic.comparison.viewModeLabel")}
           </span>
           {viewButtons.map((btn) => (
             <button
@@ -174,6 +182,7 @@ export default function AgenticComparisonTab({
                 const hasBravePrice = (item.web_price_avg || 0) > 0;
                 const showSrc = expandedSources[idx] ?? false;
                 const webSources: any[] = item.web_sources ?? [];
+                const localKey = String(item.catalogue_id ?? item.id ?? item.product_name);
 
                 return (
                   <div
@@ -188,27 +197,27 @@ export default function AgenticComparisonTab({
                     {isWinner && (
                       <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
                         <Award size={9} />
-                        Direkomendasikan AI
+                        {t("agentic.comparison.recommendedBadge")}
                       </div>
                     )}
 
                     {/* Selected badge — user choice */}
-                    {String(item.catalogue_id ?? item.id ?? item.product_name) === localSelected && !isWinner && (
+                    {localKey === localSelected && !isWinner && (
                       <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
                         <MousePointerClick size={9} />
-                        Dipilih Anda
+                        {t("agentic.comparison.selectedBadge")}
                       </div>
                     )}
-                    {String(item.catalogue_id ?? item.id ?? item.product_name) === localSelected && isWinner && (
+                    {localKey === localSelected && isWinner && (
                       <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
                         <MousePointerClick size={9} />
-                        Dipilih Anda
+                        {t("agentic.comparison.selectedBadge")}
                       </div>
                     )}
 
                     {/* Thumbnail */}
                     <div className="p-3 pb-0">
-                      <ProductThumbnail src={item.thumbnail} alt={item.product_name ?? "Produk"} />
+                      <ProductThumbnail src={item.thumbnail} alt={item.product_name ?? productFallback} fallback={productFallback} />
                     </div>
 
                     <div className="p-3 flex flex-col gap-2">
@@ -241,7 +250,7 @@ export default function AgenticComparisonTab({
                       <div className={`rounded-lg p-2.5 border flex flex-col gap-0.5 ${hasBravePrice ? "bg-blue-500/8 border-blue-500/20" : "bg-[var(--ui-bg-input)] border-[var(--ui-border)]"}`}>
                         <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1 mb-0.5">
                           <Globe size={9} />
-                          Harga Pasar (Brave Search)
+                          {t("agentic.comparison.braveMarketPrice")}
                         </span>
                         {hasBravePrice ? (
                           <>
@@ -250,7 +259,7 @@ export default function AgenticComparisonTab({
                             </span>
                             {(item.web_price_min || item.web_price_max) && (
                               <span className="text-[10px] text-[var(--ui-text-muted)]">
-                                Range:{" "}
+                                {t("agentic.comparison.rangeLabel")}{" "}
                                 {formatRupiah(Math.round(item.web_price_min ?? item.web_price_avg))}
                                 {" – "}
                                 {formatRupiah(Math.round(item.web_price_max ?? item.web_price_avg))}
@@ -259,7 +268,7 @@ export default function AgenticComparisonTab({
                           </>
                         ) : (
                           <span className="text-[11px] text-[var(--ui-text-muted)] italic">
-                            Tidak ditemukan harga di web
+                            {t("agentic.comparison.noPriceFound")}
                           </span>
                         )}
                       </div>
@@ -268,7 +277,7 @@ export default function AgenticComparisonTab({
                       {item.key_specs && (
                         <div className="p-2 rounded-lg bg-[var(--ui-bg-input)] text-[11px] text-[var(--ui-text-secondary)] border border-[var(--ui-border)] leading-relaxed">
                           <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] block mb-0.5">
-                            Spesifikasi Utama
+                            {t("agentic.comparison.mainSpecs")}
                           </span>
                           {item.key_specs}
                         </div>
@@ -277,7 +286,9 @@ export default function AgenticComparisonTab({
                       {/* Pros */}
                       {item.pros?.length > 0 && (
                         <div className="text-[11px]">
-                          <span className="font-semibold text-emerald-400 block mb-0.5 text-[10px]">Kelebihan:</span>
+                          <span className="font-semibold text-emerald-400 block mb-0.5 text-[10px]">
+                            {t("agentic.comparison.prosLabel")}
+                          </span>
                           <ul className="space-y-0.5">
                             {item.pros.map((pro: string, pIdx: number) => (
                               <li key={pIdx} className="flex items-start gap-1 text-[var(--ui-text-secondary)]">
@@ -292,7 +303,9 @@ export default function AgenticComparisonTab({
                       {/* Cons */}
                       {item.cons?.length > 0 && (
                         <div className="text-[11px]">
-                          <span className="font-semibold text-amber-400 block mb-0.5 text-[10px]">Catatan:</span>
+                          <span className="font-semibold text-amber-400 block mb-0.5 text-[10px]">
+                            {t("agentic.comparison.consLabel")}
+                          </span>
                           <ul className="space-y-0.5">
                             {item.cons.map((con: string, cIdx: number) => (
                               <li key={cIdx} className="flex items-start gap-1 text-[var(--ui-text-muted)]">
@@ -308,7 +321,7 @@ export default function AgenticComparisonTab({
                       {item.best_for && (
                         <div className="text-[10px] text-[var(--ui-text-muted)] italic flex items-center gap-1">
                           <Tag size={9} />
-                          Cocok untuk: {item.best_for}
+                          {t("agentic.comparison.bestFor")} {item.best_for}
                         </div>
                       )}
 
@@ -323,7 +336,8 @@ export default function AgenticComparisonTab({
                             className="text-[10px] font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
                           >
                             <Globe size={10} />
-                            {showSrc ? "Sembunyikan" : "Lihat"} {webSources.length} sumber web Brave
+                            {showSrc ? t("agentic.comparison.hideSources") : t("agentic.comparison.showSources")}{" "}
+                            {t("agentic.comparison.sourcesCount", { count: webSources.length })}
                           </button>
                           {showSrc && (
                             <div className="mt-1.5 flex flex-col gap-1.5">
@@ -371,13 +385,13 @@ export default function AgenticComparisonTab({
                     {/* Footer — Select button */}
                     <div className="px-3 py-2 border-t border-[var(--ui-border)] flex items-center justify-between text-xs mt-auto gap-2">
                       <span className={`text-[10px] font-semibold shrink-0 ${item.value_rating?.toLowerCase().includes("sangat") ? "text-emerald-400" : "text-[var(--ui-text-muted)]"}`}>
-                        {item.value_rating ?? "Perlu RFQ"}
+                        {item.value_rating ?? t("agentic.comparison.valueRfq")}
                       </span>
 
                       {/* Select button */}
-                      {localSelected === String(item.catalogue_id ?? item.id ?? item.product_name) ? (
+                      {localSelected === localKey ? (
                         <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[10px] font-bold">
-                          <CheckCircle2 size={10} /> Dipilih
+                          <CheckCircle2 size={10} /> {t("agentic.comparison.selected")}
                         </span>
                       ) : (
                         <button
@@ -386,7 +400,7 @@ export default function AgenticComparisonTab({
                           className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] hover:border-blue-500/50 hover:bg-blue-500/8 text-[var(--ui-text-muted)] hover:text-blue-400 text-[10px] font-semibold transition-colors cursor-pointer"
                         >
                           <MousePointerClick size={10} />
-                          Pilih Produk Ini
+                          {t("agentic.comparison.pickButton")}
                         </button>
                       )}
                     </div>
@@ -396,7 +410,7 @@ export default function AgenticComparisonTab({
             </div>
           ) : (
             <div className="p-6 text-center rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-muted)]">
-              Perbandingan otomatis aktif ketika ada 2 atau lebih opsi barang.
+              {t("agentic.comparison.emptyCompare")}
             </div>
           )}
         </>
@@ -406,7 +420,7 @@ export default function AgenticComparisonTab({
       {viewMode === "radar" && matrix.length > 0 && (
         <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-3">
-            Radar Komparasi Multi-Dimensi
+            {t("agentic.comparison.radarTitle")}
           </p>
           <ResponsiveContainer width="100%" height={300}>
             <RadarChart data={radarData}>
@@ -423,12 +437,16 @@ export default function AgenticComparisonTab({
                   strokeWidth={2}
                 />
               ))}
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "11px", color: "var(--ui-text-secondary)" }} />
+              <Legend
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: "11px", color: "var(--ui-text-secondary)" }}
+              />
               <Tooltip content={<CustomTooltip />} />
             </RadarChart>
           </ResponsiveContainer>
           <p className="text-[10px] text-[var(--ui-text-muted)] mt-2 text-center">
-            * Score AI, Jumlah Kelebihan, Kekurangan (dibalik) — dinormalisasi 0–100
+            * {t("agentic.comparison.radarNote")}
           </p>
         </div>
       )}
@@ -438,18 +456,23 @@ export default function AgenticComparisonTab({
         <div className="flex flex-col gap-3">
           <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
-              Perbandingan Harga Pasar (Brave Search)
+              {t("agentic.comparison.barPriceTitle")}
             </p>
             <p className="text-[9px] text-[var(--ui-text-muted)] mb-3 flex items-center gap-1">
-              <Globe size={9} /> Data harga real-time dari web
+              <Globe size={9} /> {t("agentic.comparison.barPriceNote")}
             </p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={barData} barSize={36}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--ui-border)" vertical={false} />
                 <XAxis dataKey="name" tick={{ fill: "var(--ui-text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: "var(--ui-text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis
+                  tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}jt`}
+                  tick={{ fill: "var(--ui-text-muted)", fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="Harga Web" radius={[6, 6, 0, 0]}>
+                <Bar dataKey={barWebPriceKey} radius={[6, 6, 0, 0]}>
                   {barData.map((entry, i) => (
                     <Cell key={`cell-price-${i}`} fill={entry.isWinner ? "#10b981" : CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
@@ -460,10 +483,10 @@ export default function AgenticComparisonTab({
 
           <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4">
             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
-              Skor Teknis AI per Produk (0–100)
+              {t("agentic.comparison.barScoreTitle")}
             </p>
             <p className="text-[9px] text-[var(--ui-text-muted)] mb-3 flex items-center gap-1">
-              <Sparkles size={9} /> Berdasarkan kesesuaian spesifikasi teknis
+              <Sparkles size={9} /> {t("agentic.comparison.barScoreNote")}
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={barData} barSize={36}>
@@ -482,11 +505,10 @@ export default function AgenticComparisonTab({
 
           <p className="text-[10px] text-[var(--ui-text-muted)] text-center">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-500 mr-1 align-middle" />
-            Hijau = Produk yang direkomendasikan AI
+            {t("agentic.comparison.barLegendGreen")}
           </p>
         </div>
       )}
     </div>
   );
 }
-

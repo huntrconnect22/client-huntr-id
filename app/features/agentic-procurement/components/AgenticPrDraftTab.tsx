@@ -13,21 +13,12 @@ import {
   ChevronDown,
   Trophy,
 } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 
-const DEPARTMENTS = [
-  "Procurement",
-  "General Affairs (GA)",
-  "Information Technology (IT)",
-  "Finance & Accounting",
-  "Human Resources (HR)",
-  "Operations",
-  "Marketing",
-  "Research & Development (R&D)",
-  "Legal",
-  "Facility Management",
-  "Supply Chain",
-  "Sales",
-];
+const DEPT_KEYS = [
+  "procurement", "ga", "it", "finance", "hr", "operations",
+  "marketing", "rnd", "legal", "facility", "supplyChain", "sales",
+] as const;
 
 const TENDER_DAYS = [7, 14, 21, 30];
 
@@ -48,14 +39,14 @@ export interface PrConfig {
   attachments: File[];
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadgeInner({ status, t }: { status: string; t: (k: string) => string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    verified_catalogue:   { label: "✓ Katalog",         cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" },
-    historical_reference: { label: "PO Historis",       cls: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" },
-    web_market_reference: { label: "Riset Web (Brave)",  cls: "bg-orange-500/10 text-orange-400 border-orange-500/30" },
-    market_estimate:      { label: "Estimasi Pasar",    cls: "bg-purple-500/10 text-purple-400 border-purple-500/30" },
-    buyer_budget:         { label: "Pagu Buyer",        cls: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
-    rfq_required:         { label: "Butuh Penawaran",   cls: "bg-amber-500/10 text-amber-400 border-amber-500/30" },
+    verified_catalogue:   { label: t("agentic.prDraft.statusBadge.verifiedCatalogue"), cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" },
+    historical_reference: { label: t("agentic.prDraft.statusBadge.historical"),       cls: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" },
+    web_market_reference: { label: t("agentic.prDraft.statusBadge.webMarket"),        cls: "bg-orange-500/10 text-orange-400 border-orange-500/30" },
+    market_estimate:      { label: t("agentic.prDraft.statusBadge.marketEstimate"),   cls: "bg-purple-500/10 text-purple-400 border-purple-500/30" },
+    buyer_budget:         { label: t("agentic.prDraft.statusBadge.buyerBudget"),      cls: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
+    rfq_required:         { label: t("agentic.prDraft.statusBadge.rfqRequired"),      cls: "bg-amber-500/10 text-amber-400 border-amber-500/30" },
   };
   const m = map[status];
   if (!m) return null;
@@ -76,9 +67,29 @@ export default function AgenticPrDraftTab({
   getTotalBudget,
   selectedWinner,
 }: AgenticPrDraftTabProps) {
-  const totalBudget = getTotalBudget(prDraft, intent);
+  const { t } = useLanguage();
 
-  const [department, setDepartment] = useState<string>(prDraft?.department || "Procurement");
+  const DEPARTMENTS = DEPT_KEYS.map((k) => t(`agentic.prDraft.departments.${k}`));
+
+  const totalBudget = getTotalBudget(prDraft, intent);
+  const defaultDept = DEPARTMENTS[0];
+  const initialDept = (() => {
+    const d = prDraft?.department;
+    if (!d) return defaultDept;
+    // Jika sudah pernah di-set ke nilai string cocok dengan translated values, keep
+    if (DEPARTMENTS.includes(d)) return d;
+    // Coba match via key originalnya (conbackend msh "Procurement")
+    const idx = [
+      "Procurement","General Affairs (GA)","Information Technology (IT)",
+      "Finance & Accounting","Human Resources (HR)","Operations",
+      "Marketing","Research & Development (R&D)","Legal",
+      "Facility Management","Supply Chain","Sales",
+    ].indexOf(d);
+    if (idx >= 0) return DEPARTMENTS[idx] ?? defaultDept;
+    return defaultDept;
+  })();
+
+  const [department, setDepartment] = useState<string>(initialDept);
   const [tenderDays, setTenderDays] = useState<number>(prDraft?.duration_days || 14);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -109,6 +120,8 @@ export default function AgenticPrDraftTab({
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   }
 
+  const tRenderPrf = (s: string) => (typeof s === "string" && s.toLowerCase().includes("urgent") ? "urgent" : "normal");
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
@@ -119,23 +132,32 @@ export default function AgenticPrDraftTab({
           {/* Header */}
           <div className="border-b border-[var(--ui-border)] pb-3">
             <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">
-              Purchase Requisition Draft
+              {t("agentic.prDraft.headerTitle")}
             </span>
             <h3 className="text-sm md:text-base font-bold text-[var(--ui-text-primary)] mt-0.5">
               {prDraft.title}
             </h3>
             <div className="flex flex-wrap items-center gap-2.5 mt-1 text-xs text-[var(--ui-text-muted)]">
-              <span className="flex items-center gap-1"><Building size={11} /> {department}</span>
+              <span className="flex items-center gap-1">
+                <Building size={11} /> {t("agentic.prDraft.needDeptLabel")}: {department}
+              </span>
               <span>•</span>
-              <span className="flex items-center gap-1"><Calendar size={11} /> Tender: {tenderDays} Hari</span>
+              <span className="flex items-center gap-1">
+                <Calendar size={11} /> {t("agentic.prDraft.tenderLabel", { days: tenderDays })}
+              </span>
               <span>•</span>
-              <span className={"px-1.5 rounded font-semibold text-[10px] border " + (prDraft.priority === "Urgent" ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20")}>
-                {prDraft.priority || "Normal"}
+              <span className={"px-1.5 rounded font-semibold text-[10px] border " +
+                (tRenderPrf(prDraft.priority || "") === "urgent"
+                  ? "bg-red-500/10 text-red-400 border-red-500/20"
+                  : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20")}>
+                {tRenderPrf(prDraft.priority || "") === "urgent"
+                  ? t("agentic.prDraft.priorityUrgent")
+                  : t("agentic.prDraft.priorityNormal")}
               </span>
               {selectedWinner && (
                 <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[10px] font-bold">
                   <Trophy size={9} />
-                  Dipilih: {selectedWinner.product_name || selectedWinner.name}
+                  {t("agentic.prDraft.selectedWinnerPrefix")} {selectedWinner.product_name || selectedWinner.name}
                 </span>
               )}
             </div>
@@ -143,7 +165,9 @@ export default function AgenticPrDraftTab({
 
           {/* Description */}
           <div className="flex flex-col gap-1 text-xs">
-            <span className="font-bold text-[var(--ui-text-secondary)] uppercase tracking-wider text-[11px]">Deskripsi Kebutuhan</span>
+            <span className="font-bold text-[var(--ui-text-secondary)] uppercase tracking-wider text-[11px]">
+              {t("agentic.prDraft.needDescriptionTitle")}
+            </span>
             <p className="text-xs text-[var(--ui-text-primary)] leading-relaxed bg-[var(--ui-bg-input)] p-3 rounded-md border border-[var(--ui-border)]">
               {prDraft.description}
             </p>
@@ -154,7 +178,7 @@ export default function AgenticPrDraftTab({
             <div className="flex flex-col gap-1 text-xs">
               <span className="font-bold text-[var(--ui-text-secondary)] uppercase tracking-wider text-[11px] flex items-center gap-1">
                 <ShieldCheck size={12} className="text-orange-400" />
-                Justifikasi Bisnis
+                {t("agentic.prDraft.businessJustification")}
               </span>
               <div className="text-xs text-[var(--ui-text-primary)] bg-orange-500/5 p-3 rounded-md border border-orange-500/20">
                 {prDraft.business_justification}
@@ -165,18 +189,18 @@ export default function AgenticPrDraftTab({
           {/* Line Items — Desktop */}
           <div className="flex flex-col gap-1.5 mt-1">
             <span className="font-bold text-[var(--ui-text-secondary)] uppercase tracking-wider text-[11px]">
-              Line Items ({prDraft.suggested_items?.length || 0})
+              {t("agentic.prDraft.lineItemsTitle", { count: prDraft.suggested_items?.length || 0 })}
             </span>
 
             <div className="hidden sm:block overflow-x-auto rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-[var(--ui-bg-input)] border-b border-[var(--ui-border)] text-[var(--ui-text-muted)] font-semibold">
-                    <th className="px-3 py-2">Item &amp; Spesifikasi</th>
-                    <th className="px-3 py-2">Brand</th>
-                    <th className="px-3 py-2 text-center">Qty</th>
-                    <th className="px-3 py-2 text-right">Harga Satuan</th>
-                    <th className="px-3 py-2 text-right">Subtotal</th>
+                    <th className="px-3 py-2">{t("agentic.prDraft.tableHeaders.itemSpec")}</th>
+                    <th className="px-3 py-2">{t("agentic.prDraft.tableHeaders.brand")}</th>
+                    <th className="px-3 py-2 text-center">{t("agentic.prDraft.tableHeaders.qty")}</th>
+                    <th className="px-3 py-2 text-right">{t("agentic.prDraft.tableHeaders.unitPrice")}</th>
+                    <th className="px-3 py-2 text-right">{t("agentic.prDraft.tableHeaders.subtotal")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--ui-border)]">
@@ -191,13 +215,15 @@ export default function AgenticPrDraftTab({
                         <td className="px-3 py-2.5 max-w-xs">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="font-semibold text-[var(--ui-text-primary)]">{item.name}</span>
-                            <StatusBadge status={status} />
+                            <StatusBadgeInner status={status} t={t} />
                           </div>
                           <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
                             {item.detailed_specs || item.reason || "—"}
                           </div>
                           {item.item_code && (
-                            <div className="text-[10px] text-[var(--ui-text-muted)] opacity-70 font-mono mt-0.5">Kode: {item.item_code}</div>
+                            <div className="text-[10px] text-[var(--ui-text-muted)] opacity-70 font-mono mt-0.5">
+                              {t("agentic.prDraft.itemCodeLabel")} {item.item_code}
+                            </div>
                           )}
                           {item.price_note && (
                             <div className="text-[10px] text-blue-400/80 mt-0.5 italic">{item.price_note}</div>
@@ -215,13 +241,13 @@ export default function AgenticPrDraftTab({
                         </td>
 
                         <td className="px-3 py-2.5 text-center font-medium text-[var(--ui-text-primary)] whitespace-nowrap">
-                          {item.qty} {item.uom || "unit"}
+                          {item.qty} {item.uom || t("agentic.itemGenericUom")}
                         </td>
                         <td className="px-3 py-2.5 text-right font-mono text-[var(--ui-text-secondary)] whitespace-nowrap">
-                          {price > 0 ? formatRupiah(price) : <span className="text-[11px] text-amber-400 italic">Perlu Penawaran</span>}
+                          {price > 0 ? formatRupiah(price) : <span className="text-[11px] text-amber-400 italic">{t("agentic.prDraft.statusBadge.rfqRequired")}</span>}
                         </td>
                         <td className="px-3 py-2.5 text-right font-mono font-bold text-orange-400 whitespace-nowrap">
-                          {price > 0 ? formatRupiah(subtotal) : <span className="text-[11px] text-amber-400 font-medium">Perlu Penawaran</span>}
+                          {price > 0 ? formatRupiah(subtotal) : <span className="text-[11px] text-amber-400 font-medium">{t("agentic.prDraft.statusBadge.rfqRequired")}</span>}
                         </td>
                       </tr>
                     );
@@ -229,9 +255,9 @@ export default function AgenticPrDraftTab({
                 </tbody>
                 <tfoot>
                   <tr className="bg-[var(--ui-bg-input)] font-bold text-[var(--ui-text-primary)]">
-                    <td colSpan={4} className="px-3 py-2 text-right">Total Anggaran (IDR):</td>
+                    <td colSpan={4} className="px-3 py-2 text-right">{t("agentic.prDraft.totalBudget")}:</td>
                     <td className="px-3 py-2 text-right font-mono text-xs text-orange-400">
-                      {totalBudget > 0 ? formatRupiah(totalBudget) : <span className="text-amber-400 font-semibold">Perlu Penawaran Vendor</span>}
+                      {totalBudget > 0 ? formatRupiah(totalBudget) : <span className="text-amber-400 font-semibold">{t("agentic.prDraft.needVendorOffer")}</span>}
                     </td>
                   </tr>
                 </tfoot>
@@ -251,7 +277,7 @@ export default function AgenticPrDraftTab({
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-bold text-[var(--ui-text-primary)] leading-tight">{item.name}</div>
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 flex-shrink-0">
-                        {item.qty} {item.uom || "unit"}
+                        {item.qty} {item.uom || t("agentic.itemGenericUom")}
                       </span>
                     </div>
                     {brand && (
@@ -259,12 +285,16 @@ export default function AgenticPrDraftTab({
                         <Tag size={10} className="text-orange-400" />{brand}
                       </div>
                     )}
-                    <div className="flex flex-wrap gap-1"><StatusBadge status={status} /></div>
+                    <div className="flex flex-wrap gap-1"><StatusBadgeInner status={status} t={t} /></div>
                     {item.detailed_specs && <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">{item.detailed_specs}</p>}
                     {item.price_note && <p className="text-[10px] text-blue-400/80 italic">{item.price_note}</p>}
                     <div className="flex items-center justify-between pt-1 border-t border-[var(--ui-border)] text-[11px]">
-                      <span className="text-[var(--ui-text-muted)]">{price > 0 ? "@ " + formatRupiah(price) : "Perlu Penawaran"}</span>
-                      <span className="font-bold font-mono text-orange-400">{price > 0 ? formatRupiah(subtotal) : "—"}</span>
+                      <span className="text-[var(--ui-text-muted)]">
+                        {price > 0 ? "@ " + formatRupiah(price) : t("agentic.prDraft.statusBadge.rfqRequired")}
+                      </span>
+                      <span className="font-bold font-mono text-orange-400">
+                        {price > 0 ? formatRupiah(subtotal) : "—"}
+                      </span>
                     </div>
                   </div>
                 );
@@ -280,7 +310,8 @@ export default function AgenticPrDraftTab({
         {/* Department */}
         <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-2">
           <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <Building size={12} className="text-orange-400" />Departemen Pengajuan
+            <Building size={12} className="text-orange-400" />
+            {t("agentic.prDraft.configDeptTitle")} · {t("agentic.prDraft.deptLabel")}
           </span>
           <div className="relative">
             <select
@@ -297,7 +328,8 @@ export default function AgenticPrDraftTab({
         {/* Tender Duration */}
         <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-2">
           <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar size={12} className="text-orange-400" />Durasi Tender / RFQ
+            <Calendar size={12} className="text-orange-400" />
+            {t("agentic.prDraft.tenderDurationLabel")}
           </span>
           <div className="grid grid-cols-4 gap-1.5">
             {TENDER_DAYS.map((d) => (
@@ -305,34 +337,41 @@ export default function AgenticPrDraftTab({
                 key={d}
                 type="button"
                 onClick={() => setTenderDays(d)}
-                className={"py-1.5 rounded-md text-[11px] font-bold transition-all border cursor-pointer " + (tenderDays === d ? "bg-orange-500 text-white border-orange-500" : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] border-[var(--ui-border)] hover:border-orange-400/60")}
+                className={"py-1.5 rounded-md text-[11px] font-bold transition-all border cursor-pointer " +
+                  (tenderDays === d
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] border-[var(--ui-border)] hover:border-orange-400/60")}
               >
-                {d}h
+                {t("agentic.prDraft.tenderDayShorthand", { days: d })}
               </button>
             ))}
           </div>
           <p className="text-[10px] text-[var(--ui-text-muted)]">
-            Vendor memiliki <span className="font-bold text-[var(--ui-text-primary)]">{tenderDays} hari</span> untuk merespons undangan tender.
+            {t("agentic.prDraft.tenderActiveDuration")} · <span className="font-bold text-[var(--ui-text-primary)]">{tenderDays} {t("agentic.prDraft.tenderDayUnit")}</span>
           </p>
         </div>
 
         {/* Upload */}
         <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-2">
           <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <Upload size={12} className="text-orange-400" />Dokumen Pendukung
+            <Upload size={12} className="text-orange-400" />
+            {t("agentic.prDraft.attachmentsLabel")}
           </span>
           <div
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files); }}
-            className={"border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors " + (isDragging ? "border-orange-400 bg-orange-500/10" : "border-[var(--ui-border)] hover:border-orange-400/50 hover:bg-[var(--ui-bg-input)]")}
+            className={"border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors " +
+              (isDragging ? "border-orange-400 bg-orange-500/10" : "border-[var(--ui-border)] hover:border-orange-400/50 hover:bg-[var(--ui-bg-input)]")}
           >
             <Upload size={16} className="mx-auto mb-1 text-[var(--ui-text-muted)]" />
             <p className="text-[10px] text-[var(--ui-text-muted)]">
-              Seret ke sini atau <span className="text-orange-400 font-semibold">klik untuk unggah</span>
+              {t("agentic.prDraft.attachmentsHint")}
             </p>
-            <p className="text-[9px] text-[var(--ui-text-muted)] opacity-60 mt-0.5">PDF, Word, Excel, JPG — maks 5 file</p>
+            <p className="text-[9px] text-[var(--ui-text-muted)] opacity-60 mt-0.5">
+              {t("agentic.prDraft.maxFilesNote", { current: attachments.length })}
+            </p>
             <input
               ref={fileInputRef} type="file" multiple
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
@@ -348,7 +387,7 @@ export default function AgenticPrDraftTab({
                   <span className="flex-1 truncate text-[var(--ui-text-primary)] font-medium">{f.name}</span>
                   <span className="text-[var(--ui-text-muted)] flex-shrink-0">{formatFileSize(f.size)}</span>
                   <button type="button" onClick={() => removeFile(i)} className="text-[var(--ui-text-muted)] hover:text-red-400 transition-colors flex-shrink-0 cursor-pointer">
-                    <X size={10} />
+                    <X size={10} /> <span className="sr-only">{t("agentic.prDraft.removeFile")}</span>
                   </button>
                 </div>
               ))}
@@ -359,44 +398,47 @@ export default function AgenticPrDraftTab({
         {/* Financial Summary */}
         <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-3">
           <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <DollarSign size={12} className="text-emerald-400" />Ringkasan Finansial
+            <DollarSign size={12} className="text-emerald-400" />
+            {t("agentic.prDraft.grandTotal")}
           </span>
           <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex flex-col">
-            <span className="text-[10px] text-emerald-400 font-semibold">Total Estimasi Anggaran</span>
+            <span className="text-[10px] text-emerald-400 font-semibold">{t("agentic.prDraft.totalBudget")}</span>
             <span className="text-lg font-black font-mono text-emerald-400">
-              {totalBudget > 0 ? formatRupiah(totalBudget) : "Perlu Penawaran Vendor"}
+              {totalBudget > 0 ? formatRupiah(totalBudget) : t("agentic.prDraft.needVendorOffer")}
             </span>
-            {totalBudget === 0 && <span className="text-[10px] text-amber-400 mt-0.5">Menunggu penawaran harga resmi dari vendor</span>}
+            {totalBudget === 0 && <span className="text-[10px] text-amber-400 mt-0.5">{t("agentic.prDraft.needVendorOffer")}</span>}
           </div>
           <div className="flex flex-col gap-2 text-xs divide-y divide-[var(--ui-border)]">
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">Perusahaan</span>
-              <span className="font-semibold text-[var(--ui-text-primary)]">{activeCompanyName || "Buyer"}</span>
+              <span className="text-[var(--ui-text-muted)]">{t("agentic.prDraft.summaryCompany")}</span>
+              <span className="font-semibold text-[var(--ui-text-primary)]">{activeCompanyName || t("agentic.prDraft.buyerFallback")}</span>
             </div>
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">Departemen</span>
+              <span className="text-[var(--ui-text-muted)]">{t("agentic.prDraft.deptLabel")}</span>
               <span className="font-semibold text-[var(--ui-text-primary)] truncate max-w-[130px]">{department}</span>
             </div>
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">Durasi Tender</span>
-              <span className="font-semibold text-[var(--ui-text-primary)]">{tenderDays} Hari</span>
+              <span className="text-[var(--ui-text-muted)]">{t("agentic.prDraft.tenderDurationLabel")}</span>
+              <span className="font-semibold text-[var(--ui-text-primary)]">
+                {t("agentic.prDraft.tenderDayShorthand", { days: tenderDays })}
+              </span>
             </div>
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">Dokumen</span>
-              <span className="font-semibold text-[var(--ui-text-primary)]">{attachments.length > 0 ? attachments.length + " file" : "—"}</span>
+              <span className="text-[var(--ui-text-muted)]">{t("agentic.prDraft.attachmentsLabel")}</span>
+              <span className="font-semibold text-[var(--ui-text-primary)]">{attachments.length > 0 ? attachments.length + " " + t("agentic.prDraft.summaryFiles") : "—"}</span>
             </div>
             {selectedWinner && (
               <div className="flex items-center justify-between pt-1">
-                <span className="text-[var(--ui-text-muted)]">Produk Dipilih</span>
+                <span className="text-[var(--ui-text-muted)]">{t("agentic.comparison.selectedBadge")}</span>
                 <span className="font-semibold text-yellow-400 flex items-center gap-1 truncate max-w-[130px]">
                   <Trophy size={10} /> {selectedWinner.product_name || selectedWinner.name}
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">Pengiriman</span>
+              <span className="text-[var(--ui-text-muted)]">{t("agentic.prDraft.summaryDelivery")}</span>
               <span className="font-semibold text-[var(--ui-text-primary)] truncate max-w-[130px]">
-                {prDraft.delivery_point_recommendation || "Kantor Pusat"}
+                {prDraft.delivery_point_recommendation || t("agentic.prDraft.summaryHeadOffice")}
               </span>
             </div>
           </div>
@@ -406,9 +448,9 @@ export default function AgenticPrDraftTab({
             className="w-full mt-1 py-2.5 rounded-md bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
           >
             {isCreatingPr ? (
-              <><Loader2 size={13} className="animate-spin" /><span>Menyimpan...</span></>
+              <><Loader2 size={13} className="animate-spin" /><span>{t("agentic.tabs.saving")}</span></>
             ) : (
-              <><CheckCircle2 size={13} /><span>Buat PR Sekarang</span></>
+              <><CheckCircle2 size={13} /><span>{t("agentic.prDraft.actions.createNow")}</span></>
             )}
           </button>
         </div>

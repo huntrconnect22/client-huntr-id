@@ -1,6 +1,7 @@
 import React from "react";
 import { Sparkles, Zap, Loader2, Sliders } from "lucide-react";
-import { PRESET_PROMPTS } from "../types";
+import { useLanguage } from "../../../context/LanguageContext";
+import { useAgenticPresets } from "../hooks/useAgenticPresets";
 
 interface AgenticPromptInputProps {
   prompt: string;
@@ -15,6 +16,9 @@ export default function AgenticPromptInput({
   isRunning,
   onExecute,
 }: AgenticPromptInputProps) {
+  const { t } = useLanguage();
+  const presetPrompts = useAgenticPresets();
+
   return (
     <div className="rounded-xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] p-3.5 sm:p-4 shadow-sm flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
@@ -25,17 +29,17 @@ export default function AgenticPromptInput({
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
               <h2 className="text-sm font-bold text-[var(--ui-text-primary)]">
-                Huntr Procurement Agent
+                {t("agentic.prompt.header")}
               </h2>
               <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                Beta
+                {t("agentic.prompt.badgeBeta")}
               </span>
               <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 border border-orange-500/20">
-                GPT-4o
+                {t("agentic.prompt.modelBadge")}
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
-              Deskripsikan barang/jasa yang ingin diadakan, AI akan mencari katalog & menyusun PR lengkap.
+              {t("agentic.prompt.subtitle")}
             </p>
           </div>
         </div>
@@ -46,7 +50,7 @@ export default function AgenticPromptInput({
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Contoh: Butuh 15 unit laptop Core i7 RAM 32GB untuk tim developer, 15 monitor 27 inch 4K..."
+          placeholder={t("agentic.prompt.placeholder")}
           rows={3}
           disabled={isRunning}
           className="w-full p-3 sm:pr-32 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-xs sm:text-sm outline-none focus:border-orange-500/50 transition-all resize-none"
@@ -64,12 +68,12 @@ export default function AgenticPromptInput({
           {isRunning ? (
             <>
               <Loader2 size={13} className="animate-spin" />
-              <span>Memproses AI...</span>
+              <span>{t("agentic.prompt.processing")}</span>
             </>
           ) : (
             <>
               <Zap size={13} />
-              <span>Jalankan AI Agent</span>
+              <span>{t("agentic.prompt.execute")}</span>
             </>
           )}
         </button>
@@ -78,9 +82,9 @@ export default function AgenticPromptInput({
       {/* Preset Prompts (Compact chips) */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-hide">
         <span className="text-[11px] font-semibold text-[var(--ui-text-muted)] flex items-center gap-1 flex-shrink-0">
-          <Sliders size={11} /> Preset:
+          <Sliders size={11} /> {t("agentic.prompt.preset")}
         </span>
-        {PRESET_PROMPTS.map((item, idx) => (
+        {presetPrompts.map((item, idx) => (
           <button
             key={idx}
             onClick={() => {
