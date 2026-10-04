@@ -57,6 +57,7 @@ export default function Marketplace() {
   const [cart, setCart] = useState<CartItem[]>(() => loadCart());
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const [totalPages, setTotalPages] = useState(1);
+  const [isAgenticEnabled, setIsAgenticEnabled] = useState(false);
 
   // AI state
   const [aiMode, setAiMode] = useState(false);
@@ -111,6 +112,19 @@ export default function Marketplace() {
   };
 
   /* ── Init ── */
+  useEffect(() => {
+    setIsAgenticEnabled(isAgenticProcurementEnabled());
+    const handleFeatureUpdate = () => {
+      setIsAgenticEnabled(isAgenticProcurementEnabled());
+    };
+    window.addEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+    window.addEventListener("storage", handleFeatureUpdate);
+    return () => {
+      window.removeEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+      window.removeEventListener("storage", handleFeatureUpdate);
+    };
+  }, []);
+
   useEffect(() => {
     const companySession = localStorage.getItem("active_company");
     if (companySession) {
@@ -266,7 +280,7 @@ export default function Marketplace() {
         style={{ paddingRight: cartPanelOpen && !isMobile ? 296 : 0 }}
       >
         {/* Agentic Procurement Quick Launch Banner (Only visible when feature is enabled in Settings) */}
-        {isAgenticProcurementEnabled() && (
+        {isAgenticEnabled && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-2.5 rounded-xl sm:rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30">
             <div className="flex items-start sm:items-center gap-2.5">
               <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-lg sm:rounded-md bg-orange-500 text-white flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 sm:mt-0">
