@@ -1,5 +1,6 @@
 import React from "react";
 import { Plus, Wand2, Loader2, Search, LayoutGrid, List } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface CatalogueHeaderProps {
   onAddNew: () => void;
@@ -22,6 +23,8 @@ export default function CatalogueHeader({
   viewMode,
   setViewMode,
 }: CatalogueHeaderProps) {
+  const { t } = useLanguage();
+
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -44,7 +47,7 @@ export default function CatalogueHeader({
           onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.88")}
           onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
         >
-          <Plus size={16} /> Add New Item
+          <Plus size={16} /> {t("catalogue.addNewItem")}
         </button>
 
         {/* ChatGPT AI Batch Update Button */}
@@ -72,9 +75,11 @@ export default function CatalogueHeader({
           ) : (
             <Wand2 size={15} color="var(--huntr-orange)" />
           )}
-          ChatGPT AI Mass Update {selectedCount > 0 ? `(${selectedCount} Terpilih)` : "(Pilih Produk)"}
+          {t("catalogue.aiMassUpdate")}{" "}
+          {selectedCount > 0
+            ? t("catalogue.selectedCount", { count: selectedCount })
+            : `(${t("catalogue.selectProductPrompt")})`}
         </button>
-
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, maxWidth: 560 }}>
@@ -86,7 +91,7 @@ export default function CatalogueHeader({
           />
           <input
             type="text"
-            placeholder="Search your catalogue..."
+            placeholder={t("catalogue.searchPlaceholder")}
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             style={{
@@ -140,3 +145,4 @@ export default function CatalogueHeader({
     </div>
   );
 }
+

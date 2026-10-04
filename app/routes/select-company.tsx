@@ -6,8 +6,11 @@ import {
 } from "lucide-react";
 import { getMyCompanies } from "../lib/api";
 import ThemeToggle from "../components/ThemeToggle";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function SelectCompany() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [companies, setCompanies] = useState<any[]>([]);
@@ -77,12 +80,13 @@ export default function SelectCompany() {
           />
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
           <button
             onClick={handleSignOut}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded-lg text-xs font-semibold text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-all"
           >
-            <LogOut size={13} /> <span className="hidden sm:inline">Sign out</span>
+            <LogOut size={13} /> <span className="hidden sm:inline">{t("selectCompany.signOut")}</span>
           </button>
         </div>
       </header>
@@ -100,11 +104,11 @@ export default function SelectCompany() {
                 <LayoutGrid size={22} className="text-white" />
               </div>
               <h1 className="text-xl font-bold text-[var(--ui-text-primary)] tracking-tight mb-1">
-                Choose a Workspace
+                {t("selectCompany.chooseWorkspace")}
               </h1>
               {user && (
                 <p className="text-xs text-[var(--ui-text-secondary)]">
-                  Welcome back,{" "}
+                  {t("selectCompany.welcomeBack")}{" "}
                   <span className="text-orange-400 font-semibold">{user.name}</span>
                 </p>
               )}
@@ -114,7 +118,7 @@ export default function SelectCompany() {
             {isLoading ? (
               <div className="flex flex-col items-center gap-3 py-8">
                 <Loader2 size={24} className="text-orange-500 animate-spin" />
-                <span className="text-xs text-[var(--ui-text-muted)] font-medium">Loading workspaces...</span>
+                <span className="text-xs text-[var(--ui-text-muted)] font-medium">{t("selectCompany.loadingWorkspaces")}</span>
               </div>
             ) : companies.length === 0 ? (
               <div className="text-center py-4">
@@ -122,13 +126,13 @@ export default function SelectCompany() {
                   <Building2 size={22} />
                 </div>
                 <p className="text-xs text-[var(--ui-text-secondary)] mb-5">
-                  You don't have any registered company yet.
+                  {t("selectCompany.noCompany")}
                 </p>
                 <button
                   onClick={handleRegisterNew}
                   className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/25 transition-all"
                 >
-                  <Plus size={16} /> Register a Company
+                  <Plus size={16} /> {t("selectCompany.registerCompany")}
                 </button>
               </div>
             ) : (
@@ -194,7 +198,7 @@ export default function SelectCompany() {
                                 title={`NPWP: ${c.formatted_tax_id || c.tax_id} (Terverifikasi)`}
                               >
                                 <CheckCircle2 size={10} className="text-sky-400 shrink-0" />
-                                <span>NPWP Terverifikasi</span>
+                                <span>{t("selectCompany.npwpVerified")}</span>
                               </span>
                             )}
                           </div>
@@ -219,14 +223,14 @@ export default function SelectCompany() {
                     style={{ color: 'white' }}
                     className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
                   >
-                    Enter Workspace <ArrowRight size={16} />
+                    {t("selectCompany.enterWorkspace")} <ArrowRight size={16} />
                   </button>
 
                   <button
                     onClick={handleRegisterNew}
                     className="w-full py-2 bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] rounded-lg font-medium text-xs transition-all"
                   >
-                    + Register Another Company
+                    {t("selectCompany.registerAnother")}
                   </button>
                 </div>
               </>
@@ -237,7 +241,7 @@ export default function SelectCompany() {
         {/* Footer */}
         <div className="mt-4 text-center">
           <p className="text-[10px] text-[var(--ui-text-muted)] font-medium">
-            &copy; 2026 Huntr.id &bull; Secure Environment
+            {t("selectCompany.footer")}
           </p>
         </div>
       </div>

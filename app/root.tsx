@@ -16,6 +16,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { EventBusProvider } from "./lib/EventBus";
 import WebSocketDebug from "./components/WebSocketDebug";
+import MaintenanceBanner from "./components/MaintenanceBanner";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -76,6 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <EventBusProvider>
               {children}
               <WebSocketDebug />
+              <MaintenanceBanner />
             </EventBusProvider>
           </ThemeProvider>
         </LanguageProvider>

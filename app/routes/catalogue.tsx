@@ -11,6 +11,7 @@ import {
   getCsrfCookie 
 } from "../lib/api";
 import { Sparkles, Loader2, Package } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 import {
   PRODUCT_CATEGORIES,
   type CatalogueFormData,
@@ -26,6 +27,7 @@ import {
 } from "../features/catalogue";
 
 export default function Catalogue() {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get("search") || "";
   const currentPage = Number(searchParams.get("page")) || 1;
@@ -146,13 +148,13 @@ export default function Catalogue() {
   // ChatGPT AI Single Product Auto-fill
   const handleAiAutofill = async () => {
     if (!formData.name.trim()) {
-      setError("Isi nama produk terlebih dahulu agar ChatGPT AI dapat mencari referensi, spesifikasi & gambar secara akurat.");
+      setError(t("catalogue.fillProductNameFirst"));
       return;
     }
     setAiAutofilling(true);
     setError(null);
     try {
-      setAiStatusMessage(`ChatGPT AI sedang menganalisis spesifikasi & meng-generate foto studio produk untuk "${formData.name}"...`);
+      setAiStatusMessage(t("catalogue.analyzingAiMessage", { name: formData.name }));
       const info = await fetchProductKnowledge(formData.name, formData.category, company?.id);
 
       setFormData((prev) => ({
@@ -168,10 +170,10 @@ export default function Catalogue() {
         setProductImage(info.imageFile);
       }
 
-      setAiStatusMessage("Formulir & Gambar produk berhasil di-generate otomatis oleh AI!");
+      setAiStatusMessage(t("catalogue.aiAutofillSuccess"));
       setTimeout(() => setAiStatusMessage(null), 4000);
     } catch (err: any) {
-      setError(err.message || "Gagal mengisi data dengan ChatGPT AI.");
+      setError(err.message || t("catalogue.fillProductNameFirst"));
     } finally {
       setAiAutofilling(false);
     }
@@ -181,18 +183,18 @@ export default function Catalogue() {
   const handleAiImageSearch = async () => {
     if (!formData.name.trim()) return;
     setAiImageSearching(true);
-    setAiStatusMessage(`AI sedang meng-generate gambar produk untuk "${formData.name}"...`);
+    setAiStatusMessage(t("catalogue.generatingAiPhotoMessage", { name: formData.name }));
     try {
       const fileRes = await fetchProductImage(formData.name, formData.category, formData.brand, company?.id);
       if (fileRes) {
         setProductImage(fileRes);
-        setAiStatusMessage("Gambar produk AI berhasil digenerate & dipasang otomatis!");
+        setAiStatusMessage(t("catalogue.aiPhotoSuccess"));
       } else {
-        setAiStatusMessage("Gambar tidak dapat di-generate, silakan upload manual.");
+        setAiStatusMessage(t("catalogue.aiPhotoFailed"));
       }
       setTimeout(() => setAiStatusMessage(null), 3500);
     } catch {
-      setAiStatusMessage("Gagal generate gambar.");
+      setAiStatusMessage(t("catalogue.aiPhotoFailed"));
       setTimeout(() => setAiStatusMessage(null), 3000);
     } finally {
       setAiImageSearching(false);
@@ -204,14 +206,14 @@ export default function Catalogue() {
   const handleBatchAiUpdate = async () => {
     if (!company?.id) return;
     if (selectedItemIds.length === 0) {
-      setError("Pilih setidaknya 1 produk (maksimal 10) untuk diperbarui oleh ChatGPT AI.");
+      setError(t("catalogue.selectAtLeastOneBatch"));
       return;
     }
 
     const selectedProducts = items.filter((item) => selectedItemIds.includes(item.id)).slice(0, 10);
     setAiBatchUpdating(true);
     setError(null);
-    setAiStatusMessage(`ChatGPT AI sedang memproses spesifikasi untuk ${selectedProducts.length} produk terpilih...`);
+    setAiStatusMessage(t("catalogue.processingBatchAiMessage", { count: selectedProducts.length }));
 
     try {
       for (const p of selectedProducts) {
@@ -237,10 +239,10 @@ export default function Catalogue() {
 
       await fetchItems(company.id);
       setSelectedItemIds([]);
-      setAiStatusMessage(`Sukses! ${selectedProducts.length} produk terpilih telah diperbarui massal oleh ChatGPT AI.`);
+      setAiStatusMessage(t("catalogue.batchAiSuccess", { count: selectedProducts.length }));
       setTimeout(() => setAiStatusMessage(null), 4000);
     } catch (err: any) {
-      setError(err.message || "Gagal melakukan batch update ChatGPT AI.");
+      setError(err.message || t("catalogue.selectAtLeastOneBatch"));
     } finally {
       setAiBatchUpdating(false);
     }
@@ -286,7 +288,7 @@ export default function Catalogue() {
   const handleImportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !company) {
-      setError("Please select a file");
+      setError(t("catalogue.importCard.selectFileWarning"));
       return;
     }
     
@@ -347,11 +349,11 @@ export default function Catalogue() {
   const handleDeleteItem = async (item: CatalogueItem) => {
     const confirm = await Swal.fire({
       icon: "warning",
-      title: "Hapus Produk?",
-      text: `Apakah Anda yakin ingin menghapus produk "${item.name}" dari katalog?`,
+      title: t("catalogue.deleteConfirmTitle"),
+      text: t("catalogue.deleteConfirmText", { name: item.name }),
       showCancelButton: true,
-      confirmButtonText: "Ya, Hapus",
-      cancelButtonText: "Batal",
+      confirmButtonText: t("catalogue.deleteConfirmBtn"),
+      cancelButtonText: t("settings.sessions.cancelBtn"),
       confirmButtonColor: "#ef4444",
     });
 
@@ -361,8 +363,8 @@ export default function Catalogue() {
       await deleteCatalogue(item.id);
       Swal.fire({
         icon: "success",
-        title: "Berhasil!",
-        text: "Produk berhasil dihapus dari katalog.",
+        title: t("catalogue.deleteSuccessTitle"),
+        text: t("catalogue.deleteSuccessText"),
         timer: 2000,
         showConfirmButton: false,
       });
@@ -372,14 +374,14 @@ export default function Catalogue() {
     } catch (err: any) {
       Swal.fire({
         icon: "error",
-        title: "Gagal!",
-        text: err.message || "Gagal menghapus produk.",
+        title: t("catalogue.deleteFailedTitle"),
+        text: err.message || t("catalogue.deleteFailedText"),
       });
     }
   };
 
   return (
-    <Layout title="Company Catalogue" subtitle="Manage your products, add new items manually, or import from Excel/CSV.">
+    <Layout title={t("catalogue.title")} subtitle={t("catalogue.subtitle")}>
       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
         {/* Status AI global notification */}
         {aiStatusMessage && (
@@ -446,13 +448,13 @@ export default function Catalogue() {
           {itemsLoading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "80px 0" }}>
               <Loader2 className="animate-spin" color="var(--huntr-orange)" size={28} />
-              <span style={{ fontSize: 13, color: "var(--ui-text-muted)" }}>Fetching your products...</span>
+              <span style={{ fontSize: 13, color: "var(--ui-text-muted)" }}>{t("catalogue.fetchingProducts")}</span>
             </div>
           ) : filteredItems.length === 0 ? (
             <div style={{ textAlign: "center", padding: "80px 0", background: "var(--ui-bg-input)", borderRadius: 8, border: "1px dashed var(--ui-border-input)" }}>
               <Package size={40} color="var(--ui-text-muted)" style={{ marginBottom: 12, opacity: 0.3 }} />
-              <h3 style={{ color: "var(--ui-text-primary)", margin: 0, fontSize: 15, fontWeight: 700 }}>No products found</h3>
-              <p style={{ color: "var(--ui-text-muted)", marginTop: 6, fontSize: 13 }}>{searchTerm ? "Try another search term" : "Start by adding your first product"}</p>
+              <h3 style={{ color: "var(--ui-text-primary)", margin: 0, fontSize: 15, fontWeight: 700 }}>{t("catalogue.noProductsFound")}</h3>
+              <p style={{ color: "var(--ui-text-muted)", marginTop: 6, fontSize: 13 }}>{searchTerm ? t("catalogue.tryAnotherSearch") : t("catalogue.startByAdding")}</p>
             </div>
           ) : viewMode === "grid" ? (
             <CatalogueGridView

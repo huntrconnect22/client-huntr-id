@@ -4,8 +4,10 @@ import { Loader2, Eye, EyeOff, MessageSquareCode, ArrowLeft, User, Phone, Mail, 
 import { register, sendOtp, verifyOtp, loadOtpSession, clearOtpSession, getCsrfCookie } from "../lib/api";
 import { isValidWhatsapp } from "../lib/whatsapp";
 import AuthLayout from "../components/AuthLayout";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Register() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
@@ -63,11 +65,11 @@ export default function Register() {
     e?.preventDefault();
     if (sendingOtp || (resendCooldown > 0 && otpSent)) return;
     if (!form.name || !form.whatsapp || !form.password) {
-      setError("Isi Nama Lengkap, Nomor WhatsApp, dan Kata Sandi terlebih dahulu.");
+      setError(t("register.validationFillFields"));
       return;
     }
     if (!isValidWhatsapp(form.whatsapp)) {
-      setError("Format WhatsApp tidak valid. Gunakan 08xxxxxxxxxx.");
+      setError(t("register.validationWhatsapp"));
       return;
     }
     setSendingOtp(true);
@@ -97,11 +99,11 @@ export default function Register() {
     e?.preventDefault();
     if (!otpSent) return;
     if (!otp) {
-      setError("Masukkan kode verifikasi OTP.");
+      setError(t("register.validationEnterOtp"));
       return;
     }
     if (otp.length !== 6) {
-      setError("Masukkan 6 digit kode OTP secara lengkap.");
+      setError(t("register.validationOtpLength"));
       return;
     }
     setLoading(true);
@@ -150,9 +152,9 @@ export default function Register() {
   return (
     <AuthLayout
       variant="register"
-      visualTitle="Bergabung dengan Ekosistem Pengadaan"
-      visualText="Hubungkan perusahaan Anda dengan ratusan buyer & vendor terverifikasi di seluruh Indonesia."
-      features={["✓ Onboarding Terpandu", "✓ Verifikasi WhatsApp", "✓ Keamanan Berstandar Enterprise"]}
+      visualTitle={t("register.visualTitle")}
+      visualText={t("register.visualText")}
+      features={t("register.features").split("|")}
     >
       <form onSubmit={e => e.preventDefault()} className="flex flex-col gap-6">
         {/* Back link */}
@@ -160,16 +162,16 @@ export default function Register() {
           to="/" 
           className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--ui-text-muted)] hover:text-orange-500 transition-colors w-fit"
         >
-          <ArrowLeft size={14} /> Kembali ke Marketplace
+          <ArrowLeft size={14} /> {t("register.backToMarketplace")}
         </Link>
 
         {/* Heading */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-[var(--ui-text-primary)] tracking-tight">
-            Buat Akun Perusahaan
+            {t("register.heading")}
           </h1>
           <p className="text-xs sm:text-sm text-[var(--ui-text-muted)] mt-1.5 leading-relaxed">
-            Daftarkan identitas pengelola untuk mulai menggunakan platform
+            {t("register.subheading")}
           </p>
         </div>
 
@@ -181,7 +183,7 @@ export default function Register() {
             }`}>
               {!otpSent ? "1" : <CheckCircle2 size={16} />}
             </div>
-            <span className="text-xs font-semibold text-[var(--ui-text-primary)]">Data Pengguna</span>
+            <span className="text-xs font-semibold text-[var(--ui-text-primary)]">{t("register.step1")}</span>
           </div>
 
           <div className="w-8 h-[2px] bg-[var(--ui-border)]" />
@@ -193,7 +195,7 @@ export default function Register() {
               2
             </div>
             <span className={`text-xs font-semibold ${otpSent ? "text-[var(--ui-text-primary)]" : "text-[var(--ui-text-muted)]"}`}>
-              Verifikasi OTP
+              {t("register.step2")}
             </span>
           </div>
         </div>
@@ -202,7 +204,7 @@ export default function Register() {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="register-name">
-              Nama Lengkap
+              {t("register.nameLabel")}
             </label>
             <div className="relative">
               <input
@@ -222,7 +224,7 @@ export default function Register() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="register-whatsapp">
-              Nomor WhatsApp
+              {t("register.whatsappLabel")}
             </label>
             <div className="relative">
               <input
@@ -244,7 +246,7 @@ export default function Register() {
                   onClick={() => setOtpSent(false)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-orange-500 hover:underline px-2 py-1"
                 >
-                  Ubah
+                  {t("register.changeBtn")}
                 </button>
               )}
             </div>
@@ -252,7 +254,7 @@ export default function Register() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="register-email">
-              Email Perusahaan (Opsional)
+              {t("register.emailLabel")}
             </label>
             <div className="relative">
               <input
@@ -272,7 +274,7 @@ export default function Register() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="register-password">
-              Kata Sandi
+              {t("register.passwordLabel")}
             </label>
             <div className="relative">
               <input
@@ -281,7 +283,7 @@ export default function Register() {
                 onChange={e => set("password", e.target.value)}
                 type={showPw ? "text" : "password"}
                 autoComplete="new-password"
-                placeholder="minimal 8 karakter"
+                placeholder={t("register.passwordPlaceholder")}
                 required
                 disabled={otpSent}
                 className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
@@ -304,7 +306,7 @@ export default function Register() {
             <div className="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/25 space-y-3 animate-in fade-in">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-orange-500 flex items-center gap-1.5">
-                  <MessageSquareCode size={16} /> Masukkan Kode OTP
+                  <MessageSquareCode size={16} /> {t("register.otpLabel")}
                 </label>
                 {debugOtp && (
                   <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
@@ -328,7 +330,7 @@ export default function Register() {
 
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[11px] text-[var(--ui-text-muted)]">
-                  Cek pesan WhatsApp Anda
+                  {t("register.checkWhatsapp")}
                 </span>
                 <button
                   type="button"
@@ -337,10 +339,10 @@ export default function Register() {
                   className="text-xs font-bold text-orange-500 hover:underline disabled:opacity-50"
                 >
                   {resendCooldown > 0
-                    ? `Kirim Ulang (${resendCooldown}s)`
+                    ? t("register.resendCooldown").replace("{count}", String(resendCooldown))
                     : sendingOtp
-                      ? "Mengirim..."
-                      : "Kirim Ulang OTP"}
+                      ? t("register.sending")
+                      : t("register.resendOtp")}
                 </button>
               </div>
             </div>
@@ -371,10 +373,10 @@ export default function Register() {
           >
             {loading || sendingOtp ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Mengirim Kode...
+                <Loader2 size={18} className="animate-spin" /> {t("register.sendingCode")}
               </>
             ) : (
-              "Minta Kode OTP WhatsApp"
+              t("register.sendOtpBtn")
             )}
           </button>
         ) : (
@@ -386,10 +388,10 @@ export default function Register() {
           >
             {loading ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Memverifikasi...
+                <Loader2 size={18} className="animate-spin" /> {t("register.verifying")}
               </>
             ) : (
-              "Verifikasi & Buat Akun"
+              t("register.verifyBtn")
             )}
           </button>
         )}
@@ -397,9 +399,9 @@ export default function Register() {
         {/* Footer Link */}
         <div className="text-center pt-2 border-t border-[var(--ui-border-subtle)]">
           <p className="text-xs text-[var(--ui-text-muted)]">
-            Sudah memiliki akun?{" "}
+            {t("register.alreadyHaveAccount")}{" "}
             <Link to="/login" className="font-bold text-orange-500 hover:underline ml-1">
-              Masuk Sekarang
+              {t("register.loginNow")}
             </Link>
           </p>
         </div>

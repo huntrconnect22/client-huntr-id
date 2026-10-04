@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router";
 import { Loader2, ArrowLeft, Key, MessageSquare, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { sendOtp, verifyOtp, resetPasswordWhatsapp } from "../lib/api/auth";
 import AuthLayout from "../components/AuthLayout";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ForgotPassword() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [step, setStep] = useState<"whatsapp" | "otp" | "reset" | "success">("whatsapp");
   const [loading, setLoading] = useState(false);
@@ -64,23 +66,23 @@ export default function ForgotPassword() {
   return (
     <AuthLayout
       variant="login"
-      visualTitle="Account Recovery"
-      visualText="Securely reset your password using WhatsApp verification to regain access to your procurement dashboard."
-      features={["✓ Fast OTP Verification", "✓ Secure Password Reset", "✓ Multi-device Sync"]}
+      visualTitle={t("forgotPassword.visualTitle")}
+      visualText={t("forgotPassword.visualText")}
+      features={t("forgotPassword.features").split("|")}
       featureVariant="orange"
     >
       {step === "whatsapp" && (
         <form onSubmit={handleSendOtp} className="auth-form">
           <Link to="/login" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--ui-text-muted)", marginBottom: 24, textDecoration: "none" }}>
-            <ArrowLeft size={16} /> Back to Login
+            <ArrowLeft size={16} /> {t("forgotPassword.backToLogin")}
           </Link>
           <div className="auth-form__header">
-            <h1 className="auth-heading">Forgot Password</h1>
-            <p className="auth-subheading">Enter your verified WhatsApp number to reset your password.</p>
+            <h1 className="auth-heading">{t("forgotPassword.headingStep1")}</h1>
+            <p className="auth-subheading">{t("forgotPassword.subheadingStep1")}</p>
           </div>
 
           <div className="auth-field">
-            <label className="auth-label" htmlFor="whatsapp-input">WhatsApp Number</label>
+            <label className="auth-label" htmlFor="whatsapp-input">{t("forgotPassword.whatsappLabel")}</label>
             <div className="auth-input-wrap">
               <input
                 id="whatsapp-input"
@@ -100,7 +102,7 @@ export default function ForgotPassword() {
           {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
 
           <button type="submit" disabled={loading || !whatsapp} className="auth-btn auth-btn--primary">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : "Send OTP"}
+            {loading ? <Loader2 size={18} className="animate-spin" /> : t("forgotPassword.sendOtp")}
           </button>
         </form>
       )}
@@ -108,15 +110,15 @@ export default function ForgotPassword() {
       {step === "otp" && (
         <form onSubmit={handleVerifyOtp} className="auth-form">
           <button type="button" onClick={() => setStep("whatsapp")} style={{ background: "none", border: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--ui-text-muted)", marginBottom: 24, cursor: "pointer", padding: 0 }}>
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> {t("forgotPassword.back")}
           </button>
           <div className="auth-form__header">
-            <h1 className="auth-heading">Verify OTP</h1>
-            <p className="auth-subheading">Enter the 6-digit code sent to {whatsapp}</p>
+            <h1 className="auth-heading">{t("forgotPassword.headingStep2")}</h1>
+            <p className="auth-subheading">{t("forgotPassword.subheadingStep2").replace("{number}", whatsapp)}</p>
           </div>
 
           <div className="auth-field">
-            <label className="auth-label" htmlFor="otp-input">Verification Code</label>
+            <label className="auth-label" htmlFor="otp-input">{t("forgotPassword.verificationCodeLabel")}</label>
             <div className="auth-input-wrap">
               <input
                 id="otp-input"
@@ -137,7 +139,7 @@ export default function ForgotPassword() {
           {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
 
           <button type="submit" disabled={loading || otp.length !== 6} className="auth-btn auth-btn--primary">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : "Verify Code"}
+            {loading ? <Loader2 size={18} className="animate-spin" /> : t("forgotPassword.verifyCode")}
           </button>
         </form>
       )}
@@ -145,12 +147,12 @@ export default function ForgotPassword() {
       {step === "reset" && (
         <form onSubmit={handleResetPassword} className="auth-form">
           <div className="auth-form__header">
-            <h1 className="auth-heading">Create New Password</h1>
-            <p className="auth-subheading">Enter your new password below.</p>
+            <h1 className="auth-heading">{t("forgotPassword.headingStep3")}</h1>
+            <p className="auth-subheading">{t("forgotPassword.subheadingStep3")}</p>
           </div>
 
           <div className="auth-field">
-            <label className="auth-label" htmlFor="new-password">New Password</label>
+            <label className="auth-label" htmlFor="new-password">{t("forgotPassword.newPasswordLabel")}</label>
             <div className="auth-input-wrap">
               <input
                 id="new-password"
@@ -169,7 +171,7 @@ export default function ForgotPassword() {
           </div>
 
           <div className="auth-field">
-            <label className="auth-label" htmlFor="confirm-password">Confirm Password</label>
+            <label className="auth-label" htmlFor="confirm-password">{t("forgotPassword.confirmPasswordLabel")}</label>
             <div className="auth-input-wrap">
               <input
                 id="confirm-password"
@@ -190,7 +192,7 @@ export default function ForgotPassword() {
           {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
 
           <button type="submit" disabled={loading || !password || !passwordConfirmation} className="auth-btn auth-btn--primary">
-            {loading ? <Loader2 size={18} className="animate-spin" /> : "Reset Password"}
+            {loading ? <Loader2 size={18} className="animate-spin" /> : t("forgotPassword.resetPasswordBtn")}
           </button>
         </form>
       )}
@@ -202,10 +204,10 @@ export default function ForgotPassword() {
               <CheckCircle2 size={32} color="#22c55e" />
             </div>
           </div>
-          <h1 className="auth-heading" style={{ marginBottom: 12 }}>Password Reset!</h1>
-          <p className="auth-subheading" style={{ marginBottom: 32 }}>Your password has been successfully changed. You can now login with your new password.</p>
+          <h1 className="auth-heading" style={{ marginBottom: 12 }}>{t("forgotPassword.successTitle")}</h1>
+          <p className="auth-subheading" style={{ marginBottom: 32 }}>{t("forgotPassword.successSubtitle")}</p>
           <button onClick={() => navigate("/login")} className="auth-btn auth-btn--primary">
-            Go to Login
+            {t("forgotPassword.goToLogin")}
           </button>
         </div>
       )}

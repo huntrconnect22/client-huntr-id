@@ -2,6 +2,7 @@ import React from "react";
 import { ChevronRight, Trash2 } from "lucide-react";
 import { getAssetUrl } from "../../../lib/assets";
 import { type CatalogueItem } from "../types";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface CatalogueGridViewProps {
   items: CatalogueItem[];
@@ -18,6 +19,7 @@ export default function CatalogueGridView({
   onEditItem,
   onDeleteItem,
 }: CatalogueGridViewProps) {
+  const { t } = useLanguage();
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
       {items.map((item) => {
@@ -65,7 +67,7 @@ export default function CatalogueGridView({
                 {item.name}
               </h4>
               <div style={{ fontSize: 11, color: "var(--ui-text-brand)", marginTop: 3, fontWeight: 600 }}>
-                {item.category || "General"}
+                {item.category || t("catalogue.grid.generalCategory")}
               </div>
               <p
                 style={{
@@ -79,7 +81,7 @@ export default function CatalogueGridView({
                   overflow: "hidden",
                 }}
               >
-                {item.specifications || "No detailed specifications provided."}
+                {item.specifications || t("catalogue.grid.noSpecs")}
               </p>
               {(item.image_url || item.image_path) && (
                 <div style={{ marginTop: 10 }}>
@@ -102,7 +104,7 @@ export default function CatalogueGridView({
               }}
             >
               <span style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>
-                UOM: <strong style={{ color: "var(--ui-text-secondary)" }}>{item.uom}</strong>
+                {t("catalogue.grid.uomLabel")} <strong style={{ color: "var(--ui-text-secondary)" }}>{item.uom}</strong>
               </span>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <button
@@ -120,7 +122,7 @@ export default function CatalogueGridView({
                     gap: 4,
                   }}
                 >
-                  Edit <ChevronRight size={13} />
+                  {t("catalogue.grid.edit")} <ChevronRight size={13} />
                 </button>
                 {onDeleteItem && (
                   <button
@@ -141,9 +143,9 @@ export default function CatalogueGridView({
                     }}
                     onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
                     onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "0.85")}
-                    title="Delete product"
+                    title={t("catalogue.grid.delete")}
                   >
-                    <Trash2 size={13} /> Delete
+                    <Trash2 size={13} /> {t("catalogue.grid.delete")}
                   </button>
                 )}
               </div>

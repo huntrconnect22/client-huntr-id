@@ -12,17 +12,19 @@ import { useOnboardingViewModel } from "../features/onboarding/hooks/useOnboardi
 import { StepTracker } from "../features/onboarding/components/StepTracker";
 import { SlideContent } from "../features/onboarding/components/SlideContent";
 import ThemeToggle from "../components/ThemeToggle";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 
 // --- Config: Metadata ---
 const TOTAL_SLIDES = 7;
-const STEP_META = [
-  { id: 1, icon: Building2,   label: "Profil",    color: "#f97316" },
-  { id: 2, icon: MapPin,      label: "Lokasi",    color: "#f59e0b" },
-  { id: 3, icon: CreditCard,  label: "Bank",      color: "#fbbf24" },
-  { id: 4, icon: FileText,    label: "Documents", color: "#f59e0b" },
-  { id: 5, icon: UploadCloud, label: "Data",      color: "#10b981" },
-  { id: 6, icon: ScrollText,  label: "Ketentuan", color: "#8b5cf6" },
-  { id: 7, icon: LogIn,       label: "Finish",    color: "#fb923c" },
+const STEP_ICONS = [
+  { id: 1, icon: Building2,   color: "#f97316" },
+  { id: 2, icon: MapPin,      color: "#f59e0b" },
+  { id: 3, icon: CreditCard,  color: "#fbbf24" },
+  { id: 4, icon: FileText,    color: "#f59e0b" },
+  { id: 5, icon: UploadCloud, color: "#10b981" },
+  { id: 6, icon: ScrollText,  color: "#8b5cf6" },
+  { id: 7, icon: LogIn,       color: "#fb923c" },
 ];
 
 /**
@@ -32,10 +34,17 @@ const STEP_META = [
  * Mengoordinasikan ViewModel, StepTracker, dan SlideContent.
  */
 export default function Onboarding() {
+  const { t } = useLanguage();
   const vm = useOnboardingViewModel();
   const navigate = useNavigate();
   const docInputRef = useRef<HTMLInputElement>(null);
   const [docType, setDocType] = useState("NPWP");
+
+  const stepLabels = t("onboarding.stepMeta").split("|");
+  const stepMeta = STEP_ICONS.map((step, idx) => ({
+    ...step,
+    label: stepLabels[idx] || "",
+  }));
 
   /**
    * Check if country is Indonesia
@@ -50,42 +59,42 @@ export default function Onboarding() {
    */
   const validateCurrentSlide = (): string | null => {
     if (vm.slide === 1) {
-      if (!vm.formData.company_name.trim()) return "Nama perusahaan wajib diisi.";
-      if (!vm.formData.type) return "Pilih tipe bisnis (Buyer/Vendor).";
-      if (!vm.formData.industry_type.trim()) return "Jenis industri wajib dipilih.";
+      if (!vm.formData.company_name.trim()) return t("onboarding.validation.companyName");
+      if (!vm.formData.type) return t("onboarding.validation.businessType");
+      if (!vm.formData.industry_type.trim()) return t("onboarding.validation.industryType");
       // NPWP verification only required for Indonesia
       if (isIndonesia() && !vm.npwpVerifiedData) {
-        return "Harap verifikasi NPWP sebelum melanjutkan.";
+        return t("onboarding.validation.npwp");
       }
     }
     if (vm.slide === 4) {
       // Cek ada dokumen yang diupload
       if (vm.uploadedDocs.length === 0) {
-        return "Harap upload minimal satu dokumen perusahaan (NPWP, KTP Direktur, Akta Perusahaan, dll).";
+        return t("onboarding.validation.uploadDoc");
       }
       
       // Cek apakah semua dokumen memiliki file_path
       const docsWithoutFilePath = vm.uploadedDocs.filter((d: any) => !d.file_path);
       if (docsWithoutFilePath.length > 0) {
-        return `Beberapa dokumen gagal diupload (${docsWithoutFilePath.length} dokumen). Silahkan hapus dan upload ulang dokumen tersebut.`;
+        return t("onboarding.validation.failedDocs").replace("{count}", String(docsWithoutFilePath.length));
       }
     }
     if (vm.slide === 5) {
       if (!vm.selectedFile) {
-        return "Pilih file CSV atau Excel untuk diimport.";
+        return t("onboarding.validation.selectFile");
       }
       if (vm.isParsingFile) {
-        return "Tunggu proses parsing file selesai terlebih dahulu.";
+        return t("onboarding.validation.waitParsing");
       }
       if (!vm.parsedData || vm.parsedData.totalRows === 0) {
-        return "File yang dipilih kosong atau tidak dapat diparsing. Harap pilih file dengan data yang valid.";
+        return t("onboarding.validation.emptyFile");
       }
       if (vm.parsedData.validRowsCount === 0) {
-        return "Tidak ada baris data valid yang ditemukan dalam file ini.";
+        return t("onboarding.validation.noValidRows");
       }
     }
     if (vm.slide === 6 && !vm.termsAccepted) {
-      return "Anda harus menyetujui Ketentuan Penggunaan Platform HUNTR untuk melanjutkan.";
+      return t("onboarding.validation.acceptTerms");
     }
     return null;
   };
@@ -153,16 +162,19 @@ export default function Onboarding() {
           />
           <div className="hidden sm:block pl-2 border-l border-[var(--ui-border)]">
             <div className="font-extrabold text-sm text-[var(--ui-text-primary)] tracking-tight">Huntr.id</div>
-            <div className="text-[9px] text-orange-400 tracking-widest font-bold uppercase">Company Onboarding</div>
+            <div className="text-[9px] text-orange-400 tracking-widest font-bold uppercase">{t("onboarding.label")}</div>
           </div>
         </div>
         
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="w-full max-w-4xl relative z-10 my-auto">
         {/* Step Tracker UI */}
-        <StepTracker steps={STEP_META} currentSlide={vm.slide} />
+        <StepTracker steps={stepMeta} currentSlide={vm.slide} />
 
         {/* Main Card Container */}
         <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-2xl backdrop-blur-xl overflow-hidden shadow-2xl">
@@ -170,7 +182,7 @@ export default function Onboarding() {
           <div 
             className="h-1 transition-all duration-500" 
             style={{ 
-              background: `linear-gradient(90deg, ${STEP_META[Math.min(vm.slide - 1, 6)].color}, ${STEP_META[Math.min(vm.slide - 1, 6)].color}80)`,
+              background: `linear-gradient(90deg, ${stepMeta[Math.min(vm.slide - 1, 6)].color}, ${stepMeta[Math.min(vm.slide - 1, 6)].color}80)`,
               width: `${(vm.slide / TOTAL_SLIDES) * 100}%` 
             }} 
           />
@@ -199,7 +211,7 @@ export default function Onboarding() {
                   onClick={() => vm.setSlide((p: any) => p - 1)} 
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30 font-semibold text-sm transition-all"
                 >
-                  <ChevronLeft size={16} /> Back
+                  <ChevronLeft size={16} /> {t("onboarding.back")}
                 </button>
               )}
               <div className="flex-1" />
@@ -209,7 +221,7 @@ export default function Onboarding() {
                   disabled={vm.isLoading} 
                   className="flex items-center gap-2 px-7 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-500/20"
                 >
-                  {vm.isLoading ? <Loader2 className="animate-spin" size={16} /> : vm.slide === 6 ? "Setuju & Lanjutkan" : "Next"} 
+                  {vm.isLoading ? <Loader2 className="animate-spin" size={16} /> : vm.slide === 6 ? t("onboarding.agreeAndContinue") : t("onboarding.next")} 
                   {!vm.isLoading && <ChevronRight size={16} />}
                 </button>
               )}

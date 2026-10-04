@@ -3,8 +3,10 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Eye, EyeOff, ShieldCheck, Key, ArrowLeft, Mail, Lock, LogIn } from "lucide-react";
 import { login, verify2FALogin, getCsrfCookie } from "../lib/api/auth";
 import AuthLayout from "../components/AuthLayout";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Login() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
@@ -124,9 +126,9 @@ export default function Login() {
   return (
     <AuthLayout
       variant="login"
-      visualTitle="Enterprise B2B Procurement"
-      visualText="Streamline operations, automate RFQ workflows, and connect with verified enterprise vendors."
-      features={["✓ Verified Vendor Network", "✓ Automated RFQ Flow", "✓ Smart PO Matching"]}
+      visualTitle={t("login.visualTitle")}
+      visualText={t("login.visualText")}
+      features={t("login.features").split("|")}
     >
       {!show2FA ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -135,16 +137,16 @@ export default function Login() {
             to="/" 
             className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--ui-text-muted)] hover:text-orange-500 transition-colors w-fit"
           >
-            <ArrowLeft size={14} /> Back to Marketplace
+            <ArrowLeft size={14} /> {t("login.backToMarketplace")}
           </Link>
 
           {/* Heading */}
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-[var(--ui-text-primary)] tracking-tight">
-              Selamat Datang Kembali
+              {t("login.heading")}
             </h1>
             <p className="text-xs sm:text-sm text-[var(--ui-text-muted)] mt-1.5 leading-relaxed">
-              Masuk ke akun Huntr.id Anda untuk mengelola pengadaan perusahaan
+              {t("login.subheading")}
             </p>
           </div>
 
@@ -152,7 +154,7 @@ export default function Login() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-email">
-                Email atau WhatsApp
+                {t("login.emailLabel")}
               </label>
               <div className="relative">
                 <input
@@ -162,7 +164,7 @@ export default function Login() {
                   type="text"
                   inputMode="email"
                   autoComplete="username"
-                  placeholder="Email atau nomor WhatsApp"
+                  placeholder={t("login.emailPlaceholder")}
                   required
                   className="w-full pl-11 pr-4 py-3 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-2 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
                 />
@@ -172,7 +174,7 @@ export default function Login() {
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-password">
-                Kata Sandi
+                {t("login.passwordLabel")}
               </label>
               <div className="relative">
                 <input
@@ -209,14 +211,14 @@ export default function Login() {
                 className="w-4 h-4 rounded border-[var(--ui-border-input)] text-orange-500 focus:ring-orange-500/20 accent-orange-500 cursor-pointer"
               />
               <span className="text-xs font-medium text-[var(--ui-text-secondary)]">
-                Ingat Saya
+                {t("login.rememberMe")}
               </span>
             </label>
             <Link 
               to="/forgot-password" 
               className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
             >
-              Lupa Kata Sandi?
+              {t("login.forgotPassword")}
             </Link>
           </div>
 
@@ -235,11 +237,11 @@ export default function Login() {
           >
             {loading ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Memproses...
+                <Loader2 size={18} className="animate-spin" /> {t("login.loading")}
               </>
             ) : (
               <>
-                <LogIn size={18} /> Masuk Akun
+                <LogIn size={18} /> {t("login.loginBtn")}
               </>
             )}
           </button>
@@ -247,9 +249,9 @@ export default function Login() {
           {/* Footer Link */}
           <div className="text-center pt-2 border-t border-[var(--ui-border-subtle)]">
             <p className="text-xs text-[var(--ui-text-muted)]">
-              Belum memiliki akun perusahaan?{" "}
+              {t("login.noAccount")}{" "}
               <Link to="/register" className="font-bold text-orange-500 hover:underline ml-1">
-                Daftar Sekarang
+                {t("login.registerNow")}
               </Link>
             </p>
           </div>
@@ -261,16 +263,16 @@ export default function Login() {
               <ShieldCheck size={24} />
             </div>
             <h1 className="text-2xl font-black text-[var(--ui-text-primary)]">
-              Verifikasi 2FA
+              {t("login.twoFaTitle")}
             </h1>
             <p className="text-xs text-[var(--ui-text-muted)] max-w-xs mx-auto">
-              {useRecovery ? "Masukkan kode pemulihan (recovery code) Anda" : "Masukkan 6 digit kode dari aplikasi autentikator Anda"}
+              {useRecovery ? t("login.twoFaSubtitleRecovery") : t("login.twoFaSubtitleCode")}
             </p>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-2fa">
-              {useRecovery ? "Kode Pemulihan" : "Kode Autentikasi"}
+              {useRecovery ? t("login.recoveryCodeLabel") : t("login.authCodeLabel")}
             </label>
             <input
               id="login-2fa"
@@ -297,7 +299,7 @@ export default function Login() {
             disabled={loading} 
             className="w-full py-3 px-6 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-md shadow-emerald-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : "Verifikasi & Lanjutkan"}
+            {loading ? <Loader2 size={18} className="animate-spin" /> : t("login.verifyBtn")}
           </button>
 
           <div className="space-y-2 pt-2 text-center">
@@ -307,7 +309,7 @@ export default function Login() {
               className="text-xs font-bold text-orange-500 hover:underline flex items-center justify-center gap-1.5 w-full"
             >
               <Key size={14} />
-              {useRecovery ? "Gunakan Aplikasi Authenticator" : "Gunakan Kode Pemulihan"}
+              {useRecovery ? t("login.useAuthApp") : t("login.useRecovery")}
             </button>
 
             <button
@@ -315,7 +317,7 @@ export default function Login() {
               onClick={() => { setShow2FA(false); setTwoFactorCode(""); }}
               className="text-xs font-medium text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-colors w-full"
             >
-              Kembali ke Form Login
+              {t("login.backToLogin")}
             </button>
           </div>
         </form>

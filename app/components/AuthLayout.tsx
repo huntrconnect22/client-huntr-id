@@ -1,6 +1,8 @@
 import React from "react";
 import { FileText, Building2, ClipboardList, FileCheck2, User, ShieldCheck, Sparkles, CheckCircle2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 
 type FeatureVariant = "orange" | "amber" | "indigo" | "purple";
 
@@ -20,6 +22,7 @@ export default function AuthLayout({
   features,
   children,
 }: AuthLayoutProps) {
+  const { t } = useLanguage();
   const isRegister = variant === "register";
 
   return (
@@ -40,6 +43,7 @@ export default function AuthLayout({
             />
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <ThemeToggle />
           </div>
         </header>
@@ -101,7 +105,7 @@ export default function AuthLayout({
               <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
-                    Syarat Kelengkapan Berkas
+                    {t("register.docsTitle")}
                   </h3>
                   <span className="text-[11px] font-bold text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-md border border-orange-500/20">
                     Onboarding Phase

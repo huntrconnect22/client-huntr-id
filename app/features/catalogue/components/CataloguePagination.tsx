@@ -1,4 +1,5 @@
 import React from "react";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface CataloguePaginationProps {
   currentPage: number;
@@ -11,6 +12,7 @@ export default function CataloguePagination({
   totalPages,
   onPageChange,
 }: CataloguePaginationProps) {
+  const { t } = useLanguage();
   if (totalPages <= 1) return null;
 
   const pages: (number | string)[] = [];
@@ -57,7 +59,7 @@ export default function CataloguePagination({
           fontWeight: 600,
         }}
       >
-        Previous
+        {t("catalogue.pagination.previous")}
       </button>
 
       {pages.map((page, index) =>
@@ -104,7 +106,7 @@ export default function CataloguePagination({
           fontWeight: 600,
         }}
       >
-        Next
+        {t("catalogue.pagination.next")}
       </button>
     </div>
   );

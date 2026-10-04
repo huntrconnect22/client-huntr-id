@@ -1,5 +1,6 @@
 import React from "react";
 import { UploadCloud } from "lucide-react";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface CatalogueBulkImportProps {
   file: File | null;
@@ -27,6 +28,8 @@ export default function CatalogueBulkImport({
   result,
   onSubmit,
 }: CatalogueBulkImportProps) {
+  const { t } = useLanguage();
+
   return (
     <div
       style={{
@@ -47,10 +50,10 @@ export default function CatalogueBulkImport({
       >
         <div>
           <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)" }}>
-            Bulk Import
+            {t("catalogue.importCard.title")}
           </h3>
           <p style={{ margin: "3px 0 0", fontSize: 12, color: "var(--ui-text-muted)" }}>
-            Upload your catalogue via Excel or CSV file.
+            {t("catalogue.importCard.subtitle")}
           </p>
         </div>
         <form onSubmit={onSubmit} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -76,7 +79,7 @@ export default function CatalogueBulkImport({
               color: file ? "var(--ui-text-primary)" : "var(--ui-text-muted)",
             }}
           >
-            <UploadCloud size={15} /> {file ? file.name : "Select file..."}
+            <UploadCloud size={15} /> {file ? file.name : t("catalogue.importCard.selectFile")}
           </label>
           <button
             type="submit"
@@ -86,7 +89,7 @@ export default function CatalogueBulkImport({
               opacity: !file || loading ? 0.5 : 1,
             }}
           >
-            {loading ? "Processing..." : "Import"}
+            {loading ? t("catalogue.importCard.processing") : t("catalogue.importCard.importBtn")}
           </button>
         </form>
       </div>
@@ -98,11 +101,13 @@ export default function CatalogueBulkImport({
             background: "rgba(34,197,94,0.06)",
             border: "1px solid rgba(34,197,94,0.2)",
             borderRadius: 8,
-            color: "var(--huntr-green)",
             fontSize: 12,
+            color: "var(--ui-text-secondary)",
           }}
         >
-          ✓ Catalogue update has been queued and will be visible shortly.
+          <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {JSON.stringify(result, null, 2)}
+          </pre>
         </div>
       )}
     </div>

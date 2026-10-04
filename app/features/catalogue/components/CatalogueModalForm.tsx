@@ -1,6 +1,7 @@
 import React from "react";
 import { Sparkles, Loader2, X, Image as ImageIcon } from "lucide-react";
 import { PRODUCT_CATEGORIES, type CatalogueFormData } from "../types";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface CatalogueModalFormProps {
   show: boolean;
@@ -76,6 +77,7 @@ export default function CatalogueModalForm({
   onAiImageSearch,
   onSubmit,
 }: CatalogueModalFormProps) {
+  const { t } = useLanguage();
   if (!show) return null;
 
   return (
@@ -118,7 +120,7 @@ export default function CatalogueModalForm({
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--ui-text-primary)" }}>
-              {editingItem ? "Edit Product" : "Add New Product"}
+              {editingItem ? t("catalogue.modal.editTitle") : t("catalogue.modal.addTitle")}
             </h3>
           </div>
 
@@ -133,10 +135,10 @@ export default function CatalogueModalForm({
                 cursor: aiAutofilling ? "not-allowed" : "pointer",
                 opacity: aiAutofilling ? 0.7 : 1,
               }}
-              title="Gunakan ChatGPT AI untuk mencari spesifikasi, merek, kategori & gambar produk secara otomatis"
+              title="Use ChatGPT AI to auto-fill specifications, brand, category & product image"
             >
               {aiAutofilling ? <Loader2 className="animate-spin" size={13} /> : <Sparkles size={13} />}
-              <span>{aiAutofilling ? "Menganalisis..." : "ChatGPT AI Auto-fill"}</span>
+              <span>{aiAutofilling ? t("catalogue.modal.aiAnalyzing") : t("catalogue.modal.aiAutofillBtn")}</span>
             </button>
 
             <button
@@ -178,22 +180,22 @@ export default function CatalogueModalForm({
           }}
         >
           <Field
-            label="Item Code"
+            label={t("catalogue.modal.itemCode")}
             value={formData.item_code}
             onChange={(v: any) => setFormData((prev) => ({ ...prev, item_code: v }))}
-            placeholder="e.g. HTR-123456"
+            placeholder={t("catalogue.modal.itemCodePlaceholder")}
             required
           />
           <Field
-            label="Product Name"
+            label={t("catalogue.modal.productName")}
             value={formData.name}
             onChange={(v: any) => setFormData((prev) => ({ ...prev, name: v }))}
-            placeholder="e.g. Hydraulic Pump"
+            placeholder={t("catalogue.modal.productNamePlaceholder")}
             required
           />
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={lbl}>Category</label>
+            <label style={lbl}>{t("catalogue.modal.category")}</label>
             <select
               value={formData.category}
               onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
@@ -209,20 +211,20 @@ export default function CatalogueModalForm({
           </div>
 
           <Field
-            label="Brand (Optional)"
+            label={t("catalogue.modal.brand")}
             value={formData.brand}
             onChange={(v: any) => setFormData((prev) => ({ ...prev, brand: v }))}
-            placeholder="e.g. Bosch, Siemens"
+            placeholder={t("catalogue.modal.brandPlaceholder")}
           />
           <Field
-            label="Keywords / Tags"
+            label={t("catalogue.modal.keywords")}
             value={formData.keywords}
             onChange={(v: any) => setFormData((prev) => ({ ...prev, keywords: v }))}
-            placeholder="e.g. pump, hydraulic"
+            placeholder={t("catalogue.modal.keywordsPlaceholder")}
           />
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={lbl}>UOM</label>
+            <label style={lbl}>{t("catalogue.modal.uom")}</label>
             <select
               value={formData.uom}
               onChange={(e) => setFormData((prev) => ({ ...prev, uom: e.target.value }))}
@@ -238,7 +240,7 @@ export default function CatalogueModalForm({
           </div>
 
           <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
-            <label style={lbl}>Product Image</label>
+            <label style={lbl}>{t("catalogue.modal.productImage")}</label>
             <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full">
               <input
                 type="file"
@@ -258,10 +260,10 @@ export default function CatalogueModalForm({
                 disabled={aiImageSearching || !formData.name.trim()}
                 onClick={onAiImageSearch}
                 className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-orange-500/40 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
-                title="Generate foto studio produk AI otomatis"
+                title="Auto-generate AI product studio photo"
               >
                 {aiImageSearching ? <Loader2 size={13} className="animate-spin" /> : <ImageIcon size={13} />}
-                <span>{aiImageSearching ? "Meng-generate..." : "Generate Foto AI"}</span>
+                <span>{aiImageSearching ? t("catalogue.modal.generatingPhoto") : t("catalogue.modal.generateAiPhoto")}</span>
               </button>
             </div>
             {productImage && (
@@ -279,18 +281,18 @@ export default function CatalogueModalForm({
                   onClick={() => setProductImage(null)}
                   className="text-xs text-red-500 hover:text-red-600 font-semibold px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 border-none cursor-pointer flex-shrink-0"
                 >
-                  ✕ Hapus
+                  {t("catalogue.modal.removePhoto")}
                 </button>
               </div>
             )}
           </div>
 
           <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={lbl}>Specifications</label>
+            <label style={lbl}>{t("catalogue.modal.specifications")}</label>
             <textarea
               value={formData.specifications}
               onChange={(e) => setFormData((prev) => ({ ...prev, specifications: e.target.value }))}
-              placeholder="Detailed description..."
+              placeholder={t("catalogue.modal.specificationsPlaceholder")}
               rows={4}
               style={{
                 ...inputStyle,
@@ -316,10 +318,10 @@ export default function CatalogueModalForm({
                 fontWeight: 600,
               }}
             >
-              Cancel
+              {t("catalogue.modal.cancel")}
             </button>
             <button type="submit" disabled={loading} style={primaryBtn}>
-              {loading ? <Loader2 className="animate-spin" size={16} /> : "Save Product"}
+              {loading ? <Loader2 className="animate-spin" size={16} /> : t("catalogue.modal.save")}
             </button>
           </div>
         </form>

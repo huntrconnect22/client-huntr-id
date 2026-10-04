@@ -1,6 +1,7 @@
 import React from "react";
 import { Trash2 } from "lucide-react";
 import { type CatalogueItem } from "../types";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface CatalogueTableViewProps {
   items: CatalogueItem[];
@@ -19,6 +20,7 @@ export default function CatalogueTableView({
   onEditItem,
   onDeleteItem,
 }: CatalogueTableViewProps) {
+  const { t } = useLanguage();
   const topTen = items.slice(0, 10);
   const isAllSelected = selectedItemIds.length > 0 && selectedItemIds.length === topTen.length;
 
@@ -52,7 +54,7 @@ export default function CatalogueTableView({
                 letterSpacing: "0.08em",
               }}
             >
-              Item Info
+              {t("catalogue.table.itemInfo")}
             </th>
             <th
               style={{
@@ -64,7 +66,7 @@ export default function CatalogueTableView({
                 letterSpacing: "0.08em",
               }}
             >
-              Category
+              {t("catalogue.table.category")}
             </th>
             <th
               style={{
@@ -76,7 +78,7 @@ export default function CatalogueTableView({
                 letterSpacing: "0.08em",
               }}
             >
-              UOM
+              {t("catalogue.table.uom")}
             </th>
             <th
               style={{
@@ -89,7 +91,7 @@ export default function CatalogueTableView({
                 textAlign: "right",
               }}
             >
-              Actions
+              {t("catalogue.table.actions")}
             </th>
           </tr>
         </thead>
@@ -123,7 +125,7 @@ export default function CatalogueTableView({
                 </td>
                 <td style={{ padding: "14px 16px" }}>
                   <span style={{ color: "var(--ui-text-brand)", fontSize: 12, fontWeight: 600 }}>
-                    {item.category || "General"}
+                    {item.category || t("catalogue.table.generalCategory")}
                   </span>
                 </td>
                 <td style={{ padding: "14px 16px", color: "var(--ui-text-secondary)", fontSize: 12 }}>
@@ -148,7 +150,7 @@ export default function CatalogueTableView({
                       onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = "var(--huntr-orange)")}
                       onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = "var(--ui-border-input)")}
                     >
-                      Edit
+                      {t("catalogue.table.edit")}
                     </button>
                     {onDeleteItem && (
                       <button
@@ -176,10 +178,10 @@ export default function CatalogueTableView({
                           (e.currentTarget as HTMLButtonElement).style.background = "rgba(239, 68, 68, 0.08)";
                           (e.currentTarget as HTMLButtonElement).style.color = "#ef4444";
                         }}
-                        title="Delete product"
+                        title={t("catalogue.table.delete")}
                       >
                         <Trash2 size={13} />
-                        Delete
+                        {t("catalogue.table.delete")}
                       </button>
                     )}
                   </div>
