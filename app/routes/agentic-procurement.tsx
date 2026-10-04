@@ -38,6 +38,7 @@ export default function AgenticProcurementPage() {
   const [activeTab, setActiveTab] = useState<"pr" | "comparison" | "catalogues" | "chat">("pr");
   const [isCreatingPr, setIsCreatingPr] = useState(false);
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
+  const [selectedWinner, setSelectedWinner] = useState<any>(null);
 
   // Real-time animated workflow steps
   const [workflowSteps, setWorkflowSteps] = useState<StepStatus[]>([
@@ -299,19 +300,22 @@ export default function AgenticProcurementPage() {
     return 0;
   };
 
-  const handleCreatePrNow = async () => {
+  const handleCreatePrNow = async (config?: { department?: string; tenderDays?: number; attachments?: File[] }) => {
     if (!result?.pr_draft || !activeCompany?.id) return;
 
     const totalBudget = getPrTotalBudget(result.pr_draft, result.intent);
+    const department = config?.department || result.pr_draft.department || "Procurement";
+    const tenderDays = config?.tenderDays || result.pr_draft.duration_days || 14;
 
     const confirm = await Swal.fire({
       title: "Buat Purchase Requisition?",
       html: `
         <div class="text-left text-xs">
           <p class="font-semibold text-gray-800 dark:text-gray-200 mb-1">${result.pr_draft.title}</p>
-          <p class="text-gray-600 dark:text-gray-400 mb-2">${result.pr_draft.suggested_items?.length || 0} item line akan dibuat dan diajukan ke Approval Manager.</p>
+          <p class="text-gray-600 dark:text-gray-400 mb-2">${result.pr_draft.suggested_items?.length || 0} item line — Departemen: <b>${department}</b> — Tender: <b>${tenderDays} hari</b></p>
+          ${selectedWinner ? `<p class="text-blue-600 dark:text-blue-400 mb-2">Produk dipilih: <b>${selectedWinner.product_name || selectedWinner.name}</b></p>` : ""}
           <div class="bg-orange-50 dark:bg-orange-950/40 p-2.5 rounded border border-orange-200 dark:border-orange-800 font-mono text-orange-800 dark:text-orange-300">
-            Total Anggaran: <b>${totalBudget > 0 ? `Rp ${totalBudget.toLocaleString("id-ID")}` : "TBD (Menunggu Penawaran Vendor)"}</b>
+            Total Anggaran: <b>${totalBudget > 0 ? `Rp ${totalBudget.toLocaleString("id-ID")}` : "Perlu Penawaran Vendor"}</b>
           </div>
         </div>
       `,
@@ -327,7 +331,13 @@ export default function AgenticProcurementPage() {
 
     setIsCreatingPr(true);
     try {
-      const res = await createAgenticPr(activeCompany.id, result.pr_draft);
+      const payload = {
+        ...result.pr_draft,
+        department,
+        duration_days: tenderDays,
+        selected_winner: selectedWinner || null,
+      };
+      const res = await createAgenticPr(activeCompany.id, payload);
       if (res && res.success && res.rfq?.id) {
         await Swal.fire({
           icon: "success",
@@ -356,6 +366,7 @@ export default function AgenticProcurementPage() {
 
   const handleExportToCart = () => {
     if (!result?.pr_draft?.suggested_items) return;
+
 
     const items = result.pr_draft.suggested_items.map((item: any) => ({
       id: item.catalogue_id || item.id || `ai-${Math.random().toString(36).substr(2, 9)}`,
@@ -534,7 +545,7 @@ export default function AgenticProcurementPage() {
                 </button>
 
                 <button
-                  onClick={handleCreatePrNow}
+                  onClick={() => handleCreatePrNow()}
                   disabled={isCreatingPr}
                   className="flex-1 sm:flex-initial justify-center px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                 >
@@ -560,9 +571,10 @@ export default function AgenticProcurementPage() {
                 intent={result.intent}
                 activeCompanyName={activeCompany?.name}
                 isCreatingPr={isCreatingPr}
-                onCreatePr={handleCreatePrNow}
+                onCreatePr={(config) => handleCreatePrNow(config)}
                 formatRupiah={formatRupiah}
                 getTotalBudget={getPrTotalBudget}
+                selectedWinner={selectedWinner}
               />
             )}
 
@@ -571,6 +583,11 @@ export default function AgenticProcurementPage() {
               <AgenticComparisonTab
                 comparison={result.comparison}
                 formatRupiah={formatRupiah}
+                onSelectWinner={(item) => {
+                  setSelectedWinner(item);
+                  setActiveTab("pr");
+                }}
+                selectedWinnerId={selectedWinner ? String(selectedWinner.catalogue_id ?? selectedWinner.id ?? selectedWinner.product_name) : null}
               />
             )}
 

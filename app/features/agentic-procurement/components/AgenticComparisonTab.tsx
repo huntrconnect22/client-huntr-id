@@ -9,10 +9,15 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
 } from "recharts";
 
+import { MousePointerClick } from "lucide-react";
+
 interface AgenticComparisonTabProps {
   comparison: any;
   formatRupiah: (num: number) => string;
+  onSelectWinner?: (item: any) => void;
+  selectedWinnerId?: string | null;
 }
+
 
 const CHART_COLORS = [
   "#f97316", "#3b82f6", "#8b5cf6", "#10b981", "#f43f5e", "#eab308",
@@ -61,9 +66,18 @@ function ProductThumbnail({ src, alt }: { src?: string | null; alt: string }) {
 export default function AgenticComparisonTab({
   comparison,
   formatRupiah,
+  onSelectWinner,
+  selectedWinnerId,
 }: AgenticComparisonTabProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [expandedSources, setExpandedSources] = useState<Record<number, boolean>>({});
+  const [localSelected, setLocalSelected] = useState<string | null>(selectedWinnerId ?? null);
+
+  function handleSelect(item: any) {
+    const id = String(item.catalogue_id ?? item.id ?? item.product_name);
+    setLocalSelected(id);
+    onSelectWinner?.(item);
+  }
 
   if (!comparison) return null;
 
@@ -170,11 +184,25 @@ export default function AgenticComparisonTab({
                         : "border-[var(--ui-border)]"
                     }`}
                   >
-                    {/* Winner badge */}
+                    {/* Winner badge — AI recommendation */}
                     {isWinner && (
                       <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
                         <Award size={9} />
                         Direkomendasikan AI
+                      </div>
+                    )}
+
+                    {/* Selected badge — user choice */}
+                    {String(item.catalogue_id ?? item.id ?? item.product_name) === localSelected && !isWinner && (
+                      <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
+                        <MousePointerClick size={9} />
+                        Dipilih Anda
+                      </div>
+                    )}
+                    {String(item.catalogue_id ?? item.id ?? item.product_name) === localSelected && isWinner && (
+                      <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
+                        <MousePointerClick size={9} />
+                        Dipilih Anda
                       </div>
                     )}
 
@@ -340,16 +368,26 @@ export default function AgenticComparisonTab({
                       )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="px-3 py-2 border-t border-[var(--ui-border)] flex items-center justify-between text-xs mt-auto">
-                      <span className={`text-[10px] font-semibold ${item.value_rating?.toLowerCase().includes("sangat") ? "text-emerald-400" : "text-[var(--ui-text-muted)]"}`}>
+                    {/* Footer — Select button */}
+                    <div className="px-3 py-2 border-t border-[var(--ui-border)] flex items-center justify-between text-xs mt-auto gap-2">
+                      <span className={`text-[10px] font-semibold shrink-0 ${item.value_rating?.toLowerCase().includes("sangat") ? "text-emerald-400" : "text-[var(--ui-text-muted)]"}`}>
                         {item.value_rating ?? "Perlu RFQ"}
                       </span>
-                      {hasBravePrice && (
-                        <span className="text-[9px] text-blue-400 flex items-center gap-0.5">
-                          <TrendingUp size={9} />
-                          Harga web
+
+                      {/* Select button */}
+                      {localSelected === String(item.catalogue_id ?? item.id ?? item.product_name) ? (
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[10px] font-bold">
+                          <CheckCircle2 size={10} /> Dipilih
                         </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(item)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] hover:border-blue-500/50 hover:bg-blue-500/8 text-[var(--ui-text-muted)] hover:text-blue-400 text-[10px] font-semibold transition-colors cursor-pointer"
+                        >
+                          <MousePointerClick size={10} />
+                          Pilih Produk Ini
+                        </button>
                       )}
                     </div>
                   </div>
