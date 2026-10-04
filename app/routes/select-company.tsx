@@ -106,12 +106,12 @@ export default function SelectCompany() {
               <h1 className="text-xl font-bold text-[var(--ui-text-primary)] tracking-tight mb-1">
                 {t("selectCompany.chooseWorkspace")}
               </h1>
-              {user && (
+              {user?.name ? (
                 <p className="text-xs text-[var(--ui-text-secondary)]">
                   {t("selectCompany.welcomeBack")}{" "}
                   <span className="text-orange-400 font-semibold">{user.name}</span>
                 </p>
-              )}
+              ) : null}
             </div>
 
             {/* Body */}

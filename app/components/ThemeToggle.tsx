@@ -14,12 +14,10 @@ export default function ThemeToggle() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  if (!mounted) {
-    return <div style={{ width: 108, height: 32, borderRadius: 10, background: "var(--ui-toggle-bg)" }} />;
-  }
-
-  // Derive current active mode
-  const mode: "light" | "auto" | "dark" = isAuto ? "auto" : isDark ? "dark" : "light";
+  // Derive current active mode (defaults to 'dark' on SSR before mount)
+  const mode: "light" | "auto" | "dark" = mounted
+    ? (isAuto ? "auto" : isDark ? "dark" : "light")
+    : "dark";
 
   const handleClick = (next: "light" | "auto" | "dark") => {
     setThemeMode(next);
