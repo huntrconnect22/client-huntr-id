@@ -11,6 +11,8 @@ import {
   Package, ShoppingCart, ArrowLeft, CheckCircle2,
   Plus, Tag, Ruler,
 } from "lucide-react";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 import type { Route } from "./+types/marketplace-detail";
 
 /* ── SSR Loader ────────────────────────────────────────────────────── */
@@ -64,12 +66,22 @@ function SpecsBlock({ text }: { text?: string }) {
 
 /* ── Guest header ──────────────────────────────────────────────────── */
 function GuestHeader() {
+  const { t } = useLanguage();
   return (
     <header className="sticky top-0 z-50 bg-[#1a1a1a] shadow-md px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
       <Link to="/"><img src="/assets/img/logo/sidebar.png" alt="Huntr" className="h-8 w-auto object-contain" /></Link>
       <nav className="flex items-center gap-3">
-        <Link to="/login"    className="px-3.5 py-1.5 border border-orange-500 rounded text-orange-500 text-xs font-bold hover:bg-orange-500 hover:text-white transition-all">Sign In</Link>
-        <Link to="/register" className="px-3.5 py-1.5 bg-orange-500 rounded text-white text-xs font-bold hover:bg-orange-600 transition-all">Register</Link>
+        <LanguageSwitcher
+          buttonStyle={{
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.18)",
+            color: "#f3f4f6",
+            height: 32,
+            padding: "4px 8px",
+          }}
+        />
+        <Link to="/login"    className="px-3.5 py-1.5 border border-orange-500 rounded text-orange-500 text-xs font-bold hover:bg-orange-500 hover:text-white transition-all">{t("guestMarketplace.login")}</Link>
+        <Link to="/register" className="px-3.5 py-1.5 bg-orange-500 rounded text-white text-xs font-bold hover:bg-orange-600 transition-all">{t("guestMarketplace.register")}</Link>
       </nav>
     </header>
   );

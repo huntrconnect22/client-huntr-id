@@ -7,7 +7,13 @@ import { LOCALE_LABELS, type Locale } from "../locales";
  * Compact language switcher dropdown.
  * Can be placed in the header, user-menu, or settings page.
  */
-export function LanguageSwitcher() {
+export function LanguageSwitcher({
+  buttonStyle,
+  className,
+}: {
+  buttonStyle?: React.CSSProperties;
+  className?: string;
+} = {}) {
   const { locale, setLocale } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -40,6 +46,7 @@ export function LanguageSwitcher() {
         aria-label={`Language: ${LOCALE_LABELS[locale]}`}
         onClick={() => setOpen((v) => !v)}
         title={`Language: ${LOCALE_LABELS[locale]}`}
+        className={className}
         style={{
           display: "flex",
           alignItems: "center",
@@ -55,6 +62,7 @@ export function LanguageSwitcher() {
           transition: "all 0.15s",
           letterSpacing: "0.03em",
           height: 34,
+          ...buttonStyle,
         }}
       >
         <Languages size={14} />

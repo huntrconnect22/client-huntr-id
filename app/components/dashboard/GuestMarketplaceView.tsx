@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams, useNavigation } from "react-router"
 import { Search, Package, Loader2, ChevronDown, ShieldCheck, Truck, ChevronLeft, ChevronRight as ChevronRightIcon, Menu, X, CreditCard, Briefcase, Tag, TrendingUp, Utensils, Sparkles } from "lucide-react";
 import { getCatalogues, aiSearch, isAiQuery } from "../../lib/api";
 import { getAssetUrl } from "../../lib/assets";
+import { LanguageSwitcher } from "../LanguageSwitcher";
+import { useLanguage } from "../../context/LanguageContext";
 
 const CATEGORIES = [
   "All", "Hardware", "Software", "Furniture", "Office Supplies",
@@ -18,6 +20,7 @@ const FEATURE_CARDS = [
 ];
 
 export function GuestMarketplaceView() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get("search") || "";
@@ -207,20 +210,31 @@ export function GuestMarketplaceView() {
             <img src="/assets/img/logo/sidebar.png" alt="Huntr Logo" style={s.logo} />
           </Link>
 
-          <button
-            onClick={() => setMobileMenuOpen(v => !v)}
-            className="md:hidden text-white hover:text-[#f97316] transition-colors p-1"
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <LanguageSwitcher
+              buttonStyle={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                color: "#f3f4f6",
+                height: 32,
+                padding: "3px 8px",
+              }}
+            />
+            <button
+              onClick={() => setMobileMenuOpen(v => !v)}
+              className="text-white hover:text-[#f97316] transition-colors p-1"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Search Bar - Full width on mobile, centered on desktop */}
         <div className="w-full md:flex-1 md:max-w-[600px] flex items-stretch bg-white rounded overflow-hidden shadow-[0_0_0_2px_#f97316] h-[38px] md:h-[40px]">
           <input
             type="text"
-            placeholder="Cari produk atau penjual..."
+            placeholder={t("guestMarketplace.searchPlaceholder")}
             value={localSearch}
             onChange={e => setLocalSearch(e.target.value)}
             style={s.searchInput}
@@ -232,23 +246,33 @@ export function GuestMarketplaceView() {
             className="bg-[#f97316] border-none cursor-pointer px-5 flex items-center gap-2 text-white text-xs md:text-sm font-bold flex-shrink-0"
           >
             <Search size={15} />
-            <span className="hidden sm:inline">Cari</span>
+            <span className="hidden sm:inline">{t("guestMarketplace.searchBtn")}</span>
           </button>
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-5 ml-auto flex-shrink-0">
+        <nav className="hidden md:flex items-center gap-4 ml-auto flex-shrink-0">
           <Link to="/track" style={s.topLink}>
-            <Truck size={13} /> Track Order
+            <Truck size={13} /> {t("guestMarketplace.trackOrder")}
           </Link>
           <Link to="/verify" style={s.topLink}>
-            <ShieldCheck size={13} /> Verify
+            <ShieldCheck size={13} /> {t("guestMarketplace.verify")}
           </Link>
           <div style={s.divider} />
-          <Link to="/register" style={{ ...s.topLink, color: "#f97316", fontWeight: 700 }}>Jadi Vendor</Link>
+          <Link to="/register" style={{ ...s.topLink, color: "#f97316", fontWeight: 700 }}>{t("guestMarketplace.becomeVendor")}</Link>
           <div style={s.divider} />
-          <Link to="/login" style={s.btnOutline}>Masuk</Link>
-          <Link to="/register" style={s.btnFill}>Daftar</Link>
+          <LanguageSwitcher
+            buttonStyle={{
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              color: "#f3f4f6",
+              height: 32,
+              padding: "4px 8px",
+            }}
+          />
+          <div style={s.divider} />
+          <Link to="/login" style={s.btnOutline}>{t("guestMarketplace.login")}</Link>
+          <Link to="/register" style={s.btnFill}>{t("guestMarketplace.register")}</Link>
         </nav>
 
         {/* Mobile Navigation Panel */}
@@ -259,21 +283,21 @@ export function GuestMarketplaceView() {
               onClick={() => setMobileMenuOpen(false)}
               className="text-gray-300 hover:text-white flex items-center gap-3 text-sm py-2"
             >
-              <Truck size={16} className="text-[#f97316]" /> Track Order
+              <Truck size={16} className="text-[#f97316]" /> {t("guestMarketplace.trackOrder")}
             </Link>
             <Link
               to="/verify"
               onClick={() => setMobileMenuOpen(false)}
               className="text-gray-300 hover:text-white flex items-center gap-3 text-sm py-2"
             >
-              <ShieldCheck size={16} className="text-[#f97316]" /> Verify
+              <ShieldCheck size={16} className="text-[#f97316]" /> {t("guestMarketplace.verify")}
             </Link>
             <Link
               to="/register"
               onClick={() => setMobileMenuOpen(false)}
               className="text-[#f97316] font-bold flex items-center gap-3 text-sm py-2"
             >
-              Jadi Vendor
+              {t("guestMarketplace.becomeVendor")}
             </Link>
             <div className="h-px bg-[#333] my-1" />
             <div className="flex gap-3">
@@ -282,14 +306,14 @@ export function GuestMarketplaceView() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex-1 py-2 text-center border border-[#f97316] rounded text-[#f97316] font-bold text-sm bg-transparent"
               >
-                Masuk
+                {t("guestMarketplace.login")}
               </Link>
               <Link
                 to="/register"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex-1 py-2 text-center rounded bg-[#f97316] text-white font-bold text-sm"
               >
-                Daftar
+                {t("guestMarketplace.register")}
               </Link>
             </div>
           </div>
@@ -305,13 +329,13 @@ export function GuestMarketplaceView() {
             {/* Main banner */}
             <div className="lg:col-span-2 bg-gradient-to-br from-[#fff4eb] to-[#fde8cc] border border-[#f7d9b0] rounded py-8 px-6 sm:py-10 sm:px-10 flex flex-col justify-center min-h-[180px] sm:min-h-[220px]">
               <span className="text-[#f97316] font-extrabold text-xs uppercase tracking-wider">
-                Huntr.id Platform
+                {t("guestMarketplace.platformTag")}
               </span>
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#111] my-3 leading-tight">
-                Enterprise E-Procurement Ecosystem
+                {t("guestMarketplace.heroTitle")}
               </h1>
               <p className="text-gray-600 text-xs sm:text-sm leading-relaxed max-w-[480px]">
-                Hubungkan perusahaan Anda dengan ribuan vendor terverifikasi dalam satu ekosistem B2B yang efisien.
+                {t("guestMarketplace.heroDesc")}
               </p>
             </div>
 
@@ -322,8 +346,8 @@ export function GuestMarketplaceView() {
                   <Briefcase size={20} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-[#111]">E-Bidding</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Sistem proposal digital transparan</div>
+                  <div className="font-bold text-sm text-[#111]">{t("guestMarketplace.ebiddingTitle")}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{t("guestMarketplace.ebiddingSub")}</div>
                 </div>
               </div>
               <div className="bg-white border border-[#e5e5e5] rounded p-4 flex items-center gap-3.5">
@@ -331,8 +355,8 @@ export function GuestMarketplaceView() {
                   <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-[#111]">Verified Vendors</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Keamanan transaksi terjamin</div>
+                  <div className="font-bold text-sm text-[#111]">{t("guestMarketplace.verifiedVendorsTitle")}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{t("guestMarketplace.verifiedVendorsSub")}</div>
                 </div>
               </div>
             </div>
@@ -342,7 +366,11 @@ export function GuestMarketplaceView() {
         {/* ── FEATURE CARDS ROW ─────────────────────────────────────────── */}
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {FEATURE_CARDS.map(c => (
+            {[
+              { icon: <TrendingUp size={20} />, title: t("guestMarketplace.crowdBuyTitle"), sub: t("guestMarketplace.crowdBuySub") },
+              { icon: <CreditCard size={20} />, title: t("guestMarketplace.payTitle"), sub: t("guestMarketplace.paySub") },
+              { icon: <Utensils size={20} />, title: t("guestMarketplace.foodTitle"), sub: t("guestMarketplace.foodSub") },
+            ].map(c => (
               <div key={c.title} className="bg-[#1e293b] text-white rounded p-4 flex items-start gap-3 cursor-pointer hover:bg-[#334155] transition-colors">
                 <span className="text-[#f97316] flex-shrink-0 mt-0.5">{c.icon}</span>
                 <div>
@@ -371,7 +399,7 @@ export function GuestMarketplaceView() {
                 {cat === "All" ? (
                   <>
                     <Tag size={14} className={activeCategory === cat ? "text-[#f97316]" : "text-gray-500"} />
-                    <span>Semua</span>
+                    <span>{t("guestMarketplace.allCategory")}</span>
                   </>
                 ) : cat}
               </button>
@@ -403,7 +431,7 @@ export function GuestMarketplaceView() {
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Sparkles size={16} color="#a78bfa" />
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#a78bfa", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Rekomendasi AI
+                    {t("guestMarketplace.aiRecommendation")}
                   </span>
                 </div>
                 {!aiLoading && (
@@ -421,7 +449,7 @@ export function GuestMarketplaceView() {
               {aiLoading && (
                 <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#c4b5fd" }}>
                   <Loader2 size={16} className="animate-spin" />
-                  <span style={{ fontSize: 13 }}>Sedang menganalisis kebutuhan Anda...</span>
+                  <span style={{ fontSize: 13 }}>{t("guestMarketplace.aiAnalyzing")}</span>
                 </div>
               )}
 
@@ -471,7 +499,7 @@ export function GuestMarketplaceView() {
                   {/* Product count info */}
                   {aiResult.products && aiResult.products.length > 0 && (
                     <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>
-                      Menampilkan {aiResult.products.length} produk yang paling relevan berdasarkan analisis AI
+                      {t("guestMarketplace.aiRelevantProducts", { count: aiResult.products.length })}
                     </p>
                   )}
                 </div>
@@ -487,9 +515,9 @@ export function GuestMarketplaceView() {
               {aiResult ? (
                 <>
                   <Sparkles size={15} color="#7c3aed" />
-                  Hasil Pencarian AI
+                  {t("guestMarketplace.aiSearchResults")}
                 </>
-              ) : "Rekomendasi Produk"}
+              ) : t("guestMarketplace.recommendedProducts")}
             </h2>
           </div>
 
@@ -500,7 +528,7 @@ export function GuestMarketplaceView() {
           ) : items.length === 0 ? (
             <div className="py-[60px] text-center text-[#999]">
               <Package size={48} style={{ opacity: 0.15, margin: "0 auto 16px" }} />
-              <p className="text-sm">Belum ada produk yang tersedia.</p>
+              <p className="text-sm">{t("guestMarketplace.noProducts")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
@@ -530,7 +558,7 @@ export function GuestMarketplaceView() {
                       {isCardLoading ? (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                           <Loader2 className="animate-spin" size={24} color="#f97316" />
-                          <span style={{ fontSize: 10, color: "#f97316", fontWeight: 700 }}>Memuat...</span>
+                          <span style={{ fontSize: 10, color: "#f97316", fontWeight: 700 }}>{t("guestMarketplace.loadingProducts")}</span>
                         </div>
                       ) : (item.image_url || item.image_path) ? (
                         <img
@@ -621,10 +649,10 @@ export function GuestMarketplaceView() {
               gap: "12px",
             }}>
               <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: "#111" }}>
-                Belum menemukan produk yang tepat?
+                {t("guestMarketplace.cantFindTitle")}
               </h2>
               <p style={{ margin: 0, fontSize: "13px", color: "#555", lineHeight: 1.7 }}>
-                Tim kami siap membantu Anda menemukan produk atau kategori yang paling sesuai dengan kebutuhan bisnis Anda.
+                {t("guestMarketplace.cantFindDesc")}
               </p>
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginTop: "4px" }}>
                 <Link
@@ -643,7 +671,7 @@ export function GuestMarketplaceView() {
                     boxShadow: "0 2px 6px rgba(249,115,22,0.25)",
                   }}
                 >
-                  Hubungi Tim Kami
+                  {t("guestMarketplace.contactTeam")}
                 </Link>
                 <Link
                   to="/login"
@@ -661,7 +689,7 @@ export function GuestMarketplaceView() {
                     border: "1px solid #f97316",
                   }}
                 >
-                  Masuk ke Akun
+                  {t("guestMarketplace.loginAccount")}
                 </Link>
               </div>
             </div>
@@ -679,10 +707,10 @@ export function GuestMarketplaceView() {
               gap: "12px",
             }}>
               <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: "#fff" }}>
-                Punya produk serupa?
+                {t("guestMarketplace.haveProductTitle")}
               </h2>
               <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8", lineHeight: 1.7 }}>
-                Daftarkan bisnis Anda sebagai vendor dan jangkau ribuan pembeli korporat yang aktif mencari produk di platform kami.
+                {t("guestMarketplace.haveProductDesc")}
               </p>
               <Link
                 to="/register"
@@ -701,7 +729,7 @@ export function GuestMarketplaceView() {
                   marginTop: "4px",
                 }}
               >
-                Daftar Jadi Vendor
+                {t("guestMarketplace.registerVendor")}
               </Link>
             </div>
 
