@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface NotificationDropdownProps {
   unreadCount: number;
@@ -17,6 +18,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onClose,
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div
@@ -59,7 +61,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
               color: "var(--ui-text-primary)",
             }}
           >
-            Notifications
+            {t("notifications.title")}
           </span>
           {unreadCount > 0 && (
             <span
@@ -74,7 +76,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 letterSpacing: "0.04em",
               }}
             >
-              {unreadCount} new
+              {t("notifications.new", { count: unreadCount })}
             </span>
           )}
         </div>
@@ -93,7 +95,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             padding: 0,
           }}
         >
-          Mark all read
+          {t("notifications.markAllRead")}
         </button>
       </div>
 
@@ -107,7 +109,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
               fontSize: 12,
             }}
           >
-            No recent activity
+            {t("notifications.noActivity")}
           </div>
         ) : (
           recentNotifications.map((n: any) => (
@@ -182,7 +184,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           cursor: "pointer",
         }}
       >
-        View All Notifications
+        {t("notifications.viewAll")}
       </button>
     </div>
   );

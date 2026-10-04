@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { Building2 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface StatusGateProps {
   status: "rejected" | "pending";
@@ -16,6 +17,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
   onSwitchCompany,
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   if (status === "rejected") {
     return (
@@ -61,7 +63,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
               letterSpacing: "-0.3px",
             }}
           >
-            Pendaftaran Perusahaan Ditolak
+            {t("statusGate.rejected.title")}
           </h2>
           <p
             style={{
@@ -71,11 +73,11 @@ export const StatusGate: React.FC<StatusGateProps> = ({
               margin: 0,
             }}
           >
-            Workspace untuk <strong>{companyName}</strong> ditolak oleh tim
-            admin.
+            Workspace untuk <strong>{companyName}</strong>{" "}
             {verificationNotes
-              ? ` Alasan: "${verificationNotes}"`
-              : " Silakan periksa kembali data legalitas dan daftarkan ulang profil perusahaan Anda."}
+              ? t("statusGate.rejected.description", { companyName: "" }).split(companyName)[0] &&
+                t("statusGate.rejected.reason", { notes: verificationNotes })
+              : t("statusGate.rejected.defaultReason")}
           </p>
         </div>
         <div
@@ -96,7 +98,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
               boxShadow: "0 4px 16px rgba(239,68,68,0.25)",
             }}
           >
-            Lihat Detail Verifikasi
+            {t("statusGate.rejected.viewDetails")}
           </button>
           <button
             onClick={onSwitchCompany}
@@ -111,7 +113,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
               cursor: "pointer",
             }}
           >
-            Ganti Perusahaan
+            {t("statusGate.rejected.switchCompany")}
           </button>
         </div>
       </div>
@@ -164,7 +166,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
             letterSpacing: "-0.3px",
           }}
         >
-          Verifikasi Perusahaan Pending
+          {t("statusGate.pending.title")}
         </h2>
         <p
           style={{
@@ -174,10 +176,11 @@ export const StatusGate: React.FC<StatusGateProps> = ({
             margin: 0,
           }}
         >
-          Workspace untuk <strong>{companyName}</strong> sedang dalam proses
-          review oleh tim admin. Semua transaksi, pembuatan RFQ, upload dokumen,
-          dan manajemen katalog dinonaktifkan sementara hingga akun Anda
-          disetujui.
+          Workspace untuk <strong>{companyName}</strong>{" "}
+          {t("statusGate.pending.description", { companyName }).replace(
+            `Workspace untuk ${companyName} `,
+            ""
+          )}
         </p>
       </div>
       <div className="huntr-pending-gate-actions">
@@ -195,7 +198,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
             boxShadow: "0 4px 16px rgba(249,115,22,0.25)",
           }}
         >
-          View Verification Status
+          {t("statusGate.pending.viewStatus")}
         </button>
         <button
           onClick={onSwitchCompany}
@@ -210,7 +213,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
             cursor: "pointer",
           }}
         >
-          Ganti Perusahaan
+          {t("statusGate.pending.switchCompany")}
         </button>
       </div>
     </div>

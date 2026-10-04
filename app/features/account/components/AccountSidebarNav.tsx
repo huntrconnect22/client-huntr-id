@@ -7,6 +7,7 @@ import {
   Sparkles,
   Monitor,
 } from "lucide-react";
+import { useLanguage, type TranslationKey } from "../../../context/LanguageContext";
 
 export type AccountTabType =
   | "security"
@@ -21,16 +22,17 @@ interface AccountSidebarNavProps {
   onSelectTab: (tab: AccountTabType) => void;
 }
 
-const TABS: { id: AccountTabType; icon: React.FC<any>; label: string }[] = [
-  { id: "security", icon: Shield, label: "Security & Password" },
-  { id: "profile", icon: Smartphone, label: "WhatsApp Profile" },
-  { id: "subscription", icon: Zap, label: "Subscription & Trial" },
-  { id: "appearance", icon: Palette, label: "Appearance" },
-  { id: "features", icon: Sparkles, label: "Feature Flags" },
-  { id: "sessions", icon: Monitor, label: "Active Sessions" },
+const TABS: { id: AccountTabType; icon: React.FC<any>; labelKey: TranslationKey }[] = [
+  { id: "security", icon: Shield, labelKey: "settings.tabs.security" },
+  { id: "profile", icon: Smartphone, labelKey: "settings.tabs.profile" },
+  { id: "subscription", icon: Zap, labelKey: "settings.tabs.subscription" },
+  { id: "appearance", icon: Palette, labelKey: "settings.tabs.appearance" },
+  { id: "features", icon: Sparkles, labelKey: "settings.tabs.features" },
+  { id: "sessions", icon: Monitor, labelKey: "settings.tabs.sessions" },
 ];
 
 export function AccountSidebarNav({ activeTab, onSelectTab }: AccountSidebarNavProps) {
+  const { t } = useLanguage();
   return (
     <div className="w-full md:w-64 space-y-1 flex-shrink-0 md:sticky md:top-6">
       {TABS.map((tab) => {
@@ -63,7 +65,7 @@ export function AccountSidebarNav({ activeTab, onSelectTab }: AccountSidebarNavP
                 style={active ? { color: "white" } : undefined}
                 className={`truncate ${active ? "font-semibold" : ""}`}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </span>
             </div>
             <div className="md:hidden flex items-center">

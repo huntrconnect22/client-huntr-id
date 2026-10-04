@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Sun, Moon, SunMoon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * ThemeToggle — pill-style 3-state toggle: Light | Auto | Dark
@@ -8,6 +9,7 @@ import { useTheme } from "../context/ThemeContext";
  */
 export default function ThemeToggle() {
   const { isDark, isAuto, setThemeMode } = useTheme();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -24,9 +26,9 @@ export default function ThemeToggle() {
   };
 
   const segments: { key: "light" | "auto" | "dark"; icon: React.ReactNode; label: string }[] = [
-    { key: "light", icon: <Sun size={12} />, label: "Light" },
-    { key: "auto",  icon: <SunMoon size={12} />, label: "Auto"  },
-    { key: "dark",  icon: <Moon size={12} />, label: "Dark"  },
+    { key: "light", icon: <Sun size={12} />, label: t("settings.appearance.light") },
+    { key: "auto",  icon: <SunMoon size={12} />, label: t("settings.appearance.auto")  },
+    { key: "dark",  icon: <Moon size={12} />, label: t("settings.appearance.dark")  },
   ];
 
   return (

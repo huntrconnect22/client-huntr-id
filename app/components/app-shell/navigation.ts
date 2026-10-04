@@ -18,10 +18,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { isNavItemDisabledInDemo } from "../../lib/demo-mode";
+import type { TranslationKey } from "../../context/LanguageContext";
 
 export interface NavItemConfig {
   to: string;
   label: string;
+  labelKey?: TranslationKey;
   Icon: any;
   section: string;
   badge?: string;
@@ -52,12 +54,13 @@ export function buildNavItems({
   isAdminRole,
   isVendorComp,
 }: BuildNavItemsParams): NavItemConfig[] {
-  const items = [
+  const items: NavItemConfig[] = [
     ...(isPendingCompany
       ? [
           {
             to: `${companyPrefix}/company`,
             label: "Company",
+            labelKey: "nav.items.company",
             Icon: Building2,
             section: "settings",
             badge: "companyAlerts",
@@ -65,6 +68,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/account`,
             label: "Settings",
+            labelKey: "nav.items.settings",
             Icon: Settings,
             section: "settings",
             badge: "accountAlerts",
@@ -74,6 +78,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix || "/"}`,
             label: "Dashboard",
+            labelKey: "nav.items.dashboard",
             Icon: LayoutDashboard,
             section: "main",
             exact: true,
@@ -81,6 +86,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/tasks`,
             label: "Tasks",
+            labelKey: "nav.items.tasks",
             Icon: ListTodo,
             section: "main",
             badge: "totalUnread",
@@ -94,6 +100,7 @@ export function buildNavItems({
                       {
                         to: `${companyPrefix}/agentic-procurement`,
                         label: "AI Agentic Procurement",
+                        labelKey: "nav.items.agenticProcurement",
                         Icon: Sparkles,
                         section: "procurement",
                         isAi: true,
@@ -103,12 +110,14 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/marketplace`,
                   label: "Huntr Catalog",
+                  labelKey: "nav.items.huntrCatalog",
                   Icon: Package,
                   section: "procurement",
                 },
                 {
                   to: `${companyPrefix}/my-pr`,
                   label: "My PR",
+                  labelKey: "nav.items.myPr",
                   Icon: ClipboardList,
                   section: "procurement",
                   badge: "pendingNewProposals",
@@ -120,6 +129,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/approvals`,
                   label: "Approvals",
+                  labelKey: "nav.items.approvals",
                   Icon: CheckCircle2,
                   section: "procurement",
                   badge: "pendingApprovals",
@@ -131,6 +141,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/pr-audit`,
                   label: "PR Audit Log",
+                  labelKey: "nav.items.prAuditLog",
                   Icon: History,
                   section: "procurement",
                 },
@@ -143,6 +154,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/all-requests`,
                   label: "All Request",
+                  labelKey: "nav.items.allRequest",
                   Icon: Lightbulb,
                   section: "vendor",
                   badge: "opportunities",
@@ -154,6 +166,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/catalogue`,
                   label: "Catalogue",
+                  labelKey: "nav.items.catalogue",
                   Icon: List,
                   section: "vendor",
                   badge: "catalogueAlerts",
@@ -161,6 +174,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/proposals`,
                   label: "Proposals",
+                  labelKey: "nav.items.proposals",
                   Icon: Trophy,
                   section: "vendor",
                   badge: "pendingProposals",
@@ -172,6 +186,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/my-rank`,
                   label: "My Rank",
+                  labelKey: "nav.items.myRank",
                   Icon: Medal,
                   section: "vendor",
                   badge: "rankAlerts",
@@ -183,6 +198,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/negotiation`,
             label: "Negotiations",
+            labelKey: "nav.items.negotiations",
             Icon: MessageSquare,
             section: "orders",
             badge: "negotiations",
@@ -192,6 +208,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/orders`,
                   label: "Purchase Order",
+                  labelKey: "nav.items.purchaseOrder",
                   Icon: ReceiptText,
                   section: "orders",
                   badge: "pendingPurchaseOrders",
@@ -201,6 +218,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/orders`,
                   label: "Purchase Order",
+                  labelKey: "nav.items.purchaseOrder",
                   Icon: ReceiptText,
                   section: "orders",
                   badge: "buyerOrderAlerts",
@@ -209,6 +227,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/receipts`,
             label: "Goods Receipt",
+            labelKey: "nav.items.goodsReceipt",
             Icon: CheckCircle2,
             section: "orders",
             badge: "receiptsToInspect",
@@ -216,6 +235,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/bast`,
             label: "BAST",
+            labelKey: "nav.items.bast",
             Icon: FileText,
             section: "orders",
             badge: "pendingBast",
@@ -223,12 +243,14 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/efaktur`,
             label: "e-Faktur",
+            labelKey: "nav.items.eFaktur",
             Icon: ReceiptText,
             section: "orders",
           },
           {
             to: `${companyPrefix}/returns`,
             label: "Returns",
+            labelKey: "nav.items.returns",
             Icon: Package,
             section: "orders",
             badge: "pendingReturns",
@@ -236,6 +258,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/debit-notes`,
             label: "Debit Notes",
+            labelKey: "nav.items.debitNotes",
             Icon: Briefcase,
             section: "orders",
             badge: "pendingDebitNotes",
@@ -247,6 +270,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/finance`,
                   label: "Finance Approval",
+                  labelKey: "nav.items.financeApproval",
                   Icon: Briefcase,
                   section: "finance",
                   badge: "financeApprovals",
@@ -256,6 +280,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/payment-history`,
             label: "Payment History",
+            labelKey: "nav.items.paymentHistory",
             Icon: History,
             section: "finance",
           },
@@ -264,6 +289,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/company`,
             label: "Company",
+            labelKey: "nav.items.company",
             Icon: Building2,
             section: "settings",
             badge: "companyAlerts",
@@ -271,6 +297,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/account`,
             label: "Settings",
+            labelKey: "nav.items.settings",
             Icon: Settings,
             section: "settings",
             badge: "accountAlerts",

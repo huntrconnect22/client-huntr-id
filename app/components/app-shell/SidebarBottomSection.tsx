@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router";
 import { Building2, CheckCircle2, ArrowLeftRight, ShoppingCart } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface SidebarBottomSectionProps {
   user: any;
@@ -32,6 +33,7 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
   onSwitchCompany,
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   if (!activeCompany) return null;
 
@@ -62,7 +64,7 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
               letterSpacing: "0.07em",
             }}
           >
-            Debug: Switch Role
+            Debug: {t("sidebar.debugSwitchRole").split(":")[1]?.trim() || "Switch Role"}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
             {(() => {
@@ -121,7 +123,7 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
             textTransform: "uppercase",
           }}
         >
-          Active Workspace
+          {t("sidebar.activeWorkspace")}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div
@@ -193,10 +195,10 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
                     color: "#38bdf8",
                     border: "1px solid rgba(56, 189, 248, 0.25)",
                   }}
-                  title="NPWP Terverifikasi"
+                  title={t("sidebar.npwpVerified")}
                 >
                   <CheckCircle2 size={8} className="text-sky-400" />
-                  <span>NPWP VERIFIED</span>
+                  <span>{t("sidebar.npwpVerified")}</span>
                 </span>
               )}
             </div>
@@ -236,10 +238,10 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
                 <ArrowLeftRight size={11} />
                 <span>
                   {switchingWorkspace
-                    ? "Beralih..."
+                    ? t("sidebar.switchingWorkspace")
                     : isVendorComp
-                    ? `Beralih ke Buyer Workspace`
-                    : `Beralih ke Vendor Workspace`}
+                    ? t("sidebar.switchToBuyer")
+                    : t("sidebar.switchToVendor")}
                 </span>
               </button>
             ) : (
@@ -275,11 +277,11 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
                 <span>
                   {rejectedCounterpart
                     ? isVendorComp
-                      ? "Aktifkan Ulang Buyer Mode"
-                      : "Daftar Ulang Vendor"
+                      ? t("sidebar.reactivateBuyerMode")
+                      : t("sidebar.reregisterVendor")
                     : isVendorComp
-                    ? "Aktifkan Buyer Mode"
-                    : "Daftar sebagai Vendor"}
+                    ? t("sidebar.activateBuyerMode")
+                    : t("sidebar.registerAsVendor")}
                 </span>
               </button>
             )}
@@ -306,7 +308,7 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
               transition: "all 0.15s",
             }}
           >
-            <ArrowLeftRight size={10} /> Switch Company
+            <ArrowLeftRight size={10} /> {t("sidebar.switchCompany")}
           </button>
         </div>
       </div>

@@ -12,18 +12,11 @@ import {
   AccountSessionsTab,
   type AccountTabType,
 } from "../features/account";
-
-const TAB_TITLES: Record<AccountTabType, { title: string; subtitle: string }> = {
-  security: { title: "Security & Password", subtitle: "Manage authentication and password security" },
-  profile: { title: "WhatsApp Profile", subtitle: "Manage WhatsApp number and notification settings" },
-  subscription: { title: "Subscription & Trial", subtitle: "Manage active subscription plan and limits" },
-  appearance: { title: "Appearance", subtitle: "Customize theme and display preferences" },
-  features: { title: "Feature Flags", subtitle: "Configure experimental and advanced features" },
-  sessions: { title: "Active Sessions", subtitle: "Monitor active devices and login sessions" },
-};
+import { useLanguage } from "../context/LanguageContext";
 
 export default function AccountSettings() {
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
+  const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<AccountTabType | null>("security");
@@ -48,15 +41,24 @@ export default function AccountSettings() {
 
   const currentTab = isMobile ? mobileSelectedTab : (activeTab || "security");
 
+  const tabTitles: Record<AccountTabType, { title: string; subtitle: string }> = {
+    security: { title: t("settings.tabs.security"), subtitle: t("settings.tabs.securityDesc") },
+    profile: { title: t("settings.tabs.profile"), subtitle: t("settings.tabs.profileDesc") },
+    subscription: { title: t("settings.tabs.subscription"), subtitle: t("settings.tabs.subscriptionDesc") },
+    appearance: { title: t("settings.tabs.appearance"), subtitle: t("settings.tabs.appearanceDesc") },
+    features: { title: t("settings.tabs.features"), subtitle: t("settings.tabs.featuresDesc") },
+    sessions: { title: t("settings.tabs.sessions"), subtitle: t("settings.tabs.sessionsDesc") },
+  };
+
   const pageTitle = isMobile && mobileSelectedTab
-    ? TAB_TITLES[mobileSelectedTab]?.title || "Account Settings"
-    : "Account Settings";
+    ? tabTitles[mobileSelectedTab]?.title || t("settings.title")
+    : t("settings.title");
 
   const pageSubtitle = isMobile && mobileSelectedTab
-    ? TAB_TITLES[mobileSelectedTab]?.subtitle
+    ? tabTitles[mobileSelectedTab]?.subtitle
     : isMobile
-    ? "Manage your account preferences"
-    : "Manage your security, profile, appearance, and active sessions";
+    ? t("settings.subtitleMobile")
+    : t("settings.subtitleDesktop");
 
   return (
     <Layout title={pageTitle} subtitle={pageSubtitle}>
@@ -72,7 +74,7 @@ export default function AccountSettings() {
             }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors"
           >
-            <ArrowLeft size={14} /> Back to Settings Menu
+            <ArrowLeft size={14} /> {t("settings.backToMenu")}
           </button>
         )}
 

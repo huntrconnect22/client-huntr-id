@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { getTrialInfo } from "../../../lib/trial";
 import { getAiUsage } from "../../../lib/api/ai";
 import { getCompanySubscription, type GmvSubscriptionSummary } from "../../../lib/api/subscription";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface AccountSubscriptionTabProps {
   user: any;
@@ -14,6 +15,7 @@ export function AccountSubscriptionTab({
   user,
   activeCompany,
 }: AccountSubscriptionTabProps) {
+  const { t, locale } = useLanguage();
   const trial = getTrialInfo(user);
   const [usageData, setUsageData] = useState<{
     total_requests: number;
@@ -54,17 +56,22 @@ export function AccountSubscriptionTab({
       .catch(() => setSubscription(null));
   }, [activeCompany?.id]);
 
-  const formatRupiah = (value: number) => `Rp ${value.toLocaleString("id-ID")}`;
+  const numberLocale = locale === "en" ? "en-US" : "id-ID";
+  const formatRupiah = (value: number) => `Rp ${value.toLocaleString(numberLocale)}`;
   const quotaPercent = subscription
     ? Math.min(100, ((subscription.current_realized_gmv + subscription.reserved_gmv) / subscription.gmv_limit) * 100)
     : 0;
 
   const handleContactSales = () => {
     Swal.fire({
-      title: "Konsultasi Paket Langganan",
+      title: t("settings.subscription.contactSalesModalTitle"),
       html: `
         <div style="text-align: left; font-size: 13px; color: var(--ui-text-secondary, #4b5563); line-height: 1.6;">
-          <p style="margin-bottom: 12px;">Dapatkan akses enterprise khusus, integrasi ERP, dan kuota tanpa batas untuk seluruh organisasi Anda:</p>
+          <p style="margin-bottom: 12px;">${
+            locale === "en"
+              ? "Get dedicated enterprise access, ERP integrations, and unlimited quotas for your whole organization:"
+              : "Dapatkan akses enterprise khusus, integrasi ERP, dan kuota tanpa batas untuk seluruh organisasi Anda:"
+          }</p>
           <div style="background: rgba(249, 115, 22, 0.08); padding: 12px; border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.2); margin-bottom: 12px;">
             <div style="font-weight: 700; color: #f97316; margin-bottom: 4px;">Huntr Enterprise Solutions</div>
             <div>📧 Email: <b>support@huntr.id</b></div>
@@ -74,16 +81,18 @@ export function AccountSubscriptionTab({
         </div>
       `,
       icon: "info",
-      confirmButtonText: "Hubungi via WhatsApp",
+      confirmButtonText: locale === "en" ? "Contact via WhatsApp" : "Hubungi via WhatsApp",
       showCancelButton: true,
-      cancelButtonText: "Tutup",
+      cancelButtonText: locale === "en" ? "Close" : "Tutup",
       confirmButtonColor: "#f97316",
     }).then((res: any) => {
       if (res.isConfirmed) {
-        window.open(
-          "https://wa.me/6281234567890?text=Halo%20Tim%20Huntr,%20saya%20tertarik%20dengan%20paket%20Enterprise%20Huntr.id",
-          "_blank"
+        const text = encodeURIComponent(
+          locale === "en"
+            ? "Hello Huntr Team, I am interested in the Huntr.id Enterprise Plan."
+            : "Halo Tim Huntr, saya tertarik dengan paket Enterprise Huntr.id"
         );
+        window.open(`https://wa.me/6281234567890?text=${text}`, "_blank");
       }
     });
   };
@@ -91,9 +100,11 @@ export function AccountSubscriptionTab({
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">Subscription & Trial Plan</h2>
+        <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+          {t("settings.subscription.title")}
+        </h2>
         <p className="text-sm text-[var(--ui-text-muted)] mt-1">
-          Pantau masa aktif paket percobaan (trial), kuota pemakaian AI, dan kelola lisensi akun enterprise Anda.
+          {t("settings.subscription.subtitle")}
         </p>
       </div>
 
@@ -102,7 +113,9 @@ export function AccountSubscriptionTab({
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
             <Bot size={13} className="text-orange-500" />
-            Penggunaan AI & Credit ({usageData?.month || "Bulan Ini"})
+            {t("settings.subscription.aiUsageSection", {
+              month: usageData?.month || t("settings.subscription.thisMonth"),
+            })}
           </span>
           <button
             onClick={fetchUsage}
@@ -110,7 +123,7 @@ export function AccountSubscriptionTab({
             className="text-[11px] text-orange-500 hover:text-orange-600 flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={11} className={loadingUsage ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <span>{t("settings.subscription.refresh")}</span>
           </button>
         </div>
 
@@ -118,31 +131,31 @@ export function AccountSubscriptionTab({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
               <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <Cpu size={12} className="text-orange-500" /> Total Request AI
+                <Cpu size={12} className="text-orange-500" /> {t("settings.subscription.totalAiRequests")}
               </span>
               <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
-                {usageData?.total_requests?.toLocaleString("id-ID") ?? 0}
+                {usageData?.total_requests?.toLocaleString(numberLocale) ?? 0}
                 <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">calls</span>
               </div>
             </div>
 
             <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
               <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <Zap size={12} className="text-amber-500" /> Token Dikonsumsi
+                <Zap size={12} className="text-amber-500" /> {t("settings.subscription.tokensConsumed")}
               </span>
               <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
-                {usageData?.total_tokens?.toLocaleString("id-ID") ?? 0}
+                {usageData?.total_tokens?.toLocaleString(numberLocale) ?? 0}
                 <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">tokens</span>
               </div>
             </div>
 
             <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
               <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <ShieldCheck size={12} className="text-emerald-500" /> Status Kuota
+                <ShieldCheck size={12} className="text-emerald-500" /> {t("settings.subscription.quotaStatus")}
               </span>
               <div className="text-sm font-bold text-emerald-500 mt-1 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                Trial Unlimited
+                {t("settings.subscription.trialUnlimited")}
               </div>
             </div>
           </div>
@@ -153,28 +166,37 @@ export function AccountSubscriptionTab({
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
-              <Zap size={13} className="text-orange-500" /> Kuota GMV Subscription
+              <Zap size={13} className="text-orange-500" /> {t("settings.subscription.gmvQuota")}
             </span>
             <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${subscription.status === "active" ? "text-emerald-500 bg-emerald-500/10" : "text-amber-500 bg-amber-500/10"}`}>
-              {subscription.status === "active" ? "AKTIF" : "PERLU PERPANJANGAN"}
+              {subscription.status === "active" ? t("settings.subscription.statusActive") : t("settings.subscription.statusNeedsRenewal")}
             </span>
           </div>
           <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 text-xs">
               <div>
-                <p className="m-0 text-[var(--ui-text-muted)]">GMV terealisasi + teralokasi</p>
+                <p className="m-0 text-[var(--ui-text-muted)]">{t("settings.subscription.realizedGmv")}</p>
                 <p className="m-0 mt-1 text-base font-bold text-[var(--ui-text-primary)]">
                   {formatRupiah(subscription.current_realized_gmv + subscription.reserved_gmv)}
                   <span className="font-normal text-[var(--ui-text-muted)]"> / {formatRupiah(subscription.gmv_limit)}</span>
                 </p>
               </div>
-              <span className="font-semibold text-orange-500">Sisa {formatRupiah(subscription.available_gmv)}</span>
+              <span className="font-semibold text-orange-500">
+                {t("settings.subscription.remainingGmv", { amount: formatRupiah(subscription.available_gmv) })}
+              </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-[var(--ui-bg-card)] overflow-hidden">
               <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all" style={{ width: `${quotaPercent}%` }} />
             </div>
             <p className="m-0 text-[11px] text-[var(--ui-text-muted)]">
-              Biaya di muka: {formatRupiah(subscription.upfront_fee)} (1,5% dari kuota GMV), berlaku sampai {new Date(subscription.ends_at).toLocaleDateString("id-ID")}. {subscription.overflow_strategy === "transaction_fee" ? "Setelah kuota terlampaui, transaksi berikutnya memakai tarif per transaksi." : "Saat kuota terlampaui, kontrak baru diperlukan."}
+              {t("settings.subscription.gmvLimitFeeNote", {
+                fee: formatRupiah(subscription.upfront_fee),
+                date: new Date(subscription.ends_at).toLocaleDateString(numberLocale),
+                overflowNote:
+                  subscription.overflow_strategy === "transaction_fee"
+                    ? t("settings.subscription.overflowTransactionFee")
+                    : t("settings.subscription.overflowNewContract"),
+              })}
             </p>
           </div>
         </div>
@@ -182,7 +204,7 @@ export function AccountSubscriptionTab({
 
       <div className="space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
-          Paket Aktif Saat Ini
+          {t("settings.subscription.currentPlan")}
         </span>
 
         <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-6 space-y-6">
@@ -196,17 +218,19 @@ export function AccountSubscriptionTab({
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-bold text-[var(--ui-text-primary)] m-0">
                     {activeCompany?.type === "vendor"
-                      ? "Vendor Unlimited Free Account"
-                      : "Buyer Purchasing Enterprise Free Trial"}
+                      ? t("settings.subscription.vendorFreeTitle")
+                      : t("settings.subscription.buyerTrialTitle")}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/15 text-orange-400 border border-orange-500/30">
-                    {activeCompany?.type === "vendor" ? "0% PLATFORM FEE" : "30 DAYS TRIAL"}
+                    {activeCompany?.type === "vendor"
+                      ? t("settings.subscription.vendorFreeBadge")
+                      : t("settings.subscription.buyerTrialBadge")}
                   </span>
                 </div>
                 <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">
                   {activeCompany?.type === "vendor"
-                    ? "Sisi Vendor 100% bebas biaya pendaftaran dan bebas potongan platform fee."
-                    : "Trial 30 hari gratis 0% platform fee untuk Buyer Purchasing (PPN 11% barang tetap berlaku)."}
+                    ? t("settings.subscription.vendorFreeDesc")
+                    : t("settings.subscription.buyerTrialDesc")}
                 </p>
               </div>
             </div>
@@ -215,17 +239,17 @@ export function AccountSubscriptionTab({
               {trial.isExpired ? (
                 <span className="px-3 py-1 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-red-400" />
-                  KEDALUWARSA
+                  {t("settings.subscription.statusExpired")}
                 </span>
               ) : trial.isUrgent ? (
                 <span className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  SEGERA BERAKHIR
+                  {t("settings.subscription.statusExpiringSoon")}
                 </span>
               ) : (
                 <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  AKTIF
+                  {t("settings.subscription.statusActive")}
                 </span>
               )}
             </div>
@@ -236,10 +260,12 @@ export function AccountSubscriptionTab({
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-[var(--ui-text-primary)] flex items-center gap-1.5">
                 <Clock size={14} className="text-orange-500" />
-                Sisa Waktu Masa Percobaan:
+                {t("settings.subscription.remainingTrialTime")}
               </span>
               <span className="font-bold text-orange-500">
-                {trial.isExpired ? "0 Hari (Habis)" : `${trial.daysRemaining} Hari Tersisa`}
+                {trial.isExpired
+                  ? t("settings.subscription.expiredTime")
+                  : t("settings.subscription.daysRemainingText", { days: trial.daysRemaining })}
               </span>
             </div>
             {/* Progress Bar */}
@@ -256,7 +282,7 @@ export function AccountSubscriptionTab({
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-[var(--ui-text-muted)] pt-1">
-              <span>Masa Berlaku Berakhir:</span>
+              <span>{t("settings.subscription.validUntil")}</span>
               <span className="font-medium text-[var(--ui-text-primary)]">{trial.formattedEndDate}</span>
             </div>
           </div>
@@ -264,32 +290,32 @@ export function AccountSubscriptionTab({
           {/* Features Matrix */}
           <div className="space-y-2.5">
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-              Fitur Enterprise yang Termasuk:
+              {t("settings.subscription.featuresIncluded")}
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[var(--ui-text-secondary)]">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>Unlimited PR & RFQ Creation</span>
+                <span>{t("settings.subscription.features.unlimitedPrRfq")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>Multi-Tier Approval Management</span>
+                <span>{t("settings.subscription.features.multiTierApproval")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>AI Agentic Procurement Assistant</span>
+                <span>{t("settings.subscription.features.aiAgentic")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>E-Faktur VAT Match & Verification</span>
+                <span>{t("settings.subscription.features.efakturVat")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>Real-time Live Bidding Websockets</span>
+                <span>{t("settings.subscription.features.liveBidding")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>Unlimited Team Member Invites</span>
+                <span>{t("settings.subscription.features.teamInvites")}</span>
               </div>
             </div>
           </div>
@@ -297,7 +323,7 @@ export function AccountSubscriptionTab({
           {/* Contact Sales Action */}
           <div className="pt-2 border-t border-[var(--ui-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="text-xs text-[var(--ui-text-muted)]">
-              Ingin upgrade ke langganan tahunan atau paket enterprise dedicated?
+              {t("settings.subscription.upgradePrompt")}
             </div>
             <button
               type="button"
@@ -306,7 +332,7 @@ export function AccountSubscriptionTab({
               className="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
             >
               <PhoneCall size={14} />
-              <span>Hubungi Sales / Upgrade</span>
+              <span>{t("settings.subscription.contactSalesBtn")}</span>
               <ArrowRight size={13} />
             </button>
           </div>

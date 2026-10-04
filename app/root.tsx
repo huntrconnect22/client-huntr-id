@@ -13,6 +13,7 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 import { ThemeProvider } from "./context/ThemeContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import { EventBusProvider } from "./lib/EventBus";
 import WebSocketDebug from "./components/WebSocketDebug";
 
@@ -70,12 +71,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body suppressHydrationWarning>
-        <ThemeProvider>
-          <EventBusProvider>
-            {children}
-            <WebSocketDebug />
-          </EventBusProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider>
+            <EventBusProvider>
+              {children}
+              <WebSocketDebug />
+            </EventBusProvider>
+          </ThemeProvider>
+        </LanguageProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

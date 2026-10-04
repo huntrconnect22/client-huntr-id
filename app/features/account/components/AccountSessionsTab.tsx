@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Monitor, Smartphone, Clock, Trash2 } from "lucide-react";
 import Swal from "sweetalert2";
 import { getSessions, logoutSession } from "../../../lib/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export function AccountSessionsTab() {
+  const { t } = useLanguage();
   const [sessions, setSessions] = useState<any[]>([]);
 
   const fetchSessions = async () => {
@@ -22,11 +24,11 @@ export function AccountSessionsTab() {
   const handleLogoutSession = async (sessionId: string) => {
     const result = await Swal.fire({
       icon: "question",
-      title: "Terminate Session?",
-      text: "Are you sure you want to terminate this session?",
+      title: t("settings.sessions.terminateConfirmTitle"),
+      text: t("settings.sessions.terminateConfirmText"),
       showCancelButton: true,
-      confirmButtonText: "Yes, Terminate",
-      cancelButtonText: "Cancel",
+      confirmButtonText: t("settings.sessions.terminateConfirmBtn"),
+      cancelButtonText: t("settings.sessions.cancelBtn"),
     });
     if (!result.isConfirmed) return;
 
@@ -46,24 +48,30 @@ export function AccountSessionsTab() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">Active Sessions</h2>
-          <p className="text-sm text-[var(--ui-text-muted)] mt-1">Devices currently authenticated with your Huntr account.</p>
+          <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+            {t("settings.sessions.title")}
+          </h2>
+          <p className="text-sm text-[var(--ui-text-muted)] mt-1">
+            {t("settings.sessions.subtitle")}
+          </p>
         </div>
         <button
           onClick={fetchSessions}
           className="px-4 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm font-semibold text-orange-400 hover:border-orange-500/40 transition-all"
         >
-          Refresh
+          {t("settings.sessions.refresh")}
         </button>
       </div>
 
       <div className="space-y-2.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">Connected Devices</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+          {t("settings.sessions.connectedDevices")}
+        </span>
         <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
           {sessions.length === 0 ? (
             <div className="text-center py-12 text-[var(--ui-text-muted)]">
               <Monitor size={40} className="mx-auto mb-2 opacity-20" />
-              <p className="text-sm">No active session data found.</p>
+              <p className="text-sm">{t("settings.sessions.noSessions")}</p>
             </div>
           ) : (
             sessions.map((session) => {
@@ -91,7 +99,7 @@ export function AccountSessionsTab() {
                         </span>
                         {session.is_current_device && (
                           <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            THIS DEVICE
+                            {t("settings.sessions.thisDevice")}
                           </span>
                         )}
                       </div>
@@ -108,7 +116,7 @@ export function AccountSessionsTab() {
                     <button
                       onClick={() => handleLogoutSession(session.id)}
                       className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all flex-shrink-0"
-                      title="Terminate session"
+                      title={t("settings.sessions.terminateConfirmBtn")}
                     >
                       <Trash2 size={16} />
                     </button>

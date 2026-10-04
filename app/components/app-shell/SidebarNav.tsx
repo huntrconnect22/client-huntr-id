@@ -1,9 +1,12 @@
 import React from "react";
 import { Link } from "react-router";
+import { useLanguage } from "../../context/LanguageContext";
+import type { TranslationKey } from "../../context/LanguageContext";
 
 interface NavItem {
   to: string;
   label: string;
+  labelKey?: TranslationKey;
   Icon: any;
   section?: string;
   badge?: string;
@@ -18,13 +21,14 @@ interface SidebarNavProps {
   onNavClick: () => void;
 }
 
-const SECTION_LABELS: Record<string, string> = {
-  main: "Main",
-  procurement: "Procurement",
-  vendor: "Vendor",
-  orders: "Orders & Documents",
-  finance: "Finance",
-  settings: "Settings",
+/** Maps section ID → translation key */
+const SECTION_TRANSLATION_KEYS: Record<string, TranslationKey> = {
+  main: "nav.sections.main",
+  procurement: "nav.sections.procurement",
+  vendor: "nav.sections.vendor",
+  orders: "nav.sections.orders",
+  finance: "nav.sections.finance",
+  settings: "nav.sections.settings",
 };
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({
@@ -33,6 +37,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   pendingCounts,
   onNavClick,
 }) => {
+  const { t } = useLanguage();
   let currentSection = "";
 
   return (
@@ -46,7 +51,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         overflowY: "auto",
       }}
     >
-      {navItems.map(({ to, label, Icon, section, badge, exact, isAi }: NavItem) => {
+      {navItems.map(({ to, label, labelKey, Icon, section, badge, exact, isAi }: NavItem) => {
         const active =
           pathname === to || (!exact && to !== "/" && pathname.startsWith(to + "/"));
         const badgeCount = badge ? pendingCounts[badge] || 0 : 0;
@@ -67,7 +72,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                   marginTop: currentSection === "main" ? 0 : 8,
                 }}
               >
-                {SECTION_LABELS[section] || section}
+                {section && SECTION_TRANSLATION_KEYS[section]
+                  ? t(SECTION_TRANSLATION_KEYS[section])
+                  : section}
               </div>
             )}
             <Link
@@ -95,7 +102,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
               }}
             >
               <Icon size={16} />
-              <span style={{ flex: 1 }}>{label}</span>
+              <span style={{ flex: 1 }}>{labelKey ? t(labelKey) : label}</span>
               {isAi && (
                 <span
                   style={{

@@ -21,6 +21,8 @@ import { StatusGate } from "../components/app-shell/StatusGate";
 import { buildNavItems } from "../components/app-shell/navigation";
 import { calculateNotificationCounts } from "../components/app-shell/notificationCounts";
 import { isAgenticProcurementEnabled } from "../lib/features";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
 export interface AppShellContext {
@@ -39,6 +41,7 @@ export default function AppShell() {
   const navigate = useNavigate();
   const { lastEvent } = useEventBus();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
+  const { t } = useLanguage();
 
   // Page title/subtitle — child routes push these upward via context
   const [pageTitle, setPageTitle] = useState("Huntr.id");
@@ -460,7 +463,7 @@ export default function AppShell() {
       <div className="huntr-main">
         <header ref={headerRef} className="huntr-main-header">
           <div className="huntr-header-leading">
-            <button type="button" className="huntr-menu-btn" onClick={() => setSidebarOpen(true)} aria-label="Open navigation menu">
+            <button type="button" className="huntr-menu-btn" onClick={() => setSidebarOpen(true)} aria-label={t("header.openMenu")}>
               <Menu size={20} />
             </button>
             <div className="huntr-header-titles">
@@ -475,7 +478,7 @@ export default function AppShell() {
               <button
                 type="button"
                 onClick={() => navigate(`${companyPrefix}/account`)}
-                title={`Masa trial berakhir pada ${trialInfo.formattedEndDate}`}
+                title={t("header.trialEndsOn", { date: trialInfo.formattedEndDate })}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -516,19 +519,21 @@ export default function AppShell() {
                 />
                 <span>
                   {trialInfo.isExpired
-                    ? "Trial Berakhir"
+                    ? t("header.trialExpired")
                     : trialInfo.isExpiringSoon
-                    ? `Trial: Sisa ${trialInfo.daysRemaining} Hari`
-                    : `Trial: ${trialInfo.daysRemaining} Hari`}
+                    ? t("header.trialExpiringSoon", { days: trialInfo.daysRemaining })
+                    : t("header.trialDays", { days: trialInfo.daysRemaining })}
                 </span>
               </button>
             )}
+
+            <LanguageSwitcher />
 
             {!isMobile && (
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent("huntr-toggle-cart"))}
-                aria-label={`View cart (${cartCount} items in cart)`}
+                aria-label={t("header.viewCart", { count: cartCount })}
                 style={{
                   position: "relative",
                   width: 34,
@@ -572,7 +577,7 @@ export default function AppShell() {
               <button 
                 ref={notifButtonRef} 
                 onClick={handleNotificationToggle}
-                aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+                aria-label={unreadCount > 0 ? t("header.notificationsUnread", { count: unreadCount }) : t("header.notifications")}
                 style={{ 
                   position: "relative", 
                   width: 34, 
@@ -614,7 +619,7 @@ export default function AppShell() {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   aria-expanded={showUserMenu}
                   aria-haspopup="true"
-                  aria-label={`User menu, ${user.name}`}
+                  aria-label={t("header.userMenu", { name: user.name || "" })}
                   className={`huntr-user-menu-btn${showUserMenu ? " huntr-user-menu-btn--open" : ""}`}
                 >
                   <div className="huntr-user-avatar">

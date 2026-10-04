@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeftRight, Settings, LogOut } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface UserMenuDropdownProps {
   user: any;
@@ -30,6 +31,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
   onClose,
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div
@@ -128,18 +130,18 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
           />
           <span>
             {switchingWorkspace
-              ? "Beralih..."
+              ? t("userMenu.switchingWorkspace")
               : (isVendorComp ? counterpartBuyer : counterpartVendor)
               ? isVendorComp
-                ? "Beralih ke Buyer Workspace"
-                : "Beralih ke Vendor Workspace"
+                ? t("userMenu.switchToBuyer")
+                : t("userMenu.switchToVendor")
               : rejectedCounterpart
               ? isVendorComp
-                ? "Aktifkan Ulang Buyer Mode"
-                : "Daftar Ulang Vendor"
+                ? t("userMenu.reactivateBuyerMode")
+                : t("userMenu.reregisterVendor")
               : isVendorComp
-              ? "Aktifkan Buyer Mode"
-              : "Daftar sebagai Vendor"}
+              ? t("userMenu.activateBuyerMode")
+              : t("userMenu.registerAsVendor")}
           </span>
         </button>
       )}
@@ -167,7 +169,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
         className="hover:bg-[var(--ui-bg-input)]"
       >
         <Settings size={14} className="text-[var(--ui-text-muted)]" />
-        <span>Account Settings</span>
+        <span>{t("userMenu.accountSettings")}</span>
       </button>
 
       <button
@@ -193,7 +195,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
         }}
       >
         <LogOut size={14} />
-        <span>Sign Out</span>
+        <span>{t("userMenu.signOut")}</span>
       </button>
     </div>
   );

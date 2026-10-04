@@ -9,6 +9,7 @@ import {
   get2FARecoveryCodes,
 } from "../../../lib/api";
 import { getCsrfCookie } from "../../../lib/api/auth";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface AccountSecurityTabProps {
   user: any;
@@ -23,6 +24,7 @@ export function AccountSecurityTab({
   onError,
   onSuccess,
 }: AccountSecurityTabProps) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
 
   // Password state
@@ -49,7 +51,7 @@ export function AccountSecurityTab({
     try {
       await getCsrfCookie();
       await updatePassword(passwordForm);
-      onSuccess("Password successfully updated!");
+      onSuccess(t("settings.security.updatePasswordBtn") + " ✓");
       setPasswordForm({
         current_password: "",
         password: "",
@@ -70,7 +72,7 @@ export function AccountSecurityTab({
       const qrRes = await get2FAQRCode();
       setQrCode(qrRes.svg);
       setConfirming2FA(true);
-      onSuccess("2FA is being activated. Please scan the QR code.");
+      onSuccess(t("settings.security.scanQrTitle"));
     } catch (err: any) {
       onError(err.message);
     } finally {
@@ -94,7 +96,7 @@ export function AccountSecurityTab({
       localStorage.setItem("user_session", JSON.stringify(updatedUser));
       onUserUpdate(updatedUser);
 
-      onSuccess("2FA successfully activated!");
+      onSuccess(t("settings.security.twoFactorActive") + " ✓");
     } catch (err: any) {
       onError(err.message);
     } finally {
@@ -103,7 +105,7 @@ export function AccountSecurityTab({
   };
 
   const handleDisable2FA = async () => {
-    if (!confirm("Are you sure you want to disable 2FA?")) return;
+    if (!confirm(t("settings.security.disable2FAConfirm"))) return;
     setLoading(true);
     onError(null);
     try {
@@ -115,7 +117,7 @@ export function AccountSecurityTab({
       localStorage.setItem("user_session", JSON.stringify(updatedUser));
       onUserUpdate(updatedUser);
 
-      onSuccess("2FA dinonaktifkan.");
+      onSuccess(t("settings.security.twoFactorDisabledMsg"));
     } catch (err: any) {
       onError(err.message);
     } finally {
@@ -126,22 +128,30 @@ export function AccountSecurityTab({
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">Security & Password</h2>
-        <p className="text-sm text-[var(--ui-text-muted)] mt-1">Manage authentication credentials and multi-factor protection.</p>
+        <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+          {t("settings.security.title")}
+        </h2>
+        <p className="text-sm text-[var(--ui-text-muted)] mt-1">
+          {t("settings.security.subtitle")}
+        </p>
       </div>
 
       {/* Change Password Group */}
       <div className="space-y-2.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">Login Password</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+          {t("settings.security.loginPassword")}
+        </span>
         <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
           <form onSubmit={handleUpdatePassword}>
             {/* Current Password Row */}
             <div className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">Current Password</label>
+              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">
+                {t("settings.security.currentPassword")}
+              </label>
               <div className="sm:w-2/3">
                 <input
                   type="password"
-                  placeholder="Enter current password"
+                  placeholder={t("settings.security.currentPasswordPlaceholder")}
                   value={passwordForm.current_password}
                   onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
                   required
@@ -152,11 +162,13 @@ export function AccountSecurityTab({
 
             {/* New Password Row */}
             <div className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--ui-border)]">
-              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">New Password</label>
+              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">
+                {t("settings.security.newPassword")}
+              </label>
               <div className="sm:w-2/3 relative">
                 <input
                   type={showPw ? "text" : "password"}
-                  placeholder="Enter new password"
+                  placeholder={t("settings.security.newPasswordPlaceholder")}
                   value={passwordForm.password}
                   onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
                   required
@@ -174,11 +186,13 @@ export function AccountSecurityTab({
 
             {/* Confirm Password Row */}
             <div className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--ui-border)]">
-              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">Confirm Password</label>
+              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">
+                {t("settings.security.confirmPassword")}
+              </label>
               <div className="sm:w-2/3 relative">
                 <input
                   type={showConfirmPw ? "text" : "password"}
-                  placeholder="Confirm new password"
+                  placeholder={t("settings.security.confirmPasswordPlaceholder")}
                   value={passwordForm.password_confirmation}
                   onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
                   required
@@ -202,7 +216,7 @@ export function AccountSecurityTab({
                 style={{ color: 'white' }}
                 className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all shadow-sm flex items-center gap-2"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : "Update Password"}
+                {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.security.updatePasswordBtn")}
               </button>
             </div>
           </form>
@@ -211,13 +225,19 @@ export function AccountSecurityTab({
 
       {/* 2FA Group */}
       <div className="space-y-2.5 pt-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">Two-Factor Authentication</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+          {t("settings.security.twoFactorAuth")}
+        </span>
         <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5 space-y-4">
           {!twoFactorEnabled && !confirming2FA && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <div className="text-sm font-semibold text-[var(--ui-text-primary)]">Two-Factor Auth is Off</div>
-                <p className="text-xs text-[var(--ui-text-muted)] mt-1">Use an authenticator app (Google Authenticator, Authy) for extra security.</p>
+                <div className="text-sm font-semibold text-[var(--ui-text-primary)]">
+                  {t("settings.security.twoFactorOffTitle")}
+                </div>
+                <p className="text-xs text-[var(--ui-text-muted)] mt-1">
+                  {t("settings.security.twoFactorOffDesc")}
+                </p>
               </div>
               <button
                 onClick={handleEnable2FA}
@@ -225,31 +245,35 @@ export function AccountSecurityTab({
                 style={{ color: 'white' }}
                 className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex-shrink-0"
               >
-                Enable 2FA
+                {t("settings.security.enable2FABtn")}
               </button>
             </div>
           )}
 
           {confirming2FA && qrCode && (
             <div className="space-y-4 pt-1">
-              <p className="text-sm font-medium text-[var(--ui-text-primary)]">Scan QR Code with your Authenticator App:</p>
+              <p className="text-sm font-medium text-[var(--ui-text-primary)]">
+                {t("settings.security.scanQrTitle")}
+              </p>
               <div dangerouslySetInnerHTML={{ __html: qrCode }} className="bg-white p-3 rounded-md w-fit" />
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Enter Confirmation Code</label>
+                <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  {t("settings.security.enterCodeLabel")}
+                </label>
                 <input
                   type="text"
                   value={twoFactorCode}
                   onChange={(e) => setTwoFactorCode(e.target.value)}
-                  placeholder="6-digit code"
+                  placeholder={t("settings.security.codePlaceholder")}
                   className="w-full max-w-xs px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-sm outline-none"
                 />
               </div>
               <div className="flex gap-2">
                 <button onClick={handleConfirm2FA} disabled={loading} style={{ color: 'white' }} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all">
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : "Confirm"}
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.security.confirmBtn")}
                 </button>
                 <button onClick={() => { setConfirming2FA(false); setQrCode(null); }} className="px-5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] transition-all">
-                  Cancel
+                  {t("settings.security.cancelBtn")}
                 </button>
               </div>
             </div>
@@ -260,15 +284,17 @@ export function AccountSecurityTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-emerald-400">
                   <CheckCircle2 size={18} />
-                  <span className="font-semibold text-sm">2FA Active</span>
+                  <span className="font-semibold text-sm">{t("settings.security.twoFactorActive")}</span>
                 </div>
                 <button onClick={handleDisable2FA} disabled={loading} className="px-5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm hover:bg-red-500/20 transition-all">
-                  Disable
+                  {t("settings.security.disableBtn")}
                 </button>
               </div>
               {recoveryCodes.length > 0 && (
                 <div className="p-3.5 rounded-md bg-black/30">
-                  <p className="text-xs font-semibold text-[var(--ui-text-primary)] mb-2">Recovery Codes:</p>
+                  <p className="text-xs font-semibold text-[var(--ui-text-primary)] mb-2">
+                    {t("settings.security.recoveryCodesTitle")}
+                  </p>
                   <div className="grid grid-cols-2 gap-1.5 font-mono text-xs text-orange-300">
                     {recoveryCodes.map(c => <span key={c}>{c}</span>)}
                   </div>

@@ -4,21 +4,23 @@ import {
   isAgenticProcurementEnabled,
   setAgenticProcurementEnabled,
 } from "../../../lib/features";
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface AccountFeaturesTabProps {
   onSuccess: (msg: string | null) => void;
 }
 
 export function AccountFeaturesTab({ onSuccess }: AccountFeaturesTabProps) {
+  const { t } = useLanguage();
   const [agenticEnabled, setAgenticEnabled] = useState(isAgenticProcurementEnabled());
 
   const handleToggleAgentic = (val: boolean) => {
     setAgenticProcurementEnabled(val);
     setAgenticEnabled(val);
     if (val) {
-      onSuccess("AI Agentic Procurement berhasil diaktifkan! Menu sekarang muncul di sidebar navigasi.");
+      onSuccess(t("settings.features.enabledSuccess"));
     } else {
-      onSuccess("AI Agentic Procurement dinonaktifkan. Menu telah disembunyikan dari sidebar navigasi.");
+      onSuccess(t("settings.features.disabledSuccess"));
     }
   };
 
@@ -26,19 +28,21 @@ export function AccountFeaturesTab({ onSuccess }: AccountFeaturesTabProps) {
     <div className="space-y-6 max-w-3xl">
       <div>
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">Feature Flags & AI Tools</h2>
+          <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+            {t("settings.features.title")}
+          </h2>
           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
-            BETA
+            {t("settings.features.beta")}
           </span>
         </div>
         <p className="text-sm text-[var(--ui-text-muted)] mt-1">
-          Aktifkan fitur eksperimental dan modul AI secara manual sesuai kebutuhan alur kerja Anda.
+          {t("settings.features.subtitle")}
         </p>
       </div>
 
       <div className="space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
-          AI & Autonomous Procurement
+          {t("settings.features.aiSection")}
         </span>
 
         <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
@@ -51,30 +55,30 @@ export function AccountFeaturesTab({ onSuccess }: AccountFeaturesTabProps) {
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-bold text-[var(--ui-text-primary)]">
-                    AI Agentic Procurement
+                    {t("settings.features.agenticTitle")}
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-gradient-to-r from-orange-500/20 to-amber-500/20 text-orange-400 border border-orange-500/30">
-                    AI Assistant
+                    {t("settings.features.agenticBadge")}
                   </span>
                   {agenticEnabled ? (
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      AKTIF DI SIDEBAR
+                      {t("settings.features.statusActiveSidebar")}
                     </span>
                   ) : (
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-gray-500/10 text-[var(--ui-text-muted)] border border-[var(--ui-border)]">
-                      NONAKTIF
+                      {t("settings.features.statusInactive")}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-[var(--ui-text-muted)] leading-relaxed max-w-xl">
-                  Mengaktifkan agen cerdas untuk pengadaan otonom. AI akan meriset spesifikasi teknis, mencocokkan katalog vendor, membandingkan estimasi harga, dan menyusun draf Purchase Requisition (PR) secara otomatis.
+                  {t("settings.features.agenticDesc")}
                 </p>
                 <div className="text-[11px] text-[var(--ui-text-secondary)] pt-1 flex items-center gap-1.5">
-                  <span className="font-semibold text-orange-400">Status:</span>
+                  <span className="font-semibold text-orange-400">{t("settings.features.statusLabel")}</span>
                   {agenticEnabled
-                    ? "Menu 'AI Agentic Procurement' ditampilkan di sidebar pada bagian Procurement (Buyer)."
-                    : "Menu disembunyikan dari sidebar navigasi."}
+                    ? t("settings.features.statusActiveText")
+                    : t("settings.features.statusInactiveText")}
                 </div>
               </div>
             </div>
