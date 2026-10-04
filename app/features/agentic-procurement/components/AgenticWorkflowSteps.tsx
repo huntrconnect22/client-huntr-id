@@ -6,7 +6,10 @@ interface BraveSource {
   title: string;
   link: string;
   price?: number;
+  snippet?: string;
+  thumbnail?: string | null;
 }
+
 
 interface BrandRec {
   brand: string;
@@ -172,15 +175,30 @@ export default function AgenticWorkflowSteps({
                   rel="noopener noreferrer"
                   className="flex items-start gap-2 p-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] hover:border-blue-500/40 transition-colors group"
                 >
-                  <div className="w-5 h-5 rounded bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Globe size={10} className="text-blue-400" />
-                  </div>
+                  {/* Thumbnail atau fallback globe icon */}
+                  {src.thumbnail ? (
+                    <img
+                      src={src.thumbnail}
+                      alt={domain}
+                      className="w-8 h-8 object-cover rounded shrink-0 mt-0.5 border border-[var(--ui-border)]"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Globe size={12} className="text-blue-400" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-semibold text-[var(--ui-text-primary)] line-clamp-1 group-hover:text-blue-400 transition-colors flex items-center gap-0.5">
                       {src.title || domain}
                       <ExternalLink size={8} className="flex-shrink-0 ml-0.5 opacity-60" />
                     </div>
-                    <div className="text-[9px] text-blue-400/70 truncate">{domain}</div>
+                    <div className="text-[9px] text-blue-400/70 truncate mb-0.5">{domain}</div>
+                    {src.snippet && (
+                      <div className="text-[9px] text-[var(--ui-text-muted)] line-clamp-2 leading-relaxed">
+                        {src.snippet}
+                      </div>
+                    )}
                     {src.price != null && src.price > 0 && (
                       <div className="text-[9px] font-bold text-emerald-400 mt-0.5">
                         {formatRp(src.price)}
@@ -190,6 +208,7 @@ export default function AgenticWorkflowSteps({
                 </a>
               );
             })}
+
           </div>
 
           <p className="text-[9px] text-[var(--ui-text-muted)] text-center">

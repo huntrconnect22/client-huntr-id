@@ -195,7 +195,13 @@ export default function AgenticProcurementPage() {
         if (res.web_search) {
           Object.values(res.web_search).forEach((data: any) => {
             (data.results || []).forEach((r: any) => {
-              if (r.link) rawWebSources.push({ title: r.title || "", link: r.link, price: r.price || 0 });
+              if (r.link) rawWebSources.push({
+                title: r.title || "",
+                link: r.link,
+                price: r.price || 0,
+                snippet: r.snippet || "",
+                thumbnail: r.thumbnail || null,
+              });
             });
           });
         }
@@ -435,7 +441,13 @@ export default function AgenticProcurementPage() {
               (result?.workflow_steps?.find((s: any) => s.step === "web_search")?.sources || [])
                 .concat(
                   Object.values(result?.web_search || {}).flatMap((d: any) =>
-                    (d.results || []).map((r: any) => ({ title: r.title || "", link: r.link, price: r.price || 0 }))
+                    (d.results || []).map((r: any) => ({
+                      title: r.title || "",
+                      link: r.link,
+                      price: r.price || 0,
+                      snippet: r.snippet || "",
+                      thumbnail: r.thumbnail || null,
+                    }))
                   )
                 )
                 .filter((s: any, i: number, arr: any[]) => s.link && arr.findIndex((x) => x.link === s.link) === i)
