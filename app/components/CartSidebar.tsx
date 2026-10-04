@@ -13,6 +13,7 @@ import {
   clearCart,
   getCartItemCount,
 } from "../lib/cart";
+import { useLanguage } from "../context/LanguageContext";
 
 interface CartSidebarProps {
   cart: CartItem[];
@@ -30,6 +31,7 @@ export default function CartSidebar({
   onClose,
   embedded = false,
 }: CartSidebarProps) {
+  const { t } = useLanguage();
   const navigate   = useNavigate();
   const totalItems = getCartItemCount(cart);
   const skuCount   = cart.length;
@@ -40,12 +42,12 @@ export default function CartSidebar({
 
   const handleRemove = async (item: CartItem) => {
     const result = await Swal.fire({
-      title: "Remove item?",
+      title: t("marketplace.cartSidebar.removeConfirmTitle"),
       text: item.name,
       icon: "question",
       showCancelButton: true,
-      confirmButtonText: "Remove",
-      cancelButtonText: "Cancel",
+      confirmButtonText: t("marketplace.cartSidebar.removeBtn"),
+      cancelButtonText: t("marketplace.cartSidebar.cancelBtn"),
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "var(--ui-bg-input)",
     });
@@ -55,12 +57,12 @@ export default function CartSidebar({
   const handleClear = async () => {
     if (cart.length === 0) return;
     const result = await Swal.fire({
-      title: "Clear cart?",
-      text: `Remove all ${skuCount} item${skuCount !== 1 ? "s" : ""} from cart?`,
+      title: t("marketplace.cartSidebar.clearConfirmTitle"),
+      text: t("marketplace.cartSidebar.clearConfirmText", { count: skuCount }),
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Clear all",
-      cancelButtonText: "Cancel",
+      confirmButtonText: t("marketplace.cartSidebar.clearConfirmBtn"),
+      cancelButtonText: t("marketplace.cartSidebar.cancelBtn"),
       confirmButtonColor: "#ef4444",
     });
     if (result.isConfirmed) { clearCart(); onCartChange([]); }
@@ -93,10 +95,10 @@ export default function CartSidebar({
       <div className={`flex items-center justify-between border-b border-[var(--ui-border)] flex-shrink-0 ${mobile ? "px-4 py-4" : "px-4 py-3"}`}>
         <div className="flex items-center gap-2.5 min-w-0">
           <ShoppingCart size={mobile ? 18 : 14} className="text-orange-500 flex-shrink-0" />
-          <span className={`font-bold text-[var(--ui-text-primary)] ${mobile ? "text-sm" : "text-xs"}`}>Cart</span>
+          <span className={`font-bold text-[var(--ui-text-primary)] ${mobile ? "text-sm" : "text-xs"}`}>{t("marketplace.cartSidebar.title")}</span>
           {totalItems > 0 && (
             <span className={`text-[var(--ui-text-muted)] truncate ${mobile ? "text-xs" : "text-[10px]"}`}>
-              · {skuCount} SKU, {totalItems} unit
+              {t("marketplace.cartSidebar.counts", { skus: skuCount, units: totalItems })}
             </span>
           )}
         </div>
@@ -105,20 +107,20 @@ export default function CartSidebar({
             <button
               type="button"
               onClick={handleClear}
-              title="Clear cart"
+              title={t("marketplace.cartSidebar.clear")}
               className={`font-semibold text-red-400 hover:text-red-500 hover:bg-red-500/8 rounded-lg transition-all touch-manipulation ${
                 mobile ? "min-h-11 px-4 text-sm" : "px-2 py-1 text-[10px]"
               }`}
             >
-              Clear
+              {t("marketplace.cartSidebar.clear")}
             </button>
           )}
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              title="Close cart"
-              aria-label="Close cart"
+              title={t("marketplace.cartSidebar.close")}
+              aria-label={t("marketplace.cartSidebar.close")}
               className={`flex items-center justify-center rounded-lg text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] border border-transparent hover:border-[var(--ui-border)] transition-all touch-manipulation cursor-pointer ${
                 mobile ? "w-11 h-11" : "w-7 h-7"
               }`}
@@ -134,9 +136,9 @@ export default function CartSidebar({
         <div className={`flex flex-col items-center justify-center gap-4 flex-1 text-center ${mobile ? "px-6 py-10" : "px-4"}`}>
           <Package size={mobile ? 40 : 28} className="text-[var(--ui-text-muted)] opacity-20" />
           <div>
-            <p className={`font-semibold text-[var(--ui-text-secondary)] ${mobile ? "text-sm" : "text-xs"}`}>Cart is empty</p>
+            <p className={`font-semibold text-[var(--ui-text-secondary)] ${mobile ? "text-sm" : "text-xs"}`}>{t("marketplace.cartSidebar.emptyTitle")}</p>
             <p className={`text-[var(--ui-text-muted)] mt-1 leading-relaxed ${mobile ? "text-sm" : "text-[11px]"}`}>
-              Tap <strong>Add to Cart</strong> on any product.
+              {t("marketplace.cartSidebar.emptyDesc")}
             </p>
           </div>
         </div>
@@ -238,17 +240,17 @@ export default function CartSidebar({
             mobile ? "px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]" : "px-3.5 py-3 space-y-2"
           }`}>
             <div className={`flex items-center justify-between ${mobile ? "text-sm" : "text-[11px]"}`}>
-              <span className="text-[var(--ui-text-muted)]">Total Units</span>
+              <span className="text-[var(--ui-text-muted)]">{t("marketplace.cartSidebar.totalUnits")}</span>
               <span className="font-bold text-[var(--ui-text-primary)] tabular-nums">{totalItems}</span>
             </div>
             <div className={`flex items-center justify-between ${mobile ? "text-sm" : "text-[11px]"}`}>
-              <span className="text-[var(--ui-text-muted)]">SKUs</span>
+              <span className="text-[var(--ui-text-muted)]">{t("marketplace.cartSidebar.skus")}</span>
               <span className="font-bold text-[var(--ui-text-primary)] tabular-nums">{skuCount}</span>
             </div>
             <p className={`text-[var(--ui-text-muted)] leading-relaxed bg-[var(--ui-bg-inset)] border border-[var(--ui-border)] rounded-lg ${
               mobile ? "text-xs px-3 py-2.5" : "text-[10px] px-2 py-1.5"
             }`}>
-              Prices will be quoted by vendors at checkout.
+              {t("marketplace.cartSidebar.vendorQuoteNotice")}
             </p>
             <button
               type="button"
@@ -259,13 +261,13 @@ export default function CartSidebar({
               }`}
             >
               <CheckCircle2 size={mobile ? 18 : 13} />
-              Create Purchase Request
+              {t("marketplace.cartSidebar.createPrBtn")}
               <ArrowRight size={mobile ? 16 : 11} />
             </button>
             {cart.length >= 3 && (
               <div className={`flex items-start gap-2 text-purple-500 ${mobile ? "text-xs" : "text-[10px]"}`}>
                 <Sparkles size={mobile ? 12 : 9} className="flex-shrink-0 mt-0.5" />
-                <span>AI can generate your PR at checkout.</span>
+                <span>{t("marketplace.cartSidebar.aiCheckoutHint")}</span>
               </div>
             )}
           </div>

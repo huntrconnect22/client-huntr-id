@@ -21,27 +21,29 @@ import { isAgenticProcurementEnabled } from "../lib/features";
 
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import Toast from "../components/Toast";
+import { useLanguage } from "../context/LanguageContext";
 
-const CATEGORY_CONFIG: { label: string; Icon: LucideIcon }[] = [
-  { label: "All", Icon: LayoutGrid },
-  { label: "Hardware", Icon: Wrench },
-  { label: "Software", Icon: Monitor },
-  { label: "Furniture", Icon: Sofa },
-  { label: "Office Supplies", Icon: Paperclip },
-  { label: "Services", Icon: Handshake },
-  { label: "Spareparts", Icon: Settings2 },
-  { label: "Electronics", Icon: Zap },
-  { label: "Mechanical", Icon: Building2 },
-  { label: "Chemicals", Icon: FlaskConical },
-  { label: "Construction", Icon: HardHat },
-  { label: "Stationery", Icon: PenLine },
-  { label: "Pantry & F&B", Icon: Coffee },
-  { label: "Logistics", Icon: BoxIcon },
-  { label: "Marketing", Icon: Megaphone },
-  { label: "Other", Icon: Bookmark },
+const CATEGORY_CONFIG: { key: string; label: string; Icon: LucideIcon }[] = [
+  { key: "all", label: "All", Icon: LayoutGrid },
+  { key: "hardware", label: "Hardware", Icon: Wrench },
+  { key: "software", label: "Software", Icon: Monitor },
+  { key: "furniture", label: "Furniture", Icon: Sofa },
+  { key: "officeSupplies", label: "Office Supplies", Icon: Paperclip },
+  { key: "services", label: "Services", Icon: Handshake },
+  { key: "spareparts", label: "Spareparts", Icon: Settings2 },
+  { key: "electronics", label: "Electronics", Icon: Zap },
+  { key: "mechanical", label: "Mechanical", Icon: Building2 },
+  { key: "chemicals", label: "Chemicals", Icon: FlaskConical },
+  { key: "construction", label: "Construction", Icon: HardHat },
+  { key: "stationery", label: "Stationery", Icon: PenLine },
+  { key: "pantry", label: "Pantry & F&B", Icon: Coffee },
+  { key: "logistics", label: "Logistics", Icon: BoxIcon },
+  { key: "marketing", label: "Marketing", Icon: Megaphone },
+  { key: "other", label: "Other", Icon: Bookmark },
 ];
 
 export default function Marketplace() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const [cartToast, setCartToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: "" });
@@ -257,7 +259,7 @@ export default function Marketplace() {
     setCart(updated);
     if (isMobile) {
       // On mobile: only show a toast — don't open the cart panel
-      setCartToast({ visible: true, message: `${item.name ?? "Item"} ditambahkan ke keranjang` });
+      setCartToast({ visible: true, message: t("marketplace.item.toastAdded", { name: item.name ?? "Item" }) });
     } else {
       window.dispatchEvent(new CustomEvent("huntr-open-cart"));
     }
@@ -273,7 +275,7 @@ export default function Marketplace() {
   const activeInOverflow = overflowCats.some(c => c.label === activeCategory);
 
   return (
-    <Layout title="Huntr Catalog" subtitle="Standardized corporate procurement catalog">
+    <Layout title={t("marketplace.title")} subtitle={t("marketplace.subtitle")}>
       {/* ── Product area — padding-right when cart is open to avoid overlap on desktop only ── */}
       <div
         className="w-full space-y-4 transition-all duration-300"
@@ -288,11 +290,11 @@ export default function Marketplace() {
               </div>
               <div>
                 <div className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5 flex-wrap">
-                  <span>Butuh pengadaan otomatis dari deskripsi kebutuhan?</span>
-                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">Baru</span>
+                  <span>{t("marketplace.agenticBanner.title")}</span>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">{t("marketplace.agenticBanner.badge")}</span>
                 </div>
                 <p className="text-[11px] text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
-                  Gunakan <b>AI Agentic Procurement</b> untuk mencari katalog, komparasi produk, dan menyusun PR otomatis.
+                  {t("marketplace.agenticBanner.description")}
                 </p>
               </div>
             </div>
@@ -300,7 +302,7 @@ export default function Marketplace() {
               onClick={() => navigate(`${getCompanyPrefix()}/agentic-procurement`)}
               className="w-full sm:w-auto justify-center px-3 py-2 sm:py-1 rounded-lg sm:rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
             >
-              <span>Buka Procurement Agent</span>
+              <span>{t("marketplace.agenticBanner.button")}</span>
               <ArrowRight size={13} />
             </button>
           </div>
@@ -315,7 +317,7 @@ export default function Marketplace() {
             }
             <input
               type="text"
-              placeholder="Search products or describe your need (AI-enabled)…"
+              placeholder={t("marketplace.searchPlaceholder")}
               value={localSearch}
               onChange={e => setLocalSearch(e.target.value)}
               className={`w-full pl-9 pr-24 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border text-[var(--ui-text-primary)] text-sm outline-none transition-all ${aiMode ? "border-purple-500/50 ring-2 ring-purple-500/10" : "border-[var(--ui-border-input)] focus:border-orange-500/50"
@@ -323,7 +325,7 @@ export default function Marketplace() {
             />
             {aiMode && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded">
-                ✦ AI Mode
+                {t("marketplace.aiModeBadge")}
               </span>
             )}
           </div>
@@ -333,7 +335,7 @@ export default function Marketplace() {
         {/* Categories — single row, overflow into "More" */}
         <div className="relative" ref={categoryDropdownRef}>
           <div className="flex gap-1.5 items-center overflow-hidden" style={{ flexWrap: "nowrap" }}>
-            {primaryCats.map(({ label, Icon }) => {
+            {primaryCats.map(({ key, label, Icon }) => {
               const isActive = activeCategory === label;
               return (
                 <button
@@ -345,7 +347,7 @@ export default function Marketplace() {
                       : "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
                     }`}
                 >
-                  <Icon size={12} strokeWidth={2} /> {label}
+                  <Icon size={12} strokeWidth={2} /> {t(`marketplace.categories.${key}` as any)}
                 </button>
               );
             })}
@@ -362,18 +364,18 @@ export default function Marketplace() {
               {activeInOverflow ? (
                 <>
                   {(() => { const c = overflowCats.find(c => c.label === activeCategory)!; return <c.Icon size={12} strokeWidth={2} />; })()}
-                  {activeCategory}
+                  {t(`marketplace.categories.${overflowCats.find(c => c.label === activeCategory)?.key ?? "other"}` as any)}
                 </>
               ) : (
-                <>More <ChevronDown size={11} className={`transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} /></>
+                <>{t("marketplace.categories.more")} <ChevronDown size={11} className={`transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} /></>
               )}
             </button>
           </div>
           {showCategoryDropdown && (
             <div className="absolute left-0 top-full mt-2 z-50 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-xl shadow-xl p-3 min-w-[320px]">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)] mb-2.5 px-1">More Categories</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)] mb-2.5 px-1">{t("marketplace.categories.moreCategories")}</p>
               <div className="grid grid-cols-4 gap-1.5">
-                {overflowCats.map(({ label, Icon }) => {
+                {overflowCats.map(({ key, label, Icon }) => {
                   const isActive = activeCategory === label;
                   return (
                     <button
@@ -385,7 +387,7 @@ export default function Marketplace() {
                           : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
                         }`}
                     >
-                      <Icon size={14} strokeWidth={1.75} /> {label}
+                      <Icon size={14} strokeWidth={1.75} /> {t(`marketplace.categories.${key}` as any)}
                     </button>
                   );
                 })}
@@ -415,12 +417,12 @@ export default function Marketplace() {
           <div className="flex items-center justify-between p-3.5 px-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--ui-text-primary)]">
               <GitCompare size={16} className="text-indigo-500" />
-              <span><strong className="text-indigo-500">{compareIds.length} items</strong> selected</span>
+              <span><strong className="text-indigo-500">{t("marketplace.compareBar.itemsSelected", { count: compareIds.length })}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setCompareIds([])} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-muted)]">Reset</button>
+              <button onClick={() => setCompareIds([])} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-muted)]">{t("marketplace.compareBar.reset")}</button>
               <button onClick={() => setShowCompareModal(true)} style={{ color: "white" }} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-bold shadow-sm">
-                <Sparkles size={13} /> Compare with AI
+                <Sparkles size={13} /> {t("marketplace.compareBar.compareWithAi")}
               </button>
             </div>
           </div>
@@ -435,8 +437,8 @@ export default function Marketplace() {
                   <Sparkles size={22} className="text-white" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-bold text-[var(--ui-text-primary)]">Analyzing specifications…</p>
-                  <p className="text-xs text-[var(--ui-text-muted)]">Huntr AI is scoring the best matches</p>
+                  <p className="text-sm font-bold text-[var(--ui-text-primary)]">{t("marketplace.loading.analyzingSpecs")}</p>
+                  <p className="text-xs text-[var(--ui-text-muted)]">{t("marketplace.loading.aiScoring")}</p>
                 </div>
               </>
             ) : (
@@ -446,7 +448,7 @@ export default function Marketplace() {
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-[var(--ui-border)] bg-[var(--ui-bg-input)] gap-3">
             <Package size={32} className="text-[var(--ui-text-muted)] opacity-25" />
-            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">No catalog items found</p>
+            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">{t("marketplace.empty")}</p>
           </div>
         ) : (
           <div className={`grid gap-3 sm:gap-4 ${cartPanelOpen ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`}>
@@ -501,7 +503,7 @@ export default function Marketplace() {
                     </h3>
                     {item.brand && (
                       <p className="text-[10px] text-[var(--ui-text-muted)] truncate">
-                        <span className="font-medium">Brand:</span> {item.brand}
+                        <span className="font-medium">{t("marketplace.item.brand")}</span> {item.brand}
                       </p>
                     )}
                     {item.price > 0 && (
@@ -512,7 +514,7 @@ export default function Marketplace() {
                     {item.ai_score !== undefined && (
                       <div className="pt-1 border-t border-[var(--ui-border)]">
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded">
-                          <Sparkles size={10} /> {item.ai_score}% Match
+                          <Sparkles size={10} /> {t("marketplace.item.match", { score: item.ai_score })}
                         </span>
                         {item.ai_explanation && (
                           <p className="text-[10px] text-[var(--ui-text-muted)] italic line-clamp-2 mt-0.5">{item.ai_explanation}</p>
@@ -524,7 +526,7 @@ export default function Marketplace() {
                     <div className="mt-auto pt-2">
                       <button
                         type="button"
-                        aria-label="Add to cart"
+                        aria-label={t("marketplace.item.addToCart")}
                         onClick={e => handleAddToCart(item, e)}
                         style={{ color: "white" }}
                         className={`w-full py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${justAdded
@@ -535,11 +537,11 @@ export default function Marketplace() {
                           }`}
                       >
                         {justAdded ? (
-                          <><CheckCircle2 size={13} /> Added!</>
+                          <><CheckCircle2 size={13} /> {t("marketplace.item.added")}</>
                         ) : inCart ? (
-                          <><Plus size={13} /> Add More</>
+                          <><Plus size={13} /> {t("marketplace.item.addMore")}</>
                         ) : (
-                          <><ShoppingCart size={13} /> Add to Cart</>
+                          <><ShoppingCart size={13} /> {t("marketplace.item.addToCart")}</>
                         )}
                       </button>
                     </div>

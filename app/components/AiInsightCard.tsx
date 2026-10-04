@@ -1,5 +1,6 @@
 import React from "react";
 import { Sparkles, X } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 interface AiInsightCardProps {
   summary: string;
@@ -118,6 +119,7 @@ export default function AiInsightCard({
   isComparison = false,
   specs = [],
 }: AiInsightCardProps) {
+  const { t } = useLanguage();
   return (
     <div
       style={{
@@ -184,7 +186,7 @@ export default function AiInsightCard({
                 border: isComparison ? "1px solid rgba(99,102,241,0.2)" : "1px solid rgba(168,85,247,0.2)",
               }}
             >
-              {isComparison ? "⚖ Comparison Mode" : "✦ AI Mode"}
+              {isComparison ? t("marketplace.aiInsight.badgeComparison") : t("marketplace.aiInsight.badgeAi")}
             </span>
           </div>
           <p
@@ -228,7 +230,7 @@ export default function AiInsightCard({
               <div style={{ height: 12, borderRadius: 6, background: "rgba(99,102,241,0.12)", width: "60%", animation: "pulse 1.5s ease-in-out infinite" }} />
               <div style={{ height: 80, borderRadius: 10, background: "rgba(99,102,241,0.08)", width: "100%", animation: "pulse 1.5s ease-in-out infinite", animationDelay: "0.2s" }} />
               <div style={{ height: 12, borderRadius: 6, background: "rgba(99,102,241,0.08)", width: "80%", animation: "pulse 1.5s ease-in-out infinite", animationDelay: "0.4s" }} />
-              <div style={{ fontSize: 11, color: "#6366f1", marginTop: 4 }}>⚖ Sedang memuat analisis perbandingan...</div>
+              <div style={{ fontSize: 11, color: "#6366f1", marginTop: 4 }}>{t("marketplace.aiInsight.loadingComparison")}</div>
             </div>
           )}
         </div>
@@ -249,7 +251,7 @@ export default function AiInsightCard({
             justifyContent: "center",
             flexShrink: 0,
           }}
-          aria-label="Tutup AI insight"
+          aria-label={t("marketplace.aiInsight.closeAria")}
         >
           <X size={14} />
         </button>
@@ -269,10 +271,7 @@ export default function AiInsightCard({
       >
         <div style={{ display: "flex", gap: 16 }}>
           <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>
-            <span style={{ fontWeight: 800, color: "#f97316" }}>
-              {totalFound}
-            </span>{" "}
-            produk ditemukan
+            {t("marketplace.aiInsight.productsFound", { count: totalFound })}
           </div>
           <div
             style={{
@@ -284,8 +283,7 @@ export default function AiInsightCard({
               whiteSpace: "nowrap",
             }}
           >
-            untuk:{" "}
-            <em style={{ color: "var(--ui-text-secondary)" }}>"{query}"</em>
+            {t("marketplace.aiInsight.forQuery", { query })}
           </div>
         </div>
 
@@ -327,12 +325,12 @@ export default function AiInsightCard({
                 >
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>
-                AI sedang menyiapkan...
+                {t("marketplace.aiInsight.generatingPr")}
               </>
             ) : (
               <>
                 <Sparkles size={14} />
-                Buat PR Otomatis
+                {t("marketplace.aiInsight.generatePrBtn")}
               </>
             )}
           </button>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Sparkles, Star, Loader2, CheckCircle2, ShoppingCart, Lightbulb } from "lucide-react";
 import { aiCompare } from "../lib/api/ai";
+import { useLanguage } from "../context/LanguageContext";
 
 interface AiCompareModalProps {
   catalogueIds: string[];
@@ -23,6 +24,7 @@ export default function AiCompareModal({
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   // Click outside to close functionality
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function AiCompareModal({
         const res = await aiCompare(catalogueIds);
         setResult(res);
       } catch (e) {
-        setError("Gagal memuat perbandingan AI. Silakan coba lagi.");
+        setError(t("marketplace.aiCompareModal.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -143,7 +145,7 @@ export default function AiCompareModal({
                   fontWeight: 600,
                 }}
               >
-                {catalogueIds.length} produk dibandingkan oleh Huntr AI
+                {t("marketplace.aiCompareModal.subtitle", { count: catalogueIds.length })}
               </p>
             </div>
           </div>
@@ -161,7 +163,7 @@ export default function AiCompareModal({
               alignItems: "center",
               justifyContent: "center",
             }}
-            aria-label="Tutup"
+            aria-label={t("marketplace.aiCompareModal.closeAria")}
           >
             <X size={18} />
           </button>
@@ -203,12 +205,12 @@ export default function AiCompareModal({
                     marginBottom: 6,
                   }}
                 >
-                  Huntr AI sedang menganalisis...
+                  {t("marketplace.aiCompareModal.loadingTitle")}
                 </div>
                 <div
                   style={{ fontSize: 13, color: "var(--ui-text-muted)" }}
                 >
-                  Membandingkan spesifikasi, harga, dan kualitas produk
+                  {t("marketplace.aiCompareModal.loadingDesc")}
                 </div>
               </div>
             </div>
@@ -252,7 +254,7 @@ export default function AiCompareModal({
                       gap: 6,
                     }}
                   >
-                    <Sparkles size={12} /> Analisis AI
+                    <Sparkles size={12} /> {t("marketplace.aiCompareModal.aiAnalysis")}
                   </div>
                   <p
                     style={{
@@ -333,7 +335,7 @@ export default function AiCompareModal({
                             boxShadow: "0 4px 12px rgba(249,115,22,0.4)",
                           }}
                         >
-                          ✦ AI REKOMENDASI
+                          {t("marketplace.aiCompareModal.recommendedBadge")}
                         </div>
                       )}
 
@@ -434,7 +436,7 @@ export default function AiCompareModal({
                       >
                         {catalogue?.category && (
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <span style={{ color: "var(--ui-text-muted)" }}>Kategori</span>
+                            <span style={{ color: "var(--ui-text-muted)" }}>{t("marketplace.aiCompareModal.categoryLabel")}</span>
                             <span style={{ fontWeight: 700, color: "var(--ui-text-primary)" }}>
                               {catalogue.category}
                             </span>
@@ -442,7 +444,7 @@ export default function AiCompareModal({
                         )}
                         {catalogue?.brand && (
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <span style={{ color: "var(--ui-text-muted)" }}>Brand</span>
+                            <span style={{ color: "var(--ui-text-muted)" }}>{t("marketplace.aiCompareModal.brandLabel")}</span>
                             <span style={{ fontWeight: 700, color: "var(--ui-text-primary)" }}>
                               {catalogue.brand}
                             </span>
@@ -450,7 +452,7 @@ export default function AiCompareModal({
                         )}
                         {catalogue?.uom && (
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <span style={{ color: "var(--ui-text-muted)" }}>UOM</span>
+                            <span style={{ color: "var(--ui-text-muted)" }}>{t("marketplace.aiCompareModal.uomLabel")}</span>
                             <span style={{ fontWeight: 700, color: "var(--ui-text-primary)" }}>
                               {catalogue.uom}
                             </span>
@@ -471,7 +473,7 @@ export default function AiCompareModal({
                               marginBottom: 6,
                             }}
                           >
-                            Kelebihan
+                            {t("marketplace.aiCompareModal.prosLabel")}
                           </div>
                           {item.pros.slice(0, 3).map((pro: string, i: number) => (
                             <div
@@ -526,7 +528,7 @@ export default function AiCompareModal({
                           }}
                         >
                           <ShoppingCart size={14} />
-                          Tambah ke Cart
+                          {t("marketplace.aiCompareModal.addToCart")}
                         </button>
                       )}
                     </div>
