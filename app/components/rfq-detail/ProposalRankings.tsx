@@ -3,6 +3,7 @@ import {
   Trophy, MessageSquare, Award, Loader2, Sparkles, FileText, Info,
 } from "lucide-react";
 import { getAssetUrl } from "../../lib/assets";
+import { useLanguage } from "../../context/LanguageContext";
 
 const btnSecondary =
   "inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors disabled:opacity-50";
@@ -38,6 +39,7 @@ export function ProposalRankings({
   aiRankLoading,
   showAiPanel,
 }: ProposalRankingsProps) {
+  const { t } = useLanguage();
   const topRank = rankings.find((r) => r.rank === 1);
 
   if (rankings.length === 0) return null;
@@ -48,7 +50,7 @@ export function ProposalRankings({
         <div className="flex items-center gap-2">
           <Trophy size={14} className="text-orange-500" />
           <h2 className="text-sm font-bold text-[var(--ui-text-primary)]">
-            Vendor Proposals
+            {t("rfqDetail.proposals.sectionTitle")}
             <span className="text-[var(--ui-text-muted)] font-normal ml-1">({rankings.length})</span>
           </h2>
         </div>
@@ -59,34 +61,34 @@ export function ProposalRankings({
             ) : (
               <Sparkles size={11} />
             )}
-            {showAiPanel ? "Refresh AI" : "AI Analysis"}
+            {showAiPanel ? t("rfqDetail.proposals.aiRefresh") : t("rfqDetail.proposals.aiAnalysis")}
           </button>
         )}
       </div>
 
       <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 mb-2">
         <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
-          <Info size={11} /> Evaluation criteria
+          <Info size={11} /> {t("rfqDetail.proposals.evaluationCriteria")}
         </div>
         <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">
-          Price (primary) → delivery lead time → warranty period.
+          {t("rfqDetail.proposals.evaluationDetail")}
         </p>
       </div>
 
       {topRank && canApproveOrAward && !isRfqAlreadyAwarded && (
         <div className="rounded-lg border border-orange-500/25 bg-orange-500/5 px-3 py-2 mb-2 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-[10px] font-bold uppercase text-orange-400">System recommendation</div>
+            <div className="text-[10px] font-bold uppercase text-orange-400">{t("rfqDetail.proposals.systemRecommendation")}</div>
             <div className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
               {topRank.proposal.company?.name || "Vendor"}
             </div>
             <div className="text-[11px] text-[var(--ui-text-muted)]">
-              Rp {Number(topRank.proposal.price_offer).toLocaleString("id-ID")} · {topRank.proposal.delivery_days}d · {topRank.proposal.warranty_months}mo warranty
+              Rp {Number(topRank.proposal.price_offer).toLocaleString("id-ID")} · {t("rfqDetail.proposals.deliveryDays", { n: topRank.proposal.delivery_days })} · {t("rfqDetail.proposals.warrantyMonths", { n: topRank.proposal.warranty_months })} warranty
             </div>
           </div>
           <div className="flex gap-1.5 flex-shrink-0">
             <button type="button" onClick={() => onNegotiate(topRank.proposal)} className={btnSecondary}>
-              <MessageSquare size={11} /> Negotiate
+              <MessageSquare size={11} /> {t("rfqDetail.proposals.negotiate")}
             </button>
             <button
               type="button"
@@ -99,7 +101,7 @@ export function ProposalRankings({
               ) : (
                 <Award size={11} />
               )}
-              Award
+              {t("rfqDetail.proposals.award")}
             </button>
           </div>
         </div>
@@ -110,14 +112,14 @@ export function ProposalRankings({
           <thead>
             <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
               <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-12">#</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Vendor</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">Offer</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">Del.</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">Warr.</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">Status</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[50px]">Doc</th>
+              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{t("rfqDetail.proposals.tableVendor")}</th>
+              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">{t("rfqDetail.proposals.tableOffer")}</th>
+              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">{t("rfqDetail.proposals.tableDel")}</th>
+              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">{t("rfqDetail.proposals.tableWarr")}</th>
+              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">{t("rfqDetail.proposals.tableStatus")}</th>
+              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[50px]">{t("rfqDetail.proposals.tableDoc")}</th>
               {canApproveOrAward && !isRfqAlreadyAwarded && (
-                <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[140px]">Actions</th>
+                <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[140px]">{t("rfqDetail.proposals.tableActions")}</th>
               )}
             </tr>
           </thead>
@@ -135,7 +137,7 @@ export function ProposalRankings({
                   <td className="px-3 py-2 whitespace-nowrap">
                     {isWinner ? (
                       <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                        Win
+                        {t("rfqDetail.proposals.winBadge")}
                       </span>
                     ) : (
                       <span className="text-xs font-bold text-[var(--ui-text-muted)]">#{rankData.rank}</span>
@@ -147,22 +149,22 @@ export function ProposalRankings({
                     </div>
                     {rankData.vendor_stats && (
                       <div className="text-[10px] text-[var(--ui-text-muted)]">
-                        Win rate {rankData.vendor_stats.win_rate}%
+                        {t("rfqDetail.proposals.winRate", { rate: rankData.vendor_stats.win_rate })}
                       </div>
                     )}
                   </td>
                   <td className="px-3 py-2 text-xs font-bold text-[var(--ui-text-brand)] whitespace-nowrap">
                     Rp {Number(p.price_offer).toLocaleString("id-ID")}
                   </td>
-                  <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{p.delivery_days}d</td>
-                  <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{p.warranty_months}mo</td>
+                  <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{t("rfqDetail.proposals.deliveryDays", { n: p.delivery_days })}</td>
+                  <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{t("rfqDetail.proposals.warrantyMonths", { n: p.warranty_months })}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {isWinner ? (
-                      <span className="text-[10px] font-semibold text-emerald-500">Awarded</span>
+                      <span className="text-[10px] font-semibold text-emerald-500">{t("rfqDetail.proposals.statusAwarded")}</span>
                     ) : p.winner_status === "rejected" ? (
-                      <span className="text-[10px] font-semibold text-red-400">Rejected</span>
+                      <span className="text-[10px] font-semibold text-red-400">{t("rfqDetail.proposals.statusRejected")}</span>
                     ) : (
-                      <span className="text-[10px] text-[var(--ui-text-muted)]">Active</span>
+                      <span className="text-[10px] text-[var(--ui-text-muted)]">{t("rfqDetail.proposals.statusActive")}</span>
                     )}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">

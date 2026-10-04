@@ -1,6 +1,7 @@
 import React from "react";
 import { User, Building2, FileText, CheckCircle2 } from "lucide-react";
 import { getAssetUrl } from "../../lib/assets";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface RFQDescriptionProps {
   rfq: any;
@@ -31,13 +32,14 @@ function MetaCell({
 }
 
 export function RFQDescription({ rfq, successMessage }: RFQDescriptionProps) {
+  const { t } = useLanguage();
   const documentUrl = rfq?.document_url || (rfq?.document_path ? getAssetUrl(rfq.document_path) : null);
 
   return (
     <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 space-y-3">
       <div>
         <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
-          Purchase Requisition
+          {t("rfqDetail.description.purchaseRequisition")}
         </span>
         <h2 className="text-base sm:text-lg font-bold text-[var(--ui-text-primary)] mt-2 leading-snug">
           {rfq.title}
@@ -47,21 +49,21 @@ export function RFQDescription({ rfq, successMessage }: RFQDescriptionProps) {
       <div className="grid grid-cols-2 gap-2">
         <MetaCell
           icon={User}
-          label="Requested by"
-          value={rfq.user?.name || "Unknown"}
+          label={t("rfqDetail.description.requestedBy")}
+          value={rfq.user?.name || t("rfqDetail.description.unknown")}
           sub={rfq.created_at ? new Date(rfq.created_at).toLocaleDateString("id-ID") : undefined}
         />
         <MetaCell
           icon={Building2}
-          label="Company"
-          value={rfq.company?.name || "Unknown"}
+          label={t("rfqDetail.description.company")}
+          value={rfq.company?.name || t("rfqDetail.description.unknown")}
         />
       </div>
 
       {rfq.description && (
         <div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
-            Requirements
+            {t("rfqDetail.description.requirements")}
           </div>
           <p className="text-sm text-[var(--ui-text-secondary)] leading-relaxed">{rfq.description}</p>
         </div>
@@ -74,7 +76,7 @@ export function RFQDescription({ rfq, successMessage }: RFQDescriptionProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:underline"
         >
-          <FileText size={12} /> View attachment
+          <FileText size={12} /> {t("rfqDetail.description.viewAttachment")}
         </a>
       )}
 

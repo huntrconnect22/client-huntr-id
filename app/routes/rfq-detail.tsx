@@ -16,6 +16,7 @@ import { ProposalRankings } from "../components/rfq-detail/ProposalRankings";
 import { AIAnalysisPanel } from "../components/rfq-detail/AIAnalysisPanel";
 import { RFQSidebar } from "../components/rfq-detail/RFQSidebar";
 import { isDemoMode } from "../lib/demo-mode";
+import { useLanguage } from "../context/LanguageContext";
 
 function StatCell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
@@ -33,6 +34,7 @@ export default function RfqDetail() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const { user, company } = useAppShell();
+  const { t } = useLanguage();
   const [rfq, setRfq] = useState<any>(null);
   const [rankings, setRankings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,7 @@ export default function RfqDetail() {
       const res = await apiPost(`/api/demo/rfq/${rfq.id}/generate-bots`, {});
       Swal.fire({
         icon: "success",
-        title: "5 AI Vendor Bots Participated!",
+        title: t("rfqDetail.demoBot.successTitle"),
         text: res?.message || "5 AI Vendor bots have submitted unique tenders using ChatGPT API.",
         confirmButtonColor: "#f97316"
       });
@@ -99,14 +101,14 @@ export default function RfqDetail() {
 
   useEffect(() => {
     if (!id || id === "NaN" || id === "undefined") {
-      setError("Invalid RFQ ID.");
+      setError(t("rfqDetail.invalidId"));
       setLoading(false);
       return;
     }
     setLoading(true);
     loadRfq(id)
       .then(() => setError(null))
-      .catch(() => setError("Unable to load RFQ detail. Please try again."))
+      .catch(() => setError(t("rfqDetail.loadError")))
       .finally(() => setLoading(false));
   }, [id, loadRfq]);
 
@@ -126,7 +128,7 @@ export default function RfqDetail() {
       Swal.fire({ icon: "success", title: "Invitation Sent!", timer: 2500, showConfirmButton: false });
       setInviteWhatsapp("");
     } catch (err: any) {
-      Swal.fire({ icon: "error", title: "Error", text: err.message || "Failed to send invitation." });
+      Swal.fire({ icon: "error", title: "Error", text: err.message || t("rfqDetail.inviteError") });
     } finally {
       setInviting(false);
     }
@@ -155,7 +157,7 @@ export default function RfqDetail() {
     setError(null);
     try {
       await apiPost(`/api/proposals/${proposalId}/award`, { rfq_id: rfqId, user_id: user.id });
-      setSuccessMessage("Proposal awarded — sent to manager for approval.");
+      setSuccessMessage(t("rfqDetail.awardedMsg"));
       if (id) await loadRfq(id);
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
@@ -211,7 +213,7 @@ export default function RfqDetail() {
 
   if (loading && !rfq) {
     return (
-      <Layout title="RFQ Detail" subtitle="Loading...">
+      <Layout title="RFQ Detail" subtitle={t("rfqDetail.loading")}>
         <div className="flex justify-center py-16">
           <Loader2 size={22} className="animate-spin text-orange-500" />
         </div>
@@ -233,7 +235,7 @@ export default function RfqDetail() {
   if (!rfq) {
     return (
       <Layout title="RFQ Detail" subtitle="Not found">
-        <div className="py-16 text-center text-sm text-[var(--ui-text-muted)]">RFQ not found.</div>
+        <div className="py-16 text-center text-sm text-[var(--ui-text-muted)]">{t("rfqDetail.notFound")}</div>
       </Layout>
     );
   }
@@ -254,11 +256,11 @@ export default function RfqDetail() {
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          <StatCell label="Line Items" value={String(lineItems)} />
-          <StatCell label="Total Qty" value={`${totalItems} units`} />
-          <StatCell label="Proposals" value={String(rankings.length)} accent={rankings.length > 0} />
-          <StatCell label="Duration" value={`${rfq.duration_days ?? 7} days`} />
-          <StatCell label="Time Left" value={getTenderSummary()} />
+          <StatCell label={t("rfqDetail.stats.lineItems")} value={String(lineItems)} />
+          <StatCell label={t("rfqDetail.stats.totalQty")} value={t("rfqDetail.stats.unitsUnit", { n: totalItems })} />
+          <StatCell label={t("rfqDetail.stats.proposals")} value={String(rankings.length)} accent={rankings.length > 0} />
+          <StatCell label={t("rfqDetail.stats.duration")} value={t("rfqDetail.stats.daysUnit", { n: rfq.duration_days ?? 7 })} />
+          <StatCell label={t("rfqDetail.stats.timeLeft")} value={getTenderSummary()} />
         </div>
 
         <div className="grid lg:grid-cols-[1fr_260px] gap-4 items-start">
@@ -276,11 +278,11 @@ export default function RfqDetail() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold text-[var(--ui-text-primary)] uppercase tracking-wider">Demo Mode: AI Vendor Bots</h4>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-orange-500 text-white">ChatGPT API</span>
+                          <h4 className="text-xs font-bold text-[var(--ui-text-primary)] uppercase tracking-wider">{t("rfqDetail.demoBot.title")}</h4>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-orange-500 text-white">{t("rfqDetail.demoBot.badge")}</span>
                         </div>
                         <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">
-                          Setiap PR dilayani 5 AI Vendor Bots (Tender, Negosiasi, & PO Confirm) dengan penawaran unik.
+                          {t("rfqDetail.demoBot.description")}
                         </p>
                       </div>
                     </div>
@@ -290,7 +292,7 @@ export default function RfqDetail() {
                       onClick={handleTriggerDemoBots}
                       className="px-3.5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white text-xs font-bold rounded-lg flex items-center gap-2 shrink-0 transition shadow-sm"
                     >
-                      {generatingBots ? <Loader2 size={14} className="animate-spin" /> : "🤖 Trigger 5 AI Vendor Bids"}
+                      {generatingBots ? <Loader2 size={14} className="animate-spin" /> : t("rfqDetail.demoBot.triggerBtn")}
                     </button>
                   </div>
                 )}

@@ -2,12 +2,14 @@ import React from "react";
 import { Link } from "react-router";
 import { Package } from "lucide-react";
 import { getAssetUrl } from "../../lib/assets";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface RFQItemsTableProps {
   rfq: any;
 }
 
 export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
+  const { t } = useLanguage();
   const items = rfq.items || [];
 
   return (
@@ -15,14 +17,14 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
       <div className="flex items-center gap-2 mb-2">
         <Package size={14} className="text-orange-500" />
         <h2 className="text-sm font-bold text-[var(--ui-text-primary)]">
-          Items & Specifications
+          {t("rfqDetail.items.sectionTitle")}
           <span className="text-[var(--ui-text-muted)] font-normal ml-1">({items.length})</span>
         </h2>
       </div>
 
       {items.length === 0 ? (
         <div className="py-8 text-center text-xs text-[var(--ui-text-muted)] rounded-lg border border-dashed border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-          No items in this RFQ.
+          {t("rfqDetail.items.empty")}
         </div>
       ) : (
         <div className="rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)] huntr-table-scroll">
@@ -30,9 +32,9 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
             <thead>
               <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
                 <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-8">#</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Product</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">Qty</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">Required</th>
+                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{t("rfqDetail.items.product")}</th>
+                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">{t("rfqDetail.items.qty")}</th>
+                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">{t("rfqDetail.items.required")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--ui-border)]">
@@ -40,7 +42,7 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
                 const cat = item.catalogue;
                 const catalogueId = item.catalogue_id || cat?.id;
                 const hasImage = Boolean(cat?.image_url || cat?.image_path);
-                const name = cat?.name || item.item_name || item.name || "Unknown Item";
+                const name = cat?.name || item.item_name || item.name || t("rfqDetail.items.unknownItem");
 
                 return (
                   <tr key={item.id ?? index} className="hover:bg-[var(--ui-bg-input)] transition-colors">

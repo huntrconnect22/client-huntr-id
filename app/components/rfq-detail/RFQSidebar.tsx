@@ -2,6 +2,7 @@ import React from "react";
 import {
   ArrowRight, MapPin, ShieldCheck, User, Sparkles, Loader2, AlertTriangle, CheckCircle2,
 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 const btnPrimary =
   "w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors";
@@ -49,22 +50,23 @@ export function RFQSidebar({
   setInviteWhatsapp,
   inviting,
 }: RFQSidebarProps) {
+  const { t } = useLanguage();
   const expired = isTenderExpired();
 
   return (
     <aside className="flex flex-col gap-3 lg:sticky lg:top-2">
       <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3">
         <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-2">
-          Tender Summary
+          {t("rfqDetail.sidebar.tenderSummary")}
         </div>
-        <Row label="Total quantity" value={`${totalItems} units`} />
-        <Row label="Duration" value={`${rfq.duration_days ?? 7} days`} />
-        {rfq.department && <Row label="Department" value={rfq.department} />}
-        <Row label="Time remaining" value={getTenderSummary()} />
+        <Row label={t("rfqDetail.sidebar.totalQuantity")} value={t("rfqDetail.stats.unitsUnit", { n: totalItems })} />
+        <Row label={t("rfqDetail.sidebar.duration")} value={t("rfqDetail.stats.daysUnit", { n: rfq.duration_days ?? 7 })} />
+        {rfq.department && <Row label={t("rfqDetail.sidebar.department")} value={rfq.department} />}
+        <Row label={t("rfqDetail.sidebar.timeRemaining")} value={getTenderSummary()} />
 
         {canSubmitProposal() && (
           <button type="button" onClick={onNavigateToProposals} className={`${btnPrimary} mt-3`}>
-            Submit Proposal <ArrowRight size={13} />
+            {t("rfqDetail.sidebar.submitProposal")} <ArrowRight size={13} />
           </button>
         )}
 
@@ -72,20 +74,20 @@ export function RFQSidebar({
         {hasAlreadySubmitted && !expired && (
           <div className="mt-3 flex items-center gap-2 px-2.5 py-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
             <CheckCircle2 size={13} className="shrink-0" />
-            Proposal sudah disubmit
+            {t("rfqDetail.sidebar.proposalSubmitted")}
           </div>
         )}
 
         {isVendor && expired && (
           <div className="mt-3 flex items-center gap-2 px-2.5 py-2 rounded-lg border border-red-500/25 bg-red-500/10 text-red-400 text-xs font-semibold">
             <AlertTriangle size={13} />
-            Tender period ended
+            {t("rfqDetail.sidebar.tenderEnded")}
           </div>
         )}
 
         {!isVendor && rfq?.status === "active" && !expired && (
           <p className="mt-3 text-[11px] text-[var(--ui-text-muted)] text-center">
-            Only vendors can submit proposals
+            {t("rfqDetail.sidebar.onlyVendors")}
           </p>
         )}
       </div>
@@ -95,9 +97,9 @@ export function RFQSidebar({
           <div className="flex items-start gap-2 mb-2">
             <User size={14} className="text-orange-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-[var(--ui-text-primary)]">Invite vendor</p>
+              <p className="text-xs font-semibold text-[var(--ui-text-primary)]">{t("rfqDetail.sidebar.inviteVendorTitle")}</p>
               <p className="text-[11px] text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
-                Send WhatsApp invite to submit a proposal.
+                {t("rfqDetail.sidebar.inviteVendorDesc")}
               </p>
             </div>
           </div>
@@ -105,7 +107,7 @@ export function RFQSidebar({
             <input
               type="tel"
               required
-              placeholder="e.g. 628123456789"
+              placeholder={t("rfqDetail.sidebar.invitePlaceholder")}
               value={inviteWhatsapp}
               onChange={(e) => setInviteWhatsapp(e.target.value)}
               className={inputClass}
@@ -116,7 +118,7 @@ export function RFQSidebar({
               className={`${btnPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {inviting ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-              {inviting ? "Sending..." : "Invite Vendor"}
+              {inviting ? t("rfqDetail.sidebar.sending") : t("rfqDetail.sidebar.inviteBtn")}
             </button>
           </form>
         </div>
@@ -124,10 +126,10 @@ export function RFQSidebar({
 
       <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3">
         <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1.5">
-          <MapPin size={11} /> Delivery point
+          <MapPin size={11} /> {t("rfqDetail.sidebar.deliveryPoint")}
         </div>
         <p className="text-xs text-[var(--ui-text-primary)] leading-relaxed">
-          {rfq.delivery_point || rfq.company?.address || "Not specified"}
+          {rfq.delivery_point || rfq.company?.address || t("rfqDetail.sidebar.notSpecified")}
         </p>
       </div>
 
@@ -135,7 +137,7 @@ export function RFQSidebar({
         <div className="flex gap-2 items-start">
           <ShieldCheck size={14} className="text-orange-500 shrink-0 mt-0.5" />
           <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">
-            Proposals are protected. Only the target buyer can access commercial data.
+            {t("rfqDetail.sidebar.proposalProtected")}
           </p>
         </div>
       </div>

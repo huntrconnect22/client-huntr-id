@@ -3,6 +3,7 @@ import { MessageSquare, X, Loader2 } from "lucide-react";
 import { apiPost } from "../../lib/api";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../../hooks/useMediaQuery";
 import Swal from "sweetalert2";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface NegotiationModalProps {
   proposal: any;
@@ -11,6 +12,7 @@ interface NegotiationModalProps {
 }
 
 export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationModalProps) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [paymentScheme, setPaymentScheme] = useState(proposal.payment_term || "");
@@ -65,8 +67,8 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
       });
       Swal.fire({
         icon: 'success',
-        title: 'Negotiation Sent!',
-        text: 'Negotiation request sent to vendor!',
+        title: t("rfqDetail.negotiation.sentTitle"),
+        text: t("rfqDetail.negotiation.sentText"),
         timer: 2000,
         timerProgressBar: true,
         showConfirmButton: false
@@ -76,8 +78,8 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
       console.error(err);
       Swal.fire({
         icon: 'error',
-        title: 'Error!',
-        text: 'Failed to send negotiation.'
+        title: t("rfqDetail.negotiation.errorTitle"),
+        text: t("rfqDetail.negotiation.errorText"),
       });
     } finally {
       setLoading(false);
@@ -89,8 +91,8 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
       <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: isMobile ? 12 : 16, width: "100%", maxWidth: isMobile ? "100%" : 600, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
         <div style={{ padding: isMobile ? "20px 24px" : "24px 32px", borderBottom: "1px solid var(--ui-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "var(--ui-text-primary)" }}>Negotiation Request</h3>
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 600 }}>Proposal by {proposal.company?.name}</p>
+            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "var(--ui-text-primary)" }}>{t("rfqDetail.negotiation.modalTitle")}</h3>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 600 }}>{t("rfqDetail.negotiation.proposalBy", { name: proposal.company?.name })}</p>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer" }}><X size={24} /></button>
         </div>
@@ -98,13 +100,15 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
         <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Items Negotiation */}
           <div>
-            <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, display: "block" }}>Proposed Unit Prices</label>
+            <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, display: "block" }}>{t("rfqDetail.negotiation.proposedPrices")}</label>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {items.map((it, idx) => (
                 <div key={idx} style={{ padding: 12, background: "var(--ui-bg-input)", borderRadius: 8, border: "1px solid var(--ui-border-input)", display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", gap: 16, flexDirection: isMobile ? "column" : "row" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ui-text-primary)" }}>{it.inventory_name}</div>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 600 }}>Qty: {it.negotiated_qty} {it.uom} · Original: Rp {Number(it.original_price).toLocaleString()}</div>
+                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 600 }}>
+                      {t("rfqDetail.negotiation.qtyOriginal", { qty: it.negotiated_qty, uom: it.uom, price: Number(it.original_price).toLocaleString() })}
+                    </div>
                   </div>
                   <div style={{ width: isMobile ? "100%" : 140 }}>
                     <div style={{ position: "relative" }}>
@@ -124,7 +128,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
             <div>
-              <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>Payment Scheme</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("rfqDetail.negotiation.paymentScheme")}</label>
               <select 
                 value={paymentScheme}
                 onChange={e => setPaymentScheme(e.target.value)}
@@ -138,7 +142,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>Delivery Info</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("rfqDetail.negotiation.deliveryInfo")}</label>
               <select 
                 value={deliveryTerms}
                 onChange={e => setDeliveryTerms(e.target.value)}
@@ -154,24 +158,24 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
           </div>
 
           <div>
-            <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>Negotiation Notes</label>
+            <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("rfqDetail.negotiation.notes")}</label>
             <textarea 
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Tell vendor why you are negotiating..."
+              placeholder={t("rfqDetail.negotiation.notesPlaceholder")}
               style={{ width: "100%", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: 12, fontSize: 14, color: "var(--ui-text-primary)", minHeight: 100, outline: "none", resize: "none" }}
             />
           </div>
         </div>
 
         <div style={{ padding: 12, borderTop: "1px solid var(--ui-border)", display: "flex", gap: 16, flexDirection: isMobile ? "column" : "row" }}>
-          <button onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 8, border: "1px solid var(--ui-border-input)", background: "none", fontSize: 14, fontWeight: 700, color: "var(--ui-text-secondary)", cursor: "pointer" }}>Cancel</button>
+          <button onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 8, border: "1px solid var(--ui-border-input)", background: "none", fontSize: 14, fontWeight: 700, color: "var(--ui-text-secondary)", cursor: "pointer" }}>{t("rfqDetail.negotiation.cancel")}</button>
           <button 
             onClick={handleSubmit}
             disabled={loading}
             style={{ flex: 2, padding: 12, borderRadius: 8, background: "var(--huntr-gradient)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 10px 20px rgba(249,115,22,0.2)", opacity: loading ? 0.5 : 1 }}
           >
-            {loading ? <Loader2 className="animate-spin" style={{ margin: "0 auto" }} /> : "Submit Negotiation"}
+            {loading ? <Loader2 className="animate-spin" style={{ margin: "0 auto" }} /> : t("rfqDetail.negotiation.submit")}
           </button>
         </div>
       </div>

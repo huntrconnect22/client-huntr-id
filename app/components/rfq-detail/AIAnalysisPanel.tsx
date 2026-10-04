@@ -1,5 +1,6 @@
 import React from "react";
 import { Sparkles, Loader2 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface AIAnalysisPanelProps {
   showAiPanel: boolean;
@@ -9,6 +10,7 @@ interface AIAnalysisPanelProps {
 }
 
 export function AIAnalysisPanel({ showAiPanel, aiRankLoading, aiRankError, aiRankings }: AIAnalysisPanelProps) {
+  const { t } = useLanguage();
   if (!showAiPanel) return null;
 
   return (
@@ -16,15 +18,15 @@ export function AIAnalysisPanel({ showAiPanel, aiRankLoading, aiRankError, aiRan
       <div className="flex items-center gap-2 mb-2">
         <Sparkles size={14} className="text-purple-400" />
         <div>
-          <div className="text-xs font-bold text-[var(--ui-text-primary)]">Huntr AI Assessment</div>
-          <div className="text-[10px] text-[var(--ui-text-muted)]">Price 40% · delivery 30% · warranty 20% · completeness 10%</div>
+          <div className="text-xs font-bold text-[var(--ui-text-primary)]">{t("rfqDetail.aiPanel.title")}</div>
+          <div className="text-[10px] text-[var(--ui-text-muted)]">{t("rfqDetail.aiPanel.criteria")}</div>
         </div>
       </div>
 
       {aiRankLoading ? (
         <div className="flex items-center gap-2 py-3 text-xs text-[var(--ui-text-muted)]">
           <Loader2 size={14} className="animate-spin text-purple-400" />
-          Evaluating proposals...
+          {t("rfqDetail.aiPanel.evaluating")}
         </div>
       ) : aiRankError ? (
         <div className="text-xs text-red-400 px-2.5 py-2 rounded-lg border border-red-500/25 bg-red-500/10">
@@ -55,12 +57,12 @@ export function AIAnalysisPanel({ showAiPanel, aiRankLoading, aiRankError, aiRan
                       {rank.proposal?.company?.name || "Vendor"}
                     </span>
                     {isAiWinner && (
-                      <span className="ml-1.5 text-[10px] font-bold text-purple-400">AI pick</span>
+                      <span className="ml-1.5 text-[10px] font-bold text-purple-400">{t("rfqDetail.aiPanel.aiPick")}</span>
                     )}
                   </div>
                   {rank.total_score != null && (
                     <span className="text-xs font-bold text-purple-400 tabular-nums shrink-0">
-                      {rank.total_score.toFixed(1)} pts
+                      {rank.total_score.toFixed(1)} {t("rfqDetail.aiPanel.pts")}
                     </span>
                   )}
                 </div>
