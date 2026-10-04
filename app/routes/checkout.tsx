@@ -4,6 +4,7 @@ import { createRfq } from "../lib/api";
 import { ClipboardList, CheckCircle2, ArrowLeft, Loader2, Package, AlertCircle, FileText, Calendar, Paperclip, MapPin, Building } from "lucide-react";
 import { useNavigate } from "react-router";
 import { getAssetUrl } from "../lib/assets";
+import { clearCart } from "../lib/cart";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -168,7 +169,8 @@ export default function Checkout() {
 
       await createRfq(formData);
       
-      localStorage.removeItem("huntr_cart");
+      clearCart();
+      setCart([]);
       setSuccess(true);
       setTimeout(() => navigate(`${getCompanyPrefix()}/my-pr`), 3000);
     } catch (err: any) {

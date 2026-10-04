@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Layout from "../components/Layout";
 import { runAgenticProcurement, chatAgenticProcurement, createAgenticPr } from "../lib/api/ai";
 import { isAgenticProcurementEnabled, setAgenticProcurementEnabled } from "../lib/features";
+import { clearCart } from "../lib/cart";
 
 import {
   FileText,
@@ -339,6 +340,7 @@ export default function AgenticProcurementPage() {
       };
       const res = await createAgenticPr(activeCompany.id, payload);
       if (res && res.success && res.rfq?.id) {
+        clearCart();
         await Swal.fire({
           icon: "success",
           title: "PR Berhasil Dibuat!",
