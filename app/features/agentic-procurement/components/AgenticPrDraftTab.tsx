@@ -113,6 +113,16 @@ export default function AgenticPrDraftTab({
                                 ✓ Katalog Terdaftar
                               </span>
                             )}
+                            {status === "historical_reference" && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                                PO Historis Huntr
+                              </span>
+                            )}
+                            {status === "web_market_reference" && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                                Riset Web (Brave)
+                              </span>
+                            )}
                             {status === "market_estimate" && (
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
                                 Estimasi Pasar (HPS)
@@ -202,6 +212,16 @@ export default function AgenticPrDraftTab({
                       {status === "verified_catalogue" && (
                         <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                           ✓ Terdaftar
+                        </span>
+                      )}
+                      {status === "historical_reference" && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                          PO Historis
+                        </span>
+                      )}
+                      {status === "web_market_reference" && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                          Web Brave
                         </span>
                       )}
                       {status === "market_estimate" && (

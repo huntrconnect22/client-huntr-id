@@ -129,10 +129,11 @@ export default function AgenticProcurementPage() {
     setResult(null);
 
     setWorkflowSteps([
-      { step: "intent_analysis", title: "1. Analisis Kebutuhan", status: "running" },
-      { step: "catalogue_discovery", title: "2. Pencarian Katalog", status: "pending" },
-      { step: "product_comparison", title: "3. Komparasi Opsi", status: "pending" },
-      { step: "pr_formulation", title: "4. Formulasi PR Lengkap", status: "pending" },
+      { step: "intent_analysis",    title: "1. Analisis Kebutuhan",          status: "running" },
+      { step: "web_search",          title: "2. Brave Search Real-time",       status: "pending" },
+      { step: "catalogue_discovery", title: "3. Pencarian Katalog",            status: "pending" },
+      { step: "product_comparison",  title: "4. Komparasi Opsi",              status: "pending" },
+      { step: "pr_formulation",      title: "5. Formulasi PR Lengkap",        status: "pending" },
     ]);
 
     try {
@@ -158,7 +159,19 @@ export default function AgenticProcurementPage() {
               : s
           )
         );
-      }, 2000);
+      }, 2500);
+
+      const stepTimer3 = setTimeout(() => {
+        setWorkflowSteps((prev) =>
+          prev.map((s, idx) =>
+            idx <= 2
+              ? { ...s, status: "completed" }
+              : idx === 3
+              ? { ...s, status: "running" }
+              : s
+          )
+        );
+      }, 4000);
 
       const res = await runAgenticProcurement(promptText, {
         company_id: activeCompany?.id,
@@ -166,9 +179,17 @@ export default function AgenticProcurementPage() {
 
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
+      clearTimeout(stepTimer3);
 
       if (res && res.success) {
         setResult(res);
+
+        // Bangun summary web_search dari response
+        const webSearchCount = res.web_search ? Object.keys(res.web_search).length : 0;
+        const webSearchFound = webSearchCount > 0
+          ? `Brave menemukan ${webSearchCount} produk dengan harga & spesifikasi terkini`
+          : (res.workflow_steps?.find((s: any) => s.step === "web_search")?.summary || "Brave Search selesai");
+
         setWorkflowSteps([
           {
             step: "intent_analysis",
@@ -177,20 +198,26 @@ export default function AgenticProcurementPage() {
             summary: res.intent?.ai_summary,
           },
           {
+            step: "web_search",
+            title: "2. Brave Search Real-time",
+            status: "completed",
+            summary: webSearchFound,
+          },
+          {
             step: "catalogue_discovery",
-            title: "2. Pencarian Katalog",
+            title: "3. Pencarian Katalog",
             status: "completed",
             summary: `Ditemukan ${res.catalogues?.length || 0} kandidat katalog`,
           },
           {
             step: "product_comparison",
-            title: "3. Komparasi Opsi",
+            title: "4. Komparasi Opsi",
             status: "completed",
             summary: res.comparison?.executive_summary || "Evaluasi komparasi produk selesai",
           },
           {
             step: "pr_formulation",
-            title: "4. Formulasi PR Lengkap",
+            title: "5. Formulasi PR Lengkap",
             status: "completed",
             summary: res.pr_draft?.title,
           },
