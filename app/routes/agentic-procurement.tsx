@@ -161,6 +161,7 @@ export default function AgenticProcurementPage() {
     if (!promptText.trim()) return;
 
     setIsRunning(true);
+  setSelectedWinner(null);
     setResult(null);
 
     setWorkflowSteps([
@@ -405,6 +406,89 @@ export default function AgenticProcurementPage() {
     }
   };
 
+  const handleSelectComparisonItem = (comparisonItem: any) => {
+    const catalogue = result?.catalogues?.find(
+      (item: any) => String(item.id) === String(comparisonItem.catalogue_id)
+    );
+    const isBrandComparison = result?.comparison?.source === "brave_brand_comparison";
+    const isWebListing = result?.comparison?.source === "brave_web_listings";
+    if (!catalogue && !isBrandComparison && !isWebListing) return;
+
+    const currentItems = result?.pr_draft?.suggested_items || [];
+    const existingIndex = currentItems.findIndex(
+      (item: any) => catalogue && String(item.catalogue_id) === String(catalogue.id)
+    );
+    const targetIndex = existingIndex >= 0 ? existingIndex : currentItems.length === 1 ? 0 : -1;
+    const selectedName = catalogue?.name || comparisonItem.product_name;
+    if (!selectedName) return;
+
+    const listingPrice = Number(comparisonItem.web_listing_price) || 0;
+    const webPrice = Number(comparisonItem.web_price_avg) || listingPrice;
+    const selectedItem = {
+      ...(targetIndex >= 0 ? currentItems[targetIndex] : {}),
+      catalogue_id: catalogue?.id ?? null,
+      id: catalogue?.id ?? comparisonItem.catalogue_id,
+      name: selectedName,
+      item_code: catalogue?.item_code ?? null,
+      category: catalogue?.category ?? result?.intent?.category ?? null,
+      brand: catalogue?.brand ?? comparisonItem.brand ?? null,
+      detailed_specs: catalogue?.specifications ?? null,
+      uom: catalogue?.uom ?? "unit",
+      qty: Math.max(1, Number(targetIndex >= 0 ? currentItems[targetIndex].qty : 1) || 1),
+      estimated_price: webPrice,
+      price_status: listingPrice > 0 ? "web_listing_reference" : webPrice > 0 ? "web_market_reference" : "rfq_required",
+      price_note: listingPrice > 0 ? "Harga dari satu listing web; bukan median pasar." : webPrice > 0 ? "Harga median berdasarkan referensi web." : "Tidak ada harga web tervalidasi; harga ditentukan melalui RFQ.",
+      web_price_min: comparisonItem.web_price_min ?? null,
+      web_price_max: comparisonItem.web_price_max ?? null,
+      web_price_avg: webPrice > 0 ? webPrice : null,
+      web_sources: comparisonItem.web_sources ?? [],
+    };
+    const suggestedItems = [...currentItems];
+
+    if (targetIndex >= 0) {
+      suggestedItems[targetIndex] = selectedItem;
+    } else {
+      suggestedItems.push(selectedItem);
+    }
+
+    setResult((previous: any) => ({
+      ...previous,
+      pr_draft: {
+        ...previous.pr_draft,
+        suggested_items: suggestedItems,
+        estimated_total_budget: suggestedItems.reduce(
+          (total: number, item: any) => total + (Number(item.qty) || 1) * (Number(item.estimated_price) || 0),
+          0
+        ),
+      },
+    }));
+    setSelectedWinner(comparisonItem);
+    setActiveTab("pr");
+  };
+
+  const handleUpdatePrItemQty = (itemIndex: number, quantity: number) => {
+    setResult((previous: any) => {
+      const items = previous?.pr_draft?.suggested_items;
+      if (!Array.isArray(items) || !items[itemIndex]) return previous;
+
+      const suggestedItems = items.map((item: any, index: number) =>
+        index === itemIndex ? { ...item, qty: Math.max(1, quantity) } : item
+      );
+
+      return {
+        ...previous,
+        pr_draft: {
+          ...previous.pr_draft,
+          suggested_items: suggestedItems,
+          estimated_total_budget: suggestedItems.reduce(
+            (total: number, item: any) => total + (Number(item.qty) || 1) * (Number(item.estimated_price) || 0),
+            0
+          ),
+        },
+      };
+    });
+  };
+
   const handleExportToCart = () => {
     if (!result?.pr_draft?.suggested_items) return;
 
@@ -591,6 +675,7 @@ export default function AgenticProcurementPage() {
                 activeCompanyName={activeCompany?.name}
                 isCreatingPr={isCreatingPr}
                 onCreatePr={(config) => handleCreatePrNow(config)}
+                onUpdateItemQty={handleUpdatePrItemQty}
                 formatRupiah={formatRupiah}
                 getTotalBudget={getPrTotalBudget}
                 selectedWinner={selectedWinner}
@@ -602,10 +687,7 @@ export default function AgenticProcurementPage() {
               <AgenticComparisonTab
                 comparison={result.comparison}
                 formatRupiah={formatRupiah}
-                onSelectWinner={(item) => {
-                  setSelectedWinner(item);
-                  setActiveTab("pr");
-                }}
+                onSelectWinner={handleSelectComparisonItem}
                 selectedWinnerId={selectedWinner ? String(selectedWinner.catalogue_id ?? selectedWinner.id ?? selectedWinner.product_name) : null}
               />
             )}

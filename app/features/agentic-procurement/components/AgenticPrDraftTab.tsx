@@ -28,6 +28,7 @@ interface AgenticPrDraftTabProps {
   activeCompanyName?: string;
   isCreatingPr: boolean;
   onCreatePr: (config: PrConfig) => void;
+  onUpdateItemQty: (index: number, quantity: number) => void;
   formatRupiah: (num: number) => string;
   getTotalBudget: (draft?: any, intent?: any) => number;
   selectedWinner?: any;
@@ -44,6 +45,7 @@ function StatusBadgeInner({ status, t }: { status: string; t: (k: string) => str
     verified_catalogue:   { label: t("agentic.prDraft.statusBadge.verifiedCatalogue"), cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" },
     historical_reference: { label: t("agentic.prDraft.statusBadge.historical"),       cls: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" },
     web_market_reference: { label: t("agentic.prDraft.statusBadge.webMarket"),        cls: "bg-orange-500/10 text-orange-400 border-orange-500/30" },
+    web_listing_reference:{ label: t("agentic.prDraft.statusBadge.webListing"),       cls: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
     market_estimate:      { label: t("agentic.prDraft.statusBadge.marketEstimate"),   cls: "bg-purple-500/10 text-purple-400 border-purple-500/30" },
     buyer_budget:         { label: t("agentic.prDraft.statusBadge.buyerBudget"),      cls: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
     rfq_required:         { label: t("agentic.prDraft.statusBadge.rfqRequired"),      cls: "bg-amber-500/10 text-amber-400 border-amber-500/30" },
@@ -63,6 +65,7 @@ export default function AgenticPrDraftTab({
   activeCompanyName,
   isCreatingPr,
   onCreatePr,
+  onUpdateItemQty,
   formatRupiah,
   getTotalBudget,
   selectedWinner,
@@ -209,6 +212,7 @@ export default function AgenticPrDraftTab({
                     const subtotal = (item.qty || 1) * price;
                     const status = item.price_status || (price > 0 ? (item.catalogue_id ? "verified_catalogue" : "buyer_budget") : "rfq_required");
                     const brand = item.brand || item.vendor_name || selectedWinner?.vendor_name || "";
+                    const webSources = (item.web_sources || []).filter((source: any) => source.link).slice(0, 10);
 
                     return (
                       <tr key={idx} className="hover:bg-[var(--ui-bg-input)]/50 transition-colors">
@@ -228,6 +232,16 @@ export default function AgenticPrDraftTab({
                           {item.price_note && (
                             <div className="text-[10px] text-blue-400/80 mt-0.5 italic">{item.price_note}</div>
                           )}
+                          {webSources.length > 0 && (
+                            <div className="mt-1 flex flex-col gap-0.5">
+                              {webSources.map((source: any, sourceIndex: number) => (
+                                <a key={sourceIndex} href={source.link} target="_blank" rel="noopener noreferrer" className="flex items-start justify-between gap-2 text-[10px] text-blue-400 hover:text-blue-300">
+                                  <span className="min-w-0 truncate">{source.title || source.source}</span>
+                                  {source.price > 0 && <span className="shrink-0">{formatRupiah(source.price)}</span>}
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </td>
 
                         <td className="px-3 py-2.5 min-w-[100px]">
@@ -241,7 +255,18 @@ export default function AgenticPrDraftTab({
                         </td>
 
                         <td className="px-3 py-2.5 text-center font-medium text-[var(--ui-text-primary)] whitespace-nowrap">
-                          {item.qty} {item.uom || t("agentic.itemGenericUom")}
+                          <div className="inline-flex items-center justify-center gap-1.5">
+                            <input
+                              type="number"
+                              min={1}
+                              step={1}
+                              value={item.qty || 1}
+                              onChange={(event) => onUpdateItemQty(idx, Math.max(1, Number.parseInt(event.target.value, 10) || 1))}
+                              aria-label={`${t("agentic.prDraft.tableHeaders.qty")} ${item.name}`}
+                              className="w-16 bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded px-2 py-1 text-center text-[var(--ui-text-primary)]"
+                            />
+                            <span>{item.uom || t("agentic.itemGenericUom")}</span>
+                          </div>
                         </td>
                         <td className="px-3 py-2.5 text-right font-mono text-[var(--ui-text-secondary)] whitespace-nowrap">
                           {price > 0 ? formatRupiah(price) : <span className="text-[11px] text-amber-400 italic">{t("agentic.prDraft.statusBadge.rfqRequired")}</span>}
@@ -271,13 +296,23 @@ export default function AgenticPrDraftTab({
                 const subtotal = (item.qty || 1) * price;
                 const status = item.price_status || (price > 0 ? (item.catalogue_id ? "verified_catalogue" : "buyer_budget") : "rfq_required");
                 const brand = item.brand || item.vendor_name || selectedWinner?.vendor_name || "";
+                const webSources = (item.web_sources || []).filter((source: any) => source.link).slice(0, 10);
 
                 return (
                   <div key={idx} className="p-3 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex flex-col gap-1.5 text-xs">
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-bold text-[var(--ui-text-primary)] leading-tight">{item.name}</div>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 flex-shrink-0">
-                        {item.qty} {item.uom || t("agentic.itemGenericUom")}
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 flex-shrink-0">
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={item.qty || 1}
+                          onChange={(event) => onUpdateItemQty(idx, Math.max(1, Number.parseInt(event.target.value, 10) || 1))}
+                          aria-label={`${t("agentic.prDraft.tableHeaders.qty")} ${item.name}`}
+                          className="w-12 bg-transparent border-b border-orange-500/40 text-center text-orange-500 focus:outline-none"
+                        />
+                        {item.uom || t("agentic.itemGenericUom")}
                       </span>
                     </div>
                     {brand && (
@@ -288,6 +323,16 @@ export default function AgenticPrDraftTab({
                     <div className="flex flex-wrap gap-1"><StatusBadgeInner status={status} t={t} /></div>
                     {item.detailed_specs && <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">{item.detailed_specs}</p>}
                     {item.price_note && <p className="text-[10px] text-blue-400/80 italic">{item.price_note}</p>}
+                    {webSources.length > 0 && (
+                      <div className="flex flex-col gap-0.5">
+                        {webSources.map((source: any, sourceIndex: number) => (
+                          <a key={sourceIndex} href={source.link} target="_blank" rel="noopener noreferrer" className="flex items-start justify-between gap-2 text-[10px] text-blue-400 hover:text-blue-300">
+                            <span className="min-w-0 truncate">{source.title || source.source}</span>
+                            {source.price > 0 && <span className="shrink-0">{formatRupiah(source.price)}</span>}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between pt-1 border-t border-[var(--ui-border)] text-[11px]">
                       <span className="text-[var(--ui-text-muted)]">
                         {price > 0 ? "@ " + formatRupiah(price) : t("agentic.prDraft.statusBadge.rfqRequired")}

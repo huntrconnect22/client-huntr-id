@@ -86,6 +86,7 @@ export default function AgenticComparisonTab({
 
   const winnerId = comparison.winner_id ?? null;
   const matrix: any[] = comparison.comparison_matrix || [];
+  const isWebListingOnly = comparison.source === "brave_web_listings";
 
   const radarDimKeys = [
     "chartDimensions.score",
@@ -130,8 +131,8 @@ export default function AgenticComparisonTab({
       {comparison.executive_summary && (
         <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30 flex flex-col gap-1.5 text-xs">
           <span className="font-bold text-orange-400 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
-            <Sparkles size={12} />
-            {t("agentic.comparison.aiAnalysis")}
+            {isWebListingOnly ? <Globe size={12} /> : <Sparkles size={12} />}
+            {isWebListingOnly ? t("agentic.comparison.webListings") : t("agentic.comparison.aiAnalysis")}
           </span>
           <p className="text-[var(--ui-text-primary)] leading-relaxed">
             {comparison.executive_summary}
@@ -148,7 +149,7 @@ export default function AgenticComparisonTab({
       )}
 
       {/* ── View Mode Toggle ── */}
-      {matrix.length > 0 && (
+      {matrix.length > 0 && !isWebListingOnly && (
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mr-1">
             {t("agentic.comparison.viewModeLabel")}
@@ -179,7 +180,9 @@ export default function AgenticComparisonTab({
               {matrix.map((item: any, idx: number) => {
                 const isWinner =
                   winnerId !== null && String(item.catalogue_id) === String(winnerId);
-                const hasBravePrice = (item.web_price_avg || 0) > 0;
+                const listingPrice = Number(item.web_listing_price || 0);
+                const marketPrice = Number(item.web_price_avg || 0);
+                const hasBravePrice = listingPrice > 0 || marketPrice > 0;
                 const showSrc = expandedSources[idx] ?? false;
                 const webSources: any[] = item.web_sources ?? [];
                 const localKey = String(item.catalogue_id ?? item.id ?? item.product_name);
@@ -233,18 +236,22 @@ export default function AgenticComparisonTab({
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded shrink-0">
-                          {item.score || 85}/100
-                        </span>
+                        {!isWebListingOnly && (
+                          <span className="text-[11px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded shrink-0">
+                            {item.score || 85}/100
+                          </span>
+                        )}
                       </div>
 
                       {/* Score bar */}
-                      <div className="w-full h-1 rounded-full bg-[var(--ui-bg-input)] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${isWinner ? "bg-emerald-500" : "bg-orange-500"}`}
-                          style={{ width: `${item.score || 85}%` }}
-                        />
-                      </div>
+                      {!isWebListingOnly && (
+                        <div className="w-full h-1 rounded-full bg-[var(--ui-bg-input)] overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${isWinner ? "bg-emerald-500" : "bg-orange-500"}`}
+                            style={{ width: `${item.score || 85}%` }}
+                          />
+                        </div>
+                      )}
 
                       {/* Harga Brave */}
                       <div className={`rounded-lg p-2.5 border flex flex-col gap-0.5 ${hasBravePrice ? "bg-blue-500/8 border-blue-500/20" : "bg-[var(--ui-bg-input)] border-[var(--ui-border)]"}`}>
@@ -255,9 +262,9 @@ export default function AgenticComparisonTab({
                         {hasBravePrice ? (
                           <>
                             <span className="text-sm font-bold font-mono text-blue-400">
-                              {formatRupiah(Math.round(item.web_price_avg))}
+                              {formatRupiah(Math.round(listingPrice || marketPrice))}
                             </span>
-                            {(item.web_price_min || item.web_price_max) && (
+                            {!listingPrice && (item.web_price_min || item.web_price_max) && (
                               <span className="text-[10px] text-[var(--ui-text-muted)]">
                                 {t("agentic.comparison.rangeLabel")}{" "}
                                 {formatRupiah(Math.round(item.web_price_min ?? item.web_price_avg))}
@@ -385,23 +392,23 @@ export default function AgenticComparisonTab({
                     {/* Footer — Select button */}
                     <div className="px-3 py-2 border-t border-[var(--ui-border)] flex items-center justify-between text-xs mt-auto gap-2">
                       <span className={`text-[10px] font-semibold shrink-0 ${item.value_rating?.toLowerCase().includes("sangat") ? "text-emerald-400" : "text-[var(--ui-text-muted)]"}`}>
-                        {item.value_rating ?? t("agentic.comparison.valueRfq")}
+                        {isWebListingOnly ? t("agentic.comparison.unverifiedWebListing") : (item.value_rating ?? t("agentic.comparison.valueRfq"))}
                       </span>
 
                       {/* Select button */}
                       {localSelected === localKey ? (
-                        <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[10px] font-bold">
-                          <CheckCircle2 size={10} /> {t("agentic.comparison.selected")}
-                        </span>
+                          <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[10px] font-bold">
+                            <CheckCircle2 size={10} /> {t("agentic.comparison.selected")}
+                          </span>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSelect(item)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] hover:border-blue-500/50 hover:bg-blue-500/8 text-[var(--ui-text-muted)] hover:text-blue-400 text-[10px] font-semibold transition-colors cursor-pointer"
-                        >
-                          <MousePointerClick size={10} />
-                          {t("agentic.comparison.pickButton")}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSelect(item)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] hover:border-blue-500/50 hover:bg-blue-500/8 text-[var(--ui-text-muted)] hover:text-blue-400 text-[10px] font-semibold transition-colors cursor-pointer"
+                          >
+                            <MousePointerClick size={10} />
+                            {t("agentic.comparison.pickButton")}
+                          </button>
                       )}
                     </div>
                   </div>
