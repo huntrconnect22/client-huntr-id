@@ -1,4 +1,9 @@
-import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
+import {
+  type RouteConfig,
+  index,
+  route,
+  layout,
+} from "@react-router/dev/routes";
 
 export default [
   // ── SEO / Search Engine feeds ──────────────────────────────────────────────
@@ -26,43 +31,99 @@ export default [
 
     // Dynamic company slug prefixed routes (e.g. /micro-padma-nusantara, /micro-padma-nusantara/dashboard)
     route(":companySlug", "routes/home.tsx", { id: "company-home" }),
-    route(":companySlug/dashboard", "routes/home.tsx", { id: "company-dashboard" }),
-    route(":companySlug/agentic-procurement", "routes/agentic-procurement.tsx", { id: "company-agentic-procurement" }),
-    route(":companySlug/marketplace", "routes/marketplace.tsx", { id: "company-marketplace" }),
-    route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", { id: "company-marketplace-detail" }),
+    route(":companySlug/dashboard", "routes/home.tsx", {
+      id: "company-dashboard",
+    }),
+    route(
+      ":companySlug/agentic-procurement",
+      "routes/agentic-procurement.tsx",
+      { id: "company-agentic-procurement" },
+    ),
+    route(":companySlug/marketplace", "routes/marketplace.tsx", {
+      id: "company-marketplace",
+    }),
+    route(":companySlug/apps", "routes/app-market.tsx", {
+      id: "company-app-market",
+    }),
+    route(":companySlug/wms", "routes/wms.tsx", { id: "company-wms" }),
+    route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", {
+      id: "company-marketplace-detail",
+    }),
     route(":companySlug/cart", "routes/cart.tsx", { id: "company-cart" }),
     // Cart page removed — cart is now inline sidebar on marketplace
     route(":companySlug/my-pr", "routes/my-pr.tsx", { id: "company-my-pr" }),
-    route(":companySlug/my-pr/:id", "routes/my-pr-detail.tsx", { id: "company-my-pr-detail" }),
-    route(":companySlug/compare-review/:id", "routes/compare-review.tsx", { id: "company-compare-review" }),
-    route(":companySlug/all-requests", "routes/all-requests.tsx", { id: "company-all-requests" }),
-    route(":companySlug/rfq/:id", "routes/rfq-detail.tsx", { id: "company-rfq-detail" }),
-    route(":companySlug/checkout", "routes/checkout.tsx", { id: "company-checkout" }),
-    route(":companySlug/approvals", "routes/approvals.tsx", { id: "company-approvals" }),
-    route(":companySlug/finance", "routes/finance.tsx", { id: "company-finance" }),
-    route(":companySlug/company", "routes/company.tsx", { id: "company-company" }),
-    route(":companySlug/catalogue", "routes/catalogue.tsx", { id: "company-catalogue" }),
+    route(":companySlug/my-pr/:id", "routes/my-pr-detail.tsx", {
+      id: "company-my-pr-detail",
+    }),
+    route(":companySlug/compare-review/:id", "routes/compare-review.tsx", {
+      id: "company-compare-review",
+    }),
+    route(":companySlug/all-requests", "routes/all-requests.tsx", {
+      id: "company-all-requests",
+    }),
+    route(":companySlug/rfq/:id", "routes/rfq-detail.tsx", {
+      id: "company-rfq-detail",
+    }),
+    route(":companySlug/checkout", "routes/checkout.tsx", {
+      id: "company-checkout",
+    }),
+    route(":companySlug/approvals", "routes/approvals.tsx", {
+      id: "company-approvals",
+    }),
+    route(":companySlug/finance", "routes/finance.tsx", {
+      id: "company-finance",
+    }),
+    route(":companySlug/company", "routes/company.tsx", {
+      id: "company-company",
+    }),
+    route(":companySlug/catalogue", "routes/catalogue.tsx", {
+      id: "company-catalogue",
+    }),
     route(":companySlug/rfq", "routes/rfq.tsx", { id: "company-rfq" }),
-    route(":companySlug/proposals", "routes/proposals.tsx", { id: "company-proposals" }),
-    route(":companySlug/negotiation", "routes/negotiation.tsx", { id: "company-negotiation" }),
-    route(":companySlug/my-rank", "routes/my-rank.tsx", { id: "company-my-rank" }),
+    route(":companySlug/proposals", "routes/proposals.tsx", {
+      id: "company-proposals",
+    }),
+    route(":companySlug/negotiation", "routes/negotiation.tsx", {
+      id: "company-negotiation",
+    }),
+    route(":companySlug/my-rank", "routes/my-rank.tsx", {
+      id: "company-my-rank",
+    }),
     route(":companySlug/orders", "routes/orders.tsx", { id: "company-orders" }),
-    route(":companySlug/receipts", "routes/receipts.tsx", { id: "company-receipts" }),
-    route(":companySlug/payment-history", "routes/payment-history.tsx", { id: "company-payment-history" }),
-    route(":companySlug/returns", "routes/returns.tsx", { id: "company-returns" }),
-    route(":companySlug/debit-notes", "routes/debit-notes.tsx", { id: "company-debit-notes" }),
+    route(":companySlug/receipts", "routes/receipts.tsx", {
+      id: "company-receipts",
+    }),
+    route(":companySlug/payment-history", "routes/payment-history.tsx", {
+      id: "company-payment-history",
+    }),
+    route(":companySlug/returns", "routes/returns.tsx", {
+      id: "company-returns",
+    }),
+    route(":companySlug/debit-notes", "routes/debit-notes.tsx", {
+      id: "company-debit-notes",
+    }),
     route(":companySlug/bast", "routes/bast.tsx", { id: "company-bast" }),
-    route(":companySlug/efaktur", "routes/efaktur.tsx", { id: "company-efaktur" }),
-    route(":companySlug/notifications", "routes/notifications.tsx", { id: "company-notifications" }),
-    route(":companySlug/account", "routes/account.tsx", { id: "company-account" }),
-    route(":companySlug/pr-audit", "routes/pr-audit.tsx", { id: "company-pr-audit" }),
+    route(":companySlug/efaktur", "routes/efaktur.tsx", {
+      id: "company-efaktur",
+    }),
+    route(":companySlug/notifications", "routes/notifications.tsx", {
+      id: "company-notifications",
+    }),
+    route(":companySlug/account", "routes/account.tsx", {
+      id: "company-account",
+    }),
+    route(":companySlug/pr-audit", "routes/pr-audit.tsx", {
+      id: "company-pr-audit",
+    }),
     route(":companySlug/tasks", "routes/tasks.tsx", { id: "company-tasks" }),
 
     // Fallback legacy paths
     route("agentic-procurement", "routes/agentic-procurement.tsx"),
     route("marketplace", "routes/marketplace.tsx"),
+    route("apps", "routes/app-market.tsx"),
+    route("wms", "routes/wms.tsx"),
     route("marketplace/:id", "routes/marketplace-detail.tsx"),
-    route("cart", "routes/cart.tsx"),  // kept for deep-link /cart?add= backwards compat
+    route("cart", "routes/cart.tsx"), // kept for deep-link /cart?add= backwards compat
     route("my-pr", "routes/my-pr.tsx"),
     route("my-pr/:id", "routes/my-pr-detail.tsx"),
     route("compare-review/:id", "routes/compare-review.tsx"),

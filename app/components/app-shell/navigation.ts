@@ -41,6 +41,7 @@ interface BuildNavItemsParams {
   isManager: boolean;
   isAdminRole: boolean;
   isVendorComp: boolean;
+  wmsInstalled: boolean;
 }
 
 export function buildNavItems({
@@ -53,6 +54,7 @@ export function buildNavItems({
   isManager,
   isAdminRole,
   isVendorComp,
+  wmsInstalled,
 }: BuildNavItemsParams): NavItemConfig[] {
   const items: NavItemConfig[] = [
     ...(isPendingCompany
@@ -194,6 +196,22 @@ export function buildNavItems({
               ]
             : []),
 
+          {
+            to: `${companyPrefix}/apps`,
+            label: "App Market",
+            Icon: Package,
+            section: "main",
+          },
+          ...(wmsInstalled
+            ? [
+                {
+                  to: `${companyPrefix}/wms`,
+                  label: "WMS & Inventory",
+                  Icon: Package,
+                  section: "main",
+                },
+              ]
+            : []),
           // Orders & Documents
           {
             to: `${companyPrefix}/negotiation`,

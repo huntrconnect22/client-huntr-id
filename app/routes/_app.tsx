@@ -1,10 +1,21 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router";
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from "react-router";
 import { Menu, ShoppingCart, Bell } from "lucide-react";
 import { getCartLineCount } from "../lib/cart";
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationSound from "../components/NotificationSound";
-import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, switchRole } from "../lib/api";
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  switchRole,
+} from "../lib/api";
 import { SessionManager } from "../lib/session";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import { useEventBus } from "../lib/EventBus";
@@ -23,6 +34,7 @@ import { calculateNotificationCounts } from "../components/app-shell/notificatio
 import { isAgenticProcurementEnabled } from "../lib/features";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { getWmsApps } from "../lib/api/wms";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
 export interface AppShellContext {
@@ -55,12 +67,46 @@ export default function AppShell() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
+  const [pendingCounts, setPendingCounts] = useState<Record<string, number>>(
+    {},
+  );
   const [roleSwitching, setRoleSwitching] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [agenticEnabled, setAgenticEnabled] = useState(false);
   const [allUserCompanies, setAllUserCompanies] = useState<any[]>([]);
   const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
+  const [wmsInstalled, setWmsInstalled] = useState(false);
+
+  const loadWmsInstallation = useCallback(async () => {
+    if (!activeCompany?.id) {
+      setWmsInstalled(false);
+      return;
+    }
+    try {
+      const response = await getWmsApps(activeCompany.id);
+      setWmsInstalled(
+        Boolean(
+          response?.apps?.find((app: any) => app.key === "wms-inventory")
+            ?.installed,
+        ),
+      );
+    } catch {
+      setWmsInstalled(false);
+    }
+  }, [activeCompany?.id]);
+
+  useEffect(() => {
+    loadWmsInstallation();
+    window.addEventListener(
+      "huntr-app-installations-updated",
+      loadWmsInstallation,
+    );
+    return () =>
+      window.removeEventListener(
+        "huntr-app-installations-updated",
+        loadWmsInstallation,
+      );
+  }, [loadWmsInstallation]);
 
   // Load all user companies to power the workspace switcher
   const loadUserCompanies = useCallback(async () => {
@@ -87,7 +133,10 @@ export default function AppShell() {
     window.addEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
     window.addEventListener("storage", handleFeatureUpdate);
     return () => {
-      window.removeEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+      window.removeEventListener(
+        "huntr-feature-flags-updated",
+        handleFeatureUpdate,
+      );
       window.removeEventListener("storage", handleFeatureUpdate);
     };
   }, []);
@@ -140,7 +189,10 @@ export default function AppShell() {
 
   const updateHeaderHeight = useCallback(() => {
     const height = headerRef.current?.offsetHeight ?? 64;
-    document.documentElement.style.setProperty("--huntr-header-height", `${height}px`);
+    document.documentElement.style.setProperty(
+      "--huntr-header-height",
+      `${height}px`,
+    );
   }, []);
 
   useEffect(() => {
@@ -166,7 +218,8 @@ export default function AppShell() {
     if (companySession) {
       setActiveCompany(JSON.parse(companySession));
     }
-    const isGuestRoute = pathname === "/" || pathname.startsWith("/marketplace/");
+    const isGuestRoute =
+      pathname === "/" || pathname.startsWith("/marketplace/");
     if (!userSession) {
       if (isGuestRoute) return;
       navigate("/login");
@@ -201,7 +254,14 @@ export default function AppShell() {
     }
     // Do NOT overwrite state here — syncSession (subscribed to SessionManager) already keeps state in sync.
     // Only handle redirect for root path.
-    const slug = c?.slug || (c?.name ? c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : "");
+    const slug =
+      c?.slug ||
+      (c?.name
+        ? c.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "")
+        : "");
     if (slug && pathname === "/") {
       navigate(`/${slug}`, { replace: true });
     }
@@ -233,27 +293,35 @@ export default function AppShell() {
   // Handle outside clicks & escape key for dropdowns
   useEffect(() => {
     const handleEscapeKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showNotifications) setShowNotifications(false);
-      if (e.key === 'Escape' && showUserMenu) setShowUserMenu(false);
+      if (e.key === "Escape" && showNotifications) setShowNotifications(false);
+      if (e.key === "Escape" && showUserMenu) setShowUserMenu(false);
     };
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (showNotifications && notifButtonRef.current && !notifButtonRef.current.contains(e.target as Node)) {
-        const dropdown = document.querySelector('.huntr-notif-dropdown');
+      if (
+        showNotifications &&
+        notifButtonRef.current &&
+        !notifButtonRef.current.contains(e.target as Node)
+      ) {
+        const dropdown = document.querySelector(".huntr-notif-dropdown");
         if (dropdown && !dropdown.contains(e.target as Node)) {
           setShowNotifications(false);
         }
       }
-      if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      if (
+        showUserMenu &&
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
         setShowUserMenu(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscapeKey);
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("keydown", handleEscapeKey);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showNotifications, showUserMenu]);
 
@@ -266,7 +334,11 @@ export default function AppShell() {
   const isBuyerComp = activeCompany?.type === "buyer";
   const isVendorComp = activeCompany?.type === "vendor";
 
-  const canManageApprovals = isBuyerComp && (user?.role === "manager" || isOwner) && !isFinance && !isBuyerRole;
+  const canManageApprovals =
+    isBuyerComp &&
+    (user?.role === "manager" || isOwner) &&
+    !isFinance &&
+    !isBuyerRole;
   const showBuyerProcurement = isBuyerComp && (isManager || isBuyerRole);
   const showVendorMenu = isVendorComp;
 
@@ -275,27 +347,46 @@ export default function AppShell() {
   const activeNpwp = normalizeNpwp(activeCompany?.tax_id || "");
   const counterpartVendor = isBuyerComp
     ? allUserCompanies.find(
-        (c) => c.type === "vendor" && normalizeNpwp(c.tax_id || "") === activeNpwp && c.status === "approved"
+        (c) =>
+          c.type === "vendor" &&
+          normalizeNpwp(c.tax_id || "") === activeNpwp &&
+          c.status === "approved",
       )
     : null;
   const counterpartBuyer = isVendorComp
     ? allUserCompanies.find(
-        (c) => c.type === "buyer" && normalizeNpwp(c.tax_id || "") === activeNpwp && c.status === "approved"
+        (c) =>
+          c.type === "buyer" &&
+          normalizeNpwp(c.tax_id || "") === activeNpwp &&
+          c.status === "approved",
       )
     : null;
 
   const rejectedCounterpart = isBuyerComp
     ? allUserCompanies.find(
-        (c) => c.type === "vendor" && normalizeNpwp(c.tax_id || "") === activeNpwp && c.status === "rejected"
+        (c) =>
+          c.type === "vendor" &&
+          normalizeNpwp(c.tax_id || "") === activeNpwp &&
+          c.status === "rejected",
       )
     : isVendorComp
-    ? allUserCompanies.find(
-        (c) => c.type === "buyer" && normalizeNpwp(c.tax_id || "") === activeNpwp && c.status === "rejected"
-      )
-    : null;
+      ? allUserCompanies.find(
+          (c) =>
+            c.type === "buyer" &&
+            normalizeNpwp(c.tax_id || "") === activeNpwp &&
+            c.status === "rejected",
+        )
+      : null;
 
   const isPendingCompany = activeCompany?.status === "pending";
-  const companySlug = activeCompany?.slug || (activeCompany?.name ? activeCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : "");
+  const companySlug =
+    activeCompany?.slug ||
+    (activeCompany?.name
+      ? activeCompany.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "")
+      : "");
   const companyPrefix = companySlug ? `/${companySlug}` : "";
 
   const NAV = buildNavItems({
@@ -308,12 +399,17 @@ export default function AppShell() {
     isManager,
     isAdminRole,
     isVendorComp,
+    wmsInstalled,
   });
 
   const fetchUnreadCount = async (userId: number) => {
     try {
       const res = await getNotifications(userId);
-      const dataArray = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+      const dataArray = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res)
+          ? res
+          : [];
       const unread = dataArray.filter((n: any) => n.read_at === null).length;
       setUnreadCount(unread);
       setRecentNotifications(dataArray.slice(0, 5));
@@ -366,7 +462,8 @@ export default function AppShell() {
       await fetchFreshUserData();
     } catch (err: any) {
       console.error("Failed to switch role", err);
-      const errorMessage = err?.response?.data?.message || err?.message || "Gagal beralih peran!";
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "Gagal beralih peran!";
       alert(`${errorMessage} Silakan coba lagi.`);
     } finally {
       setRoleSwitching(false);
@@ -387,7 +484,12 @@ export default function AppShell() {
         SessionManager.setUser({ ...current, ...res.user });
       }
       await loadUserCompanies();
-      const slug = freshCompany.slug || freshCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const slug =
+        freshCompany.slug ||
+        freshCompany.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
       navigate(`/${slug}`);
     } catch (err: any) {
       console.error("Failed to switch workspace", err);
@@ -398,7 +500,9 @@ export default function AppShell() {
   };
 
   const closeSidebar = () => setSidebarOpen(false);
-  const handleNavClick = () => { if (isMobile) closeSidebar(); };
+  const handleNavClick = () => {
+    if (isMobile) closeSidebar();
+  };
 
   const handleNotificationToggle = useCallback(() => {
     if (isMobile) {
@@ -410,11 +514,45 @@ export default function AppShell() {
 
   const sidebarInner = (
     <>
-      <div style={{ padding: "0 20px 24px", width: "100%", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", width: "100%" }}>
-          <Link to="/" onClick={handleNavClick} style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", width: "100%", textDecoration: "none" }}>
-            <img src="/assets/img/logo/sidebar.png" alt="Huntr Logo"
-              style={{ width: 260, height: 64, objectFit: "contain", flexShrink: 0, marginLeft: 0, display: "block", cursor: "pointer" }} />
+      <div
+        style={{
+          padding: "0 20px 24px",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            width: "100%",
+          }}
+        >
+          <Link
+            to="/"
+            onClick={handleNavClick}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              width: "100%",
+              textDecoration: "none",
+            }}
+          >
+            <img
+              src="/assets/img/logo/sidebar.png"
+              alt="Huntr Logo"
+              style={{
+                width: 260,
+                height: 64,
+                objectFit: "contain",
+                flexShrink: 0,
+                marginLeft: 0,
+                display: "block",
+                cursor: "pointer",
+              }}
+            />
           </Link>
         </div>
       </div>
@@ -443,10 +581,15 @@ export default function AppShell() {
     </>
   );
 
-  const shellContext: AppShellContext = { setPageTitle, setPageSubtitle, user, company: activeCompany };
+  const shellContext: AppShellContext = {
+    setPageTitle,
+    setPageSubtitle,
+    user,
+    company: activeCompany,
+  };
   const trialInfo = getTrialInfo(user);
   const isGuestRoute = pathname === "/" || pathname.startsWith("/marketplace/");
-  
+
   if (!isClient || (!user && isGuestRoute)) {
     return <Outlet context={shellContext} />;
   }
@@ -455,15 +598,28 @@ export default function AppShell() {
     <div className="huntr-app-shell">
       <NotificationSound />
 
-      {sidebarOpen && <div className="huntr-sidebar-backdrop" onClick={closeSidebar} aria-hidden="true" />}
-      <aside className={`huntr-sidebar${sidebarOpen ? " huntr-sidebar--open" : ""}`}>
+      {sidebarOpen && (
+        <div
+          className="huntr-sidebar-backdrop"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`huntr-sidebar${sidebarOpen ? " huntr-sidebar--open" : ""}`}
+      >
         {sidebarInner}
       </aside>
 
       <div className="huntr-main">
         <header ref={headerRef} className="huntr-main-header">
           <div className="huntr-header-leading">
-            <button type="button" className="huntr-menu-btn" onClick={() => setSidebarOpen(true)} aria-label={t("header.openMenu")}>
+            <button
+              type="button"
+              className="huntr-menu-btn"
+              onClick={() => setSidebarOpen(true)}
+              aria-label={t("header.openMenu")}
+            >
               <Menu size={20} />
             </button>
             <div className="huntr-header-titles">
@@ -478,7 +634,9 @@ export default function AppShell() {
               <button
                 type="button"
                 onClick={() => navigate(`${companyPrefix}/account`)}
-                title={t("header.trialEndsOn", { date: trialInfo.formattedEndDate })}
+                title={t("header.trialEndsOn", {
+                  date: trialInfo.formattedEndDate,
+                })}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -488,18 +646,18 @@ export default function AppShell() {
                   background: trialInfo.isExpired
                     ? "rgba(239, 68, 68, 0.12)"
                     : trialInfo.isUrgent
-                    ? "rgba(249, 115, 22, 0.15)"
-                    : "var(--ui-bg-input)",
+                      ? "rgba(249, 115, 22, 0.15)"
+                      : "var(--ui-bg-input)",
                   border: trialInfo.isExpired
                     ? "1px solid rgba(239, 68, 68, 0.3)"
                     : trialInfo.isUrgent
-                    ? "1px solid rgba(249, 115, 22, 0.35)"
-                    : "1px solid var(--ui-border)",
+                      ? "1px solid rgba(249, 115, 22, 0.35)"
+                      : "1px solid var(--ui-border)",
                   color: trialInfo.isExpired
                     ? "#ef4444"
                     : trialInfo.isUrgent
-                    ? "#f97316"
-                    : "var(--ui-text-secondary)",
+                      ? "#f97316"
+                      : "var(--ui-text-secondary)",
                   fontSize: 11,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -512,7 +670,11 @@ export default function AppShell() {
                     width: 6,
                     height: 6,
                     borderRadius: "50%",
-                    background: trialInfo.isExpired ? "#ef4444" : trialInfo.isUrgent ? "#f97316" : "#10b981",
+                    background: trialInfo.isExpired
+                      ? "#ef4444"
+                      : trialInfo.isUrgent
+                        ? "#f97316"
+                        : "#10b981",
                     display: "inline-block",
                   }}
                   className={trialInfo.isUrgent ? "animate-pulse" : ""}
@@ -521,8 +683,12 @@ export default function AppShell() {
                   {trialInfo.isExpired
                     ? t("header.trialExpired")
                     : trialInfo.isExpiringSoon
-                    ? t("header.trialExpiringSoon", { days: trialInfo.daysRemaining })
-                    : t("header.trialDays", { days: trialInfo.daysRemaining })}
+                      ? t("header.trialExpiringSoon", {
+                          days: trialInfo.daysRemaining,
+                        })
+                      : t("header.trialDays", {
+                          days: trialInfo.daysRemaining,
+                        })}
                 </span>
               </button>
             )}
@@ -532,7 +698,9 @@ export default function AppShell() {
             {!isMobile && (
               <button
                 type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent("huntr-toggle-cart"))}
+                onClick={() =>
+                  window.dispatchEvent(new CustomEvent("huntr-toggle-cart"))
+                }
                 aria-label={t("header.viewCart", { count: cartCount })}
                 style={{
                   position: "relative",
@@ -551,22 +719,24 @@ export default function AppShell() {
               >
                 <ShoppingCart size={16} />
                 {cartCount > 0 && (
-                  <span style={{
-                    position: "absolute",
-                    top: -4,
-                    right: -4,
-                    minWidth: 16,
-                    height: 16,
-                    borderRadius: 2,
-                    background: "#f59e0b",
-                    color: "#fff",
-                    fontSize: 9,
-                    fontWeight: 700,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "0 3px"
-                  }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: -4,
+                      right: -4,
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 2,
+                      background: "#f59e0b",
+                      color: "#fff",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 3px",
+                    }}
+                  >
                     {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
@@ -574,28 +744,52 @@ export default function AppShell() {
             )}
 
             <div style={{ position: "relative" }}>
-              <button 
-                ref={notifButtonRef} 
+              <button
+                ref={notifButtonRef}
                 onClick={handleNotificationToggle}
-                aria-label={unreadCount > 0 ? t("header.notificationsUnread", { count: unreadCount }) : t("header.notifications")}
-                style={{ 
-                  position: "relative", 
-                  width: 34, 
-                  height: 34, 
-                  borderRadius: 8, 
-                  background: "var(--ui-bg-input)", 
-                  border: "1px solid var(--ui-border)", 
-                  color: unreadCount > 0 ? "#fb923c" : "var(--ui-text-muted)", 
-                  cursor: "pointer", 
-                  display: "flex", 
-                  alignItems: "center", 
-                  justifyContent: "center", 
-                  transition: "all 0.2s" 
+                aria-label={
+                  unreadCount > 0
+                    ? t("header.notificationsUnread", { count: unreadCount })
+                    : t("header.notifications")
+                }
+                style={{
+                  position: "relative",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 8,
+                  background: "var(--ui-bg-input)",
+                  border: "1px solid var(--ui-border)",
+                  color: unreadCount > 0 ? "#fb923c" : "var(--ui-text-muted)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s",
                 }}
               >
-                <Bell size={16} fill={unreadCount > 0 ? "rgba(249,115,22,0.2)" : "none"} />
+                <Bell
+                  size={16}
+                  fill={unreadCount > 0 ? "rgba(249,115,22,0.2)" : "none"}
+                />
                 {unreadCount > 0 && (
-                  <span style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 4, background: "#f59e0b", color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: -4,
+                      right: -4,
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      background: "#f59e0b",
+                      color: "#fff",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 3px",
+                    }}
+                  >
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -628,7 +822,9 @@ export default function AppShell() {
                   {!isMobile && (
                     <div className="huntr-user-menu-label">
                       <span className="huntr-user-menu-name">{user.name}</span>
-                      <span className="huntr-user-menu-email">{user.email || "No email"}</span>
+                      <span className="huntr-user-menu-email">
+                        {user.email || "No email"}
+                      </span>
                     </div>
                   )}
                 </button>
@@ -676,4 +872,3 @@ export default function AppShell() {
     </div>
   );
 }
-
