@@ -1,233 +1,167 @@
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router";
-import {
-  Check,
-  Download,
-  Package,
-  Search,
-  SlidersHorizontal,
-  Store,
-} from "lucide-react";
+import { Search, SlidersHorizontal, Store } from "lucide-react";
 import Layout from "../components/Layout";
-import { getWmsApps, installWms, uninstallWms } from "../lib/api/wms";
+import {
+  CATEGORIES,
+  FILTERS,
+  MARKET_APPS,
+  useAppMarket,
+  type MarketApp,
+} from "../features/app-market/hooks/useAppMarket";
+import AppIconTile from "../features/app-market/components/AppIconTile";
+import AppDetailDrawer from "../features/app-market/components/AppDetailDrawer";
 
 export default function AppMarket() {
   const navigate = useNavigate();
-  const [company, setCompany] = useState<any>(null);
-  const [installed, setInstalled] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All categories");
-  const [filter, setFilter] = useState("All apps");
-  useEffect(() => {
-    try {
-      setCompany(JSON.parse(localStorage.getItem("active_company") || "null"));
-    } catch {
-      setCompany(null);
-    }
-  }, []);
-  useEffect(() => {
-    if (!company?.id) return;
-    getWmsApps(company.id)
-      .then((r) =>
-        setInstalled(
-          Boolean(
-            r?.apps?.find((a: any) => a.key === "wms-inventory")?.installed,
-          ),
-        ),
-      )
-      .catch((e) => setError(e.message));
-  }, [company]);
-  const install = async () => {
-    if (!company?.id) {
-      setError("Pilih perusahaan terlebih dahulu.");
-      return;
-    }
-    setBusy(true);
+  const {
+    company,
+    query,
+    setQuery,
+    category,
+    setCategory,
+    filter,
+    setFilter,
+    error,
+    setError,
+    visibleApps,
+    isInstalled,
+    isBusy,
+    install,
+    uninstall,
+  } = useAppMarket();
+  const [selected, setSelected] = useState<MarketApp | null>(null);
+
+  const installedCount = MARKET_APPS.filter((a) => isInstalled(a)).length;
+
+  const openApp = useCallback(
+    (app: MarketApp) => {
+      if (!app.route) return;
+      navigate(company?.slug ? `/${company.slug}${app.route}` : app.route);
+    },
+    [company?.slug, navigate],
+  );
+
+  const handleClose = useCallback(() => {
+    setSelected(null);
     setError("");
-    try {
-      await installWms(company.id);
-      setInstalled(true);
-      window.dispatchEvent(new Event("huntr-app-installations-updated"));
-    } catch (e: any) {
-      setError(e.message || "Gagal menginstall aplikasi.");
-    } finally {
-      setBusy(false);
-    }
-  };
-  const uninstall = async () => {
-    if (!company?.id) return;
-    setBusy(true);
-    setError("");
-    try {
-      await uninstallWms(company.id);
-      setInstalled(false);
-      window.dispatchEvent(new Event("huntr-app-installations-updated"));
-    } catch (e: any) {
-      setError(e.message || "Gagal menghapus aplikasi.");
-    } finally {
-      setBusy(false);
-    }
-  };
-  const app = {
-    key: "wms-inventory",
-    name: "WMS & Inventory",
-    category: "Operations",
-    description:
-      "Multiwarehouse operations with receiving, put away, inventory allocation, fulfilment, and operational reporting.",
-  };
-  const visible =
-    (category === "All categories" || category === app.category) &&
-    (filter === "All apps" ||
-      (filter === "Installed" && installed) ||
-      (filter === "Available" && !installed)) &&
-    `${app.name} ${app.description}`
-      .toLowerCase()
-      .includes(query.toLowerCase());
+  }, [setError]);
+
+  const handleInstall = useCallback(() => {
+    if (!selected) return;
+    install(selected);
+  }, [selected, install]);
+
+  const handleUninstall = useCallback(() => {
+    if (!selected) return;
+    uninstall(selected);
+  }, [selected, uninstall]);
+
+  const handleOpen = useCallback(() => {
+    if (!selected) return;
+    openApp(selected);
+  }, [selected, openApp]);
+
   return (
     <Layout
       title="App Market"
       subtitle="Add-on siap pakai untuk workspace perusahaan Anda."
     >
-      <div className="w-full space-y-4">
-        <div className="flex items-center gap-3">
-          <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-2 text-[var(--ui-text-brand)]">
-            <Store size={19} />
-          </span>
-          <div>
-            <h2 className="text-lg font-bold text-[var(--ui-text-primary)]">
-              Aplikasi untuk bisnis Anda
-            </h2>
-            <p className="text-sm text-[var(--ui-text-secondary)]">
-              Install per perusahaan. Data setiap workspace terisolasi.
-            </p>
-          </div>
-        </div>
-        <div className="grid gap-2 border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 md:grid-cols-[1fr_auto_auto]">
-          <label className="flex items-center gap-2 border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3">
-            <Search size={17} className="text-[var(--ui-text-muted)]" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search apps"
-              className="w-full bg-transparent py-2.5 text-sm outline-none"
-            />
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm"
-          >
-            <option>All categories</option>
-            <option>Operations</option>
-          </select>
-          <label className="flex items-center gap-2 border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-sm">
-            <SlidersHorizontal size={16} />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="bg-transparent py-2.5 outline-none"
-            >
-              <option>All apps</option>
-              <option>Available</option>
-              <option>Installed</option>
-            </select>
-          </label>
-        </div>
-        {visible ? (
-          <article className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="flex gap-3">
-                <div className="bg-[var(--ui-bg-input)] p-3 text-[var(--ui-text-brand)]">
-                  <Package size={24} />
-                </div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-bold text-[var(--ui-text-primary)]">
-                      WMS &amp; Inventory
-                    </h3>
-                    <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-0.5 text-[10px] font-semibold text-[var(--ui-text-brand)]">
-                      Huntr Catalogue integrated
-                    </span>
-                  </div>
-                  <p className="mt-1.5 max-w-2xl text-sm leading-5 text-[var(--ui-text-secondary)]">
-                    Kelola multiwarehouse, receiving dan put away, alokasi
-                    order, packaging, pergerakan stok, serta laporan operasional
-                    dari satu tempat.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {[
-                      "Multiwarehouse",
-                      "Receiving & Put Away",
-                      "Order Allocation",
-                      "Packaging & Dispatch",
-                      "Stock Analysis",
-                      "Tenant isolated",
-                    ].map((x) => (
-                      <span
-                        key={x}
-                        className="border border-[var(--ui-border)] px-2 py-1 text-[11px] text-[var(--ui-text-secondary)]"
-                      >
-                        {x}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <button
-                disabled={busy}
-                onClick={
-                  installed
-                    ? () =>
-                        navigate(
-                          company?.slug ? `/${company.slug}/wms` : "/wms",
-                        )
-                    : install
-                }
-                className="inline-flex shrink-0 items-center justify-center gap-2 bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {installed ? (
-                  <>
-                    <Check size={16} /> Open app
-                  </>
-                ) : (
-                  <>
-                    <Download size={16} />
-                    {busy ? "Installing…" : "Install"}
-                  </>
-                )}
-              </button>
+      <div className="w-full space-y-6">
+        <section className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[image:var(--huntr-gradient)] text-white shadow-lg shadow-indigo-500/30">
+              <Store size={24} />
             </div>
-            {error && (
-              <p className="mt-4 text-sm text-[var(--ui-text-brand)]">
-                {error}
+            <div>
+              <h2 className="text-xl font-bold text-[var(--ui-text-primary)]">
+                Aplikasi untuk bisnis Anda
+              </h2>
+              <p className="mt-0.5 text-sm text-[var(--ui-text-secondary)]">
+                Install per perusahaan · Data setiap workspace terisolasi ·{" "}
+                <span className="font-semibold text-[var(--ui-text-brand)]">
+                  {installedCount}
+                </span>{" "}
+                dari {MARKET_APPS.length} terpasang
               </p>
-            )}
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--ui-border)] pt-3 text-xs text-[var(--ui-text-muted)]">
-              <span>
-                {installed
-                  ? "Installed for this company workspace."
-                  : "Free installation · Activate instantly · Manage warehouse data by company."}
-              </span>
-              {installed && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={uninstall}
-                  className="text-xs font-semibold text-[var(--ui-text-muted)] underline underline-offset-2 disabled:opacity-50"
-                >
-                  {busy ? "Removing…" : "Uninstall"}
-                </button>
-              )}
             </div>
-          </article>
-        ) : (
-          <div className="border border-dashed border-[var(--ui-border)] p-8 text-center text-sm text-[var(--ui-text-muted)]">
-            No apps match your search or filters.
           </div>
+
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-stretch">
+            <label className="flex items-center gap-2 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 focus-within:ring-2 focus-within:ring-[var(--ui-text-brand)]/30">
+              <Search size={17} className="text-[var(--ui-text-muted)]" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Cari aplikasi…"
+                className="w-full bg-transparent py-2.5 text-sm outline-none md:w-60"
+              />
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--ui-text-brand)]/30"
+            >
+              <option>All categories</option>
+              {CATEGORIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+            <label className="flex items-center gap-2 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-sm">
+              <SlidersHorizontal size={16} className="text-[var(--ui-text-muted)]" />
+              <select
+                value={filter}
+                onChange={(e) =>
+                  setFilter(e.target.value as (typeof FILTERS)[number])
+                }
+                className="bg-transparent py-2.5 outline-none"
+              >
+                {FILTERS.map((f) => (
+                  <option key={f}>{f}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        {visibleApps.length > 0 ? (
+          <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {visibleApps.map((app) => (
+              <AppIconTile
+                key={app.key}
+                app={app}
+                installed={isInstalled(app)}
+                busy={isBusy(app.key)}
+                onClick={() => setSelected(app)}
+              />
+            ))}
+          </section>
+        ) : (
+          <section className="border border-dashed border-[var(--ui-border)] rounded-2xl bg-[var(--ui-bg-card)] p-12 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]">
+              <Store size={28} />
+            </div>
+            <h3 className="text-base font-semibold text-[var(--ui-text-primary)]">
+              Tidak ada aplikasi yang cocok
+            </h3>
+            <p className="mt-1 text-sm text-[var(--ui-text-secondary)]">
+              Coba ubah kata kunci pencarian, kategori, atau filter status
+              instalasi.
+            </p>
+          </section>
         )}
       </div>
+
+      <AppDetailDrawer
+        app={selected}
+        installed={selected ? isInstalled(selected) : false}
+        busy={selected ? isBusy(selected.key) : false}
+        error={error}
+        onClose={handleClose}
+        onInstall={handleInstall}
+        onUninstall={handleUninstall}
+        onOpen={handleOpen}
+      />
     </Layout>
   );
 }

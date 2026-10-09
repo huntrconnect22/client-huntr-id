@@ -64,6 +64,11 @@ export const importExistingGoodsReceipts = (
     company_id: companyId,
     warehouse_id: warehouseId,
   });
+export const repairWmsLegacyGoodsReceiptStock = (companyId: string) =>
+  apiPost<{ repaired_receipt_count: number; repaired_stock_count: number }>(
+    `/api/wms/goods-receipts/repair-legacy`,
+    { company_id: companyId },
+  );
 export const getWmsReceipts = (companyId: string) =>
   apiGet<any>(`/api/wms/receipts?${companyQuery(companyId)}`);
 export const putAwayStock = (companyId: string, data: any) =>
@@ -74,6 +79,11 @@ export const transferStock = (companyId: string, data: any) =>
   apiPost<any>(`/api/wms/transfers`, { ...data, company_id: companyId });
 export const allocateStock = (companyId: string, data: any) =>
   apiPost<any>(`/api/wms/allocations`, { ...data, company_id: companyId });
+export const checkWmsStockAvailability = (companyId: string, data: any) =>
+  apiPost<any>(`/api/wms/stock/availability`, {
+    ...data,
+    company_id: companyId,
+  });
 export const startWmsPicking = (companyId: string, orderId: number) =>
   apiPost<any>(`/api/wms/orders/${orderId}/start-picking`, {
     company_id: companyId,

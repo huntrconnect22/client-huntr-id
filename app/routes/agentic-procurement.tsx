@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import Layout from "../components/Layout";
-import { runAgenticProcurement, chatAgenticProcurement, createAgenticPr } from "../lib/api/ai";
-import { isAgenticProcurementEnabled, setAgenticProcurementEnabled } from "../lib/features";
+import {
+  runAgenticProcurement,
+  chatAgenticProcurement,
+  createAgenticPr,
+} from "../lib/api/ai";
+import {
+  isAgenticProcurementEnabled,
+  setAgenticProcurementEnabled,
+} from "../lib/features";
 import { clearCart } from "../lib/cart";
+import { getWarehouses, getWmsApps } from "../lib/api/wms";
 
 import {
   FileText,
@@ -38,13 +46,19 @@ export default function AgenticProcurementPage() {
   const [prompt, setPrompt] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"pr" | "comparison" | "catalogues" | "chat">("pr");
+  const [activeTab, setActiveTab] = useState<
+    "pr" | "comparison" | "catalogues" | "chat"
+  >("pr");
   const [isCreatingPr, setIsCreatingPr] = useState(false);
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
   const [selectedWinner, setSelectedWinner] = useState<any>(null);
+  const [wmsInstalled, setWmsInstalled] = useState(false);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
 
   // Real-time animated workflow steps (title translated on each render via t() and buildSteps)
-  function buildSteps(statuses?: { step: string; status: string; summary?: string }[]): StepStatus[] {
+  function buildSteps(
+    statuses?: { step: string; status: string; summary?: string }[],
+  ): StepStatus[] {
     if (statuses) {
       return statuses.map((s) => ({
         step: s.step as StepStatus["step"],
@@ -54,24 +68,47 @@ export default function AgenticProcurementPage() {
       }));
     }
     return [
-      { step: "intent_analysis",    title: getStepTitle("intent_analysis"),    status: "pending" },
-      { step: "catalogue_discovery", title: getStepTitle("catalogue_discovery"), status: "pending" },
-      { step: "product_comparison",  title: getStepTitle("product_comparison"),  status: "pending" },
-      { step: "pr_formulation",      title: getStepTitle("pr_formulation"),      status: "pending" },
+      {
+        step: "intent_analysis",
+        title: getStepTitle("intent_analysis"),
+        status: "pending",
+      },
+      {
+        step: "catalogue_discovery",
+        title: getStepTitle("catalogue_discovery"),
+        status: "pending",
+      },
+      {
+        step: "product_comparison",
+        title: getStepTitle("product_comparison"),
+        status: "pending",
+      },
+      {
+        step: "pr_formulation",
+        title: getStepTitle("pr_formulation"),
+        status: "pending",
+      },
     ];
   }
   function getStepTitle(step: string): string {
     switch (step) {
-      case "intent_analysis":    return t("agentic.workflow.steps.intentAnalysis");
-      case "web_search":         return t("agentic.workflow.steps.webSearch");
-      case "catalogue_discovery": return t("agentic.workflow.steps.catalogueDiscovery");
-      case "product_comparison":  return t("agentic.workflow.steps.productComparison");
-      case "pr_formulation":      return t("agentic.workflow.steps.prFormulation");
-      default: return step;
+      case "intent_analysis":
+        return t("agentic.workflow.steps.intentAnalysis");
+      case "web_search":
+        return t("agentic.workflow.steps.webSearch");
+      case "catalogue_discovery":
+        return t("agentic.workflow.steps.catalogueDiscovery");
+      case "product_comparison":
+        return t("agentic.workflow.steps.productComparison");
+      case "pr_formulation":
+        return t("agentic.workflow.steps.prFormulation");
+      default:
+        return step;
     }
   }
 
-  const [workflowSteps, setWorkflowSteps] = useState<StepStatus[]>(buildSteps());
+  const [workflowSteps, setWorkflowSteps] =
+    useState<StepStatus[]>(buildSteps());
 
   // Chat refinement state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -82,7 +119,7 @@ export default function AgenticProcurementPage() {
   // Sync workflow step titles whenever locale changes
   useEffect(() => {
     setWorkflowSteps((prev) =>
-      prev.map((s) => ({ ...s, title: getStepTitle(s.step) }))
+      prev.map((s) => ({ ...s, title: getStepTitle(s.step) })),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
@@ -96,10 +133,33 @@ export default function AgenticProcurementPage() {
     window.addEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
     window.addEventListener("storage", handleFeatureUpdate);
     return () => {
-      window.removeEventListener("huntr-feature-flags-updated", handleFeatureUpdate);
+      window.removeEventListener(
+        "huntr-feature-flags-updated",
+        handleFeatureUpdate,
+      );
       window.removeEventListener("storage", handleFeatureUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+
+    getWmsApps(activeCompany.id)
+      .then(async (apps) => {
+        const installed = Boolean(
+          apps?.apps?.find((app: any) => app.key === "wms-inventory")
+            ?.installed,
+        );
+        setWmsInstalled(installed);
+        setWarehouses(
+          installed ? (await getWarehouses(activeCompany.id))?.data || [] : [],
+        );
+      })
+      .catch(() => {
+        setWmsInstalled(false);
+        setWarehouses([]);
+      });
+  }, [activeCompany?.id]);
 
   const handleActivateFeature = () => {
     setAgenticProcurementEnabled(true);
@@ -161,15 +221,35 @@ export default function AgenticProcurementPage() {
     if (!promptText.trim()) return;
 
     setIsRunning(true);
-  setSelectedWinner(null);
+    setSelectedWinner(null);
     setResult(null);
 
     setWorkflowSteps([
-      { step: "intent_analysis",    title: getStepTitle("intent_analysis"),    status: "running" },
-      { step: "web_search",          title: getStepTitle("web_search"),          status: "pending" },
-      { step: "catalogue_discovery", title: getStepTitle("catalogue_discovery"), status: "pending" },
-      { step: "product_comparison",  title: getStepTitle("product_comparison"),  status: "pending" },
-      { step: "pr_formulation",      title: getStepTitle("pr_formulation"),      status: "pending" },
+      {
+        step: "intent_analysis",
+        title: getStepTitle("intent_analysis"),
+        status: "running",
+      },
+      {
+        step: "web_search",
+        title: getStepTitle("web_search"),
+        status: "pending",
+      },
+      {
+        step: "catalogue_discovery",
+        title: getStepTitle("catalogue_discovery"),
+        status: "pending",
+      },
+      {
+        step: "product_comparison",
+        title: getStepTitle("product_comparison"),
+        status: "pending",
+      },
+      {
+        step: "pr_formulation",
+        title: getStepTitle("pr_formulation"),
+        status: "pending",
+      },
     ]);
 
     try {
@@ -179,9 +259,9 @@ export default function AgenticProcurementPage() {
             idx === 0
               ? { ...s, status: "completed" }
               : idx === 1
-              ? { ...s, status: "running" }
-              : s
-          )
+                ? { ...s, status: "running" }
+                : s,
+          ),
         );
       }, 1000);
 
@@ -191,9 +271,9 @@ export default function AgenticProcurementPage() {
             idx <= 1
               ? { ...s, status: "completed" }
               : idx === 2
-              ? { ...s, status: "running" }
-              : s
-          )
+                ? { ...s, status: "running" }
+                : s,
+          ),
         );
       }, 2500);
 
@@ -203,9 +283,9 @@ export default function AgenticProcurementPage() {
             idx <= 2
               ? { ...s, status: "completed" }
               : idx === 3
-              ? { ...s, status: "running" }
-              : s
-          )
+                ? { ...s, status: "running" }
+                : s,
+          ),
         );
       }, 4000);
 
@@ -221,36 +301,49 @@ export default function AgenticProcurementPage() {
         setResult(res);
 
         // Bangun summary web_search dari response
-        const webSearchCount = res.web_search ? Object.keys(res.web_search).length : 0;
-        const webSearchFound = webSearchCount > 0
-          ? t("agentic.workflow.braveFoundSummary", { count: webSearchCount })
-          : (res.workflow_steps?.find((s: any) => s.step === "web_search")?.summary || t("agentic.workflow.brandsFound"));
+        const webSearchCount = res.web_search
+          ? Object.keys(res.web_search).length
+          : 0;
+        const webSearchFound =
+          webSearchCount > 0
+            ? t("agentic.workflow.braveFoundSummary", { count: webSearchCount })
+            : res.workflow_steps?.find((s: any) => s.step === "web_search")
+                ?.summary || t("agentic.workflow.brandsFound");
 
         // Kumpulkan semua sumber URL Brave dari web_search results
         const rawWebSources: any[] = [];
         if (res.web_search) {
           Object.values(res.web_search).forEach((data: any) => {
             (data.results || []).forEach((r: any) => {
-              if (r.link) rawWebSources.push({
-                title: r.title || "",
-                link: r.link,
-                price: r.price || 0,
-                snippet: r.snippet || "",
-                thumbnail: r.thumbnail || null,
-              });
+              if (r.link)
+                rawWebSources.push({
+                  title: r.title || "",
+                  link: r.link,
+                  price: r.price || 0,
+                  snippet: r.snippet || "",
+                  thumbnail: r.thumbnail || null,
+                });
             });
           });
         }
         // Tambahkan juga sumber dari workflow step jika ada
-        const stepSources = res.workflow_steps?.find((s: any) => s.step === "web_search")?.sources || [];
+        const stepSources =
+          res.workflow_steps?.find((s: any) => s.step === "web_search")
+            ?.sources || [];
         stepSources.forEach((s: any) => {
           if (s.link && !rawWebSources.find((r) => r.link === s.link)) {
-            rawWebSources.push({ title: s.title || "", link: s.link, price: s.price || 0 });
+            rawWebSources.push({
+              title: s.title || "",
+              link: s.link,
+              price: s.price || 0,
+            });
           }
         });
 
         const webSearchSources = rawWebSources.slice(0, 30);
-        const brandRecommendations = res.workflow_steps?.find((s: any) => s.step === "web_search")?.brand_recommendations || [];
+        const brandRecommendations =
+          res.workflow_steps?.find((s: any) => s.step === "web_search")
+            ?.brand_recommendations || [];
 
         setWorkflowSteps([
           {
@@ -272,13 +365,17 @@ export default function AgenticProcurementPage() {
             step: "catalogue_discovery",
             title: getStepTitle("catalogue_discovery"),
             status: "completed",
-            summary: t("agentic.workflow.catalogueFoundSummary", { count: res.catalogues?.length || 0 }),
+            summary: t("agentic.workflow.catalogueFoundSummary", {
+              count: res.catalogues?.length || 0,
+            }),
           },
           {
             step: "product_comparison",
             title: getStepTitle("product_comparison"),
             status: "completed",
-            summary: res.comparison?.executive_summary || t("agentic.workflow.comparisonDoneSummary"),
+            summary:
+              res.comparison?.executive_summary ||
+              t("agentic.workflow.comparisonDoneSummary"),
           },
           {
             step: "pr_formulation",
@@ -297,7 +394,9 @@ export default function AgenticProcurementPage() {
         ]);
         setActiveTab("pr");
       } else {
-        throw new Error(res?.error || t("agentic.error.swalProcessFailedTitle"));
+        throw new Error(
+          res?.error || t("agentic.error.swalProcessFailedTitle"),
+        );
       }
     } catch (err: any) {
       console.error("Agentic procurement error:", err);
@@ -305,7 +404,7 @@ export default function AgenticProcurementPage() {
         prev.map((s) => ({
           ...s,
           status: s.status === "running" ? "failed" : s.status,
-        }))
+        })),
       );
       Swal.fire({
         icon: "error",
@@ -322,30 +421,46 @@ export default function AgenticProcurementPage() {
     const itemsSum = draft.suggested_items?.reduce(
       (acc: number, cur: any) =>
         acc + (Number(cur.qty) || 1) * (Number(cur.estimated_price) || 0),
-      0
+      0,
     );
     if (itemsSum && itemsSum > 0) return itemsSum;
-    if (draft.estimated_total_budget && Number(draft.estimated_total_budget) > 0) {
+    if (
+      draft.estimated_total_budget &&
+      Number(draft.estimated_total_budget) > 0
+    ) {
       return Number(draft.estimated_total_budget);
     }
-    if (intent?.estimated_total_budget_idr && Number(intent.estimated_total_budget_idr) > 0) {
+    if (
+      intent?.estimated_total_budget_idr &&
+      Number(intent.estimated_total_budget_idr) > 0
+    ) {
       return Number(intent.estimated_total_budget_idr);
     }
     return 0;
   };
 
-  const handleCreatePrNow = async (config?: { department?: string; tenderDays?: number; attachments?: File[] }) => {
+  const handleCreatePrNow = async (config?: {
+    department?: string;
+    tenderDays?: number;
+    attachments?: File[];
+    warehouseId?: string;
+  }) => {
     if (!result?.pr_draft || !activeCompany?.id) return;
 
     const totalBudget = getPrTotalBudget(result.pr_draft, result.intent);
-    const department = config?.department || result.pr_draft.department || "Procurement";
-    const tenderDays = config?.tenderDays || result.pr_draft.duration_days || 14;
+    const department =
+      config?.department || result.pr_draft.department || "Procurement";
+    const tenderDays =
+      config?.tenderDays || result.pr_draft.duration_days || 14;
     const countItems = result.pr_draft.suggested_items?.length || 0;
     const winnerName = selectedWinner?.product_name || selectedWinner?.name;
     const winnerHtml = winnerName
       ? t("agentic.prDraft.actions.winnerLabel", { name: winnerName })
       : "";
-    const budgetLabel = totalBudget > 0 ? `Rp ${totalBudget.toLocaleString("id-ID")}` : t("agentic.prDraft.needVendorOffer");
+    const budgetLabel =
+      totalBudget > 0
+        ? `Rp ${totalBudget.toLocaleString("id-ID")}`
+        : t("agentic.prDraft.needVendorOffer");
 
     const confirm = await Swal.fire({
       title: t("agentic.prDraft.actions.confirmTitle"),
@@ -373,6 +488,7 @@ export default function AgenticProcurementPage() {
         ...result.pr_draft,
         department,
         duration_days: tenderDays,
+        warehouse_id: config?.warehouseId || null,
         selected_winner: selectedWinner || null,
       };
       const res = await createAgenticPr(activeCompany.id, payload);
@@ -408,17 +524,20 @@ export default function AgenticProcurementPage() {
 
   const handleSelectComparisonItem = (comparisonItem: any) => {
     const catalogue = result?.catalogues?.find(
-      (item: any) => String(item.id) === String(comparisonItem.catalogue_id)
+      (item: any) => String(item.id) === String(comparisonItem.catalogue_id),
     );
-    const isBrandComparison = result?.comparison?.source === "brave_brand_comparison";
+    const isBrandComparison =
+      result?.comparison?.source === "brave_brand_comparison";
     const isWebListing = result?.comparison?.source === "brave_web_listings";
     if (!catalogue && !isBrandComparison && !isWebListing) return;
 
     const currentItems = result?.pr_draft?.suggested_items || [];
     const existingIndex = currentItems.findIndex(
-      (item: any) => catalogue && String(item.catalogue_id) === String(catalogue.id)
+      (item: any) =>
+        catalogue && String(item.catalogue_id) === String(catalogue.id),
     );
-    const targetIndex = existingIndex >= 0 ? existingIndex : currentItems.length === 1 ? 0 : -1;
+    const targetIndex =
+      existingIndex >= 0 ? existingIndex : currentItems.length === 1 ? 0 : -1;
     const selectedName = catalogue?.name || comparisonItem.product_name;
     if (!selectedName) return;
 
@@ -434,10 +553,23 @@ export default function AgenticProcurementPage() {
       brand: catalogue?.brand ?? comparisonItem.brand ?? null,
       detailed_specs: catalogue?.specifications ?? null,
       uom: catalogue?.uom ?? "unit",
-      qty: Math.max(1, Number(targetIndex >= 0 ? currentItems[targetIndex].qty : 1) || 1),
+      qty: Math.max(
+        1,
+        Number(targetIndex >= 0 ? currentItems[targetIndex].qty : 1) || 1,
+      ),
       estimated_price: webPrice,
-      price_status: listingPrice > 0 ? "web_listing_reference" : webPrice > 0 ? "web_market_reference" : "rfq_required",
-      price_note: listingPrice > 0 ? "Harga dari satu listing web; bukan median pasar." : webPrice > 0 ? "Harga median berdasarkan referensi web." : "Tidak ada harga web tervalidasi; harga ditentukan melalui RFQ.",
+      price_status:
+        listingPrice > 0
+          ? "web_listing_reference"
+          : webPrice > 0
+            ? "web_market_reference"
+            : "rfq_required",
+      price_note:
+        listingPrice > 0
+          ? "Harga dari satu listing web; bukan median pasar."
+          : webPrice > 0
+            ? "Harga median berdasarkan referensi web."
+            : "Tidak ada harga web tervalidasi; harga ditentukan melalui RFQ.",
       web_price_min: comparisonItem.web_price_min ?? null,
       web_price_max: comparisonItem.web_price_max ?? null,
       web_price_avg: webPrice > 0 ? webPrice : null,
@@ -457,8 +589,10 @@ export default function AgenticProcurementPage() {
         ...previous.pr_draft,
         suggested_items: suggestedItems,
         estimated_total_budget: suggestedItems.reduce(
-          (total: number, item: any) => total + (Number(item.qty) || 1) * (Number(item.estimated_price) || 0),
-          0
+          (total: number, item: any) =>
+            total +
+            (Number(item.qty) || 1) * (Number(item.estimated_price) || 0),
+          0,
         ),
       },
     }));
@@ -472,7 +606,7 @@ export default function AgenticProcurementPage() {
       if (!Array.isArray(items) || !items[itemIndex]) return previous;
 
       const suggestedItems = items.map((item: any, index: number) =>
-        index === itemIndex ? { ...item, qty: Math.max(1, quantity) } : item
+        index === itemIndex ? { ...item, qty: Math.max(1, quantity) } : item,
       );
 
       return {
@@ -481,8 +615,10 @@ export default function AgenticProcurementPage() {
           ...previous.pr_draft,
           suggested_items: suggestedItems,
           estimated_total_budget: suggestedItems.reduce(
-            (total: number, item: any) => total + (Number(item.qty) || 1) * (Number(item.estimated_price) || 0),
-            0
+            (total: number, item: any) =>
+              total +
+              (Number(item.qty) || 1) * (Number(item.estimated_price) || 0),
+            0,
           ),
         },
       };
@@ -493,7 +629,10 @@ export default function AgenticProcurementPage() {
     if (!result?.pr_draft?.suggested_items) return;
 
     const items = result.pr_draft.suggested_items.map((item: any) => ({
-      id: item.catalogue_id || item.id || `ai-${Math.random().toString(36).substr(2, 9)}`,
+      id:
+        item.catalogue_id ||
+        item.id ||
+        `ai-${Math.random().toString(36).substr(2, 9)}`,
       name: item.name || t("agentic.itemGenericName"),
       item_code: item.item_code || t("agentic.itemGenericCode"),
       category: item.category || t("agentic.itemGenericCategory"),
@@ -519,7 +658,11 @@ export default function AgenticProcurementPage() {
     setChatInput("");
     const newMessages: ChatMessage[] = [
       ...chatMessages,
-      { role: "user" as const, content: userText, timestamp: new Date().toLocaleTimeString() },
+      {
+        role: "user" as const,
+        content: userText,
+        timestamp: new Date().toLocaleTimeString(),
+      },
     ];
     setChatMessages(newMessages);
     setIsChatSending(true);
@@ -532,7 +675,11 @@ export default function AgenticProcurementPage() {
       if (res && res.reply) {
         setChatMessages([
           ...newMessages,
-          { role: "assistant", content: res.reply, timestamp: new Date().toLocaleTimeString() },
+          {
+            role: "assistant",
+            content: res.reply,
+            timestamp: new Date().toLocaleTimeString(),
+          },
         ]);
       }
     } catch (err) {
@@ -549,15 +696,41 @@ export default function AgenticProcurementPage() {
   // Tab pills label (translated reactively)
   const tabBadgeCount = (tab: "pr" | "comparison" | "catalogues" | "chat") => {
     if (tab === "pr") return result?.pr_draft?.suggested_items?.length || 0;
-    if (tab === "comparison") return result?.comparison?.comparison_matrix?.length || 0;
+    if (tab === "comparison")
+      return result?.comparison?.comparison_matrix?.length || 0;
     if (tab === "catalogues") return result?.catalogues?.length || 0;
     return chatMessages.length;
   };
-  const TABS: { key: "pr" | "comparison" | "catalogues" | "chat"; label: string; icon: React.ReactNode; showBadge: boolean }[] = [
-    { key: "pr",           label: t("agentic.tabs.prDraft"),      icon: <FileText size={13} />, showBadge: true },
-    { key: "comparison",   label: t("agentic.tabs.comparison"),   icon: <Layers size={13} />,   showBadge: true },
-    { key: "catalogues",   label: t("agentic.tabs.catalogues"),   icon: <Package size={13} />,  showBadge: true },
-    { key: "chat",         label: t("agentic.tabs.chat"),         icon: <Bot size={13} />,      showBadge: false },
+  const TABS: {
+    key: "pr" | "comparison" | "catalogues" | "chat";
+    label: string;
+    icon: React.ReactNode;
+    showBadge: boolean;
+  }[] = [
+    {
+      key: "pr",
+      label: t("agentic.tabs.prDraft"),
+      icon: <FileText size={13} />,
+      showBadge: true,
+    },
+    {
+      key: "comparison",
+      label: t("agentic.tabs.comparison"),
+      icon: <Layers size={13} />,
+      showBadge: true,
+    },
+    {
+      key: "catalogues",
+      label: t("agentic.tabs.catalogues"),
+      icon: <Package size={13} />,
+      showBadge: true,
+    },
+    {
+      key: "chat",
+      label: t("agentic.tabs.chat"),
+      icon: <Bot size={13} />,
+      showBadge: false,
+    },
   ];
 
   return (
@@ -583,27 +756,32 @@ export default function AgenticProcurementPage() {
 
         {/* Step Reasoning Cards */}
         {(isRunning || result) && (
-        <AgenticWorkflowSteps
+          <AgenticWorkflowSteps
             workflowSteps={workflowSteps}
             isRunning={isRunning}
-            webSearchSources={
-              (result?.workflow_steps?.find((s: any) => s.step === "web_search")?.sources || [])
-                .concat(
-                  Object.values(result?.web_search || {}).flatMap((d: any) =>
-                    (d.results || []).map((r: any) => ({
-                      title: r.title || "",
-                      link: r.link,
-                      price: r.price || 0,
-                      snippet: r.snippet || "",
-                      thumbnail: r.thumbnail || null,
-                    }))
-                  )
-                )
-                .filter((s: any, i: number, arr: any[]) => s.link && arr.findIndex((x) => x.link === s.link) === i)
-                .slice(0, 30)
-            }
+            webSearchSources={(
+              result?.workflow_steps?.find((s: any) => s.step === "web_search")
+                ?.sources || []
+            )
+              .concat(
+                Object.values(result?.web_search || {}).flatMap((d: any) =>
+                  (d.results || []).map((r: any) => ({
+                    title: r.title || "",
+                    link: r.link,
+                    price: r.price || 0,
+                    snippet: r.snippet || "",
+                    thumbnail: r.thumbnail || null,
+                  })),
+                ),
+              )
+              .filter(
+                (s: any, i: number, arr: any[]) =>
+                  s.link && arr.findIndex((x) => x.link === s.link) === i,
+              )
+              .slice(0, 30)}
             brandRecommendations={
-              result?.workflow_steps?.find((s: any) => s.step === "web_search")?.brand_recommendations || []
+              result?.workflow_steps?.find((s: any) => s.step === "web_search")
+                ?.brand_recommendations || []
             }
           />
         )}
@@ -630,7 +808,9 @@ export default function AgenticProcurementPage() {
                       {tab.icon}
                       <span>{tab.label}</span>
                       {tab.showBadge && count > 0 && (
-                        <span className="text-[10px] px-1 rounded bg-white/20">{count}</span>
+                        <span className="text-[10px] px-1 rounded bg-white/20">
+                          {count}
+                        </span>
                       )}
                     </button>
                   );
@@ -679,6 +859,8 @@ export default function AgenticProcurementPage() {
                 formatRupiah={formatRupiah}
                 getTotalBudget={getPrTotalBudget}
                 selectedWinner={selectedWinner}
+                wmsInstalled={wmsInstalled}
+                warehouses={warehouses}
               />
             )}
 
@@ -688,15 +870,21 @@ export default function AgenticProcurementPage() {
                 comparison={result.comparison}
                 formatRupiah={formatRupiah}
                 onSelectWinner={handleSelectComparisonItem}
-                selectedWinnerId={selectedWinner ? String(selectedWinner.catalogue_id ?? selectedWinner.id ?? selectedWinner.product_name) : null}
+                selectedWinnerId={
+                  selectedWinner
+                    ? String(
+                        selectedWinner.catalogue_id ??
+                          selectedWinner.id ??
+                          selectedWinner.product_name,
+                      )
+                    : null
+                }
               />
             )}
 
             {/* TAB 3: CATALOGUES */}
             {activeTab === "catalogues" && (
-              <AgenticCatalogueTab
-                catalogues={result.catalogues || []}
-              />
+              <AgenticCatalogueTab catalogues={result.catalogues || []} />
             )}
 
             {/* TAB 4: CHAT REFINEMENT */}

@@ -1,21 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowDownToLine,
   BarChart3,
   Boxes,
   Building2,
+  Check,
+  ChevronRight,
   Loader2,
   PackageCheck,
   Plus,
+  Printer,
   RefreshCw,
+  Search,
   Truck,
+  Warehouse as WarehouseIcon,
+  X,
 } from "lucide-react";
 import Layout from "../components/Layout";
 import { WmsOverview, WmsWorkflowGuide } from "../components/wms/WmsOverview";
+import type { PickerItem } from "../components/wms/GenericPickerModal";
+import { GenericPickerModal } from "../components/wms/GenericPickerModal";
+import type { StockPickerItem } from "../components/wms/StockPickerModal";
+import { StockPickerModal } from "../components/wms/StockPickerModal";
 import {
   adjustStock,
   allocateStock,
+  checkWmsStockAvailability,
   createWarehouse,
   getInboundPurchaseOrders,
   getWmsCatalogue,
@@ -27,6 +38,7 @@ import {
   getWarehouses,
   installWms,
   importExistingGoodsReceipts,
+  repairWmsLegacyGoodsReceiptStock,
   putAwayStock,
   packWmsOrder,
   receiveStock,
@@ -42,6 +54,211 @@ const card = "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4";
 const input =
   "w-full rounded-md border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm text-[var(--ui-text-primary)] outline-none";
 
+const toNumeric = (value: unknown): number => {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed === "" || trimmed === "-") return 0;
+    const negative = trimmed.startsWith("-");
+    const digits = negative ? trimmed.slice(1) : trimmed;
+
+    // 1) Native parse first — works for US/backend style: "4", "4.000", "1234.56", "-4.000"
+    const native = Number(trimmed);
+    if (!Number.isNaN(native)) {
+      const hasDots = (digits.match(/\./g) || []).length;
+      if (hasDots > 1) {
+        const stripped = Number(digits.replace(/\./g, "").replace(/,/g, "."));
+        if (!Number.isNaN(stripped)) return negative ? -stripped : stripped;
+      }
+      if (hasDots === 1) {
+        const [beforeDot, afterDot] = digits.split(".");
+        if (
+          afterDot &&
+          afterDot.length === 3 &&
+          /^\d+$/.test(afterDot) &&
+          // Ambiguous: "4.000" (4) vs "12.500" (12500).
+          // Treat as thousand separator ONLY when digits before dot are
+          // >= 2 characters (>= 10 thousand) OR the afterDot has non-zero
+          // digits AND the overall length looks like a real thousand group.
+          (beforeDot.length >= 2 || /[1-9]/.test(afterDot)) &&
+          beforeDot.length + afterDot.length >= 5
+        ) {
+          const asThousand = Number(digits.replace(/\./g, ""));
+          if (!Number.isNaN(asThousand)) {
+            return negative ? -asThousand : asThousand;
+          }
+        }
+      }
+      return native;
+    }
+
+    // 2) Native failed (pure id-ID formatting): strip thousand separators
+    //    then treat comma as decimal separator.
+    const normalized = digits.replace(/\./g, "").replace(/,/g, ".");
+    const n = Number(normalized);
+    if (!Number.isNaN(n)) return negative ? -n : n;
+    return 0;
+  }
+  return 0;
+};
+
+const formatQuantity = (value: unknown, maximumFractionDigits = 3): string => {
+  const num = toNumeric(value);
+  if (Number.isInteger(num) && Math.abs(num) < 1000) {
+    return String(num);
+  }
+  return new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits,
+    ...(Number.isInteger(num) ? { maximumFractionDigits: 0 } : {}),
+  }).format(num);
+};
+
+const browseBtn =
+  "w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] hover:border-[var(--ui-text-brand)]/40 hover:bg-[var(--ui-bg-card-hover)] px-3 py-2 text-left text-sm text-[var(--ui-text-primary)] outline-none transition-colors";
+
+function PickerBrowseButton({
+  label,
+  placeholder,
+  selected,
+  onClick,
+}: {
+  label: string;
+  placeholder: string;
+  selected: PickerItem | StockPickerItem | null;
+  onClick: () => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">{label}</div>
+      <button type="button" className={browseBtn} onClick={onClick}>
+        {selected ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              {"sku" in selected ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-semibold">{selected.item_name}</span>
+                    <span className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--ui-text-brand)]">
+                      {selected.sku}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 truncate text-xs text-[var(--ui-text-muted)]">
+                    {selected.warehouse_name || ""}
+                    {selected.bin_location
+                      ? `${selected.warehouse_name ? " · " : ""}${selected.bin_location}`
+                      : ""}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="truncate text-sm font-semibold">{selected.title}</div>
+                  {selected.subtitle && (
+                    <div className="mt-0.5 truncate text-xs text-[var(--ui-text-muted)]">
+                      {selected.subtitle}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <ChevronRight size={16} className="shrink-0 text-[var(--ui-text-muted)]" />
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2 text-[var(--ui-text-muted)]">
+            <span>{placeholder}</span>
+            <Search size={15} />
+          </div>
+        )}
+      </button>
+      {selected && (
+        <div className="mt-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/50 px-3 py-2">
+          {"sku" in selected ? (
+            <div className="flex items-center gap-2 text-[11px] text-[var(--ui-text-secondary)]">
+              <WarehouseIcon size={12} className="text-[var(--ui-text-muted)]" />
+              <span className="truncate">
+                {selected.warehouse_name || "—"}
+                {selected.bin_location ? ` · ${selected.bin_location}` : ""}
+              </span>
+              <span className="ml-auto tabular-nums font-semibold text-[var(--ui-text-success)]">
+                available {formatQuantity(Number(selected.on_hand) - Number(selected.allocated))}
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+              {selected.meta?.slice(0, 3).map((m, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  <span className="font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">{m.label}</span>
+                  <span className="tabular-nums font-semibold text-[var(--ui-text-secondary)]">{m.value}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CatalogueSkuInput({
+  label,
+  placeholder,
+  helperText,
+  value,
+  onValueChange,
+  onBrowse,
+}: {
+  label: string;
+  placeholder: string;
+  helperText?: string;
+  value: string;
+  onValueChange: (sku: string) => void;
+  onBrowse: () => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+        {label}
+      </div>
+      <div className="flex gap-2">
+        <input
+          className={input + " min-w-0 flex-1"}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
+        />
+        <button
+          type="button"
+          onClick={onBrowse}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)]/40"
+        >
+          <Search size={15} className="text-[var(--ui-text-muted)]" />
+          Browse
+        </button>
+      </div>
+      {helperText && (
+        <p className="text-[11px] text-[var(--ui-text-muted)]">{helperText}</p>
+      )}
+    </div>
+  );
+}
+
+type PickerKind =
+  | "receive_warehouse"
+  | "receive_po"
+  | "receive_po_line"
+  | "receive_condition"
+  | "receive_catalogue_sku"
+  | "putaway_warehouse"
+  | "putaway_sku"
+  | "putaway_from_bin"
+  | "putaway_to_bin"
+  | "allocate_warehouse"
+  | "allocate_sku"
+  | "transfer_from_wh"
+  | "transfer_to_wh"
+  | "transfer_sku"
+  | "adjust_warehouse"
+  | "adjust_sku";
+
 export default function WmsPage() {
   const [company, setCompany] = useState<any>(null);
   const [installed, setInstalled] = useState<boolean | null>(null);
@@ -56,6 +273,14 @@ export default function WmsPage() {
   const [inboundOrders, setInboundOrders] = useState<any[]>([]);
   const [report, setReport] = useState<any>(null);
   const [tab, setTab] = useState("Overview");
+
+  const [picker, setPicker] = useState<{ kind: PickerKind | null; open: boolean }>({
+    kind: null,
+    open: false,
+  });
+  const openPicker = useCallback((kind: PickerKind) => setPicker({ kind, open: true }), []);
+  const closePicker = useCallback(() => setPicker({ kind: null, open: false }), []);
+  const [selections, setSelections] = useState<Record<string, PickerItem | StockPickerItem | null>>({});
   const [warehouseForm, setWarehouseForm] = useState({
     code: "",
     name: "",
@@ -75,6 +300,7 @@ export default function WmsPage() {
   });
   const [receiveKey, setReceiveKey] = useState(() => crypto.randomUUID());
   const [receiveLines, setReceiveLines] = useState<any[]>([]);
+  const [receiptLineNotice, setReceiptLineNotice] = useState("");
   const [allocateForm, setAllocateForm] = useState({
     warehouse_id: "",
     order_number: "",
@@ -119,6 +345,11 @@ export default function WmsPage() {
   const refresh = useCallback(async () => {
     if (!company?.id) return;
     try {
+      try {
+        await repairWmsLegacyGoodsReceiptStock(company.id);
+      } catch {
+        /* repair is best-effort; stock load continues */
+      }
       const [d, w, s, r, c, rcv, o, po] = await Promise.all([
         getWmsDashboard(company.id),
         getWarehouses(company.id),
@@ -158,6 +389,286 @@ export default function WmsPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const nonAllocatableBinIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const w of warehouses) {
+      for (const bin of w.bins || []) {
+        const type = String(bin.type ?? "").toLowerCase();
+        if (type === "receiving" || type === "quarantine") {
+          ids.add(String(bin.id));
+        }
+      }
+    }
+    return ids;
+  }, [warehouses]);
+
+  const isAllocatableStockRow = useCallback(
+    (x: StockPickerItem) =>
+      !nonAllocatableBinIds.has(String(x.bin_id ?? "")) &&
+      !["RECEIVING", "QUARANTINE"].includes(
+        String(x.bin_location ?? "").toUpperCase(),
+      ),
+    [nonAllocatableBinIds],
+  );
+
+  const allocationAvailable = stock
+    .filter(
+      (item: any) =>
+        String(item.warehouse_id) === String(allocateForm.warehouse_id) &&
+        item.sku === allocateForm.sku &&
+        !nonAllocatableBinIds.has(String(item.bin_id ?? "")) &&
+        !["RECEIVING", "QUARANTINE"].includes(
+          String(item.bin_location ?? "").toUpperCase(),
+        ),
+    )
+    .reduce(
+      (total: number, item: any) =>
+        total +
+        toNumeric(item.on_hand) -
+        toNumeric(item.allocated),
+      0,
+    );
+  const allocationRequested = Number(allocateForm.quantity || 0);
+  const allocationSufficient =
+    allocationRequested > 0 && allocationAvailable >= allocationRequested;
+
+  const cataloguePickerItems: PickerItem[] = useMemo(
+    () =>
+      catalogue.map((item: any) => ({
+        id: String(item.id),
+        title: item.name || String(item.item_code),
+        subtitle: String(item.item_code),
+        searchable: `${item.item_code} ${item.name ?? ""}`,
+        meta: [
+          {
+            label: "SKU",
+            value: String(item.item_code),
+            tone: "brand" as const,
+          },
+        ],
+      })),
+    [catalogue],
+  );
+
+  const conditionPickerItems: PickerItem[] = useMemo(
+    () => [
+      {
+        id: "good",
+        title: "Good",
+        subtitle: "Inspection passed — fully accepted",
+        meta: [
+          { label: "Tone", value: "Accepted", tone: "success" as const },
+        ],
+      },
+      {
+        id: "damaged",
+        title: "Damaged",
+        subtitle: "Goods arrived damaged",
+        meta: [
+          { label: "Tone", value: "Review", tone: "brand" as const },
+        ],
+      },
+      {
+        id: "short",
+        title: "Short shipment",
+        subtitle: "Less quantity received than ordered",
+        meta: [
+          { label: "Tone", value: "Short", tone: "muted" as const },
+        ],
+      },
+      {
+        id: "other",
+        title: "Other",
+        subtitle: "Custom inspection note required",
+        meta: [
+          { label: "Tone", value: "Manual", tone: "default" as const },
+        ],
+      },
+    ],
+    [],
+  );
+
+  const warehousePickerItems: PickerItem[] = useMemo(
+    () =>
+      warehouses.map((w: any) => ({
+        id: String(w.id),
+        title: w.name,
+        subtitle: `${w.code} · ${w.address || "—"}`,
+        meta: [
+          {
+            label: "Bins",
+            value: String(w.bins?.length || 0),
+            tone: "muted" as const,
+          },
+        ],
+      })),
+    [warehouses],
+  );
+
+  const poPickerItems: PickerItem[] = useMemo(
+    () =>
+      inboundOrders.map((po: any) => ({
+        id: String(po.id),
+        title: po.po_number,
+        subtitle: `${po.vendor_name || "Vendor"} · ${po.status || "open"}`,
+        meta: [
+          {
+            label: "Lines",
+            value: String(po.lines?.length || 0),
+            tone: "muted" as const,
+          },
+        ],
+      })),
+    [inboundOrders],
+  );
+
+  const poLinePickerItems: PickerItem[] = useMemo(() => {
+    const po = inboundOrders.find(
+      (x: any) => String(x.id) === String(receiveForm.purchase_order_id),
+    );
+    return (po?.lines || [])
+      .filter((line: any) => Number(line.remaining_quantity || 0) > 0)
+      .map((line: any) => ({
+        id: String(line.sku),
+        title: line.name || line.sku,
+        subtitle: `${line.sku}`,
+        meta: [
+          {
+            label: "Remaining",
+            value: String(line.remaining_quantity || 0),
+            tone: "brand" as const,
+          },
+        ],
+      }));
+  }, [inboundOrders, receiveForm.purchase_order_id]);
+
+  const putawayBinItems = useMemo(() => {
+    const bins =
+      warehouses.find((w: any) => String(w.id) === putawayForm.warehouse_id)
+        ?.bins || [];
+    return {
+      all: bins.map((bin: any) => ({
+        id: String(bin.id),
+        title: bin.name || bin.code,
+        subtitle: `${bin.code} · ${bin.type}`,
+        meta: [
+          {
+            label: "Status",
+            value: bin.status || "active",
+            tone: bin.status === "active" ? ("success" as const) : ("muted" as const),
+          },
+        ],
+      })),
+      storage: bins
+        .filter(
+          (bin: any) =>
+            ["storage", "picking", "packing"].includes(bin.type) &&
+            bin.status === "active",
+        )
+        .map((bin: any) => ({
+          id: String(bin.id),
+          title: bin.name || bin.code,
+          subtitle: `${bin.code} · ${bin.type}`,
+          meta: [
+            { label: "Type", value: bin.type, tone: "brand" as const },
+          ],
+        })),
+    };
+  }, [warehouses, putawayForm.warehouse_id]);
+
+  const stockPickerAll: StockPickerItem[] = useMemo(
+    () =>
+      stock.map((x: any) => ({
+        id: x.id,
+        sku: x.sku,
+        item_name: x.item_name,
+        uom: x.uom,
+        bin_location: x.bin_location,
+        warehouse_id: x.warehouse_id,
+        warehouse_name: x.warehouse_name,
+        warehouse_code: x.warehouse_code,
+        on_hand: x.on_hand,
+        allocated: x.allocated,
+        catalogue_id: x.catalogue_id,
+        bin_id: x.bin_id,
+      })),
+    [stock],
+  );
+
+  const printGrn = (receipt: any) => {
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) {
+      setError("Pop-up diblokir browser. Izinkan pop-up untuk mencetak GRN.");
+      return;
+    }
+
+    const escapeHtml = (value: unknown) =>
+      String(value ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    const lines = receipt.lines || [];
+    const rows = lines
+      .map(
+        (line: any, index: number) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td><strong>${escapeHtml(line.item_name)}</strong><br /><small>${escapeHtml(line.sku)}</small></td>
+            <td>${escapeHtml(line.uom)}</td>
+            <td>${formatQuantity(line.received_quantity)}</td>
+            <td>${formatQuantity(line.accepted_quantity)}</td>
+            <td>${formatQuantity(line.rejected_quantity)}</td>
+            <td>${escapeHtml(line.condition)}</td>
+          </tr>`,
+      )
+      .join("");
+    const totalReceived = lines.reduce(
+      (total: number, line: any) => total + Number(line.received_quantity || 0),
+      0,
+    );
+    const totalAccepted = lines.reduce(
+      (total: number, line: any) => total + Number(line.accepted_quantity || 0),
+      0,
+    );
+    const totalRejected = lines.reduce(
+      (total: number, line: any) => total + Number(line.rejected_quantity || 0),
+      0,
+    );
+
+    printWindow.document.write(`<!doctype html>
+      <html><head><title>GRN ${escapeHtml(receipt.receipt_number)}</title>
+      <style>
+        @page { size: A4; margin: 18mm; }
+        body { color: #172033; font: 12px Arial, sans-serif; margin: 0; }
+        header { border-bottom: 2px solid #ef7d00; display: flex; justify-content: space-between; padding-bottom: 14px; }
+        h1 { font-size: 21px; margin: 0 0 4px; } h2 { font-size: 13px; margin: 24px 0 8px; }
+        .muted { color: #65758b; } .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; margin-top: 18px; }
+        .meta b { display: block; font-size: 10px; color: #65758b; text-transform: uppercase; }
+        table { border-collapse: collapse; margin-top: 12px; width: 100%; } th, td { border: 1px solid #d9e0ea; padding: 8px; text-align: left; vertical-align: top; }
+        th { background: #f5f7fa; font-size: 10px; text-transform: uppercase; } tfoot td { font-weight: bold; background: #f9fafb; }
+        footer { border-top: 1px solid #d9e0ea; color: #65758b; display: flex; justify-content: space-between; margin-top: 42px; padding-top: 12px; }
+      </style></head><body>
+        <header><div><h1>Goods Received Note</h1><div class="muted">Huntr WMS &amp; Inventory</div></div><div><b>GRN NO.</b><br /><strong>${escapeHtml(receipt.receipt_number)}</strong></div></header>
+        <section class="meta">
+          <div><b>Company</b>${escapeHtml(company?.name)}</div>
+          <div><b>Warehouse</b>${escapeHtml(receipt.warehouse_name)}</div>
+          <div><b>Reference / PO</b>${escapeHtml(receipt.reference)}</div>
+          <div><b>Received at</b>${receipt.received_at ? escapeHtml(new Date(receipt.received_at).toLocaleString("id-ID")) : "—"}</div>
+          <div><b>Status</b>${escapeHtml(receipt.status)}</div>
+          <div><b>Received by</b>${escapeHtml(receipt.received_by)}</div>
+        </section>
+        <h2>Received items</h2>
+        <table><thead><tr><th>#</th><th>Item / SKU</th><th>UoM</th><th>Received</th><th>Accepted</th><th>Rejected</th><th>Condition</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7">No receipt lines.</td></tr>'}</tbody>
+        <tfoot><tr><td colspan="3">Total</td><td>${formatQuantity(totalReceived)}</td><td>${formatQuantity(totalAccepted)}</td><td>${formatQuantity(totalRejected)}</td><td></td></tr></tfoot></table>
+        <footer><span>Generated ${escapeHtml(new Date().toLocaleString("id-ID"))}</span><span>GRN is system generated.</span></footer>
+        <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); };</script>
+      </body></html>`);
+    printWindow.document.close();
   };
   if (!company?.id)
     return (
@@ -395,10 +906,14 @@ export default function WmsPage() {
                         <td>{x.warehouse_name}</td>
                         <td>{x.bin_location || "—"}</td>
                         <td>
-                          {x.on_hand} {x.uom}
+                          {formatQuantity(x.on_hand)} {x.uom}
                         </td>
-                        <td>{x.allocated}</td>
-                        <td>{Number(x.on_hand) - Number(x.allocated)}</td>
+                        <td>{formatQuantity(x.allocated)}</td>
+                        <td>
+                          {formatQuantity(
+                            Number(x.on_hand) - Number(x.allocated),
+                          )}
+                        </td>
                         <td>
                           <div className="flex items-center gap-2">
                             <input
@@ -408,8 +923,9 @@ export default function WmsPage() {
                               step="0.001"
                               className={input + " w-24 px-2 py-1"}
                               value={
-                                reorderLevels[x.id] ??
-                                String(x.reorder_level || 0)
+                                reorderLevels[x.id] !== undefined
+                                  ? reorderLevels[x.id]
+                                  : String(toNumeric(x.reorder_level))
                               }
                               onChange={(e) =>
                                 setReorderLevels({
@@ -424,10 +940,8 @@ export default function WmsPage() {
                                   await setWmsReorderLevel(
                                     company.id,
                                     x.id,
-                                    Number(
-                                      reorderLevels[x.id] ??
-                                        x.reorder_level ??
-                                        0,
+                                    toNumeric(
+                                      reorderLevels[x.id] ?? x.reorder_level ?? 0,
                                     ),
                                   );
                                 })
@@ -477,9 +991,9 @@ export default function WmsPage() {
                 "Put away accepted stock",
               ]}
             />
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
               <form
-                className={card + " space-y-3"}
+                className={card + " space-y-3 p-3.5"}
                 onSubmit={(e) => {
                   e.preventDefault();
                   run(async () => {
@@ -510,56 +1024,67 @@ export default function WmsPage() {
                     });
                     setReceiveKey(crypto.randomUUID());
                     setReceiveLines([]);
+                    setReceiptLineNotice(
+                      "Receipt confirmed and sent to the receiving bin.",
+                    );
                   });
                 }}
               >
-                <h3 className="font-bold">Receive order / incoming goods</h3>
-                <p className="text-xs text-[var(--ui-text-muted)]">
-                  Goods enter the RECEIVING staging bin before put away.
-                </p>
-                <select
-                  required
-                  className={input}
-                  value={receiveForm.warehouse_id}
-                  onChange={(e) =>
-                    setReceiveForm({
-                      ...receiveForm,
-                      warehouse_id: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select warehouse</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  required={!receiveForm.purchase_order_id}
-                  className={input}
-                  value={receiveForm.catalogue_id}
-                  onChange={(e) => {
-                    const item = catalogue.find(
-                      (x: any) => x.id === e.target.value,
-                    );
-                    setReceiveForm({
-                      ...receiveForm,
-                      catalogue_id: e.target.value,
-                      sku: item?.item_code || "",
-                      item_name: item?.name || "",
-                    });
-                  }}
-                >
-                  <option value="">
-                    Select the product variant from Huntr Catalogue
-                  </option>
-                  {catalogue.map((item: any) => (
-                    <option key={item.id} value={item.id}>
-                      {item.item_code} · {item.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-start justify-between gap-3 border-b border-[var(--ui-border)] pb-3">
+                  <div>
+                    <h3 className="font-bold">Receive incoming goods</h3>
+                    <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">Create a draft, inspect each line, then confirm it into the receiving bin.</p>
+                  </div>
+                  <span className="shrink-0 border border-[var(--ui-border)] px-2 py-1 text-[10px] font-semibold text-[var(--ui-text-muted)]">DRAFT</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <PickerBrowseButton
+                    label="Warehouse"
+                    placeholder="Select warehouse"
+                    selected={selections["receive_warehouse"] || null}
+                    onClick={() => openPicker("receive_warehouse")}
+                  />
+                  <PickerBrowseButton
+                    label="Purchase order"
+                    placeholder="No linked purchase order (optional)"
+                    selected={selections["receive_po"] || null}
+                    onClick={() => openPicker("receive_po")}
+                  />
+                </div>
+                <div className="space-y-2 border-t border-[var(--ui-border)] pt-3">
+                  <p className="text-[10px] font-bold tracking-wider text-[var(--ui-text-muted)] uppercase">Item and inspection</p>
+                  <CatalogueSkuInput
+                    label="Product variant / SKU"
+                    placeholder="Type SKU or browse Huntr Catalogue"
+                    helperText="Browse opens the catalogue modal. You can still type any SKU that is not listed."
+                    value={receiveForm.sku}
+                    onBrowse={() => openPicker("receive_catalogue_sku")}
+                    onValueChange={(sku) => {
+                      const item = catalogue.find(
+                        (x: any) =>
+                          String(x.item_code).toLowerCase() ===
+                          sku.trim().toLowerCase(),
+                      );
+                      setReceiveForm({
+                        ...receiveForm,
+                        catalogue_id: item ? String(item.id) : "",
+                        sku,
+                        item_name: item?.name || receiveForm.item_name,
+                      });
+                      setSelections((prev) => {
+                        if (!item) {
+                          return { ...prev, receive_catalogue_sku: null };
+                        }
+                        const pickerItem = cataloguePickerItems.find(
+                          (p) => p.id === String(item.id),
+                        );
+                        return {
+                          ...prev,
+                          receive_catalogue_sku: pickerItem ?? null,
+                        };
+                      });
+                    }}
+                  />
                 {receiveForm.sku && (
                   <p className="border-l-2 border-[var(--ui-text-brand)] bg-[var(--ui-bg-input)] px-3 py-2 text-xs text-[var(--ui-text-secondary)]">
                     Selected SKU identity:{" "}
@@ -569,36 +1094,31 @@ export default function WmsPage() {
                   </p>
                 )}
                 <div className="grid grid-cols-2 gap-3">
-                  <select
-                    className={input}
-                    value={receiveForm.condition}
-                    onChange={(e) =>
-                      setReceiveForm({
-                        ...receiveForm,
-                        condition: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="good">Inspection: good</option>
-                    <option value="damaged">Inspection: damaged</option>
-                    <option value="short">Inspection: short</option>
-                    <option value="other">Inspection: other</option>
-                  </select>
-                  <input
-                    className={input}
-                    placeholder="Inspection notes"
-                    value={receiveForm.inspection_notes}
-                    onChange={(e) =>
-                      setReceiveForm({
-                        ...receiveForm,
-                        inspection_notes: e.target.value,
-                      })
-                    }
+                  <PickerBrowseButton
+                    label="Inspection condition"
+                    placeholder="Select condition"
+                    selected={selections["receive_condition"] || null}
+                    onClick={() => openPicker("receive_condition")}
                   />
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Inspection notes</div>
+                    <input
+                      className={input}
+                      placeholder="Inspection notes"
+                      value={receiveForm.inspection_notes}
+                      onChange={(e) =>
+                        setReceiveForm({
+                          ...receiveForm,
+                          inspection_notes: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
                 <input
+                  required={!receiveForm.catalogue_id}
                   className={input}
-                  placeholder="Item name"
+                  placeholder="Item name (required for a new SKU)"
                   value={receiveForm.item_name}
                   onChange={(e) =>
                     setReceiveForm({
@@ -607,67 +1127,14 @@ export default function WmsPage() {
                     })
                   }
                 />
-                <select
-                  className={input}
-                  value={receiveForm.purchase_order_id}
-                  onChange={(e) => {
-                    const po = inboundOrders.find(
-                      (x: any) => x.id === e.target.value,
-                    );
-                    const line = po?.lines?.find(
-                      (x: any) => x.remaining_quantity > 0,
-                    );
-                    setReceiveForm({
-                      ...receiveForm,
-                      purchase_order_id: e.target.value,
-                      bin_location: po?.po_number || "",
-                      catalogue_id: line?.catalogue_id || "",
-                      sku: line?.sku || "",
-                      item_name: line?.name || "",
-                      quantity: line ? String(line.remaining_quantity) : "",
-                    });
-                  }}
-                >
-                  <option value="">Link to Purchase Order (optional)</option>
-                  {inboundOrders.map((po: any) => (
-                    <option key={po.id} value={po.id}>
-                      {po.po_number} · {po.vendor_name || "Vendor"} ·{" "}
-                      {po.status}
-                    </option>
-                  ))}
-                </select>
+                </div>
                 {receiveForm.purchase_order_id && (
-                  <select
-                    className={input}
-                    value={receiveForm.sku}
-                    onChange={(e) => {
-                      const po = inboundOrders.find(
-                        (x: any) => x.id === receiveForm.purchase_order_id,
-                      );
-                      const line = po?.lines?.find(
-                        (x: any) => x.sku === e.target.value,
-                      );
-                      setReceiveForm({
-                        ...receiveForm,
-                        catalogue_id: line?.catalogue_id || "",
-                        sku: line?.sku || "",
-                        item_name: line?.name || "",
-                        quantity: line ? String(line.remaining_quantity) : "",
-                      });
-                    }}
-                  >
-                    <option value="">Select outstanding PO line</option>
-                    {(
-                      inboundOrders.find(
-                        (x: any) => x.id === receiveForm.purchase_order_id,
-                      )?.lines || []
-                    ).map((line: any) => (
-                      <option key={line.sku} value={line.sku}>
-                        {line.sku} · {line.name} · remaining{" "}
-                        {line.remaining_quantity}
-                      </option>
-                    ))}
-                  </select>
+                  <PickerBrowseButton
+                    label="Outstanding PO line"
+                    placeholder="Select outstanding PO line"
+                    selected={selections["receive_po_line"] || null}
+                    onClick={() => openPicker("receive_po_line")}
+                  />
                 )}
                 <div className="grid grid-cols-2 gap-3">
                   <input
@@ -743,6 +1210,9 @@ export default function WmsPage() {
                           receiveForm.inspection_notes || undefined,
                       },
                     ]);
+                    setReceiptLineNotice(
+                      `Receipt line added. ${receiveLines.length + 1} line(s) ready to confirm.`,
+                    );
                     setReceiveForm({
                       ...receiveForm,
                       catalogue_id: "",
@@ -754,10 +1224,15 @@ export default function WmsPage() {
                       inspection_notes: "",
                     });
                   }}
-                  className="rounded-md border border-[var(--ui-border)] px-4 py-2 text-sm font-semibold"
+                  className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-4 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
                 >
-                  Add receipt line
+                  + Add receipt line
                 </button>
+                {receiptLineNotice && (
+                  <p className="border-l-2 border-emerald-500 bg-emerald-500/5 px-3 py-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    {receiptLineNotice}
+                  </p>
+                )}
                 {receiveLines.length > 0 && (
                   <div className="border border-[var(--ui-border)] p-3 text-xs">
                     <p className="mb-2 font-semibold">
@@ -770,7 +1245,7 @@ export default function WmsPage() {
                       >
                         <span>
                           {line.sku || line.catalogue_id} ·{" "}
-                          {line.accepted_quantity} accepted
+                          {formatQuantity(line.accepted_quantity)} accepted
                         </span>
                         <button
                           type="button"
@@ -787,8 +1262,14 @@ export default function WmsPage() {
                     ))}
                   </div>
                 )}
-                <button className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
-                  Confirm receiving
+                <button
+                  disabled={busy || receiveLines.length === 0}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {busy ? <Loader2 size={15} className="animate-spin" /> : null}
+                  {busy
+                    ? "Confirming receipt…"
+                    : `Confirm receiving (${receiveLines.length})`}
                 </button>
               </form>
               <form
@@ -810,117 +1291,51 @@ export default function WmsPage() {
                 <p className="text-xs text-[var(--ui-text-muted)]">
                   Move received goods from staging to the assigned storage bin.
                 </p>
-                <select
-                  required
-                  className={input}
-                  value={putawayForm.warehouse_id}
-                  onChange={(e) =>
-                    setPutawayForm({
-                      ...putawayForm,
-                      warehouse_id: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select warehouse</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
+                <PickerBrowseButton
+                  label="Warehouse"
+                  placeholder="Select warehouse"
+                  selected={selections["putaway_warehouse"] || null}
+                  onClick={() => openPicker("putaway_warehouse")}
+                />
                 <div className="grid grid-cols-2 gap-3">
-                  <select
-                    required
-                    className={input}
-                    value={putawayForm.sku}
-                    onChange={(e) =>
-                      setPutawayForm({ ...putawayForm, sku: e.target.value })
-                    }
-                  >
-                    <option value="">Select inventory item</option>
-                    {stock
-                      .filter(
-                        (x: any) => x.warehouse_id === putawayForm.warehouse_id,
-                      )
-                      .filter(
-                        (x: any, index: number, items: any[]) =>
-                          items.findIndex((item: any) => item.sku === x.sku) ===
-                          index,
-                      )
-                      .map((item: any) => (
-                        <option key={item.sku} value={item.sku}>
-                          {item.item_name} · {item.sku}
-                        </option>
-                      ))}
-                  </select>
-                  <input
-                    required
-                    type="number"
-                    min="0.001"
-                    step="0.001"
-                    className={input}
-                    placeholder="Units to move"
-                    value={putawayForm.quantity}
-                    onChange={(e) =>
-                      setPutawayForm({
-                        ...putawayForm,
-                        quantity: e.target.value,
-                      })
-                    }
+                  <PickerBrowseButton
+                    label="Inventory item"
+                    placeholder="Select inventory item"
+                    selected={selections["putaway_sku"] || null}
+                    onClick={() => openPicker("putaway_sku")}
                   />
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Units to move</div>
+                    <input
+                      required
+                      type="number"
+                      min="0.001"
+                      step="0.001"
+                      className={input}
+                      placeholder="Units to move"
+                      value={putawayForm.quantity}
+                      onChange={(e) =>
+                        setPutawayForm({
+                          ...putawayForm,
+                          quantity: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <select
-                    required
-                    className={input}
-                    value={putawayForm.from_bin_id}
-                    onChange={(e) =>
-                      setPutawayForm({
-                        ...putawayForm,
-                        from_bin_id: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">From bin</option>
-                    {(
-                      warehouses.find(
-                        (w: any) => w.id === putawayForm.warehouse_id,
-                      )?.bins || []
-                    ).map((bin: any) => (
-                      <option key={bin.id} value={bin.id}>
-                        {bin.code} · {bin.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    required
-                    className={input}
-                    value={putawayForm.to_bin_id}
-                    onChange={(e) =>
-                      setPutawayForm({
-                        ...putawayForm,
-                        to_bin_id: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Destination bin</option>
-                    {(
-                      warehouses.find(
-                        (w: any) => w.id === putawayForm.warehouse_id,
-                      )?.bins || []
-                    )
-                      .filter(
-                        (bin: any) =>
-                          ["storage", "picking", "packing"].includes(
-                            bin.type,
-                          ) && bin.status === "active",
-                      )
-                      .map((bin: any) => (
-                        <option key={bin.id} value={bin.id}>
-                          {bin.code} · {bin.name}
-                        </option>
-                      ))}
-                  </select>
+                  <PickerBrowseButton
+                    label="From bin"
+                    placeholder="Select source bin"
+                    selected={selections["putaway_from_bin"] || null}
+                    onClick={() => openPicker("putaway_from_bin")}
+                  />
+                  <PickerBrowseButton
+                    label="Destination bin"
+                    placeholder="Select destination bin"
+                    selected={selections["putaway_to_bin"] || null}
+                    onClick={() => openPicker("putaway_to_bin")}
+                  />
                 </div>
                 <button className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
                   Confirm put away
@@ -955,6 +1370,7 @@ export default function WmsPage() {
                     <th>Accepted</th>
                     <th>Rejected</th>
                     <th>Reference</th>
+                    <th className="text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -967,20 +1383,33 @@ export default function WmsPage() {
                       <td>{x.warehouse_name}</td>
                       <td>{x.lines?.length || 0}</td>
                       <td>
-                        {(x.lines || []).reduce(
-                          (sum: number, line: any) =>
-                            sum + Number(line.accepted_quantity || 0),
-                          0,
+                        {formatQuantity(
+                          (x.lines || []).reduce(
+                            (sum: number, line: any) =>
+                              sum + Number(line.accepted_quantity || 0),
+                            0,
+                          ),
                         )}
                       </td>
                       <td>
-                        {(x.lines || []).reduce(
-                          (sum: number, line: any) =>
-                            sum + Number(line.rejected_quantity || 0),
-                          0,
+                        {formatQuantity(
+                          (x.lines || []).reduce(
+                            (sum: number, line: any) =>
+                              sum + Number(line.rejected_quantity || 0),
+                            0,
+                          ),
                         )}
                       </td>
                       <td>{x.reference || "—"}</td>
+                      <td className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => printGrn(x)}
+                          className="inline-flex items-center gap-1 rounded-md border border-[var(--ui-border)] px-2 py-1 text-xs font-semibold hover:border-[var(--ui-text-brand)]"
+                        >
+                          <Printer size={13} /> Print GRN
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {!receipts.length && (
@@ -1016,6 +1445,24 @@ export default function WmsPage() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   run(async () => {
+                    const availability = await checkWmsStockAvailability(
+                      company.id,
+                      {
+                        warehouse_id: allocateForm.warehouse_id,
+                        lines: [
+                          {
+                            sku: allocateForm.sku,
+                            quantity: Number(allocateForm.quantity),
+                          },
+                        ],
+                      },
+                    );
+                    const line = availability?.data?.[0];
+                    if (!line?.sufficient) {
+                      throw new Error(
+                        `Stok ${line?.sku || allocateForm.sku} tidak cukup. Dibutuhkan ${line?.requested || allocateForm.quantity}, tersedia ${line?.available || 0}.`,
+                      );
+                    }
                     await allocateStock(company.id, {
                       warehouse_id: allocateForm.warehouse_id,
                       order_number: allocateForm.order_number,
@@ -1040,79 +1487,66 @@ export default function WmsPage() {
                   The system reserves available stock and selects pick bins
                   automatically.
                 </p>
-                <select
-                  required
-                  className={input}
-                  value={allocateForm.warehouse_id}
-                  onChange={(e) =>
-                    setAllocateForm({
-                      ...allocateForm,
-                      warehouse_id: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select warehouse</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  required
-                  className={input}
-                  placeholder="Order number"
-                  value={allocateForm.order_number}
-                  onChange={(e) =>
-                    setAllocateForm({
-                      ...allocateForm,
-                      order_number: e.target.value,
-                    })
-                  }
+                <PickerBrowseButton
+                  label="Warehouse"
+                  placeholder="Select warehouse"
+                  selected={selections["allocate_warehouse"] || null}
+                  onClick={() => openPicker("allocate_warehouse")}
                 />
-                <select
-                  required
-                  className={input}
-                  value={allocateForm.sku}
-                  onChange={(e) =>
-                    setAllocateForm({ ...allocateForm, sku: e.target.value })
-                  }
-                >
-                  <option value="">Select inventory item</option>
-                  {stock
-                    .filter(
-                      (x: any) =>
-                        x.warehouse_id === allocateForm.warehouse_id &&
-                        Number(x.on_hand) - Number(x.allocated) > 0,
-                    )
-                    .filter(
-                      (x: any, index: number, items: any[]) =>
-                        items.findIndex((item: any) => item.sku === x.sku) ===
-                        index,
-                    )
-                    .map((item: any) => (
-                      <option key={item.sku} value={item.sku}>
-                        {item.item_name} · {item.sku} · available{" "}
-                        {Number(item.on_hand) - Number(item.allocated)}
-                      </option>
-                    ))}
-                </select>
-                <input
-                  required
-                  type="number"
-                  min="0.001"
-                  step="0.001"
-                  className={input}
-                  placeholder="Units to reserve"
-                  value={allocateForm.quantity}
-                  onChange={(e) =>
-                    setAllocateForm({
-                      ...allocateForm,
-                      quantity: e.target.value,
-                    })
-                  }
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Order number</div>
+                  <input
+                    required
+                    className={input}
+                    placeholder="Order number"
+                    value={allocateForm.order_number}
+                    onChange={(e) =>
+                      setAllocateForm({
+                        ...allocateForm,
+                        order_number: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <PickerBrowseButton
+                  label="Inventory item"
+                  placeholder="Select inventory item"
+                  selected={selections["allocate_sku"] || null}
+                  onClick={() => openPicker("allocate_sku")}
                 />
-                <button className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Units to reserve</div>
+                  <input
+                    required
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    className={input}
+                    placeholder="Units to reserve"
+                    value={allocateForm.quantity}
+                    onChange={(e) =>
+                      setAllocateForm({
+                        ...allocateForm,
+                        quantity: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                {allocateForm.warehouse_id &&
+                  allocateForm.sku &&
+                  allocationRequested > 0 && (
+                    <p
+                      className={`text-xs ${allocationSufficient ? "text-emerald-500" : "text-red-500"}`}
+                    >
+                      {allocationSufficient
+                        ? `Stock available: ${allocationAvailable}. Ready to reserve ${allocationRequested}.`
+                        : `Stock insufficient: ${allocationAvailable} available, ${allocationRequested} requested.`}
+                    </p>
+                  )}
+                <button
+                  disabled={!allocationSufficient}
+                  className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
                   Allocate stock
                 </button>
               </form>
@@ -1279,107 +1713,72 @@ export default function WmsPage() {
                 }}
               >
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <select
-                    required
-                    className={input}
-                    value={transferForm.from_warehouse_id}
-                    onChange={(e) =>
-                      setTransferForm({
-                        ...transferForm,
-                        from_warehouse_id: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">From warehouse</option>
-                    {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    required
-                    className={input}
-                    value={transferForm.to_warehouse_id}
-                    onChange={(e) =>
-                      setTransferForm({
-                        ...transferForm,
-                        to_warehouse_id: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">To warehouse</option>
-                    {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    required
-                    className={input}
-                    value={transferForm.sku}
-                    onChange={(e) =>
-                      setTransferForm({ ...transferForm, sku: e.target.value })
-                    }
-                  >
-                    <option value="">Select inventory item</option>
-                    {stock
-                      .filter(
-                        (x: any) =>
-                          x.warehouse_id === transferForm.from_warehouse_id &&
-                          Number(x.on_hand) - Number(x.allocated) > 0,
-                      )
-                      .filter(
-                        (x: any, index: number, items: any[]) =>
-                          items.findIndex((item: any) => item.sku === x.sku) ===
-                          index,
-                      )
-                      .map((item: any) => (
-                        <option key={item.sku} value={item.sku}>
-                          {item.item_name} · {item.sku}
-                        </option>
-                      ))}
-                  </select>
-                  <input
-                    required
-                    type="number"
-                    min="0.001"
-                    step="0.001"
-                    className={input}
-                    placeholder="Units to transfer"
-                    value={transferForm.quantity}
-                    onChange={(e) =>
-                      setTransferForm({
-                        ...transferForm,
-                        quantity: e.target.value,
-                      })
-                    }
+                  <PickerBrowseButton
+                    label="From warehouse"
+                    placeholder="Select source warehouse"
+                    selected={selections["transfer_from_wh"] || null}
+                    onClick={() => openPicker("transfer_from_wh")}
                   />
-                  <input
-                    required
-                    className={input}
-                    placeholder="Source bin"
-                    value={transferForm.from_bin}
-                    onChange={(e) =>
-                      setTransferForm({
-                        ...transferForm,
-                        from_bin: e.target.value,
-                      })
-                    }
+                  <PickerBrowseButton
+                    label="To warehouse"
+                    placeholder="Select destination warehouse"
+                    selected={selections["transfer_to_wh"] || null}
+                    onClick={() => openPicker("transfer_to_wh")}
                   />
-                  <input
-                    required
-                    className={input}
-                    placeholder="Destination bin"
-                    value={transferForm.to_bin}
-                    onChange={(e) =>
-                      setTransferForm({
-                        ...transferForm,
-                        to_bin: e.target.value,
-                      })
-                    }
+                  <PickerBrowseButton
+                    label="Inventory item"
+                    placeholder="Select inventory item"
+                    selected={selections["transfer_sku"] || null}
+                    onClick={() => openPicker("transfer_sku")}
                   />
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Units to transfer</div>
+                    <input
+                      required
+                      type="number"
+                      min="0.001"
+                      step="0.001"
+                      className={input}
+                      placeholder="Units to transfer"
+                      value={transferForm.quantity}
+                      onChange={(e) =>
+                        setTransferForm({
+                          ...transferForm,
+                          quantity: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Source bin</div>
+                    <input
+                      required
+                      className={input}
+                      placeholder="Source bin"
+                      value={transferForm.from_bin}
+                      onChange={(e) =>
+                        setTransferForm({
+                          ...transferForm,
+                          from_bin: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Destination bin</div>
+                    <input
+                      required
+                      className={input}
+                      placeholder="Destination bin"
+                      value={transferForm.to_bin}
+                      onChange={(e) =>
+                        setTransferForm({
+                          ...transferForm,
+                          to_bin: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
                 <button className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
                   Confirm transfer
@@ -1426,71 +1825,47 @@ export default function WmsPage() {
                 }}
               >
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <select
-                    required
-                    className={input}
-                    value={adjustForm.warehouse_id}
-                    onChange={(e) =>
-                      setAdjustForm({
-                        ...adjustForm,
-                        warehouse_id: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Select warehouse</option>
-                    {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    required
-                    className={input}
-                    value={adjustForm.sku}
-                    onChange={(e) =>
-                      setAdjustForm({ ...adjustForm, sku: e.target.value })
-                    }
-                  >
-                    <option value="">Select inventory item</option>
-                    {stock
-                      .filter(
-                        (x: any) => x.warehouse_id === adjustForm.warehouse_id,
-                      )
-                      .filter(
-                        (x: any, index: number, items: any[]) =>
-                          items.findIndex((item: any) => item.sku === x.sku) ===
-                          index,
-                      )
-                      .map((item: any) => (
-                        <option key={item.sku} value={item.sku}>
-                          {item.item_name} · {item.sku}
-                        </option>
-                      ))}
-                  </select>
-                  <input
-                    required
-                    className={input}
-                    placeholder="Bin location"
-                    value={adjustForm.bin_location}
-                    onChange={(e) =>
-                      setAdjustForm({
-                        ...adjustForm,
-                        bin_location: e.target.value,
-                      })
-                    }
+                  <PickerBrowseButton
+                    label="Warehouse"
+                    placeholder="Select warehouse"
+                    selected={selections["adjust_warehouse"] || null}
+                    onClick={() => openPicker("adjust_warehouse")}
                   />
-                  <input
-                    required
-                    type="number"
-                    step="0.001"
-                    className={input}
-                    placeholder="Adjustment quantity (+ / -)"
-                    value={adjustForm.quantity}
-                    onChange={(e) =>
-                      setAdjustForm({ ...adjustForm, quantity: e.target.value })
-                    }
+                  <PickerBrowseButton
+                    label="Inventory item"
+                    placeholder="Select inventory item"
+                    selected={selections["adjust_sku"] || null}
+                    onClick={() => openPicker("adjust_sku")}
                   />
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Bin location</div>
+                    <input
+                      required
+                      className={input}
+                      placeholder="Bin location"
+                      value={adjustForm.bin_location}
+                      onChange={(e) =>
+                        setAdjustForm({
+                          ...adjustForm,
+                          bin_location: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Adjustment quantity (+ / -)</div>
+                    <input
+                      required
+                      type="number"
+                      step="0.001"
+                      className={input}
+                      placeholder="Adjustment quantity (+ / -)"
+                      value={adjustForm.quantity}
+                      onChange={(e) =>
+                        setAdjustForm({ ...adjustForm, quantity: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
                 <input
                   required
@@ -1548,8 +1923,8 @@ export default function WmsPage() {
                         </span>
                       </td>
                       <td>{x.sku_count}</td>
-                      <td>{x.on_hand}</td>
-                      <td>{x.allocated}</td>
+                      <td>{formatQuantity(x.on_hand)}</td>
+                      <td>{formatQuantity(x.allocated)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1562,7 +1937,8 @@ export default function WmsPage() {
                   >
                     <p className="capitalize font-semibold">{x.type}</p>
                     <p className="mt-1 text-xs text-[var(--ui-text-muted)]">
-                      {x.transactions} movements · {x.quantity} units
+                      {formatQuantity(x.transactions)} movements ·{" "}
+                      {formatQuantity(x.quantity)} units
                     </p>
                   </div>
                 ))}
@@ -1580,7 +1956,8 @@ export default function WmsPage() {
                       </span>
                       <span className="text-[var(--ui-text-secondary)]">
                         {x.warehouse_name} / {x.bin_location} · available{" "}
-                        {x.available} · minimum {x.reorder_level}
+                        {formatQuantity(x.available)} · minimum{" "}
+                        {formatQuantity(x.reorder_level)}
                       </span>
                     </div>
                   ))}
@@ -1599,6 +1976,369 @@ export default function WmsPage() {
           </div>
         )}
       </div>
+
+      <StockPickerModal
+        open={
+          picker.open &&
+          (picker.kind === "putaway_sku" ||
+            picker.kind === "allocate_sku" ||
+            picker.kind === "transfer_sku" ||
+            picker.kind === "adjust_sku")
+        }
+        onClose={closePicker}
+        onSelect={(item: StockPickerItem) => {
+          switch (picker.kind) {
+            case "putaway_sku":
+              setPutawayForm({ ...putawayForm, sku: item.sku });
+              setSelections((prev) => ({ ...prev, putaway_sku: item }));
+              break;
+            case "allocate_sku":
+              setAllocateForm({ ...allocateForm, sku: item.sku });
+              setSelections((prev) => ({ ...prev, allocate_sku: item }));
+              break;
+            case "transfer_sku":
+              setTransferForm({ ...transferForm, sku: item.sku });
+              setSelections((prev) => ({ ...prev, transfer_sku: item }));
+              break;
+            case "adjust_sku":
+              setAdjustForm({ ...adjustForm, sku: item.sku });
+              setSelections((prev) => ({ ...prev, adjust_sku: item }));
+              break;
+          }
+          closePicker();
+        }}
+        items={(() => {
+          switch (picker.kind) {
+            case "putaway_sku":
+              return stockPickerAll.filter(
+                (x: any) => String(x.warehouse_id) === String(putawayForm.warehouse_id),
+              );
+            case "allocate_sku":
+              return stockPickerAll.filter(
+                (x) =>
+                  String(x.warehouse_id) === String(allocateForm.warehouse_id) &&
+                  isAllocatableStockRow(x),
+              );
+            case "transfer_sku":
+              return stockPickerAll.filter(
+                (x: any) => String(x.warehouse_id) === String(transferForm.from_warehouse_id),
+              );
+            case "adjust_sku":
+              return stockPickerAll.filter(
+                (x: any) => String(x.warehouse_id) === String(adjustForm.warehouse_id),
+              );
+            default:
+              return [];
+          }
+        })()}
+        title={(() => {
+          switch (picker.kind) {
+            case "putaway_sku":
+              return "Select inventory to put away";
+            case "allocate_sku":
+              return "Select allocatable inventory";
+            case "transfer_sku":
+              return "Select transferable inventory";
+            case "adjust_sku":
+              return "Select adjustable inventory";
+            default:
+              return "Select inventory item";
+          }
+        })()}
+        description={(() => {
+          switch (picker.kind) {
+            case "allocate_sku":
+              return "Only stock with available quantity > 0 in non-receiving bins is shown.";
+            case "transfer_sku":
+              return "Only stock in the source warehouse with positive available quantity is shown.";
+            default:
+              return "Choose an SKU and optionally a specific bin to target.";
+          }
+        })()}
+        selectedSku={(() => {
+          switch (picker.kind) {
+            case "putaway_sku":
+              return putawayForm.sku || null;
+            case "allocate_sku":
+              return allocateForm.sku || null;
+            case "transfer_sku":
+              return transferForm.sku || null;
+            case "adjust_sku":
+              return adjustForm.sku || null;
+            default:
+              return null;
+          }
+        })()}
+        aggregateBySku={true}
+        hideUnavailable={
+          picker.kind === "allocate_sku" || picker.kind === "transfer_sku"
+        }
+      />
+
+      <GenericPickerModal
+        open={
+          picker.open &&
+          (picker.kind === "receive_warehouse" ||
+            picker.kind === "receive_po" ||
+            picker.kind === "receive_po_line" ||
+            picker.kind === "receive_condition" ||
+            picker.kind === "receive_catalogue_sku" ||
+            picker.kind === "putaway_warehouse" ||
+            picker.kind === "putaway_from_bin" ||
+            picker.kind === "putaway_to_bin" ||
+            picker.kind === "allocate_warehouse" ||
+            picker.kind === "transfer_from_wh" ||
+            picker.kind === "transfer_to_wh" ||
+            picker.kind === "adjust_warehouse")
+        }
+        onClose={closePicker}
+        onSelect={(item: PickerItem) => {
+          switch (picker.kind) {
+            case "receive_warehouse":
+              setReceiveForm({ ...receiveForm, warehouse_id: item.id });
+              setSelections((prev) => ({ ...prev, receive_warehouse: item }));
+              break;
+            case "receive_po": {
+              const po = inboundOrders.find((x: any) => String(x.id) === item.id);
+              const line = po?.lines?.find(
+                (x: any) => Number(x.remaining_quantity || 0) > 0,
+              );
+              setReceiveForm({
+                ...receiveForm,
+                purchase_order_id: item.id,
+                bin_location: po?.po_number || "",
+                catalogue_id: line?.catalogue_id || "",
+                sku: line?.sku || "",
+                item_name: line?.name || "",
+                quantity: line ? String(line.remaining_quantity) : "",
+              });
+              setSelections((prev) => ({
+                ...prev,
+                receive_po: item,
+                receive_po_line: null,
+              }));
+              break;
+            }
+            case "receive_po_line": {
+              const po = inboundOrders.find(
+                (x: any) => String(x.id) === String(receiveForm.purchase_order_id),
+              );
+              const line = po?.lines?.find((x: any) => String(x.sku) === item.id);
+              setReceiveForm({
+                ...receiveForm,
+                catalogue_id: line?.catalogue_id || "",
+                sku: line?.sku || "",
+                item_name: line?.name || "",
+                quantity: line ? String(line.remaining_quantity) : "",
+              });
+              setSelections((prev) => ({ ...prev, receive_po_line: item }));
+              break;
+            }
+            case "receive_condition":
+              setReceiveForm({ ...receiveForm, condition: item.id });
+              setSelections((prev) => ({ ...prev, receive_condition: item }));
+              break;
+            case "receive_catalogue_sku": {
+              const cat = catalogue.find(
+                (x: any) => String(x.id) === String(item.id),
+              );
+              setReceiveForm({
+                ...receiveForm,
+                catalogue_id: item.id,
+                sku: cat ? String(cat.item_code) : item.subtitle || "",
+                item_name: cat?.name || item.title,
+              });
+              setSelections((prev) => ({
+                ...prev,
+                receive_catalogue_sku: item,
+              }));
+              break;
+            }
+            case "putaway_warehouse":
+              setPutawayForm({ ...putawayForm, warehouse_id: item.id });
+              setSelections((prev) => ({
+                ...prev,
+                putaway_warehouse: item,
+                putaway_from_bin: null,
+                putaway_to_bin: null,
+              }));
+              break;
+            case "putaway_from_bin":
+              setPutawayForm({ ...putawayForm, from_bin_id: item.id });
+              setSelections((prev) => ({ ...prev, putaway_from_bin: item }));
+              break;
+            case "putaway_to_bin":
+              setPutawayForm({ ...putawayForm, to_bin_id: item.id });
+              setSelections((prev) => ({ ...prev, putaway_to_bin: item }));
+              break;
+            case "allocate_warehouse":
+              setAllocateForm({ ...allocateForm, warehouse_id: item.id });
+              setSelections((prev) => ({
+                ...prev,
+                allocate_warehouse: item,
+                allocate_sku: null,
+              }));
+              break;
+            case "transfer_from_wh":
+              setTransferForm({ ...transferForm, from_warehouse_id: item.id });
+              setSelections((prev) => ({
+                ...prev,
+                transfer_from_wh: item,
+                transfer_sku: null,
+              }));
+              break;
+            case "transfer_to_wh":
+              setTransferForm({ ...transferForm, to_warehouse_id: item.id });
+              setSelections((prev) => ({ ...prev, transfer_to_wh: item }));
+              break;
+            case "adjust_warehouse":
+              setAdjustForm({ ...adjustForm, warehouse_id: item.id });
+              setSelections((prev) => ({
+                ...prev,
+                adjust_warehouse: item,
+                adjust_sku: null,
+              }));
+              break;
+          }
+          closePicker();
+        }}
+        items={(() => {
+          switch (picker.kind) {
+            case "receive_warehouse":
+            case "putaway_warehouse":
+            case "allocate_warehouse":
+            case "transfer_from_wh":
+            case "transfer_to_wh":
+            case "adjust_warehouse":
+              return warehousePickerItems;
+            case "receive_po":
+              return poPickerItems;
+            case "receive_po_line":
+              return poLinePickerItems;
+            case "receive_condition":
+              return conditionPickerItems;
+            case "receive_catalogue_sku":
+              return cataloguePickerItems;
+            case "putaway_from_bin":
+              return putawayBinItems.all;
+            case "putaway_to_bin":
+              return putawayBinItems.storage;
+            default:
+              return [];
+          }
+        })()}
+        title={(() => {
+          switch (picker.kind) {
+            case "receive_warehouse":
+            case "putaway_warehouse":
+            case "allocate_warehouse":
+            case "adjust_warehouse":
+              return "Select warehouse";
+            case "transfer_from_wh":
+              return "Select source warehouse";
+            case "transfer_to_wh":
+              return "Select destination warehouse";
+            case "receive_po":
+              return "Link purchase order";
+            case "receive_po_line":
+              return "Select outstanding PO line";
+            case "receive_condition":
+              return "Inspection condition";
+            case "receive_catalogue_sku":
+              return "Select product variant / SKU";
+            case "putaway_from_bin":
+              return "Select source bin";
+            case "putaway_to_bin":
+              return "Select destination bin";
+            default:
+              return "Select";
+          }
+        })()}
+        description={(() => {
+          switch (picker.kind) {
+            case "receive_po":
+              return "Optional. Linking a PO will pre-fill the reference, first outstanding line, and its remaining quantity.";
+            case "receive_condition":
+              return "The inspection result records whether the goods were accepted, damaged or short. Use notes for details.";
+            case "receive_catalogue_sku":
+              return "Pick from Huntr Catalogue, or close and type a new SKU in the field.";
+            case "putaway_to_bin":
+              return "Only active storage, picking and packing bins are valid put away destinations.";
+            default:
+              return undefined;
+          }
+        })()}
+        placeholder={(() => {
+          switch (picker.kind) {
+            case "receive_warehouse":
+            case "putaway_warehouse":
+            case "allocate_warehouse":
+            case "adjust_warehouse":
+              return "Search warehouse by name, code or address…";
+            case "transfer_from_wh":
+            case "transfer_to_wh":
+              return "Search warehouse…";
+            case "receive_po":
+              return "Search PO number or vendor…";
+            case "receive_po_line":
+              return "Search line by SKU or name…";
+            case "receive_condition":
+              return "Search condition…";
+            case "receive_catalogue_sku":
+              return "Search by SKU code or product name…";
+            case "putaway_from_bin":
+            case "putaway_to_bin":
+              return "Search bin code or name…";
+            default:
+              return "Search…";
+          }
+        })()}
+        emptyLabel={(() => {
+          switch (picker.kind) {
+            case "receive_po":
+              return "No inbound purchase orders synced yet.";
+            case "receive_po_line":
+              return "This PO has no open lines remaining.";
+            case "receive_catalogue_sku":
+              return "No catalogue products synced yet. Type a SKU manually in the field.";
+            case "putaway_from_bin":
+            case "putaway_to_bin":
+              return "No bins configured for this warehouse yet.";
+            default:
+              return "No items available.";
+          }
+        })()}
+        selectedId={(() => {
+          switch (picker.kind) {
+            case "receive_warehouse":
+              return receiveForm.warehouse_id || null;
+            case "receive_po":
+              return receiveForm.purchase_order_id || null;
+            case "receive_po_line":
+              return receiveForm.sku || null;
+            case "receive_condition":
+              return receiveForm.condition || null;
+            case "receive_catalogue_sku":
+              return receiveForm.catalogue_id || null;
+            case "putaway_warehouse":
+              return putawayForm.warehouse_id || null;
+            case "putaway_from_bin":
+              return putawayForm.from_bin_id || null;
+            case "putaway_to_bin":
+              return putawayForm.to_bin_id || null;
+            case "allocate_warehouse":
+              return allocateForm.warehouse_id || null;
+            case "transfer_from_wh":
+              return transferForm.from_warehouse_id || null;
+            case "transfer_to_wh":
+              return transferForm.to_warehouse_id || null;
+            case "adjust_warehouse":
+              return adjustForm.warehouse_id || null;
+            default:
+              return null;
+          }
+        })()}
+      />
     </Layout>
   );
 }

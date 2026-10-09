@@ -55,6 +55,36 @@ export default function AppShell() {
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const { t } = useLanguage();
 
+  // Global backdrop state — child pages (e.g. App Market drawer) can toggle a
+  // blurred topbar + sidebar + page by dispatching huntr:global-backdrop event.
+  // true => backdrop ON (topbar blurred + page overlayed).
+  const [globalBackdropActive, setGlobalBackdropActive] = useState(false);
+
+  useEffect(() => {
+    const on = (e: Event) => {
+      const ev = e as CustomEvent<{ active: boolean; blur?: number; intensity?: string }>;
+      setGlobalBackdropActive(Boolean(ev.detail?.active));
+      if (ev.detail?.blur != null) {
+        document.documentElement.style.setProperty(
+          "--huntr-global-backdrop-blur",
+          `${ev.detail.blur}px`,
+        );
+      }
+      if (ev.detail?.intensity) {
+        document.documentElement.style.setProperty(
+          "--huntr-global-backdrop-intensity",
+          ev.detail.intensity,
+        );
+      }
+      document.documentElement.style.setProperty(
+        "--huntr-global-backdrop-z",
+        "90",
+      );
+    };
+    window.addEventListener("huntr:global-backdrop", on as EventListener);
+    return () => window.removeEventListener("huntr:global-backdrop", on as EventListener);
+  }, []);
+
   // Page title/subtitle — child routes push these upward via context
   const [pageTitle, setPageTitle] = useState("Huntr.id");
   const [pageSubtitle, setPageSubtitle] = useState("");
@@ -595,8 +625,19 @@ export default function AppShell() {
   }
 
   return (
-    <div className="huntr-app-shell">
+    <div className={`huntr-app-shell${globalBackdropActive ? " huntr-app-shell--global-backdrop" : ""}`}>
       <NotificationSound />
+
+      {globalBackdropActive && (
+        <div
+          className="huntr-global-backdrop"
+          onClick={() => {
+            // Child pages/drawers listen for this event and close themselves.
+            window.dispatchEvent(new CustomEvent("huntr:global-backdrop-clicked"));
+          }}
+          aria-hidden="true"
+        />
+      )}
 
       {sidebarOpen && (
         <div
@@ -606,13 +647,16 @@ export default function AppShell() {
         />
       )}
       <aside
-        className={`huntr-sidebar${sidebarOpen ? " huntr-sidebar--open" : ""}`}
+        className={`huntr-sidebar${sidebarOpen ? " huntr-sidebar--open" : ""}${globalBackdropActive ? " huntr-shell--blur" : ""}`}
       >
         {sidebarInner}
       </aside>
 
       <div className="huntr-main">
-        <header ref={headerRef} className="huntr-main-header">
+        <header
+          ref={headerRef}
+          className={`huntr-main-header${globalBackdropActive ? " huntr-shell--blur huntr-shell--dim" : ""}`}
+        >
           <div className="huntr-header-leading">
             <button
               type="button"

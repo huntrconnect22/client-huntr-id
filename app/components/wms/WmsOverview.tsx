@@ -11,6 +11,74 @@ import {
 
 const card = "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4";
 
+const toNumeric = (value: unknown): number => {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed === "" || trimmed === "-") return 0;
+    const negative = trimmed.startsWith("-");
+    const digits = negative ? trimmed.slice(1) : trimmed;
+
+    // 1) Native parse first — works for US/backend style: "4", "4.000", "1234.56", "-4.000"
+    const native = Number(trimmed);
+    if (!Number.isNaN(native)) {
+      // Native parse valid -> use it. EXCEPT if the string uses id-ID thousand
+      // separator "." AND the native parse produced a fraction that looks
+      // wrong (e.g. user typed "4.500" and meant 4500, not 4.5).
+      // Heuristic: treat "." as thousand separator ONLY when there are
+      // MULTIPLE dots, OR the digits after a dot are exactly 3 AND the
+      // native number ends with .000 integer anyway (4.000 → still 4).
+      const hasDots = (digits.match(/\./g) || []).length;
+      if (hasDots > 1) {
+        const stripped = Number(digits.replace(/\./g, "").replace(/,/g, "."));
+        if (!Number.isNaN(stripped)) return negative ? -stripped : stripped;
+      }
+      // Single dot: check if it's clearly a thousand separator (3 trailing
+      // digits AND overall >= 1000 after stripping). Otherwise keep native
+      // parse (e.g. "4.000" native = 4 → correct for 4 units).
+      if (hasDots === 1) {
+        const [beforeDot, afterDot] = digits.split(".");
+        if (
+          afterDot &&
+          afterDot.length === 3 &&
+          /^\d+$/.test(afterDot) &&
+          // Ambiguous: "4.000" (4) vs "12.500" (12500).
+          // Treat as thousand separator ONLY when digits before dot are
+          // >= 2 characters (>= 10 thousand) OR the afterDot has non-zero
+          // digits AND the overall length looks like a real thousand group.
+          (beforeDot.length >= 2 || /[1-9]/.test(afterDot)) &&
+          beforeDot.length + afterDot.length >= 5
+        ) {
+          const asThousand = Number(digits.replace(/\./g, ""));
+          if (!Number.isNaN(asThousand)) {
+            return negative ? -asThousand : asThousand;
+          }
+        }
+      }
+      return native;
+    }
+
+    // 2) Native failed (pure id-ID formatting): strip thousand separators
+    //    then treat comma as decimal separator.
+    const normalized = digits.replace(/\./g, "").replace(/,/g, ".");
+    const n = Number(normalized);
+    if (!Number.isNaN(n)) return negative ? -n : n;
+    return 0;
+  }
+  return 0;
+};
+
+const formatQty = (value: unknown, maximumFractionDigits = 3): string => {
+  const num = toNumeric(value);
+  if (Number.isInteger(num) && Math.abs(num) < 1000) {
+    return String(num);
+  }
+  return new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits,
+    ...(Number.isInteger(num) ? { maximumFractionDigits: 0 } : {}),
+  }).format(num);
+};
+
 export function WmsWorkflowGuide({
   title,
   description,
@@ -143,12 +211,12 @@ export function WmsOverview({
           ["Tracked SKUs", dash?.sku_count ?? 0, Boxes],
           [
             "Units on hand",
-            Number(dash?.on_hand_units || 0).toLocaleString(),
+            formatQty(dash?.on_hand_units || 0),
             PackageCheck,
           ],
           [
             "Allocated units",
-            Number(dash?.allocated_units || 0).toLocaleString(),
+            formatQty(dash?.allocated_units || 0),
             Truck,
           ],
         ].map(([label, value, Icon]: any) => (
@@ -178,26 +246,48 @@ export function WmsOverview({
           </button>
         </div>
         <div className="mt-4 divide-y divide-[var(--ui-border)]">
-          {(dash?.recent_transactions || []).map((x: any) => (
-            <div
-              key={x.id}
-              className="flex items-center justify-between gap-3 py-3 text-sm"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--ui-bg-input)] text-[var(--ui-text-brand)]">
-                  <Activity size={15} />
-                </span>
-                <div className="min-w-0">
-                  <p className="capitalize font-medium">{x.type}</p>
-                  <p className="truncate text-xs text-[var(--ui-text-muted)]">
-                    {x.reference || "No reference"} ·{" "}
-                    {new Date(x.created_at).toLocaleDateString()}
-                  </p>
+          {(dash?.recent_transactions || []).map((x: any) => {
+            const qty = toNumeric(x.quantity);
+            const positive = qty >= 0;
+            return (
+              <div
+                key={x.id}
+                className="flex items-center justify-between gap-3 py-3 text-sm"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--ui-bg-input)] text-[var(--ui-text-brand)]">
+                    <Activity size={15} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-[var(--ui-text-primary)]">
+                      {x.item_name ||
+                        (x.sku ? `SKU ${x.sku}` : (
+                          <span className="capitalize">{x.type}</span>
+                        ))}
+                    </p>
+                    <p className="truncate text-xs text-[var(--ui-text-muted)]">
+                      <span className="capitalize">{x.type}</span>
+                      {x.sku && ` · SKU ${x.sku}`}
+                      {x.reference && ` · ${x.reference}`}
+                      {" · "}
+                      {new Date(x.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
+                <span
+                  className={
+                    "font-semibold tabular-nums " +
+                    (positive
+                      ? "text-[color:var(--ui-text-success)]"
+                      : "text-[color:var(--ui-text-error)]")
+                  }
+                >
+                  {positive ? "+" : ""}
+                  {formatQty(x.quantity)}
+                </span>
               </div>
-              <span className="font-semibold">{x.quantity}</span>
-            </div>
-          ))}
+            );
+          })}
           {!dash?.recent_transactions?.length && (
             <div className="py-6 text-center">
               <ArrowDownToLine

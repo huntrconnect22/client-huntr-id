@@ -4,8 +4,14 @@ import Layout from "../components/Layout";
 import { getRfq, apiGet, apiPost } from "../lib/api";
 import { getAssetUrl } from "../lib/assets";
 import {
-  ArrowLeft, Package, Loader2, AlertCircle, RefreshCw, BarChart3,
-  ChevronLeft, ChevronRight,
+  ArrowLeft,
+  Package,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useAppShell } from "../routes/_app";
@@ -15,11 +21,23 @@ import { PRActions } from "../components/pr-detail/PRActions";
 import { PRSummary } from "../components/pr-detail/PRSummary";
 import { ProposalRankings } from "../components/pr-detail/ProposalRankings";
 
-function StatCell({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function StatCell({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
     <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-2 min-w-0">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] truncate">{label}</div>
-      <div className={`text-sm font-bold tabular-nums truncate mt-0.5 ${accent ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] truncate">
+        {label}
+      </div>
+      <div
+        className={`text-sm font-bold tabular-nums truncate mt-0.5 ${accent ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}
+      >
         {value}
       </div>
     </div>
@@ -37,25 +55,32 @@ export default function MyPurchaseRequisitionDetail() {
   const [error, setError] = useState<string | null>(null);
   const [showNegModal, setShowNegModal] = useState(false);
   const [selectedNegProposal, setSelectedNegProposal] = useState<any>(null);
-  const [awardingProposal, setAwardingProposal] = useState<string | number | null>(null);
+  const [awardingProposal, setAwardingProposal] = useState<
+    string | number | null
+  >(null);
   const [itemPage, setItemPage] = useState(1);
 
   const fetchRankings = useCallback(async (rfqId: string | number) => {
     try {
       const response = await apiGet(`/api/rfqs/${rfqId}/rankings`);
-      setRankings(response.rankings || (Array.isArray(response) ? response : []));
+      setRankings(
+        response.rankings || (Array.isArray(response) ? response : []),
+      );
     } catch {
       setRankings([]);
     }
   }, []);
 
-  const loadRequest = useCallback(async (rfqId: string) => {
-    const response = await getRfq(rfqId);
-    const rfq = response?.rfq ?? response?.data ?? response;
-    setRequest(rfq);
-    if (rfq?.id) fetchRankings(rfq.id);
-    return rfq;
-  }, [fetchRankings]);
+  const loadRequest = useCallback(
+    async (rfqId: string) => {
+      const response = await getRfq(rfqId);
+      const rfq = response?.rfq ?? response?.data ?? response;
+      setRequest(rfq);
+      if (rfq?.id) fetchRankings(rfq.id);
+      return rfq;
+    },
+    [fetchRankings],
+  );
 
   useEffect(() => {
     if (!id || id === "NaN" || id === "undefined") {
@@ -75,7 +100,10 @@ export default function MyPurchaseRequisitionDetail() {
       if (!user) return;
       setAwardingProposal(proposalId);
       try {
-        await apiPost(`/api/proposals/${proposalId}/award`, { rfq_id: rfqId, user_id: user.id });
+        await apiPost(`/api/proposals/${proposalId}/award`, {
+          rfq_id: rfqId,
+          user_id: user.id,
+        });
         Swal.fire({
           icon: "success",
           title: "Winner Awarded!",
@@ -87,18 +115,52 @@ export default function MyPurchaseRequisitionDetail() {
           await loadRequest(id);
         }
       } catch {
-        Swal.fire({ icon: "error", title: "Error!", text: "Failed to award winner." });
+        Swal.fire({
+          icon: "error",
+          title: "Error!",
+          text: "Failed to award winner.",
+        });
       } finally {
         setAwardingProposal(null);
       }
     },
-    [user, id, loadRequest]
+    [user, id, loadRequest],
   );
 
   const handleRefresh = () => {
     if (!id) return;
     setLoading(true);
     loadRequest(id).finally(() => setLoading(false));
+  };
+
+  const handleReviseAndResubmit = async () => {
+    if (!request?.id) return;
+    const result = await Swal.fire({
+      icon: "question",
+      title: "Revise and resubmit this PR?",
+      text: "The PR will return to Pending Approval and be sent to the approver again. Review the rejection reason before submitting.",
+      showCancelButton: true,
+      confirmButtonText: "Resubmit for approval",
+      cancelButtonText: "Cancel",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      const response = await apiPost(`/api/rfqs/${request.id}/resubmit`, {});
+      setRequest(response?.rfq ?? response?.data ?? response);
+      Swal.fire({
+        icon: "success",
+        title: "PR resubmitted",
+        text: "Your PR is pending approval again.",
+        timer: 1800,
+        showConfirmButton: false,
+      });
+    } catch (err: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Unable to resubmit",
+        text: err?.response?.data?.message || "Please try again.",
+      });
+    }
   };
 
   if (loading) {
@@ -116,7 +178,9 @@ export default function MyPurchaseRequisitionDetail() {
       <Layout title="Purchase Request" subtitle="Error">
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
           <AlertCircle size={28} className="text-red-500" />
-          <p className="text-sm font-semibold text-[var(--ui-text-primary)]">{error || "Request not found"}</p>
+          <p className="text-sm font-semibold text-[var(--ui-text-primary)]">
+            {error || "Request not found"}
+          </p>
           <button
             type="button"
             onClick={() => navigate("/my-pr")}
@@ -138,19 +202,28 @@ export default function MyPurchaseRequisitionDetail() {
     return s + price * (i.qty || 0);
   }, 0);
   const proposalCount = rankings.length;
+  const canResubmit =
+    request.status === "rejected" &&
+    (String(request.user_id) === String(user?.id) ||
+      String(activeCompany?.owner_id) === String(user?.id));
 
   // ── Pagination ──
   const MOBILE_PER_PAGE = 5;
   const DESKTOP_PER_PAGE = 10;
   const mobilePageCount = Math.ceil(lineItems / MOBILE_PER_PAGE);
   const desktopPageCount = Math.ceil(lineItems / DESKTOP_PER_PAGE);
-  const mobileItems = items.slice((itemPage - 1) * MOBILE_PER_PAGE, itemPage * MOBILE_PER_PAGE);
-  const desktopItems = items.slice((itemPage - 1) * DESKTOP_PER_PAGE, itemPage * DESKTOP_PER_PAGE);
+  const mobileItems = items.slice(
+    (itemPage - 1) * MOBILE_PER_PAGE,
+    itemPage * MOBILE_PER_PAGE,
+  );
+  const desktopItems = items.slice(
+    (itemPage - 1) * DESKTOP_PER_PAGE,
+    itemPage * DESKTOP_PER_PAGE,
+  );
 
   return (
     <Layout title={`PR #${prShort}`} subtitle={request.title}>
       <div className="w-full flex flex-col gap-4">
-
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -167,6 +240,15 @@ export default function MyPurchaseRequisitionDetail() {
           >
             <RefreshCw size={13} /> Refresh
           </button>
+          {canResubmit && (
+            <button
+              type="button"
+              onClick={handleReviseAndResubmit}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+            >
+              Revise &amp; resubmit
+            </button>
+          )}
           {request.status === "active" && (
             <button
               type="button"
@@ -182,11 +264,22 @@ export default function MyPurchaseRequisitionDetail() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <StatCell label="Line Items" value={String(lineItems)} />
           <StatCell label="Total Qty" value={`${totalQty} units`} />
-          <StatCell label="Est. Total" value={`Rp ${estimatedTotal.toLocaleString("id-ID")}`} accent />
-          <StatCell label="Proposals" value={request.status === "active" ? String(proposalCount) : "—"} />
+          <StatCell
+            label="Est. Total"
+            value={`Rp ${estimatedTotal.toLocaleString("id-ID")}`}
+            accent
+          />
+          <StatCell
+            label="Proposals"
+            value={request.status === "active" ? String(proposalCount) : "—"}
+          />
           <StatCell
             label="Created"
-            value={new Date(request.created_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+            value={new Date(request.created_at).toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
           />
           <StatCell label="Requester" value={request.user?.name || "Unknown"} />
         </div>
@@ -194,22 +287,27 @@ export default function MyPurchaseRequisitionDetail() {
         {/* Description */}
         {request.description && (
           <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-2.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">Description</div>
-            <p className="text-sm text-[var(--ui-text-primary)] leading-relaxed">{request.description}</p>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
+              Description
+            </div>
+            <p className="text-sm text-[var(--ui-text-primary)] leading-relaxed">
+              {request.description}
+            </p>
           </div>
         )}
 
         <div className="grid lg:grid-cols-[1fr_260px] gap-4 items-start">
           {/* Main column */}
           <div className="flex flex-col gap-4 min-w-0">
-
             {/* Items table */}
             <section>
               <div className="flex items-center gap-2 mb-2">
                 <Package size={14} className="text-orange-500" />
                 <h2 className="text-sm font-bold text-[var(--ui-text-primary)]">
                   Requested Items
-                  <span className="text-[var(--ui-text-muted)] font-normal ml-1">({lineItems})</span>
+                  <span className="text-[var(--ui-text-muted)] font-normal ml-1">
+                    ({lineItems})
+                  </span>
                 </h2>
               </div>
 
@@ -224,7 +322,8 @@ export default function MyPurchaseRequisitionDetail() {
                     {mobileItems.map((item: any, idx: number) => {
                       const index = (itemPage - 1) * MOBILE_PER_PAGE + idx;
                       const cat = item.catalogue;
-                      const unitPrice = item.estimated_price || cat?.estimated_price || 0;
+                      const unitPrice =
+                        item.estimated_price || cat?.estimated_price || 0;
                       const lineTotal = unitPrice * (item.qty || 0);
                       return (
                         <div
@@ -233,24 +332,40 @@ export default function MyPurchaseRequisitionDetail() {
                         >
                           <div className="w-10 h-10 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center shrink-0 overflow-hidden">
                             {cat?.image_path ? (
-                              <img src={getAssetUrl(cat.image_path)} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                              <img
+                                src={getAssetUrl(cat.image_path)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
                             ) : (
-                              <Package size={14} className="text-[var(--ui-text-muted)] opacity-40" />
+                              <Package
+                                size={14}
+                                className="text-[var(--ui-text-muted)] opacity-40"
+                              />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             {cat?.category && (
-                              <div className="text-[10px] font-bold uppercase text-orange-400 truncate">{cat.category}</div>
+                              <div className="text-[10px] font-bold uppercase text-orange-400 truncate">
+                                {cat.category}
+                              </div>
                             )}
                             <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
                               {cat?.name || "Unknown Item"}
                             </div>
                             {cat?.item_code && (
-                              <div className="text-[10px] text-[var(--ui-text-muted)]">{cat.item_code}</div>
+                              <div className="text-[10px] text-[var(--ui-text-muted)]">
+                                {cat.item_code}
+                              </div>
                             )}
                             <div className="flex items-center justify-between mt-2 gap-2">
                               <span className="text-[11px] text-[var(--ui-text-secondary)]">
-                                {item.qty} {cat?.uom || "pcs"} &times; Rp {Number(unitPrice).toLocaleString("id-ID")}
+                                {item.qty} {cat?.uom || "pcs"} &times; Rp{" "}
+                                {Number(unitPrice).toLocaleString("id-ID")}
                               </span>
                               <span className="text-xs font-bold text-orange-400 shrink-0">
                                 Rp {Number(lineTotal).toLocaleString("id-ID")}
@@ -264,7 +379,8 @@ export default function MyPurchaseRequisitionDetail() {
                     {/* Mobile: total row + pagination */}
                     <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
                       <span className="text-xs text-[var(--ui-text-muted)]">
-                        {totalQty} units · {lineItems} SKU{lineItems !== 1 ? "s" : ""}
+                        {totalQty} units · {lineItems} SKU
+                        {lineItems !== 1 ? "s" : ""}
                       </span>
                       <span className="text-xs font-bold text-[var(--ui-text-primary)]">
                         Rp {estimatedTotal.toLocaleString("id-ID")}
@@ -275,7 +391,7 @@ export default function MyPurchaseRequisitionDetail() {
                         <button
                           type="button"
                           disabled={itemPage === 1}
-                          onClick={() => setItemPage(p => p - 1)}
+                          onClick={() => setItemPage((p) => p - 1)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
                         >
                           <ChevronLeft size={13} /> Prev
@@ -286,7 +402,7 @@ export default function MyPurchaseRequisitionDetail() {
                         <button
                           type="button"
                           disabled={itemPage === mobilePageCount}
-                          onClick={() => setItemPage(p => p + 1)}
+                          onClick={() => setItemPage((p) => p + 1)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
                         >
                           Next <ChevronRight size={13} />
@@ -295,106 +411,137 @@ export default function MyPurchaseRequisitionDetail() {
                     )}
                   </div>
 
-
                   {/* ── Desktop table (≥ sm) ── */}
                   <div className="hidden sm:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                        <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-10">#</th>
-                        <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Product</th>
-                        <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">Qty</th>
-                        <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">Unit Est.</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">Line Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--ui-border)]">
-                      {desktopItems.map((item: any, idx: number) => {
-                        const index = (itemPage - 1) * DESKTOP_PER_PAGE + idx;
-                        const cat = item.catalogue;
-                        const unitPrice = item.estimated_price || cat?.estimated_price || 0;
-                        const lineTotal = unitPrice * (item.qty || 0);
-                        return (
-                          <tr key={index} className="hover:bg-[var(--ui-bg-input)] transition-colors">
-                            <td className="px-3 py-2 text-xs text-[var(--ui-text-muted)]">{index + 1}</td>
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-8 h-8 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center shrink-0 overflow-hidden">
-                                  {cat?.image_path ? (
-                                    <img
-                                      src={getAssetUrl(cat.image_path)}
-                                      alt=""
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                    />
-                                  ) : (
-                                    <Package size={12} className="text-[var(--ui-text-muted)] opacity-40" />
-                                  )}
-                                </div>
-                                <div className="min-w-0">
-                                  {cat?.category && (
-                                    <div className="text-[10px] font-bold uppercase text-orange-400 truncate">{cat.category}</div>
-                                  )}
-                                  <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
-                                    {cat?.name || "Unknown Item"}
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-10">
+                            #
+                          </th>
+                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                            Product
+                          </th>
+                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">
+                            Qty
+                          </th>
+                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">
+                            Unit Est.
+                          </th>
+                          <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">
+                            Line Total
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--ui-border)]">
+                        {desktopItems.map((item: any, idx: number) => {
+                          const index = (itemPage - 1) * DESKTOP_PER_PAGE + idx;
+                          const cat = item.catalogue;
+                          const unitPrice =
+                            item.estimated_price || cat?.estimated_price || 0;
+                          const lineTotal = unitPrice * (item.qty || 0);
+                          return (
+                            <tr
+                              key={index}
+                              className="hover:bg-[var(--ui-bg-input)] transition-colors"
+                            >
+                              <td className="px-3 py-2 text-xs text-[var(--ui-text-muted)]">
+                                {index + 1}
+                              </td>
+                              <td className="px-3 py-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="w-8 h-8 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center shrink-0 overflow-hidden">
+                                    {cat?.image_path ? (
+                                      <img
+                                        src={getAssetUrl(cat.image_path)}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    ) : (
+                                      <Package
+                                        size={12}
+                                        className="text-[var(--ui-text-muted)] opacity-40"
+                                      />
+                                    )}
                                   </div>
-                                  {cat?.item_code && (
-                                    <div className="text-[10px] text-[var(--ui-text-muted)]">{cat.item_code}</div>
-                                  )}
+                                  <div className="min-w-0">
+                                    {cat?.category && (
+                                      <div className="text-[10px] font-bold uppercase text-orange-400 truncate">
+                                        {cat.category}
+                                      </div>
+                                    )}
+                                    <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
+                                      {cat?.name || "Unknown Item"}
+                                    </div>
+                                    {cat?.item_code && (
+                                      <div className="text-[10px] text-[var(--ui-text-muted)]">
+                                        {cat.item_code}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
-                              {item.qty} {cat?.uom || "pcs"}
-                            </td>
-                            <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
-                              Rp {Number(unitPrice).toLocaleString("id-ID")}
-                            </td>
-                            <td className="px-3 py-2 text-xs font-bold text-orange-400 text-right whitespace-nowrap">
-                              Rp {Number(lineTotal).toLocaleString("id-ID")}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                        <td colSpan={4} className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-muted)]">
-                          {totalQty} units across {lineItems} SKU{lineItems !== 1 ? "s" : ""}
-                        </td>
-                        <td className="px-3 py-2 text-xs font-bold text-[var(--ui-text-primary)] text-right">
-                          Rp {estimatedTotal.toLocaleString("id-ID")}
-                        </td>
-                      </tr>
-                      {desktopPageCount > 1 && (
+                              </td>
+                              <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
+                                {item.qty} {cat?.uom || "pcs"}
+                              </td>
+                              <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
+                                Rp {Number(unitPrice).toLocaleString("id-ID")}
+                              </td>
+                              <td className="px-3 py-2 text-xs font-bold text-orange-400 text-right whitespace-nowrap">
+                                Rp {Number(lineTotal).toLocaleString("id-ID")}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
                         <tr className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                          <td colSpan={5} className="px-3 py-2">
-                            <div className="flex items-center justify-between gap-3">
-                              <button
-                                type="button"
-                                disabled={itemPage === 1}
-                                onClick={() => setItemPage(p => p - 1)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
-                              >
-                                <ChevronLeft size={13} /> Prev
-                              </button>
-                              <span className="text-[11px] text-[var(--ui-text-muted)]">
-                                Page {itemPage} of {desktopPageCount} &nbsp;·&nbsp; {lineItems} items total
-                              </span>
-                              <button
-                                type="button"
-                                disabled={itemPage === desktopPageCount}
-                                onClick={() => setItemPage(p => p + 1)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
-                              >
-                                Next <ChevronRight size={13} />
-                              </button>
-                            </div>
+                          <td
+                            colSpan={4}
+                            className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-muted)]"
+                          >
+                            {totalQty} units across {lineItems} SKU
+                            {lineItems !== 1 ? "s" : ""}
+                          </td>
+                          <td className="px-3 py-2 text-xs font-bold text-[var(--ui-text-primary)] text-right">
+                            Rp {estimatedTotal.toLocaleString("id-ID")}
                           </td>
                         </tr>
-                      )}
-                    </tfoot>
-                  </table>
+                        {desktopPageCount > 1 && (
+                          <tr className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                            <td colSpan={5} className="px-3 py-2">
+                              <div className="flex items-center justify-between gap-3">
+                                <button
+                                  type="button"
+                                  disabled={itemPage === 1}
+                                  onClick={() => setItemPage((p) => p - 1)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
+                                >
+                                  <ChevronLeft size={13} /> Prev
+                                </button>
+                                <span className="text-[11px] text-[var(--ui-text-muted)]">
+                                  Page {itemPage} of {desktopPageCount}{" "}
+                                  &nbsp;·&nbsp; {lineItems} items total
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={itemPage === desktopPageCount}
+                                  onClick={() => setItemPage((p) => p + 1)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
+                                >
+                                  Next <ChevronRight size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tfoot>
+                    </table>
                   </div>
                 </>
               )}
@@ -407,7 +554,9 @@ export default function MyPurchaseRequisitionDetail() {
                   <BarChart3 size={14} className="text-orange-500" />
                   <h2 className="text-sm font-bold text-[var(--ui-text-primary)]">
                     Vendor Proposals
-                    <span className="text-[var(--ui-text-muted)] font-normal ml-1">({proposalCount})</span>
+                    <span className="text-[var(--ui-text-muted)] font-normal ml-1">
+                      ({proposalCount})
+                    </span>
                   </h2>
                 </div>
                 <ProposalRankings

@@ -1,10 +1,23 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { createRfq } from "../lib/api";
-import { ClipboardList, CheckCircle2, ArrowLeft, Loader2, Package, AlertCircle, FileText, Calendar, Paperclip, MapPin, Building } from "lucide-react";
+import {
+  ClipboardList,
+  CheckCircle2,
+  ArrowLeft,
+  Loader2,
+  Package,
+  AlertCircle,
+  FileText,
+  Calendar,
+  Paperclip,
+  MapPin,
+  Building,
+} from "lucide-react";
 import { useNavigate } from "react-router";
 import { getAssetUrl } from "../lib/assets";
 import { clearCart } from "../lib/cart";
+import { getWarehouses, getWmsApps } from "../lib/api/wms";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -20,12 +33,22 @@ export default function Checkout() {
   const [prDepartment, setPrDepartment] = useState("General Procurement");
   const [prDocument, setPrDocument] = useState<File | null>(null);
   const [deliveryPoint, setDeliveryPoint] = useState("");
-  const [companyAddresses, setCompanyAddresses] = useState<{ id: string; label: string; value: string }[]>([]);
+  const [companyAddresses, setCompanyAddresses] = useState<
+    { id: string; label: string; value: string }[]
+  >([]);
+  const [wmsInstalled, setWmsInstalled] = useState(false);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [warehouseId, setWarehouseId] = useState("");
 
   const getCompanyPrefix = (comp?: any) => {
     const c = comp ?? activeCompany;
     if (!c) return "";
-    const slug = c.slug || c.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const slug =
+      c.slug ||
+      c.name
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
     return slug ? `/${slug}` : "";
   };
 
@@ -40,7 +63,11 @@ export default function Checkout() {
 
       const addresses: { id: string; label: string; value: string }[] = [];
       if (comp.address) {
-        addresses.push({ id: "main", label: "Main Address", value: comp.address });
+        addresses.push({
+          id: "main",
+          label: "Main Address",
+          value: comp.address,
+        });
       }
       if (Array.isArray(comp.hq_addresses)) {
         comp.hq_addresses.forEach((addr: any, idx: number) => {
@@ -55,7 +82,7 @@ export default function Checkout() {
         setDeliveryPoint(comp.address);
       }
 
-      if (comp.type === 'vendor') {
+      if (comp.type === "vendor") {
         const slug = getCompanyPrefix(comp);
         navigate(slug || "/");
         return;
@@ -78,7 +105,10 @@ export default function Checkout() {
           .map((item: any) => ({
             id: item.catalogue_id || item.catalogue?.id || "",
             item_code: item.catalogue?.item_code || item.item_code || "",
-            name: item.catalogue?.name || item.name || `Item ${item.catalogue_id?.slice(0, 8) || "?"}`,
+            name:
+              item.catalogue?.name ||
+              item.name ||
+              `Item ${item.catalogue_id?.slice(0, 8) || "?"}`,
             category: item.catalogue?.category || item.category || "",
             brand: item.catalogue?.brand || item.brand || "",
             uom: item.catalogue?.uom || item.uom || "unit",
@@ -95,12 +125,38 @@ export default function Checkout() {
       if (savedCart) {
         const items = JSON.parse(savedCart).map((i: any) => ({
           ...i,
-          estimated_price: i.estimated_price || 0
+          estimated_price: i.estimated_price || 0,
         }));
         setCart(items);
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    getWmsApps(activeCompany.id)
+      .then((apps) => {
+        const installed = Boolean(
+          apps?.apps?.find((app: any) => app.key === "wms-inventory")
+            ?.installed,
+        );
+        setWmsInstalled(installed);
+
+        if (!installed) {
+          setWarehouses([]);
+          return null;
+        }
+
+        return getWarehouses(activeCompany.id);
+      })
+      .then((warehouseResponse) => {
+        if (warehouseResponse) setWarehouses(warehouseResponse.data || []);
+      })
+      .catch(() => {
+        setWmsInstalled(false);
+        setWarehouses([]);
+      });
+  }, [activeCompany?.id]);
 
   // Company slug redirect check
   useEffect(() => {
@@ -111,10 +167,15 @@ export default function Checkout() {
     }
   }, [activeCompany]);
 
-  const cartTotal = cart.reduce((sum, item) => sum + (Number(item.estimated_price || 0) * item.qty), 0);
+  const cartTotal = cart.reduce(
+    (sum, item) => sum + Number(item.estimated_price || 0) * item.qty,
+    0,
+  );
 
   const updateEstimatedPrice = (id: string, price: number) => {
-    const newCart = cart.map(i => i.id === id ? { ...i, estimated_price: price } : i);
+    const newCart = cart.map((i) =>
+      i.id === id ? { ...i, estimated_price: price } : i,
+    );
     setCart(newCart);
     localStorage.setItem("huntr_cart", JSON.stringify(newCart));
   };
@@ -138,16 +199,24 @@ export default function Checkout() {
       formData.append("duration_days", prDuration.toString());
       formData.append("status", "pending_approval");
       formData.append("delivery_point", deliveryPoint);
+      if (wmsInstalled && warehouseId)
+        formData.append("warehouse_id", warehouseId);
       formData.append("department", prDepartment);
-      
+
       if (prDocument) {
         const maxSize = 10 * 1024 * 1024;
         if (prDocument.size > maxSize) {
           setError("File size must be less than 10MB.");
           return;
         }
-        
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+
+        const allowedTypes = [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "image/jpeg",
+          "image/png",
+        ];
         if (!allowedTypes.includes(prDocument.type)) {
           setError("Only PDF, DOC, DOCX, JPG, and PNG files are allowed.");
           return;
@@ -163,19 +232,30 @@ export default function Checkout() {
       cart.forEach((item, index) => {
         formData.append(`items[${index}][catalogue_id]`, item.id);
         formData.append(`items[${index}][qty]`, item.qty.toString());
-        formData.append(`items[${index}][estimated_price]`, (item.estimated_price || 0).toString());
-        formData.append(`items[${index}][expected_date]`, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+        formData.append(
+          `items[${index}][estimated_price]`,
+          (item.estimated_price || 0).toString(),
+        );
+        formData.append(
+          `items[${index}][expected_date]`,
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
+        );
       });
 
       await createRfq(formData);
-      
+
       clearCart();
       setCart([]);
       setSuccess(true);
       setTimeout(() => navigate(`${getCompanyPrefix()}/my-pr`), 3000);
     } catch (err: any) {
       console.error("PR Creation Error:", err);
-      const errorMessage = err.response?.data?.message || err.message || "Failed to create Purchase Request.";
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to create Purchase Request.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -184,16 +264,25 @@ export default function Checkout() {
 
   if (success) {
     return (
-      <Layout title="Request Created" subtitle="Your purchase requisition has been submitted.">
+      <Layout
+        title="Request Created"
+        subtitle="Your purchase requisition has been submitted."
+      >
         <div className="border border-dashed border-[var(--ui-border)] rounded-xl py-16 flex flex-col items-center justify-center gap-3 text-center">
           <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
             <CheckCircle2 size={36} />
           </div>
-          <h2 className="text-lg font-bold text-[var(--ui-text-primary)]">PR Successfully Submitted!</h2>
+          <h2 className="text-lg font-bold text-[var(--ui-text-primary)]">
+            PR Successfully Submitted!
+          </h2>
           <p className="text-xs text-[var(--ui-text-muted)] max-w-md">
-            Your Purchase Request <strong className="text-[var(--ui-text-primary)]">"{prTitle}"</strong> is now waiting for manager approval. You will be redirected shortly.
+            Your Purchase Request{" "}
+            <strong className="text-[var(--ui-text-primary)]">
+              "{prTitle}"
+            </strong>{" "}
+            is now waiting for manager approval. You will be redirected shortly.
           </p>
-          <button 
+          <button
             onClick={() => navigate(`${getCompanyPrefix()}/my-pr`)}
             className="mt-2 px-4 py-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-400/50 transition-all"
           >
@@ -205,7 +294,10 @@ export default function Checkout() {
   }
 
   return (
-    <Layout title="Checkout Purchase Request" subtitle="Review your selected items and submit for approval.">
+    <Layout
+      title="Checkout Purchase Request"
+      subtitle="Review your selected items and submit for approval."
+    >
       <div className="w-full space-y-4">
         {/* Back Link */}
         <button
@@ -216,10 +308,8 @@ export default function Checkout() {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          
           {/* Main Content Area (Items + PR Form) */}
           <div className="lg:col-span-2 space-y-4">
-            
             {/* Items Summary Table */}
             <div className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] overflow-hidden">
               <div className="p-3.5 px-4 border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-between">
@@ -228,32 +318,55 @@ export default function Checkout() {
                     <Package size={16} />
                   </div>
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)]">Item Summary</h3>
-                    <p className="text-[10px] text-[var(--ui-text-muted)]">{cart.length} item{cart.length !== 1 ? "s" : ""} in this request</p>
+                    <h3 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)]">
+                      Item Summary
+                    </h3>
+                    <p className="text-[10px] text-[var(--ui-text-muted)]">
+                      {cart.length} item{cart.length !== 1 ? "s" : ""} in this
+                      request
+                    </p>
                   </div>
                 </div>
                 {cartTotal > 0 && (
                   <div className="text-right">
-                    <span className="text-[10px] uppercase font-bold text-[var(--ui-text-muted)] block">Est. Total</span>
-                    <span className="text-xs sm:text-sm font-bold text-orange-500">IDR {cartTotal.toLocaleString()}</span>
+                    <span className="text-[10px] uppercase font-bold text-[var(--ui-text-muted)] block">
+                      Est. Total
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-orange-500">
+                      IDR {cartTotal.toLocaleString()}
+                    </span>
                   </div>
                 )}
               </div>
 
               <div className="divide-y divide-[var(--ui-border)]">
                 {cart.map((item) => (
-                  <div key={item.id} className="p-3.5 px-4 flex items-center gap-3 text-xs">
+                  <div
+                    key={item.id}
+                    className="p-3.5 px-4 flex items-center gap-3 text-xs"
+                  >
                     <div className="w-11 h-11 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] overflow-hidden shrink-0 flex items-center justify-center">
-                      {(item.image_url || item.image_path) ? (
-                        <img src={getAssetUrl(item.image_url || item.image_path)} alt={item.name} className="w-full h-full object-cover" />
+                      {item.image_url || item.image_path ? (
+                        <img
+                          src={getAssetUrl(item.image_url || item.image_path)}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <Package size={18} className="text-[var(--ui-text-muted)] opacity-40" />
+                        <Package
+                          size={18}
+                          className="text-[var(--ui-text-muted)] opacity-40"
+                        />
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[var(--ui-text-primary)] truncate">{item.name}</p>
-                      <p className="text-[10px] text-[var(--ui-text-muted)] font-mono">{item.item_code || "—"}</p>
+                      <p className="font-semibold text-[var(--ui-text-primary)] truncate">
+                        {item.name}
+                      </p>
+                      <p className="text-[10px] text-[var(--ui-text-muted)] font-mono">
+                        {item.item_code || "—"}
+                      </p>
                     </div>
 
                     <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 font-bold text-[11px] shrink-0">
@@ -261,14 +374,27 @@ export default function Checkout() {
                     </span>
 
                     <div className="w-28 shrink-0">
-                      <span className="text-[9px] font-bold uppercase text-[var(--ui-text-muted)] block mb-0.5">Est. Price</span>
+                      <span className="text-[9px] font-bold uppercase text-[var(--ui-text-muted)] block mb-0.5">
+                        Est. Price
+                      </span>
                       <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-[var(--ui-text-muted)] pointer-events-none">IDR</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-[var(--ui-text-muted)] pointer-events-none">
+                          IDR
+                        </span>
                         <input
                           type="number"
-                          value={item.estimated_price === 0 ? "" : item.estimated_price}
+                          value={
+                            item.estimated_price === 0
+                              ? ""
+                              : item.estimated_price
+                          }
                           placeholder="0"
-                          onChange={(e) => updateEstimatedPrice(item.id, Number(e.target.value))}
+                          onChange={(e) =>
+                            updateEstimatedPrice(
+                              item.id,
+                              Number(e.target.value),
+                            )
+                          }
                           className="w-full pl-7 pr-2 py-1 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs outline-none focus:border-orange-400/60"
                         />
                       </div>
@@ -277,7 +403,10 @@ export default function Checkout() {
                     <div className="text-right min-w-[70px] shrink-0">
                       {item.estimated_price > 0 ? (
                         <span className="font-bold text-[var(--ui-text-primary)] tabular-nums">
-                          IDR {(Number(item.estimated_price) * item.qty).toLocaleString()}
+                          IDR{" "}
+                          {(
+                            Number(item.estimated_price) * item.qty
+                          ).toLocaleString()}
                         </span>
                       ) : (
                         <span className="text-[var(--ui-text-muted)]">—</span>
@@ -291,18 +420,21 @@ export default function Checkout() {
             {/* Request Details Form */}
             <div className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] p-4 space-y-3">
               <h3 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)] flex items-center gap-2 pb-2 border-b border-[var(--ui-border)]">
-                <ClipboardList size={16} className="text-orange-500" /> Request Details
+                <ClipboardList size={16} className="text-orange-500" /> Request
+                Details
               </h3>
 
               <div className="space-y-3 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">PR Title *</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Office Supplies for Q3 2026" 
+                    <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">
+                      PR Title *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Office Supplies for Q3 2026"
                       value={prTitle}
-                      onChange={e => setPrTitle(e.target.value)}
+                      onChange={(e) => setPrTitle(e.target.value)}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
                     />
                   </div>
@@ -313,31 +445,76 @@ export default function Checkout() {
                     </label>
                     <select
                       value={prDepartment}
-                      onChange={e => setPrDepartment(e.target.value)}
+                      onChange={(e) => setPrDepartment(e.target.value)}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
                     >
-                      <option value="General Procurement">General Procurement</option>
-                      <option value="Information Technology">Information Technology (IT)</option>
-                      <option value="Operations & Logistics">Operations & Logistics</option>
-                      <option value="General Affairs (GA)">General Affairs (GA)</option>
-                      <option value="Finance & Accounting">Finance & Accounting</option>
-                      <option value="Human Resources (HR)">Human Resources (HR)</option>
-                      <option value="Marketing & Sales">Marketing & Sales</option>
-                      <option value="Engineering & Maintenance">Engineering & Maintenance</option>
+                      <option value="General Procurement">
+                        General Procurement
+                      </option>
+                      <option value="Information Technology">
+                        Information Technology (IT)
+                      </option>
+                      <option value="Operations & Logistics">
+                        Operations & Logistics
+                      </option>
+                      <option value="General Affairs (GA)">
+                        General Affairs (GA)
+                      </option>
+                      <option value="Finance & Accounting">
+                        Finance & Accounting
+                      </option>
+                      <option value="Human Resources (HR)">
+                        Human Resources (HR)
+                      </option>
+                      <option value="Marketing & Sales">
+                        Marketing & Sales
+                      </option>
+                      <option value="Engineering & Maintenance">
+                        Engineering & Maintenance
+                      </option>
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">Purpose / Description</label>
-                  <textarea 
-                    placeholder="Explain why these items are needed..." 
+                  <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">
+                    Purpose / Description
+                  </label>
+                  <textarea
+                    placeholder="Explain why these items are needed..."
                     value={prDesc}
-                    onChange={e => setPrDesc(e.target.value)}
+                    onChange={(e) => setPrDesc(e.target.value)}
                     rows={3}
                     className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all resize-none"
                   />
                 </div>
+                {wmsInstalled && (
+                  <div className="space-y-1">
+                    <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
+                      <Building size={12} /> Receiving Warehouse
+                    </label>
+                    <select
+                      value={warehouseId}
+                      onChange={(e) => setWarehouseId(e.target.value)}
+                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
+                    >
+                      <option value="">No WMS warehouse selected</option>
+                      {warehouses
+                        .filter(
+                          (warehouse: any) => warehouse.status === "active",
+                        )
+                        .map((warehouse: any) => (
+                          <option key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name} · {warehouse.code}
+                          </option>
+                        ))}
+                    </select>
+                    <p className="text-[11px] text-[var(--ui-text-muted)]">
+                      Goods Receipt for this PR will automatically enter the
+                      selected WMS warehouse.
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
@@ -346,20 +523,20 @@ export default function Checkout() {
                   {companyAddresses.length > 0 ? (
                     <select
                       value={deliveryPoint}
-                      onChange={e => setDeliveryPoint(e.target.value)}
+                      onChange={(e) => setDeliveryPoint(e.target.value)}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
                     >
-                      {companyAddresses.map(address => (
+                      {companyAddresses.map((address) => (
                         <option key={address.id} value={address.value}>
                           {address.label}: {address.value}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    <textarea 
-                      placeholder="e.g. Jl. Sudirman No. 123, Jakarta" 
+                    <textarea
+                      placeholder="e.g. Jl. Sudirman No. 123, Jakarta"
                       value={deliveryPoint}
-                      onChange={e => setDeliveryPoint(e.target.value)}
+                      onChange={(e) => setDeliveryPoint(e.target.value)}
                       rows={2}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all resize-none"
                     />
@@ -371,9 +548,9 @@ export default function Checkout() {
                     <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
                       <Calendar size={12} /> Tender Duration (Days)
                     </label>
-                    <select 
+                    <select
                       value={prDuration}
-                      onChange={e => setPrDuration(Number(e.target.value))}
+                      onChange={(e) => setPrDuration(Number(e.target.value))}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
                     >
                       <option value={3}>3 Days</option>
@@ -388,19 +565,35 @@ export default function Checkout() {
                       <Paperclip size={12} /> Supporting Doc (Optional)
                     </label>
                     <div>
-                      <input 
-                        type="file" 
+                      <input
+                        type="file"
                         id="pr-document"
-                        onChange={e => setPrDocument(e.target.files?.[0] || null)}
+                        onChange={(e) =>
+                          setPrDocument(e.target.files?.[0] || null)
+                        }
                         className="hidden"
                         accept=".pdf,.doc,.docx,.jpg,.png"
                       />
                       <button
                         type="button"
-                        onClick={() => document.getElementById('pr-document')?.click()}
+                        onClick={() =>
+                          document.getElementById("pr-document")?.click()
+                        }
                         className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-left text-xs text-[var(--ui-text-muted)] flex items-center gap-2 hover:border-orange-400/50 transition-all truncate"
                       >
-                        {prDocument ? <><FileText size={14} className="text-orange-500 shrink-0" /> <span className="truncate text-orange-500 font-semibold">{prDocument.name}</span></> : "Choose file..."}
+                        {prDocument ? (
+                          <>
+                            <FileText
+                              size={14}
+                              className="text-orange-500 shrink-0"
+                            />{" "}
+                            <span className="truncate text-orange-500 font-semibold">
+                              {prDocument.name}
+                            </span>
+                          </>
+                        ) : (
+                          "Choose file..."
+                        )}
                       </button>
                     </div>
                   </div>
@@ -419,15 +612,23 @@ export default function Checkout() {
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-[var(--ui-text-muted)]">Subtotal</span>
-                  <span className="font-semibold text-[var(--ui-text-primary)] tabular-nums">IDR {cartTotal.toLocaleString()}</span>
+                  <span className="font-semibold text-[var(--ui-text-primary)] tabular-nums">
+                    IDR {cartTotal.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[var(--ui-text-muted)]">Tax (0%)</span>
-                  <span className="font-semibold text-[var(--ui-text-primary)]">IDR 0</span>
+                  <span className="font-semibold text-[var(--ui-text-primary)]">
+                    IDR 0
+                  </span>
                 </div>
                 <div className="pt-2 border-t border-[var(--ui-border)] flex items-center justify-between">
-                  <span className="font-bold text-[var(--ui-text-primary)] uppercase">Total</span>
-                  <span className="text-sm font-bold text-orange-500 tabular-nums">IDR {cartTotal.toLocaleString()}</span>
+                  <span className="font-bold text-[var(--ui-text-primary)] uppercase">
+                    Total
+                  </span>
+                  <span className="text-sm font-bold text-orange-500 tabular-nums">
+                    IDR {cartTotal.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
@@ -437,21 +638,27 @@ export default function Checkout() {
                 </div>
               )}
 
-              <button 
+              <button
                 onClick={handleSubmitPR}
                 disabled={loading || cart.length === 0}
-                style={{ color: 'white' }}
+                style={{ color: "white" }}
                 className="w-full py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <>Submit Request <CheckCircle2 size={16} /></>}
+                {loading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <>
+                    Submit Request <CheckCircle2 size={16} />
+                  </>
+                )}
               </button>
-              
+
               <p className="text-[10px] text-[var(--ui-text-muted)] text-center leading-relaxed">
-                By submitting, this request will be sent to your manager for approval before being published.
+                By submitting, this request will be sent to your manager for
+                approval before being published.
               </p>
             </div>
           </div>
-
         </div>
       </div>
     </Layout>
