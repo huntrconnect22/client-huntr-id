@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import {
   Activity,
   ArrowDownToLine,
@@ -129,7 +130,9 @@ function PickerBrowseButton({
 }) {
   return (
     <div className="space-y-1">
-      <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">{label}</div>
+      <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+        {label}
+      </div>
       <button type="button" className={browseBtn} onClick={onClick}>
         {selected ? (
           <div className="flex items-center justify-between gap-2">
@@ -137,7 +140,9 @@ function PickerBrowseButton({
               {"sku" in selected ? (
                 <>
                   <div className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-semibold">{selected.item_name}</span>
+                    <span className="truncate text-sm font-semibold">
+                      {selected.item_name}
+                    </span>
                     <span className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--ui-text-brand)]">
                       {selected.sku}
                     </span>
@@ -151,7 +156,9 @@ function PickerBrowseButton({
                 </>
               ) : (
                 <>
-                  <div className="truncate text-sm font-semibold">{selected.title}</div>
+                  <div className="truncate text-sm font-semibold">
+                    {selected.title}
+                  </div>
                   {selected.subtitle && (
                     <div className="mt-0.5 truncate text-xs text-[var(--ui-text-muted)]">
                       {selected.subtitle}
@@ -160,7 +167,10 @@ function PickerBrowseButton({
                 </>
               )}
             </div>
-            <ChevronRight size={16} className="shrink-0 text-[var(--ui-text-muted)]" />
+            <ChevronRight
+              size={16}
+              className="shrink-0 text-[var(--ui-text-muted)]"
+            />
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2 text-[var(--ui-text-muted)]">
@@ -173,21 +183,31 @@ function PickerBrowseButton({
         <div className="mt-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/50 px-3 py-2">
           {"sku" in selected ? (
             <div className="flex items-center gap-2 text-[11px] text-[var(--ui-text-secondary)]">
-              <WarehouseIcon size={12} className="text-[var(--ui-text-muted)]" />
+              <WarehouseIcon
+                size={12}
+                className="text-[var(--ui-text-muted)]"
+              />
               <span className="truncate">
                 {selected.warehouse_name || "—"}
                 {selected.bin_location ? ` · ${selected.bin_location}` : ""}
               </span>
               <span className="ml-auto tabular-nums font-semibold text-[var(--ui-text-success)]">
-                available {formatQuantity(Number(selected.on_hand) - Number(selected.allocated))}
+                available{" "}
+                {formatQuantity(
+                  Number(selected.on_hand) - Number(selected.allocated),
+                )}
               </span>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
               {selected.meta?.slice(0, 3).map((m, i) => (
                 <span key={i} className="flex items-center gap-1">
-                  <span className="font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">{m.label}</span>
-                  <span className="tabular-nums font-semibold text-[var(--ui-text-secondary)]">{m.value}</span>
+                  <span className="font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                    {m.label}
+                  </span>
+                  <span className="tabular-nums font-semibold text-[var(--ui-text-secondary)]">
+                    {m.value}
+                  </span>
                 </span>
               ))}
             </div>
@@ -273,18 +293,34 @@ export default function WmsPage() {
   const [inboundOrders, setInboundOrders] = useState<any[]>([]);
   const [report, setReport] = useState<any>(null);
   const [tab, setTab] = useState("Overview");
+  const [activityPage, setActivityPage] = useState(1);
+  const [stockSearch, setStockSearch] = useState("");
+  const [stockWarehouseId, setStockWarehouseId] = useState("");
+  const [stockCategory, setStockCategory] = useState("");
 
-  const [picker, setPicker] = useState<{ kind: PickerKind | null; open: boolean }>({
+  const [picker, setPicker] = useState<{
+    kind: PickerKind | null;
+    open: boolean;
+  }>({
     kind: null,
     open: false,
   });
-  const openPicker = useCallback((kind: PickerKind) => setPicker({ kind, open: true }), []);
-  const closePicker = useCallback(() => setPicker({ kind: null, open: false }), []);
-  const [selections, setSelections] = useState<Record<string, PickerItem | StockPickerItem | null>>({});
+  const openPicker = useCallback(
+    (kind: PickerKind) => setPicker({ kind, open: true }),
+    [],
+  );
+  const closePicker = useCallback(
+    () => setPicker({ kind: null, open: false }),
+    [],
+  );
+  const [selections, setSelections] = useState<
+    Record<string, PickerItem | StockPickerItem | null>
+  >({});
   const [warehouseForm, setWarehouseForm] = useState({
     code: "",
     name: "",
     address: "",
+    capacity_units: "",
   });
   const [receiveForm, setReceiveForm] = useState({
     warehouse_id: "",
@@ -351,7 +387,7 @@ export default function WmsPage() {
         /* repair is best-effort; stock load continues */
       }
       const [d, w, s, r, c, rcv, o, po] = await Promise.all([
-        getWmsDashboard(company.id),
+        getWmsDashboard(company.id, activityPage),
         getWarehouses(company.id),
         getWmsStock(company.id),
         getWmsReport(company.id),
@@ -374,7 +410,7 @@ export default function WmsPage() {
         setInstalled(false);
       else setError(e.message || "Gagal memuat data gudang.");
     }
-  }, [company]);
+  }, [company, activityPage]);
   useEffect(() => {
     refresh();
   }, [refresh]);
@@ -425,14 +461,31 @@ export default function WmsPage() {
     )
     .reduce(
       (total: number, item: any) =>
-        total +
-        toNumeric(item.on_hand) -
-        toNumeric(item.allocated),
+        total + toNumeric(item.on_hand) - toNumeric(item.allocated),
       0,
     );
   const allocationRequested = Number(allocateForm.quantity || 0);
   const allocationSufficient =
     allocationRequested > 0 && allocationAvailable >= allocationRequested;
+  const stockCategories = [
+    ...new Set(
+      stock.map((item: any) => item.catalogue_category).filter(Boolean),
+    ),
+  ].sort();
+  const filteredStock = stock.filter((item: any) => {
+    const query = stockSearch.trim().toLowerCase();
+    return (
+      (!stockWarehouseId || String(item.warehouse_id) === stockWarehouseId) &&
+      (!stockCategory || item.catalogue_category === stockCategory) &&
+      (!query ||
+        `${item.sku} ${item.item_name} ${item.bin_location || ""}`
+          .toLowerCase()
+          .includes(query))
+    );
+  });
+  const hasStockFilters = Boolean(
+    stockSearch || stockWarehouseId || stockCategory,
+  );
 
   const cataloguePickerItems: PickerItem[] = useMemo(
     () =>
@@ -458,33 +511,25 @@ export default function WmsPage() {
         id: "good",
         title: "Good",
         subtitle: "Inspection passed — fully accepted",
-        meta: [
-          { label: "Tone", value: "Accepted", tone: "success" as const },
-        ],
+        meta: [{ label: "Tone", value: "Accepted", tone: "success" as const }],
       },
       {
         id: "damaged",
         title: "Damaged",
         subtitle: "Goods arrived damaged",
-        meta: [
-          { label: "Tone", value: "Review", tone: "brand" as const },
-        ],
+        meta: [{ label: "Tone", value: "Review", tone: "brand" as const }],
       },
       {
         id: "short",
         title: "Short shipment",
         subtitle: "Less quantity received than ordered",
-        meta: [
-          { label: "Tone", value: "Short", tone: "muted" as const },
-        ],
+        meta: [{ label: "Tone", value: "Short", tone: "muted" as const }],
       },
       {
         id: "other",
         title: "Other",
         subtitle: "Custom inspection note required",
-        meta: [
-          { label: "Tone", value: "Manual", tone: "default" as const },
-        ],
+        meta: [{ label: "Tone", value: "Manual", tone: "default" as const }],
       },
     ],
     [],
@@ -557,7 +602,10 @@ export default function WmsPage() {
           {
             label: "Status",
             value: bin.status || "active",
-            tone: bin.status === "active" ? ("success" as const) : ("muted" as const),
+            tone:
+              bin.status === "active"
+                ? ("success" as const)
+                : ("muted" as const),
           },
         ],
       })),
@@ -571,9 +619,7 @@ export default function WmsPage() {
           id: String(bin.id),
           title: bin.name || bin.code,
           subtitle: `${bin.code} · ${bin.type}`,
-          meta: [
-            { label: "Type", value: bin.type, tone: "brand" as const },
-          ],
+          meta: [{ label: "Type", value: bin.type, tone: "brand" as const }],
         })),
     };
   }, [warehouses, putawayForm.warehouse_id]);
@@ -763,6 +809,7 @@ export default function WmsPage() {
             stock={stock}
             orders={orders}
             onTabChange={setTab}
+            onActivityPage={setActivityPage}
           />
         )}
         {tab === "Warehouses" && (
@@ -783,27 +830,43 @@ export default function WmsPage() {
                   {warehouses.map((w) => (
                     <div
                       key={w.id}
-                      className="flex justify-between border border-[var(--ui-border)] p-3"
+                      className="flex justify-between gap-3 border border-[var(--ui-border)] p-3"
                     >
                       <div>
                         <p className="font-semibold">{w.name}</p>
                         <p className="text-xs text-[var(--ui-text-muted)]">
                           {w.code} · {w.address || "Address not set"}
+                          {w.capacity_units
+                            ? ` · capacity ${formatQuantity(w.capacity_units)} units`
+                            : ""}
                         </p>
                       </div>
-                      <button
-                        onClick={() =>
-                          run(() =>
-                            updateWarehouse(company.id, w.id, {
-                              status:
-                                w.status === "active" ? "inactive" : "active",
-                            }),
-                          )
-                        }
-                        className="rounded-md border border-[var(--ui-border)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-secondary)]"
-                      >
-                        {w.status === "active" ? "Deactivate" : "Activate"}
-                      </button>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStockWarehouseId(String(w.id));
+                            setTab("Stock");
+                          }}
+                          className="rounded-md border border-[var(--ui-border)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-brand)]"
+                        >
+                          View stock
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            run(() =>
+                              updateWarehouse(company.id, w.id, {
+                                status:
+                                  w.status === "active" ? "inactive" : "active",
+                              }),
+                            )
+                          }
+                          className="rounded-md border border-[var(--ui-border)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-secondary)]"
+                        >
+                          {w.status === "active" ? "Deactivate" : "Activate"}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {!warehouses.length && (
@@ -819,7 +882,12 @@ export default function WmsPage() {
                   e.preventDefault();
                   run(async () => {
                     await createWarehouse(company.id, warehouseForm);
-                    setWarehouseForm({ code: "", name: "", address: "" });
+                    setWarehouseForm({
+                      code: "",
+                      name: "",
+                      address: "",
+                      capacity_units: "",
+                    });
                   });
                 }}
               >
@@ -853,6 +921,20 @@ export default function WmsPage() {
                     })
                   }
                 />
+                <input
+                  className={input}
+                  placeholder="Warehouse capacity (units)"
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  value={warehouseForm.capacity_units}
+                  onChange={(e) =>
+                    setWarehouseForm({
+                      ...warehouseForm,
+                      capacity_units: e.target.value,
+                    })
+                  }
+                />
                 <button className="inline-flex items-center gap-2 rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
                   <Plus size={15} />
                   Create warehouse
@@ -872,90 +954,203 @@ export default function WmsPage() {
                 "Set reorder level",
               ]}
             />
-            <div className={card + " overflow-x-auto"}>
-              <h3 className="mb-4 font-bold">Inventory by warehouse</h3>
-              {stock.length > 0 ? (
-                <table className="w-full min-w-[680px] text-left text-sm">
-                  <thead className="text-xs text-[var(--ui-text-muted)]">
-                    <tr>
-                      <th className="py-2">SKU / Catalogue</th>
-                      <th>Item</th>
-                      <th>Warehouse</th>
-                      <th>Bin</th>
-                      <th>On hand</th>
-                      <th>Allocated</th>
-                      <th>Available</th>
-                      <th>Reorder level</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stock.map((x: any) => (
-                      <tr
-                        key={x.id}
-                        className="border-t border-[var(--ui-border)]"
-                      >
-                        <td className="py-3 font-mono text-xs">
-                          {x.sku}
-                          {x.catalogue_id && (
-                            <span className="ml-1 text-[var(--ui-text-brand)]">
-                              · linked
-                            </span>
-                          )}
-                        </td>
-                        <td>{x.item_name}</td>
-                        <td>{x.warehouse_name}</td>
-                        <td>{x.bin_location || "—"}</td>
-                        <td>
-                          {formatQuantity(x.on_hand)} {x.uom}
-                        </td>
-                        <td>{formatQuantity(x.allocated)}</td>
-                        <td>
-                          {formatQuantity(
-                            Number(x.on_hand) - Number(x.allocated),
-                          )}
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-2">
-                            <input
-                              aria-label={`Reorder level ${x.sku}`}
-                              type="number"
-                              min="0"
-                              step="0.001"
-                              className={input + " w-24 px-2 py-1"}
-                              value={
-                                reorderLevels[x.id] !== undefined
-                                  ? reorderLevels[x.id]
-                                  : String(toNumeric(x.reorder_level))
-                              }
-                              onChange={(e) =>
-                                setReorderLevels({
-                                  ...reorderLevels,
-                                  [x.id]: e.target.value,
-                                })
-                              }
-                            />
-                            <button
-                              onClick={() =>
-                                run(async () => {
-                                  await setWmsReorderLevel(
-                                    company.id,
-                                    x.id,
-                                    toNumeric(
-                                      reorderLevels[x.id] ?? x.reorder_level ?? 0,
-                                    ),
-                                  );
-                                })
-                              }
-                              className="rounded-md bg-[var(--ui-bg-input)] px-2 py-1 text-xs"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+            <div className={card + " overflow-hidden p-0"}>
+              <div className="border-b border-[var(--ui-border)] px-4 py-3.5">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold">Stock</h3>
+                    <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+                      Live inventory across all warehouses.
+                    </p>
+                  </div>
+                  <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs font-medium text-[var(--ui-text-secondary)]">
+                    {filteredStock.length} location
+                    {filteredStock.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-end gap-2 rounded-md bg-[var(--ui-bg-input)] p-2">
+                  <span className="px-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    Filter
+                  </span>
+                  <input
+                    className={input + " w-48 bg-[var(--ui-bg-card)]"}
+                    placeholder="Search SKU, item, bin"
+                    value={stockSearch}
+                    onChange={(e) => setStockSearch(e.target.value)}
+                  />
+                  <select
+                    className={input + " w-44 bg-[var(--ui-bg-card)]"}
+                    value={stockWarehouseId}
+                    onChange={(e) => setStockWarehouseId(e.target.value)}
+                  >
+                    <option value="">All warehouses</option>
+                    {warehouses.map((warehouse: any) => (
+                      <option key={warehouse.id} value={warehouse.id}>
+                        {warehouse.name}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
+                  </select>
+                  <select
+                    className={input + " w-40 bg-[var(--ui-bg-card)]"}
+                    value={stockCategory}
+                    onChange={(e) => setStockCategory(e.target.value)}
+                  >
+                    <option value="">All categories</option>
+                    {stockCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  {hasStockFilters && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStockSearch("");
+                        setStockWarehouseId("");
+                        setStockCategory("");
+                      }}
+                      className="px-2 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+              {filteredStock.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[850px] text-left text-sm">
+                    <thead className="bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Item</th>
+                        <th className="py-3 font-semibold">Location</th>
+                        <th className="py-3 text-right font-semibold">
+                          On hand
+                        </th>
+                        <th className="py-3 text-right font-semibold">
+                          Reserved
+                        </th>
+                        <th className="py-3 text-right font-semibold">
+                          Available
+                        </th>
+                        <th className="px-4 py-3 font-semibold">
+                          Reorder point
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStock.map((x: any) => {
+                        const available =
+                          toNumeric(x.on_hand) - toNumeric(x.allocated);
+                        const belowReorder =
+                          toNumeric(x.reorder_level) > 0 &&
+                          available <= toNumeric(x.reorder_level);
+
+                        return (
+                          <tr
+                            key={x.id}
+                            className="border-t border-[var(--ui-border)] hover:bg-[var(--ui-bg-input)]/60"
+                          >
+                            <td className="px-4 py-3 align-middle">
+                              <p className="font-semibold text-[var(--ui-text-primary)]">
+                                {x.item_name}
+                              </p>
+                              <div className="mt-1 flex items-center gap-2 text-xs">
+                                <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--ui-text-secondary)]">
+                                  {x.sku}
+                                </span>
+                                <span className="text-[var(--ui-text-muted)]">
+                                  {x.catalogue_category || "Uncategorised"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 align-middle">
+                              <p className="font-medium">{x.warehouse_name}</p>
+                              <p className="mt-0.5 font-mono text-xs text-[var(--ui-text-muted)]">
+                                {x.bin_location || "No bin assigned"}
+                              </p>
+                            </td>
+                            <td className="py-3 text-right align-middle tabular-nums">
+                              {formatQuantity(x.on_hand)}{" "}
+                              <span className="text-xs text-[var(--ui-text-muted)]">
+                                {x.uom}
+                              </span>
+                            </td>
+                            <td className="py-3 text-right align-middle tabular-nums text-[var(--ui-text-secondary)]">
+                              {formatQuantity(x.allocated)}
+                            </td>
+                            <td className="py-3 text-right align-middle tabular-nums">
+                              <span
+                                className={
+                                  belowReorder
+                                    ? "font-semibold text-amber-600"
+                                    : "font-semibold text-emerald-600"
+                                }
+                              >
+                                {formatQuantity(available)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 align-middle">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  aria-label={`Reorder level ${x.sku}`}
+                                  type="number"
+                                  min="0"
+                                  step="0.001"
+                                  className={input + " w-24 px-2 py-1"}
+                                  value={
+                                    reorderLevels[x.id] !== undefined
+                                      ? reorderLevels[x.id]
+                                      : String(toNumeric(x.reorder_level))
+                                  }
+                                  onChange={(e) =>
+                                    setReorderLevels({
+                                      ...reorderLevels,
+                                      [x.id]: e.target.value,
+                                    })
+                                  }
+                                />
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await setWmsReorderLevel(
+                                        company.id,
+                                        x.id,
+                                        toNumeric(
+                                          reorderLevels[x.id] ??
+                                            x.reorder_level ??
+                                            0,
+                                        ),
+                                      );
+                                      await Swal.fire({
+                                        icon: "success",
+                                        title: "Reorder level saved",
+                                        text: `${x.sku} is updated.`,
+                                        timer: 1400,
+                                        showConfirmButton: false,
+                                      });
+                                      await refresh();
+                                    } catch (error: any) {
+                                      await Swal.fire({
+                                        icon: "error",
+                                        title: "Unable to save",
+                                        text:
+                                          error.message || "Please try again.",
+                                      });
+                                    }
+                                  }}
+                                  className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-card)]"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div className="py-8 text-center">
                   <Boxes
@@ -1033,9 +1228,14 @@ export default function WmsPage() {
                 <div className="flex items-start justify-between gap-3 border-b border-[var(--ui-border)] pb-3">
                   <div>
                     <h3 className="font-bold">Receive incoming goods</h3>
-                    <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">Create a draft, inspect each line, then confirm it into the receiving bin.</p>
+                    <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+                      Create a draft, inspect each line, then confirm it into
+                      the receiving bin.
+                    </p>
                   </div>
-                  <span className="shrink-0 border border-[var(--ui-border)] px-2 py-1 text-[10px] font-semibold text-[var(--ui-text-muted)]">DRAFT</span>
+                  <span className="shrink-0 border border-[var(--ui-border)] px-2 py-1 text-[10px] font-semibold text-[var(--ui-text-muted)]">
+                    DRAFT
+                  </span>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <PickerBrowseButton
@@ -1052,7 +1252,9 @@ export default function WmsPage() {
                   />
                 </div>
                 <div className="space-y-2 border-t border-[var(--ui-border)] pt-3">
-                  <p className="text-[10px] font-bold tracking-wider text-[var(--ui-text-muted)] uppercase">Item and inspection</p>
+                  <p className="text-[10px] font-bold tracking-wider text-[var(--ui-text-muted)] uppercase">
+                    Item and inspection
+                  </p>
                   <CatalogueSkuInput
                     label="Product variant / SKU"
                     placeholder="Type SKU or browse Huntr Catalogue"
@@ -1085,48 +1287,50 @@ export default function WmsPage() {
                       });
                     }}
                   />
-                {receiveForm.sku && (
-                  <p className="border-l-2 border-[var(--ui-text-brand)] bg-[var(--ui-bg-input)] px-3 py-2 text-xs text-[var(--ui-text-secondary)]">
-                    Selected SKU identity:{" "}
-                    <span className="font-mono font-semibold">
-                      {receiveForm.sku}
-                    </span>
-                  </p>
-                )}
-                <div className="grid grid-cols-2 gap-3">
-                  <PickerBrowseButton
-                    label="Inspection condition"
-                    placeholder="Select condition"
-                    selected={selections["receive_condition"] || null}
-                    onClick={() => openPicker("receive_condition")}
-                  />
-                  <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Inspection notes</div>
-                    <input
-                      className={input}
-                      placeholder="Inspection notes"
-                      value={receiveForm.inspection_notes}
-                      onChange={(e) =>
-                        setReceiveForm({
-                          ...receiveForm,
-                          inspection_notes: e.target.value,
-                        })
-                      }
+                  {receiveForm.sku && (
+                    <p className="border-l-2 border-[var(--ui-text-brand)] bg-[var(--ui-bg-input)] px-3 py-2 text-xs text-[var(--ui-text-secondary)]">
+                      Selected SKU identity:{" "}
+                      <span className="font-mono font-semibold">
+                        {receiveForm.sku}
+                      </span>
+                    </p>
+                  )}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <PickerBrowseButton
+                      label="Inspection condition"
+                      placeholder="Select condition"
+                      selected={selections["receive_condition"] || null}
+                      onClick={() => openPicker("receive_condition")}
                     />
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                        Inspection notes
+                      </div>
+                      <input
+                        className={input}
+                        placeholder="Inspection notes"
+                        value={receiveForm.inspection_notes}
+                        onChange={(e) =>
+                          setReceiveForm({
+                            ...receiveForm,
+                            inspection_notes: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-                <input
-                  required={!receiveForm.catalogue_id}
-                  className={input}
-                  placeholder="Item name (required for a new SKU)"
-                  value={receiveForm.item_name}
-                  onChange={(e) =>
-                    setReceiveForm({
-                      ...receiveForm,
-                      item_name: e.target.value,
-                    })
-                  }
-                />
+                  <input
+                    required={!receiveForm.catalogue_id}
+                    className={input}
+                    placeholder="Item name (required for a new SKU)"
+                    value={receiveForm.item_name}
+                    onChange={(e) =>
+                      setReceiveForm({
+                        ...receiveForm,
+                        item_name: e.target.value,
+                      })
+                    }
+                  />
                 </div>
                 {receiveForm.purchase_order_id && (
                   <PickerBrowseButton
@@ -1136,141 +1340,176 @@ export default function WmsPage() {
                     onClick={() => openPicker("receive_po_line")}
                   />
                 )}
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    required
-                    type="number"
-                    min="0.001"
-                    step="0.001"
-                    className={input}
-                    placeholder="Received quantity"
-                    value={receiveForm.quantity}
-                    onChange={(e) =>
-                      setReceiveForm({
-                        ...receiveForm,
-                        quantity: e.target.value,
-                      })
-                    }
-                  />
-                  <input
-                    className={input}
-                    placeholder="Reference / PO"
-                    value={receiveForm.bin_location}
-                    onChange={(e) =>
-                      setReceiveForm({
-                        ...receiveForm,
-                        bin_location: e.target.value,
-                      })
-                    }
-                  />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="space-y-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    Received quantity
+                    <input
+                      required
+                      type="number"
+                      min="0.001"
+                      step="0.001"
+                      className={input}
+                      placeholder="0"
+                      value={receiveForm.quantity}
+                      onChange={(e) =>
+                        setReceiveForm({
+                          ...receiveForm,
+                          quantity: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    Reference
+                    <input
+                      className={input}
+                      placeholder="PO or delivery note"
+                      value={receiveForm.bin_location}
+                      onChange={(e) =>
+                        setReceiveForm({
+                          ...receiveForm,
+                          bin_location: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
                 </div>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.001"
-                  max={receiveForm.quantity || undefined}
-                  className={input}
-                  placeholder="Rejected quantity after inspection"
-                  value={receiveForm.rejected_quantity}
-                  onChange={(e) =>
-                    setReceiveForm({
-                      ...receiveForm,
-                      rejected_quantity: e.target.value,
-                    })
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (
-                      (!receiveForm.catalogue_id && !receiveForm.sku) ||
-                      !Number(receiveForm.quantity)
-                    ) {
-                      setError(
-                        "Select an item and enter its received quantity first.",
-                      );
-                      return;
+                <label className="block max-w-xs space-y-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  Rejected after inspection
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    max={receiveForm.quantity || undefined}
+                    className={input}
+                    placeholder="0"
+                    value={receiveForm.rejected_quantity}
+                    onChange={(e) =>
+                      setReceiveForm({
+                        ...receiveForm,
+                        rejected_quantity: e.target.value,
+                      })
                     }
-                    setReceiveLines([
-                      ...receiveLines,
-                      {
-                        ...(receiveForm.catalogue_id
-                          ? { catalogue_id: receiveForm.catalogue_id }
-                          : { sku: receiveForm.sku }),
-                        item_name: receiveForm.item_name || undefined,
-                        received_quantity: Number(receiveForm.quantity),
-                        accepted_quantity:
-                          Number(receiveForm.quantity) -
-                          Number(receiveForm.rejected_quantity || 0),
-                        rejected_quantity: Number(
-                          receiveForm.rejected_quantity || 0,
-                        ),
-                        condition: receiveForm.condition,
-                        inspection_notes:
-                          receiveForm.inspection_notes || undefined,
-                      },
-                    ]);
-                    setReceiptLineNotice(
-                      `Receipt line added. ${receiveLines.length + 1} line(s) ready to confirm.`,
-                    );
-                    setReceiveForm({
-                      ...receiveForm,
-                      catalogue_id: "",
-                      sku: "",
-                      item_name: "",
-                      quantity: "",
-                      rejected_quantity: "0",
-                      condition: "good",
-                      inspection_notes: "",
-                    });
-                  }}
-                  className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-4 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
-                >
-                  + Add receipt line
-                </button>
+                  />
+                </label>
                 {receiptLineNotice && (
                   <p className="border-l-2 border-emerald-500 bg-emerald-500/5 px-3 py-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                     {receiptLineNotice}
                   </p>
                 )}
                 {receiveLines.length > 0 && (
-                  <div className="border border-[var(--ui-border)] p-3 text-xs">
-                    <p className="mb-2 font-semibold">
-                      Receipt lines ({receiveLines.length})
-                    </p>
-                    {receiveLines.map((line, index) => (
-                      <div
-                        key={`${line.sku || line.catalogue_id}-${index}`}
-                        className="flex items-center justify-between gap-2 py-1"
-                      >
-                        <span>
-                          {line.sku || line.catalogue_id} ·{" "}
-                          {formatQuantity(line.accepted_quantity)} accepted
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setReceiveLines(
-                              receiveLines.filter((_, i) => i !== index),
-                            )
-                          }
-                          className="text-[var(--ui-text-muted)]"
+                  <div className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/30 text-xs">
+                    <div className="flex items-center justify-between border-b border-[var(--ui-border)] px-3 py-2">
+                      <p className="font-semibold">Ready to receive</p>
+                      <span className="font-mono text-[var(--ui-text-brand)]">
+                        {receiveLines.length} line
+                        {receiveLines.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-[var(--ui-border)] px-3">
+                      {receiveLines.map((line, index) => (
+                        <div
+                          key={`${line.sku || line.catalogue_id}-${index}`}
+                          className="flex items-center justify-between gap-3 py-2"
                         >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
+                          <span className="min-w-0 truncate font-mono text-[var(--ui-text-secondary)]">
+                            {line.sku || line.catalogue_id}
+                          </span>
+                          <span className="ml-auto shrink-0 tabular-nums text-[var(--ui-text-muted)]">
+                            {formatQuantity(line.accepted_quantity)} accepted
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setReceiveLines(
+                                receiveLines.filter((_, i) => i !== index),
+                              )
+                            }
+                            className="shrink-0 text-[var(--ui-text-muted)] hover:text-red-500"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between gap-3 border-t border-[var(--ui-border)] px-3 py-2">
+                      <span className="text-[var(--ui-text-muted)]">
+                        Accepted total
+                      </span>
+                      <strong className="tabular-nums">
+                        {formatQuantity(
+                          receiveLines.reduce(
+                            (sum, line) =>
+                              sum + Number(line.accepted_quantity || 0),
+                            0,
+                          ),
+                        )}
+                      </strong>
+                    </div>
                   </div>
                 )}
-                <button
-                  disabled={busy || receiveLines.length === 0}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {busy ? <Loader2 size={15} className="animate-spin" /> : null}
-                  {busy
-                    ? "Confirming receipt…"
-                    : `Confirm receiving (${receiveLines.length})`}
-                </button>
+                <div className="flex items-center justify-between gap-3 border-t border-[var(--ui-border)] pt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        (!receiveForm.catalogue_id && !receiveForm.sku) ||
+                        !Number(receiveForm.quantity)
+                      ) {
+                        setError(
+                          "Select an item and enter its received quantity first.",
+                        );
+                        return;
+                      }
+                      setReceiveLines([
+                        ...receiveLines,
+                        {
+                          ...(receiveForm.catalogue_id
+                            ? { catalogue_id: receiveForm.catalogue_id }
+                            : { sku: receiveForm.sku }),
+                          item_name: receiveForm.item_name || undefined,
+                          received_quantity: Number(receiveForm.quantity),
+                          accepted_quantity:
+                            Number(receiveForm.quantity) -
+                            Number(receiveForm.rejected_quantity || 0),
+                          rejected_quantity: Number(
+                            receiveForm.rejected_quantity || 0,
+                          ),
+                          condition: receiveForm.condition,
+                          inspection_notes:
+                            receiveForm.inspection_notes || undefined,
+                        },
+                      ]);
+                      setReceiptLineNotice(
+                        `Receipt line added. ${receiveLines.length + 1} line(s) ready to confirm.`,
+                      );
+                      setReceiveForm({
+                        ...receiveForm,
+                        catalogue_id: "",
+                        sku: "",
+                        item_name: "",
+                        quantity: "",
+                        rejected_quantity: "0",
+                        condition: "good",
+                        inspection_notes: "",
+                      });
+                    }}
+                    className="inline-flex items-center gap-2 rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
+                  >
+                    + Add receipt line
+                  </button>
+                  <button
+                    disabled={busy || receiveLines.length === 0}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {busy ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : null}
+                    {busy
+                      ? "Confirming receipt…"
+                      : `Confirm receiving (${receiveLines.length})`}
+                  </button>
+                </div>
               </form>
               <form
                 className={card + " space-y-3"}
@@ -1305,7 +1544,9 @@ export default function WmsPage() {
                     onClick={() => openPicker("putaway_sku")}
                   />
                   <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Units to move</div>
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Units to move
+                    </div>
                     <input
                       required
                       type="number"
@@ -1465,7 +1706,9 @@ export default function WmsPage() {
                     }
                     await allocateStock(company.id, {
                       warehouse_id: allocateForm.warehouse_id,
-                      order_number: allocateForm.order_number,
+                      order_number:
+                        allocateForm.order_number ||
+                        `WMS-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`,
                       lines: [
                         {
                           sku: allocateForm.sku,
@@ -1475,7 +1718,6 @@ export default function WmsPage() {
                     });
                     setAllocateForm({
                       ...allocateForm,
-                      order_number: "",
                       sku: "",
                       quantity: "",
                     });
@@ -1493,20 +1735,9 @@ export default function WmsPage() {
                   selected={selections["allocate_warehouse"] || null}
                   onClick={() => openPicker("allocate_warehouse")}
                 />
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Order number</div>
-                  <input
-                    required
-                    className={input}
-                    placeholder="Order number"
-                    value={allocateForm.order_number}
-                    onChange={(e) =>
-                      setAllocateForm({
-                        ...allocateForm,
-                        order_number: e.target.value,
-                      })
-                    }
-                  />
+                <div className="border-l-2 border-[var(--ui-text-brand)] bg-[var(--ui-bg-input)] px-3 py-2 text-xs text-[var(--ui-text-secondary)]">
+                  Order number is generated automatically when stock is
+                  allocated.
                 </div>
                 <PickerBrowseButton
                   label="Inventory item"
@@ -1515,7 +1746,9 @@ export default function WmsPage() {
                   onClick={() => openPicker("allocate_sku")}
                 />
                 <div className="space-y-1">
-                  <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Units to reserve</div>
+                  <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    Units to reserve
+                  </div>
                   <input
                     required
                     type="number"
@@ -1690,7 +1923,7 @@ export default function WmsPage() {
                 "Confirm transfer",
               ]}
             />
-            <div className={card + " max-w-3xl space-y-3"}>
+            <div className={card + " space-y-4"}>
               <h3 className="font-bold">Inter-warehouse stock transfer</h3>
               <p className="text-xs text-[var(--ui-text-muted)]">
                 Moves stock between warehouses and records both inventory
@@ -1732,7 +1965,9 @@ export default function WmsPage() {
                     onClick={() => openPicker("transfer_sku")}
                   />
                   <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Units to transfer</div>
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Units to transfer
+                    </div>
                     <input
                       required
                       type="number"
@@ -1750,7 +1985,9 @@ export default function WmsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Source bin</div>
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Source bin
+                    </div>
                     <input
                       required
                       className={input}
@@ -1765,7 +2002,9 @@ export default function WmsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Destination bin</div>
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Destination bin
+                    </div>
                     <input
                       required
                       className={input}
@@ -1799,7 +2038,7 @@ export default function WmsPage() {
                 "Record reason",
               ]}
             />
-            <div className={card + " max-w-3xl space-y-3"}>
+            <div className={card + " space-y-4"}>
               <h3 className="font-bold">Cycle count / stock adjustment</h3>
               <p className="text-xs text-[var(--ui-text-muted)]">
                 Add or subtract stock after a count. Allocated stock cannot be
@@ -1838,7 +2077,9 @@ export default function WmsPage() {
                     onClick={() => openPicker("adjust_sku")}
                   />
                   <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Bin location</div>
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Bin location
+                    </div>
                     <input
                       required
                       className={input}
@@ -1853,7 +2094,9 @@ export default function WmsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">Adjustment quantity (+ / -)</div>
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Adjustment quantity (+ / -)
+                    </div>
                     <input
                       required
                       type="number"
@@ -1862,7 +2105,10 @@ export default function WmsPage() {
                       placeholder="Adjustment quantity (+ / -)"
                       value={adjustForm.quantity}
                       onChange={(e) =>
-                        setAdjustForm({ ...adjustForm, quantity: e.target.value })
+                        setAdjustForm({
+                          ...adjustForm,
+                          quantity: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1886,92 +2132,114 @@ export default function WmsPage() {
         {tab === "Reports" && (
           <div className="space-y-4">
             <WmsWorkflowGuide
-              title="Use reports to decide what to replenish"
-              description="Start with warehouse availability, review movement, then act on any item below its reorder level."
+              title="Warehouse performance"
+              description="Review availability, movement, and items that need replenishment."
               steps={[
                 "Review availability",
                 "Inspect movement",
-                "Resolve replenishment alerts",
+                "Resolve alerts",
               ]}
             />
-            <div className={card + " overflow-x-auto"}>
-              <h3 className="mb-4 font-bold">
-                Warehouse performance &amp; analysis
-              </h3>
-              <p className="mb-4 text-xs text-[var(--ui-text-muted)]">
-                Movement and order summaries for the last 30 days.
-              </p>
-              <table className="w-full min-w-[560px] text-left text-sm">
-                <thead className="text-xs text-[var(--ui-text-muted)]">
-                  <tr>
-                    <th className="py-2">Warehouse</th>
-                    <th>SKU count</th>
-                    <th>On hand</th>
-                    <th>Allocated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(report?.stock_by_warehouse || []).map((x: any) => (
-                    <tr
-                      className="border-t border-[var(--ui-border)]"
-                      key={x.id}
-                    >
-                      <td className="py-3">
-                        {x.name}{" "}
-                        <span className="text-xs text-[var(--ui-text-muted)]">
-                          {x.code}
-                        </span>
-                      </td>
-                      <td>{x.sku_count}</td>
-                      <td>{formatQuantity(x.on_hand)}</td>
-                      <td>{formatQuantity(x.allocated)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                {(report?.movement_summary || []).map((x: any) => (
-                  <div
-                    key={x.type}
-                    className="border border-[var(--ui-border)] p-3"
-                  >
-                    <p className="capitalize font-semibold">{x.type}</p>
-                    <p className="mt-1 text-xs text-[var(--ui-text-muted)]">
-                      {formatQuantity(x.transactions)} movements ·{" "}
-                      {formatQuantity(x.quantity)} units
-                    </p>
-                  </div>
-                ))}
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className={card}>
+                <p className="text-xs text-[var(--ui-text-muted)]">
+                  Active warehouses
+                </p>
+                <p className="mt-2 text-2xl font-bold">
+                  {report?.stock_by_warehouse?.length || 0}
+                </p>
               </div>
-              <div className="mt-6">
-                <h4 className="mb-3 font-bold">Replenishment alerts</h4>
-                <div className="space-y-2">
-                  {(report?.low_stock_items || []).map((x: any) => (
+              <div className={card}>
+                <p className="text-xs text-[var(--ui-text-muted)]">
+                  Catalogue linked SKUs
+                </p>
+                <p className="mt-2 text-2xl font-bold">
+                  {formatQuantity(report?.catalogue_linked_skus || 0)}
+                </p>
+              </div>
+              <div className={card}>
+                <p className="text-xs text-[var(--ui-text-muted)]">
+                  Replenishment alerts
+                </p>
+                <p className="mt-2 text-2xl font-bold text-amber-500">
+                  {formatQuantity(report?.low_stock_items?.length || 0)}
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-3 xl:grid-cols-2">
+              <div className={card + " overflow-x-auto"}>
+                <h3 className="font-bold">Stock position by warehouse</h3>
+                <table className="mt-3 w-full min-w-[500px] text-left text-sm">
+                  <thead className="text-xs text-[var(--ui-text-muted)]">
+                    <tr>
+                      <th className="py-2">Warehouse</th>
+                      <th>SKU count</th>
+                      <th>On hand</th>
+                      <th>Allocated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(report?.stock_by_warehouse || []).map((x: any) => (
+                      <tr
+                        className="border-t border-[var(--ui-border)]"
+                        key={x.id}
+                      >
+                        <td className="py-3">
+                          {x.name}{" "}
+                          <span className="text-xs text-[var(--ui-text-muted)]">
+                            {x.code}
+                          </span>
+                        </td>
+                        <td>{x.sku_count}</td>
+                        <td>{formatQuantity(x.on_hand)}</td>
+                        <td>{formatQuantity(x.allocated)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className={card}>
+                <h3 className="font-bold">Movement in the last 30 days</h3>
+                <div className="mt-3 divide-y divide-[var(--ui-border)]">
+                  {(report?.movement_summary || []).map((x: any) => (
                     <div
-                      key={`${x.sku}-${x.warehouse_name}-${x.bin_location}`}
-                      className="flex flex-wrap items-center justify-between gap-2 border border-[var(--ui-border)] p-3 text-sm"
+                      key={x.type}
+                      className="flex items-center justify-between gap-3 py-3 text-sm"
                     >
-                      <span className="font-semibold">
-                        {x.sku} · {x.item_name}
-                      </span>
-                      <span className="text-[var(--ui-text-secondary)]">
-                        {x.warehouse_name} / {x.bin_location} · available{" "}
-                        {formatQuantity(x.available)} · minimum{" "}
-                        {formatQuantity(x.reorder_level)}
-                      </span>
+                      <p className="capitalize font-semibold">{x.type}</p>
+                      <p className="text-right text-xs text-[var(--ui-text-muted)]">
+                        {formatQuantity(x.transactions)} movements ·{" "}
+                        {formatQuantity(x.quantity)} units
+                      </p>
                     </div>
                   ))}
-                  {!report?.low_stock_items?.length && (
-                    <p className="text-sm text-[var(--ui-text-muted)]">
-                      No items currently below reorder level.
-                    </p>
-                  )}
                 </div>
               </div>
-              <p className="mt-5 text-xs text-[var(--ui-text-muted)]">
-                {report?.catalogue_linked_skus || 0} SKUs linked to Huntr
-                Catalogue
-              </p>
+            </div>
+            <div className={card}>
+              <h3 className="font-bold">Replenishment alerts</h3>
+              <div className="mt-3 divide-y divide-[var(--ui-border)]">
+                {(report?.low_stock_items || []).map((x: any) => (
+                  <div
+                    key={`${x.sku}-${x.warehouse_name}-${x.bin_location}`}
+                    className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+                  >
+                    <span className="font-semibold">
+                      {x.sku} · {x.item_name}
+                    </span>
+                    <span className="text-[var(--ui-text-secondary)]">
+                      {x.warehouse_name} / {x.bin_location} · available{" "}
+                      {formatQuantity(x.available)} · minimum{" "}
+                      {formatQuantity(x.reorder_level)}
+                    </span>
+                  </div>
+                ))}
+                {!report?.low_stock_items?.length && (
+                  <p className="py-4 text-sm text-[var(--ui-text-muted)]">
+                    No items currently below reorder level.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -2011,21 +2279,26 @@ export default function WmsPage() {
           switch (picker.kind) {
             case "putaway_sku":
               return stockPickerAll.filter(
-                (x: any) => String(x.warehouse_id) === String(putawayForm.warehouse_id),
+                (x: any) =>
+                  String(x.warehouse_id) === String(putawayForm.warehouse_id),
               );
             case "allocate_sku":
               return stockPickerAll.filter(
                 (x) =>
-                  String(x.warehouse_id) === String(allocateForm.warehouse_id) &&
+                  String(x.warehouse_id) ===
+                    String(allocateForm.warehouse_id) &&
                   isAllocatableStockRow(x),
               );
             case "transfer_sku":
               return stockPickerAll.filter(
-                (x: any) => String(x.warehouse_id) === String(transferForm.from_warehouse_id),
+                (x: any) =>
+                  String(x.warehouse_id) ===
+                  String(transferForm.from_warehouse_id),
               );
             case "adjust_sku":
               return stockPickerAll.filter(
-                (x: any) => String(x.warehouse_id) === String(adjustForm.warehouse_id),
+                (x: any) =>
+                  String(x.warehouse_id) === String(adjustForm.warehouse_id),
               );
             default:
               return [];
@@ -2099,7 +2372,9 @@ export default function WmsPage() {
               setSelections((prev) => ({ ...prev, receive_warehouse: item }));
               break;
             case "receive_po": {
-              const po = inboundOrders.find((x: any) => String(x.id) === item.id);
+              const po = inboundOrders.find(
+                (x: any) => String(x.id) === item.id,
+              );
               const line = po?.lines?.find(
                 (x: any) => Number(x.remaining_quantity || 0) > 0,
               );
@@ -2121,9 +2396,12 @@ export default function WmsPage() {
             }
             case "receive_po_line": {
               const po = inboundOrders.find(
-                (x: any) => String(x.id) === String(receiveForm.purchase_order_id),
+                (x: any) =>
+                  String(x.id) === String(receiveForm.purchase_order_id),
               );
-              const line = po?.lines?.find((x: any) => String(x.sku) === item.id);
+              const line = po?.lines?.find(
+                (x: any) => String(x.sku) === item.id,
+              );
               setReceiveForm({
                 ...receiveForm,
                 catalogue_id: line?.catalogue_id || "",

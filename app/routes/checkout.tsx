@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
-import { createRfq } from "../lib/api";
+import { createRfq, getRfq, resubmitRfq } from "../lib/api";
 import {
   ClipboardList,
   CheckCircle2,
@@ -39,6 +39,12 @@ export default function Checkout() {
   const [wmsInstalled, setWmsInstalled] = useState(false);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [warehouseId, setWarehouseId] = useState("");
+  const [revisionRfqId] = useState(() =>
+    new URLSearchParams(window.location.search).get("revise"),
+  );
+  const [revisionLoading, setRevisionLoading] = useState(
+    Boolean(revisionRfqId),
+  );
 
   const getCompanyPrefix = (comp?: any) => {
     const c = comp ?? activeCompany;
@@ -133,6 +139,42 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
+    if (!revisionRfqId || !activeCompany?.id) return;
+
+    getRfq(revisionRfqId)
+      .then((response) => {
+        const rfq = response?.rfq ?? response?.data ?? response;
+        if (String(rfq.company_id) !== String(activeCompany.id)) {
+          throw new Error("This PR belongs to another company workspace.");
+        }
+        if (rfq.status !== "rejected") {
+          throw new Error("Only rejected PRs can be revised.");
+        }
+
+        setPrTitle(rfq.title || "");
+        setPrDesc(rfq.description || "");
+        setPrDuration(Number(rfq.duration_days || 7));
+        setPrDepartment(rfq.department || "General Procurement");
+        setDeliveryPoint(rfq.delivery_point || "");
+        setWarehouseId(rfq.warehouse_id || "");
+        setCart(
+          (rfq.items || []).map((item: any) => ({
+            id: item.catalogue_id,
+            item_code: item.catalogue?.item_code || "",
+            name: item.catalogue?.name || "Unnamed item",
+            uom: item.catalogue?.uom || "unit",
+            image_path: item.catalogue?.image_path || null,
+            qty: Number(item.qty || 1),
+            estimated_price: Number(item.estimated_price || 0),
+            expected_date: item.expected_date,
+          })),
+        );
+      })
+      .catch((err) => setError(err.message || "Unable to load PR revision."))
+      .finally(() => setRevisionLoading(false));
+  }, [revisionRfqId, activeCompany?.id]);
+
+  useEffect(() => {
     if (!activeCompany?.id) return;
     getWmsApps(activeCompany.id)
       .then((apps) => {
@@ -163,7 +205,7 @@ export default function Checkout() {
     if (!activeCompany) return;
     const slug = getCompanyPrefix(activeCompany);
     if (slug && !window.location.pathname.startsWith(slug)) {
-      navigate(`${slug}/checkout`, { replace: true });
+      navigate(`${slug}/checkout${window.location.search}`, { replace: true });
     }
   }, [activeCompany]);
 
@@ -178,6 +220,14 @@ export default function Checkout() {
     );
     setCart(newCart);
     localStorage.setItem("huntr_cart", JSON.stringify(newCart));
+  };
+
+  const updateQuantity = (id: string, qty: number) => {
+    setCart((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, qty: Math.max(1, qty || 1) } : item,
+      ),
+    );
   };
 
   const handleSubmitPR = async () => {
@@ -238,13 +288,18 @@ export default function Checkout() {
         );
         formData.append(
           `items[${index}][expected_date]`,
-          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
+          item.expected_date ||
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split("T")[0],
         );
       });
 
-      await createRfq(formData);
+      if (revisionRfqId) {
+        await resubmitRfq(revisionRfqId, formData);
+      } else {
+        await createRfq(formData);
+      }
 
       clearCart();
       setCart([]);
@@ -266,14 +321,20 @@ export default function Checkout() {
     return (
       <Layout
         title="Request Created"
-        subtitle="Your purchase requisition has been submitted."
+        subtitle={
+          revisionRfqId
+            ? "Your revised purchase requisition has been submitted."
+            : "Your purchase requisition has been submitted."
+        }
       >
         <div className="border border-dashed border-[var(--ui-border)] rounded-xl py-16 flex flex-col items-center justify-center gap-3 text-center">
           <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
             <CheckCircle2 size={36} />
           </div>
           <h2 className="text-lg font-bold text-[var(--ui-text-primary)]">
-            PR Successfully Submitted!
+            {revisionRfqId
+              ? "Revised PR Submitted!"
+              : "PR Successfully Submitted!"}
           </h2>
           <p className="text-xs text-[var(--ui-text-muted)] max-w-md">
             Your Purchase Request{" "}
@@ -296,9 +357,25 @@ export default function Checkout() {
   return (
     <Layout
       title="Checkout Purchase Request"
-      subtitle="Review your selected items and submit for approval."
+      subtitle={
+        revisionRfqId
+          ? "Update the rejected PR, then submit it again for approval."
+          : "Review your selected items and submit for approval."
+      }
     >
       <div className="w-full space-y-4">
+        {revisionLoading && (
+          <div className="flex items-center gap-2 border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-4 py-3 text-sm text-[var(--ui-text-secondary)]">
+            <Loader2 size={16} className="animate-spin" /> Loading PR for
+            revision…
+          </div>
+        )}
+        {revisionRfqId && !revisionLoading && !error && (
+          <div className="border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-[var(--ui-text-secondary)]">
+            You are revising a rejected PR. Update its details and items, then
+            submit it for approval again.
+          </div>
+        )}
         {/* Back Link */}
         <button
           onClick={() => navigate(`${getCompanyPrefix()}/marketplace`)}
@@ -369,9 +446,20 @@ export default function Checkout() {
                       </p>
                     </div>
 
-                    <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 font-bold text-[11px] shrink-0">
-                      ×{item.qty} {item.uom || "pc"}
-                    </span>
+                    <label className="w-20 shrink-0">
+                      <span className="mb-0.5 block text-[9px] font-bold uppercase text-[var(--ui-text-muted)]">
+                        Qty
+                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.qty}
+                        onChange={(e) =>
+                          updateQuantity(item.id, Number(e.target.value))
+                        }
+                        className="w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+                      />
+                    </label>
 
                     <div className="w-28 shrink-0">
                       <span className="text-[9px] font-bold uppercase text-[var(--ui-text-muted)] block mb-0.5">
@@ -640,7 +728,9 @@ export default function Checkout() {
 
               <button
                 onClick={handleSubmitPR}
-                disabled={loading || cart.length === 0}
+                disabled={
+                  loading || revisionLoading || !!error || cart.length === 0
+                }
                 style={{ color: "white" }}
                 className="w-full py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
@@ -648,7 +738,8 @@ export default function Checkout() {
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
                   <>
-                    Submit Request <CheckCircle2 size={16} />
+                    {revisionRfqId ? "Submit revised PR" : "Submit Request"}{" "}
+                    <CheckCircle2 size={16} />
                   </>
                 )}
               </button>

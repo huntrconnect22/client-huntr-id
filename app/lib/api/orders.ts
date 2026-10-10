@@ -2,12 +2,18 @@ import { apiGet, apiPost, apiPostForm } from "../client";
 
 /**
  * Orders & RFQ API
- * 
+ *
  * Tanggung jawab: Mengelola siklus pengadaan mulai dari RFQ hingga Receipt.
  */
 
 // --- Orders ---
-export const getOrders = (companyId: string | number, page: number = 1, perPage: number = 10, search: string = "", type: string = "all") => {
+export const getOrders = (
+  companyId: string | number,
+  page: number = 1,
+  perPage: number = 10,
+  search: string = "",
+  type: string = "all",
+) => {
   let url = `/api/orders?company_id=${companyId}&page=${page}&per_page=${perPage}&type=${type}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
   return apiGet(url);
@@ -26,8 +32,13 @@ export const createRfq = (payload: any) => {
 
 export const getRfq = (id: string | number) => apiGet(`/api/rfqs/${id}`);
 
-export const approveRfq = (rfqId: string | number, managerId: string | number) => 
-  apiPost(`/api/rfqs/${rfqId}/approve`, { manager_id: managerId });
+export const resubmitRfq = (rfqId: string | number, payload: FormData) =>
+  apiPostForm(`/api/rfqs/${rfqId}/resubmit`, payload);
+
+export const approveRfq = (
+  rfqId: string | number,
+  managerId: string | number,
+) => apiPost(`/api/rfqs/${rfqId}/approve`, { manager_id: managerId });
 
 // --- Proposals ---
 export const submitProposal = (payload: any) => {
@@ -54,22 +65,33 @@ export const createReceipt = (payload: {
 }) => apiPost("/api/receipts", payload);
 
 // --- Delivery & Invoice ---
-export const arrangeDelivery = (poId: string | number, companyId: string | number, trackingNumber?: string) => 
-  apiPost(`/api/orders/${poId}/arrange-delivery`, { company_id: companyId, tracking_number: trackingNumber });
+export const arrangeDelivery = (
+  poId: string | number,
+  companyId: string | number,
+  trackingNumber?: string,
+) =>
+  apiPost(`/api/orders/${poId}/arrange-delivery`, {
+    company_id: companyId,
+    tracking_number: trackingNumber,
+  });
 
-export const publishInvoice = (invoiceId: string | number, companyId: string | number) => 
-  apiPost(`/api/invoices/${invoiceId}/publish`, { company_id: companyId });
+export const publishInvoice = (
+  invoiceId: string | number,
+  companyId: string | number,
+) => apiPost(`/api/invoices/${invoiceId}/publish`, { company_id: companyId });
 
-export const approveInvoice = (invoiceId: string | number, companyId: string | number) => 
-  apiPost(`/api/invoices/${invoiceId}/approve`, { company_id: companyId });
+export const approveInvoice = (
+  invoiceId: string | number,
+  companyId: string | number,
+) => apiPost(`/api/invoices/${invoiceId}/approve`, { company_id: companyId });
 
 // --- Tracking ---
 /** Vendor advances the PO tracking status (packing / in_transit / delivered) */
 export const updatePoTrackingStatus = (
   poId: string | number,
   companyId: string | number,
-  status: 'packing' | 'in_transit' | 'delivered',
-  note?: string
+  status: "packing" | "in_transit" | "delivered",
+  note?: string,
 ) =>
   apiPost(`/api/orders/${poId}/update-tracking-status`, {
     company_id: companyId,
@@ -78,9 +100,12 @@ export const updatePoTrackingStatus = (
   });
 
 /** Public tracking — no auth required */
-export const publicTrackShipment = (params: { po_number?: string; tracking_number?: string }) => {
+export const publicTrackShipment = (params: {
+  po_number?: string;
+  tracking_number?: string;
+}) => {
   const qs = new URLSearchParams();
-  if (params.po_number) qs.set('po_number', params.po_number);
-  if (params.tracking_number) qs.set('tracking_number', params.tracking_number);
+  if (params.po_number) qs.set("po_number", params.po_number);
+  if (params.tracking_number) qs.set("tracking_number", params.tracking_number);
   return apiGet(`/api/track?${qs.toString()}`);
 };

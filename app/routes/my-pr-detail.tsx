@@ -135,32 +135,7 @@ export default function MyPurchaseRequisitionDetail() {
 
   const handleReviseAndResubmit = async () => {
     if (!request?.id) return;
-    const result = await Swal.fire({
-      icon: "question",
-      title: "Revise and resubmit this PR?",
-      text: "The PR will return to Pending Approval and be sent to the approver again. Review the rejection reason before submitting.",
-      showCancelButton: true,
-      confirmButtonText: "Resubmit for approval",
-      cancelButtonText: "Cancel",
-    });
-    if (!result.isConfirmed) return;
-    try {
-      const response = await apiPost(`/api/rfqs/${request.id}/resubmit`, {});
-      setRequest(response?.rfq ?? response?.data ?? response);
-      Swal.fire({
-        icon: "success",
-        title: "PR resubmitted",
-        text: "Your PR is pending approval again.",
-        timer: 1800,
-        showConfirmButton: false,
-      });
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Unable to resubmit",
-        text: err?.response?.data?.message || "Please try again.",
-      });
-    }
+    navigate(`/checkout?revise=${request.id}`);
   };
 
   if (loading) {

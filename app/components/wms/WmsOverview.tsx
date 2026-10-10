@@ -117,6 +117,7 @@ export function WmsOverview({
   stock,
   orders,
   onTabChange,
+  onActivityPage,
 }: {
   dash: any;
   warehouses: any[];
@@ -124,7 +125,12 @@ export function WmsOverview({
   stock: any[];
   orders: any[];
   onTabChange: (tab: string) => void;
+  onActivityPage: (page: number) => void;
 }) {
+  const activity =
+    dash?.recent_transactions?.data ?? dash?.recent_transactions ?? [];
+  const activityPage = dash?.recent_transactions?.current_page ?? 1;
+  const activityLastPage = dash?.recent_transactions?.last_page ?? 1;
   const setupSteps = [
     {
       title: "Create a warehouse",
@@ -162,63 +168,135 @@ export function WmsOverview({
   ];
   return (
     <>
-      <section className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--ui-border)] px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold">
-              Get started with your warehouse
-            </p>
-            <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
-              Follow the operational flow once. After that, use the tabs for
-              day-to-day work.
-            </p>
+      <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+        <section className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--ui-border)] px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold">
+                Get started with your warehouse
+              </p>
+              <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+                Follow the operational flow once. After that, use the tabs for
+                day-to-day work.
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-[var(--ui-text-brand)]">
+              {setupSteps.filter((step) => step.ready).length}/
+              {setupSteps.length} complete
+            </span>
           </div>
-          <span className="text-xs font-semibold text-[var(--ui-text-brand)]">
-            {setupSteps.filter((step) => step.ready).length}/{setupSteps.length}{" "}
-            complete
-          </span>
-        </div>
-        <div className="grid divide-y divide-[var(--ui-border)] md:grid-cols-2 md:divide-x md:divide-y-0">
-          {setupSteps.map(({ title, description, tab, ready, Icon }, index) => (
+          <div className="grid divide-y divide-[var(--ui-border)] md:grid-cols-2 md:divide-x md:divide-y-0">
+            {setupSteps.map(
+              ({ title, description, tab, ready, Icon }, index) => (
+                <button
+                  key={title}
+                  type="button"
+                  onClick={() => onTabChange(tab)}
+                  className="flex items-center gap-3 p-4 text-left transition-colors hover:bg-[var(--ui-bg-input)]"
+                >
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center border text-xs font-bold ${ready ? "border-[var(--ui-text-brand)] bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)]" : "border-[var(--ui-border)] text-[var(--ui-text-muted)]"}`}
+                  >
+                    {ready ? <CheckCircle2 size={16} /> : index + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold">{title}</span>
+                    <span className="mt-0.5 block text-xs leading-5 text-[var(--ui-text-muted)]">
+                      {description}
+                    </span>
+                  </span>
+                  <Icon
+                    size={17}
+                    className="shrink-0 text-[var(--ui-text-brand)]"
+                  />
+                </button>
+              ),
+            )}
+          </div>
+        </section>
+        <section className={card}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold">Recent activity</h3>
+              <p className="mt-1 text-xs text-[var(--ui-text-muted)]">
+                Your latest inventory events.
+              </p>
+            </div>
             <button
-              key={title}
               type="button"
-              onClick={() => onTabChange(tab)}
-              className="flex items-center gap-3 p-4 text-left transition-colors hover:bg-[var(--ui-bg-input)]"
+              onClick={() => onTabChange("Stock")}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--ui-text-brand)]"
             >
-              <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center border text-xs font-bold ${ready ? "border-[var(--ui-text-brand)] bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)]" : "border-[var(--ui-border)] text-[var(--ui-text-muted)]"}`}
-              >
-                {ready ? <CheckCircle2 size={16} /> : index + 1}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">{title}</span>
-                <span className="mt-0.5 block text-xs leading-5 text-[var(--ui-text-muted)]">
-                  {description}
-                </span>
-              </span>
-              <Icon
-                size={17}
-                className="shrink-0 text-[var(--ui-text-brand)]"
-              />
+              View stock <ChevronRight size={14} />
             </button>
-          ))}
-        </div>
-      </section>
+          </div>
+          <div className="mt-3 divide-y divide-[var(--ui-border)]">
+            {activity.map((x: any) => {
+              const quantity = toNumeric(x.quantity);
+              return (
+                <div
+                  key={x.id}
+                  className="flex items-center justify-between gap-2 py-2.5 text-xs"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">
+                      {x.item_name || x.sku || x.type}
+                    </p>
+                    <p className="truncate text-[var(--ui-text-muted)]">
+                      {x.reference || x.type} ·{" "}
+                      {new Date(x.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span
+                    className={
+                      quantity >= 0
+                        ? "shrink-0 font-semibold text-[color:var(--ui-text-success)]"
+                        : "shrink-0 font-semibold text-[color:var(--ui-text-error)]"
+                    }
+                  >
+                    {quantity >= 0 ? "+" : ""}
+                    {formatQty(quantity)}
+                  </span>
+                </div>
+              );
+            })}
+            {!activity.length && (
+              <p className="py-8 text-center text-xs text-[var(--ui-text-muted)]">
+                No stock movement yet.
+              </p>
+            )}
+          </div>
+          {activityLastPage > 1 && (
+            <div className="mt-3 flex items-center justify-between text-xs">
+              <button
+                type="button"
+                disabled={activityPage === 1}
+                onClick={() => onActivityPage(activityPage - 1)}
+                className="border border-[var(--ui-border)] px-2 py-1 disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="text-[var(--ui-text-muted)]">
+                Page {activityPage} of {activityLastPage}
+              </span>
+              <button
+                type="button"
+                disabled={activityPage === activityLastPage}
+                onClick={() => onActivityPage(activityPage + 1)}
+                className="border border-[var(--ui-border)] px-2 py-1 disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
           ["Active warehouses", dash?.warehouses ?? 0, Building2],
           ["Tracked SKUs", dash?.sku_count ?? 0, Boxes],
-          [
-            "Units on hand",
-            formatQty(dash?.on_hand_units || 0),
-            PackageCheck,
-          ],
-          [
-            "Allocated units",
-            formatQty(dash?.allocated_units || 0),
-            Truck,
-          ],
+          ["Units on hand", formatQty(dash?.on_hand_units || 0), PackageCheck],
+          ["Allocated units", formatQty(dash?.allocated_units || 0), Truck],
         ].map(([label, value, Icon]: any) => (
           <div className={card} key={label}>
             <Icon size={17} className="text-[var(--ui-text-brand)]" />
@@ -229,7 +307,7 @@ export function WmsOverview({
           </div>
         ))}
       </div>
-      <div className={card}>
+      <div className={card + " hidden"}>
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="font-bold">Recent activity</h3>
@@ -246,7 +324,7 @@ export function WmsOverview({
           </button>
         </div>
         <div className="mt-4 divide-y divide-[var(--ui-border)]">
-          {(dash?.recent_transactions || []).map((x: any) => {
+          {activity.map((x: any) => {
             const qty = toNumeric(x.quantity);
             const positive = qty >= 0;
             return (
@@ -261,7 +339,9 @@ export function WmsOverview({
                   <div className="min-w-0">
                     <p className="truncate font-medium text-[var(--ui-text-primary)]">
                       {x.item_name ||
-                        (x.sku ? `SKU ${x.sku}` : (
+                        (x.sku ? (
+                          `SKU ${x.sku}`
+                        ) : (
                           <span className="capitalize">{x.type}</span>
                         ))}
                     </p>
@@ -288,7 +368,7 @@ export function WmsOverview({
               </div>
             );
           })}
-          {!dash?.recent_transactions?.length && (
+          {!activity.length && (
             <div className="py-6 text-center">
               <ArrowDownToLine
                 size={22}

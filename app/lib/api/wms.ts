@@ -10,8 +10,10 @@ export const installWms = (companyId: string) =>
   apiPost<any>(`/api/wms/apps/install`, { company_id: companyId });
 export const uninstallWms = (companyId: string) =>
   apiDelete<any>(`/api/wms/apps/install?${companyQuery(companyId)}`);
-export const getWmsDashboard = (companyId: string) =>
-  apiGet<any>(`/api/wms/dashboard?${companyQuery(companyId)}`);
+export const getWmsDashboard = (companyId: string, activityPage = 1) =>
+  apiGet<any>(
+    `/api/wms/dashboard?${companyQuery(companyId)}&activity_page=${activityPage}`,
+  );
 export const getWarehouses = (companyId: string) =>
   apiGet<any>(`/api/wms/warehouses?${companyQuery(companyId)}`);
 export const createWarehouse = (companyId: string, data: any) =>
