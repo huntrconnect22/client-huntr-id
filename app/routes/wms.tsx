@@ -427,6 +427,59 @@ export default function WmsPage() {
     }
   };
 
+  const buildReceiveLine = () => {
+    if (
+      (!receiveForm.catalogue_id && !receiveForm.sku) ||
+      !Number(receiveForm.quantity)
+    ) {
+      throw new Error("Select an item and enter its received quantity first.");
+    }
+
+    const receivedQuantity = Number(receiveForm.quantity);
+    const rejectedQuantity = Number(receiveForm.rejected_quantity || 0);
+    if (rejectedQuantity > receivedQuantity) {
+      throw new Error("Rejected quantity cannot exceed received quantity.");
+    }
+
+    return {
+      ...(receiveForm.catalogue_id
+        ? { catalogue_id: receiveForm.catalogue_id }
+        : { sku: receiveForm.sku }),
+      item_name: receiveForm.item_name || undefined,
+      received_quantity: receivedQuantity,
+      accepted_quantity: receivedQuantity - rejectedQuantity,
+      rejected_quantity: rejectedQuantity,
+      condition: receiveForm.condition,
+      inspection_notes: receiveForm.inspection_notes || undefined,
+    };
+  };
+
+  const clearReceiveLine = () => {
+    setReceiveForm({
+      ...receiveForm,
+      catalogue_id: "",
+      sku: "",
+      item_name: "",
+      quantity: "",
+      rejected_quantity: "0",
+      condition: "good",
+      inspection_notes: "",
+    });
+  };
+
+  const hasReceiveLineInput = Boolean(
+    receiveForm.catalogue_id ||
+    receiveForm.sku ||
+    receiveForm.item_name ||
+    receiveForm.quantity,
+  );
+  const readyReceiveLineCount =
+    receiveLines.length +
+    ((receiveForm.catalogue_id || receiveForm.sku) &&
+    Number(receiveForm.quantity)
+      ? 1
+      : 0);
+
   const nonAllocatableBinIds = useMemo(() => {
     const ids = new Set<string>();
     for (const w of warehouses) {
@@ -1192,9 +1245,12 @@ export default function WmsPage() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   run(async () => {
-                    if (!receiveLines.length) {
+                    const lines = hasReceiveLineInput
+                      ? [...receiveLines, buildReceiveLine()]
+                      : receiveLines;
+                    if (!lines.length) {
                       throw new Error(
-                        "Add at least one receipt line before confirming.",
+                        "Select an item and enter its received quantity first.",
                       );
                     }
                     await receiveStock(company.id, {
@@ -1203,7 +1259,7 @@ export default function WmsPage() {
                         receiveForm.purchase_order_id || undefined,
                       idempotency_key: receiveKey,
                       reference: receiveForm.bin_location || undefined,
-                      lines: receiveLines,
+                      lines,
                     });
                     setReceiveForm({
                       ...receiveForm,
@@ -1229,8 +1285,8 @@ export default function WmsPage() {
                   <div>
                     <h3 className="font-bold">Receive incoming goods</h3>
                     <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
-                      Create a draft, inspect each line, then confirm it into
-                      the receiving bin.
+                      Confirm the item being entered directly, or add lines
+                      first when one delivery contains multiple items.
                     </p>
                   </div>
                   <span className="shrink-0 border border-[var(--ui-border)] px-2 py-1 text-[10px] font-semibold text-[var(--ui-text-muted)]">
@@ -1452,54 +1508,26 @@ export default function WmsPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (
-                        (!receiveForm.catalogue_id && !receiveForm.sku) ||
-                        !Number(receiveForm.quantity)
-                      ) {
-                        setError(
-                          "Select an item and enter its received quantity first.",
+                      try {
+                        const line = buildReceiveLine();
+                        setReceiveLines([...receiveLines, line]);
+                        setReceiptLineNotice(
+                          `Receipt line added. ${receiveLines.length + 1} line(s) ready to confirm.`,
                         );
-                        return;
+                        clearReceiveLine();
+                      } catch (lineError: any) {
+                        setError(
+                          lineError.message ||
+                            "Select an item and enter its received quantity first.",
+                        );
                       }
-                      setReceiveLines([
-                        ...receiveLines,
-                        {
-                          ...(receiveForm.catalogue_id
-                            ? { catalogue_id: receiveForm.catalogue_id }
-                            : { sku: receiveForm.sku }),
-                          item_name: receiveForm.item_name || undefined,
-                          received_quantity: Number(receiveForm.quantity),
-                          accepted_quantity:
-                            Number(receiveForm.quantity) -
-                            Number(receiveForm.rejected_quantity || 0),
-                          rejected_quantity: Number(
-                            receiveForm.rejected_quantity || 0,
-                          ),
-                          condition: receiveForm.condition,
-                          inspection_notes:
-                            receiveForm.inspection_notes || undefined,
-                        },
-                      ]);
-                      setReceiptLineNotice(
-                        `Receipt line added. ${receiveLines.length + 1} line(s) ready to confirm.`,
-                      );
-                      setReceiveForm({
-                        ...receiveForm,
-                        catalogue_id: "",
-                        sku: "",
-                        item_name: "",
-                        quantity: "",
-                        rejected_quantity: "0",
-                        condition: "good",
-                        inspection_notes: "",
-                      });
                     }}
                     className="inline-flex items-center gap-2 rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
                   >
                     + Add receipt line
                   </button>
                   <button
-                    disabled={busy || receiveLines.length === 0}
+                    disabled={busy}
                     className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {busy ? (
@@ -1507,7 +1535,7 @@ export default function WmsPage() {
                     ) : null}
                     {busy
                       ? "Confirming receipt…"
-                      : `Confirm receiving (${receiveLines.length})`}
+                      : `Confirm receiving (${readyReceiveLineCount})`}
                   </button>
                 </div>
               </form>
