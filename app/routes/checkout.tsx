@@ -289,7 +289,9 @@ export default function Checkout() {
       formData.append("user_id", user.id);
       formData.append("title", prTitle);
       formData.append("description", prDesc);
-      formData.append("duration_days", prDuration.toString());
+      if (procurementMode === "tender") {
+        formData.append("duration_days", prDuration.toString());
+      }
       formData.append("status", "pending_approval");
       formData.append("procurement_mode", procurementMode);
       formData.append("delivery_point", deliveryPoint);
@@ -297,7 +299,7 @@ export default function Checkout() {
         formData.append("warehouse_id", warehouseId);
       formData.append("department", prDepartment);
 
-      if (prDocument) {
+      if (procurementMode === "tender" && prDocument) {
         const maxSize = 10 * 1024 * 1024;
         if (prDocument.size > maxSize) {
           setError("File size must be less than 10MB.");
@@ -610,7 +612,10 @@ export default function Checkout() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setProcurementMode("direct")}
+                      onClick={() => {
+                        setProcurementMode("direct");
+                        setPrDocument(null);
+                      }}
                       className={`border p-3 text-left transition-colors ${procurementMode === "direct" ? "border-orange-500 bg-orange-500/5" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)]"}`}
                     >
                       <span className="block font-semibold text-[var(--ui-text-primary)]">
@@ -768,61 +773,63 @@ export default function Checkout() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
-                      <Calendar size={12} /> Tender Duration (Days)
-                    </label>
-                    <select
-                      value={prDuration}
-                      onChange={(e) => setPrDuration(Number(e.target.value))}
-                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
-                    >
-                      <option value={3}>3 Days</option>
-                      <option value={7}>7 Days</option>
-                      <option value={14}>14 Days</option>
-                      <option value={30}>30 Days</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
-                      <Paperclip size={12} /> Supporting Doc (Optional)
-                    </label>
-                    <div>
-                      <input
-                        type="file"
-                        id="pr-document"
-                        onChange={(e) =>
-                          setPrDocument(e.target.files?.[0] || null)
-                        }
-                        className="hidden"
-                        accept=".pdf,.doc,.docx,.jpg,.png"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          document.getElementById("pr-document")?.click()
-                        }
-                        className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-left text-xs text-[var(--ui-text-muted)] flex items-center gap-2 hover:border-orange-400/50 transition-all truncate"
+                {procurementMode === "tender" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
+                        <Calendar size={12} /> Tender Duration (Days)
+                      </label>
+                      <select
+                        value={prDuration}
+                        onChange={(e) => setPrDuration(Number(e.target.value))}
+                        className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
                       >
-                        {prDocument ? (
-                          <>
-                            <FileText
-                              size={14}
-                              className="text-orange-500 shrink-0"
-                            />{" "}
-                            <span className="truncate text-orange-500 font-semibold">
-                              {prDocument.name}
-                            </span>
-                          </>
-                        ) : (
-                          "Choose file..."
-                        )}
-                      </button>
+                        <option value={3}>3 Days</option>
+                        <option value={7}>7 Days</option>
+                        <option value={14}>14 Days</option>
+                        <option value={30}>30 Days</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
+                        <Paperclip size={12} /> Supporting Doc (Optional)
+                      </label>
+                      <div>
+                        <input
+                          type="file"
+                          id="pr-document"
+                          onChange={(e) =>
+                            setPrDocument(e.target.files?.[0] || null)
+                          }
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.jpg,.png"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("pr-document")?.click()
+                          }
+                          className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-left text-xs text-[var(--ui-text-muted)] flex items-center gap-2 hover:border-orange-400/50 transition-all truncate"
+                        >
+                          {prDocument ? (
+                            <>
+                              <FileText
+                                size={14}
+                                className="text-orange-500 shrink-0"
+                              />{" "}
+                              <span className="truncate text-orange-500 font-semibold">
+                                {prDocument.name}
+                              </span>
+                            </>
+                          ) : (
+                            "Choose file..."
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
