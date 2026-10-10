@@ -42,6 +42,7 @@ interface BuildNavItemsParams {
   isAdminRole: boolean;
   isVendorComp: boolean;
   wmsInstalled: boolean;
+  canAccessWms: boolean;
 }
 
 export function buildNavItems({
@@ -55,6 +56,7 @@ export function buildNavItems({
   isAdminRole,
   isVendorComp,
   wmsInstalled,
+  canAccessWms,
 }: BuildNavItemsParams): NavItemConfig[] {
   const items: NavItemConfig[] = [
     ...(isPendingCompany
@@ -202,7 +204,7 @@ export function buildNavItems({
             Icon: Package,
             section: "main",
           },
-          ...(wmsInstalled
+          ...(wmsInstalled && canAccessWms
             ? [
                 {
                   to: `${companyPrefix}/wms`,

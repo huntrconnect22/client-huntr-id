@@ -30,6 +30,7 @@ import {
   arrangeDelivery,
   publishInvoice,
   updatePoTrackingStatus,
+  advanceDirectPurchaseOrder,
 } from "../lib/api";
 import PaymentModal from "../components/PaymentModal";
 import { ImportModal } from "../features/orders/components/ImportModal";
@@ -489,6 +490,21 @@ export default function Orders() {
     }
   };
 
+  const handleAdvanceDirectPo = async (po: any) => {
+    if (!company) return;
+    setProcessingId(po.id);
+    setError(null);
+    try {
+      await advanceDirectPurchaseOrder(po.id, company.id);
+      showSuccess("✓ Direct PO progress updated.");
+      fetchOrders(company.id, currentPage, searchQuery, activeTab);
+    } catch (err: any) {
+      setError(err.message || "Failed to update direct PO progress");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleIssueBast = async (poId: string) => {
     if (!company || !user) return;
     setIssuingBastId(poId);
@@ -795,6 +811,57 @@ export default function Orders() {
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                      {company.type === "buyer" &&
+                        po.procurement_mode === "direct" &&
+                        po.status === "issued" && (
+                          <button
+                            onClick={() => handleAdvanceDirectPo(po)}
+                            disabled={processingId === po.id}
+                            style={{ color: "white" }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                          >
+                            {processingId === po.id ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={11} />
+                            )}{" "}
+                            Record vendor confirmation
+                          </button>
+                        )}
+                      {company.type === "buyer" &&
+                        po.procurement_mode === "direct" &&
+                        po.status === "confirmed" && (
+                          <button
+                            onClick={() => handleAdvanceDirectPo(po)}
+                            disabled={processingId === po.id}
+                            style={{ color: "white" }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                          >
+                            {processingId === po.id ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <Truck size={11} />
+                            )}{" "}
+                            Record goods dispatch
+                          </button>
+                        )}
+                      {company.type === "buyer" &&
+                        po.procurement_mode === "direct" &&
+                        po.status === "in_transit" && (
+                          <button
+                            onClick={() => handleAdvanceDirectPo(po)}
+                            disabled={processingId === po.id}
+                            style={{ color: "white" }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                          >
+                            {processingId === po.id ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <Package size={11} />
+                            )}{" "}
+                            Record goods received
+                          </button>
+                        )}
                       {company.type === "vendor" &&
                         ["published", "issued"].includes(po.status) && (
                           <button

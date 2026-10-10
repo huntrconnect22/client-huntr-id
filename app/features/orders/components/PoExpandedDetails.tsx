@@ -92,27 +92,37 @@ export const PoExpandedDetails = ({
     "do" | "bast" | "efaktur" | null
   >(null);
 
-  const steps = [
-    { key: "issued", label: "PO Issued", icon: FileText },
-    { key: "confirmed", label: "PO Confirmed", icon: CheckCircle2 },
-    { key: "paid", label: "Payment Received", icon: CreditCard },
-    { key: "packing", label: "Packing", icon: Package },
-    { key: "in_transit", label: "In Transit", icon: Truck },
-    { key: "delivered", label: "Delivered", icon: CheckCircle2 },
-  ];
+  const isDirectPurchase = po.procurement_mode === "direct";
+  const steps = isDirectPurchase
+    ? [
+        { key: "issued", label: "PO Issued", icon: FileText },
+        { key: "confirmed", label: "Vendor Confirmed", icon: CheckCircle2 },
+        { key: "in_transit", label: "Goods Dispatched", icon: Truck },
+        { key: "delivered", label: "Received", icon: CheckCircle2 },
+      ]
+    : [
+        { key: "issued", label: "PO Issued", icon: FileText },
+        { key: "confirmed", label: "PO Confirmed", icon: CheckCircle2 },
+        { key: "paid", label: "Payment Received", icon: CreditCard },
+        { key: "packing", label: "Packing", icon: Package },
+        { key: "in_transit", label: "In Transit", icon: Truck },
+        { key: "delivered", label: "Delivered", icon: CheckCircle2 },
+      ];
 
-  const statusOrder = [
-    "issued",
-    "published",
-    "confirmed",
-    "paid",
-    "packing",
-    "in_transit",
-    "delivery",
-    "delivered",
-    "completed",
-    "done",
-  ];
+  const statusOrder = isDirectPurchase
+    ? ["issued", "confirmed", "in_transit", "delivered"]
+    : [
+        "issued",
+        "published",
+        "confirmed",
+        "paid",
+        "packing",
+        "in_transit",
+        "delivery",
+        "delivered",
+        "completed",
+        "done",
+      ];
   const currentIdx = statusOrder.indexOf(po.status);
   const isReached = (stepKey: string) => {
     const stepIdx = statusOrder.indexOf(stepKey);
@@ -136,7 +146,9 @@ export const PoExpandedDetails = ({
       {/* ── Order Progress Stepper ── */}
       <div className="bg-[var(--ui-bg-card)] p-3 rounded-xl border border-[var(--ui-border)] space-y-3">
         <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-          <span>Order Timeline</span>
+          <span>
+            {isDirectPurchase ? "Direct purchase progress" : "Order Timeline"}
+          </span>
           {company?.type === "vendor" && (
             <a
               href="/track"
@@ -148,6 +160,12 @@ export const PoExpandedDetails = ({
             </a>
           )}
         </div>
+        {isDirectPurchase && (
+          <p className="text-xs text-[var(--ui-text-muted)]">
+            Buyer records vendor confirmation, dispatch, and receipt for this
+            direct PO.
+          </p>
+        )}
 
         <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
           {steps.map((step, idx) => {

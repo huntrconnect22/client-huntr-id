@@ -62,7 +62,11 @@ export default function AppShell() {
 
   useEffect(() => {
     const on = (e: Event) => {
-      const ev = e as CustomEvent<{ active: boolean; blur?: number; intensity?: string }>;
+      const ev = e as CustomEvent<{
+        active: boolean;
+        blur?: number;
+        intensity?: string;
+      }>;
       setGlobalBackdropActive(Boolean(ev.detail?.active));
       if (ev.detail?.blur != null) {
         document.documentElement.style.setProperty(
@@ -82,7 +86,8 @@ export default function AppShell() {
       );
     };
     window.addEventListener("huntr:global-backdrop", on as EventListener);
-    return () => window.removeEventListener("huntr:global-backdrop", on as EventListener);
+    return () =>
+      window.removeEventListener("huntr:global-backdrop", on as EventListener);
   }, []);
 
   // Page title/subtitle — child routes push these upward via context
@@ -361,6 +366,8 @@ export default function AppShell() {
   const isFinance = user?.role === "finance";
   const isBuyerRole = user?.role === "buyer";
   const isAdminRole = user?.role === "admin";
+  const canAccessWms =
+    user?.role === "warehouse_admin" || isManager;
   const isBuyerComp = activeCompany?.type === "buyer";
   const isVendorComp = activeCompany?.type === "vendor";
 
@@ -430,6 +437,7 @@ export default function AppShell() {
     isAdminRole,
     isVendorComp,
     wmsInstalled,
+    canAccessWms,
   });
 
   const fetchUnreadCount = async (userId: number) => {
@@ -625,7 +633,9 @@ export default function AppShell() {
   }
 
   return (
-    <div className={`huntr-app-shell${globalBackdropActive ? " huntr-app-shell--global-backdrop" : ""}`}>
+    <div
+      className={`huntr-app-shell${globalBackdropActive ? " huntr-app-shell--global-backdrop" : ""}`}
+    >
       <NotificationSound />
 
       {globalBackdropActive && (
@@ -633,7 +643,9 @@ export default function AppShell() {
           className="huntr-global-backdrop"
           onClick={() => {
             // Child pages/drawers listen for this event and close themselves.
-            window.dispatchEvent(new CustomEvent("huntr:global-backdrop-clicked"));
+            window.dispatchEvent(
+              new CustomEvent("huntr:global-backdrop-clicked"),
+            );
           }}
           aria-hidden="true"
         />

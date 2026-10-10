@@ -51,6 +51,9 @@ export const createDirectPurchaseOrder = (payload: {
   expected_receiving_date?: string;
 }) => apiPost("/api/orders/direct", payload);
 
+export const advanceDirectPurchaseOrder = (poId: string, companyId: string) =>
+  apiPost(`/api/orders/${poId}/advance-direct`, { company_id: companyId });
+
 // --- Proposals ---
 export const submitProposal = (payload: any) => {
   if (payload instanceof FormData) {
