@@ -746,7 +746,7 @@ export default function WmsPage() {
                 setInstalled(true);
               })
             }
-            className="mt-3 rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white"
+            className="mt-3 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white"
           >
             Install module
           </button>
@@ -935,7 +935,7 @@ export default function WmsPage() {
                     })
                   }
                 />
-                <button className="inline-flex items-center gap-2 rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
+                <button className="inline-flex items-center gap-2 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
                   <Plus size={15} />
                   Create warehouse
                 </button>
@@ -1500,7 +1500,7 @@ export default function WmsPage() {
                   </button>
                   <button
                     disabled={busy || receiveLines.length === 0}
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {busy ? (
                       <Loader2 size={15} className="animate-spin" />
@@ -1578,7 +1578,7 @@ export default function WmsPage() {
                     onClick={() => openPicker("putaway_to_bin")}
                   />
                 </div>
-                <button className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
+                <button className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
                   Confirm put away
                 </button>
               </form>
@@ -1778,7 +1778,7 @@ export default function WmsPage() {
                   )}
                 <button
                   disabled={!allocationSufficient}
-                  className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Allocate stock
                 </button>
@@ -2019,7 +2019,7 @@ export default function WmsPage() {
                     />
                   </div>
                 </div>
-                <button className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
+                <button className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
                   Confirm transfer
                 </button>
               </form>
@@ -2122,7 +2122,7 @@ export default function WmsPage() {
                     setAdjustForm({ ...adjustForm, reason: e.target.value })
                   }
                 />
-                <button className="rounded-md bg-[image:var(--huntr-gradient)] px-4 py-2 text-sm font-semibold text-white">
+                <button className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
                   Record adjustment
                 </button>
               </form>

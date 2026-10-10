@@ -3,14 +3,33 @@ import { useNavigate, useLocation } from "react-router";
 import Layout from "../components/Layout";
 import QRCode from "qrcode";
 import {
-  FileText, RefreshCw, ChevronDown, ChevronRight, Loader2,
-  Calendar, Building, CheckCircle2, ChevronLeft, Package, Clock,
-  UploadCloud, FileSpreadsheet, Search, Truck, Bot
+  FileText,
+  RefreshCw,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  Calendar,
+  Building,
+  CheckCircle2,
+  ChevronLeft,
+  Package,
+  Clock,
+  UploadCloud,
+  FileSpreadsheet,
+  Search,
+  Truck,
+  Bot,
 } from "lucide-react";
 import {
-  getOrders, importHistoricalPo, importCatalogue,
-  getCsrfCookie, apiPost, getFullApiUrl, arrangeDelivery,
-  publishInvoice, updatePoTrackingStatus
+  getOrders,
+  importHistoricalPo,
+  importCatalogue,
+  getCsrfCookie,
+  apiPost,
+  getFullApiUrl,
+  arrangeDelivery,
+  publishInvoice,
+  updatePoTrackingStatus,
 } from "../lib/api";
 import PaymentModal from "../components/PaymentModal";
 import { ImportModal } from "../features/orders/components/ImportModal";
@@ -21,13 +40,43 @@ import { isDemoMode } from "../lib/demo-mode";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'confirmed':  return { label: 'Confirmed',  bg: "rgba(249,115,22,0.1)",  color: "#f97316",  Icon: CheckCircle2 };
-    case 'paid':       return { label: 'Paid',        bg: "rgba(59,130,246,0.1)",  color: "#3b82f6",  Icon: CheckCircle2 };
-    case 'completed':
-    case 'done':       return { label: 'Completed',   bg: "rgba(34,197,94,0.1)",   color: "#22c55e",  Icon: CheckCircle2 };
-    case 'shipped':
-    case 'delivered':  return { label: 'Delivering',  bg: "rgba(236,72,153,0.1)",  color: "#ec4899",  Icon: Package };
-    default:           return { label: 'Issued',      bg: "rgba(249,115,22,0.1)",  color: "#fb923c",  Icon: Clock };
+    case "confirmed":
+      return {
+        label: "Confirmed",
+        bg: "rgba(249,115,22,0.1)",
+        color: "#f97316",
+        Icon: CheckCircle2,
+      };
+    case "paid":
+      return {
+        label: "Paid",
+        bg: "rgba(59,130,246,0.1)",
+        color: "#3b82f6",
+        Icon: CheckCircle2,
+      };
+    case "completed":
+    case "done":
+      return {
+        label: "Completed",
+        bg: "rgba(34,197,94,0.1)",
+        color: "#22c55e",
+        Icon: CheckCircle2,
+      };
+    case "shipped":
+    case "delivered":
+      return {
+        label: "Delivering",
+        bg: "rgba(236,72,153,0.1)",
+        color: "#ec4899",
+        Icon: Package,
+      };
+    default:
+      return {
+        label: "Issued",
+        bg: "rgba(249,115,22,0.1)",
+        color: "#fb923c",
+        Icon: Clock,
+      };
   }
 };
 
@@ -39,18 +88,38 @@ const getPlatFeeRate = (base: number) => {
 };
 
 const calcFees = (base: number) => {
-  const platFeeRate  = getPlatFeeRate(base);
-  const platFee      = base * platFeeRate;
-  const ppnPlatform  = platFee * 0.11;
-  const adminBank    = 4400;
-  const pph23        = platFee * 0.02;
-  const biayaLayanan = (platFee + ppnPlatform) + adminBank - pph23;
-  const ppn          = base * 0.11;
-  const grandTotal   = base + biayaLayanan + ppn;
-  return { platFeeRate, platFee, ppnPlatform, adminBank, pph23, biayaLayanan, ppn, grandTotal };
+  const platFeeRate = getPlatFeeRate(base);
+  const platFee = base * platFeeRate;
+  const ppnPlatform = platFee * 0.11;
+  const adminBank = 4400;
+  const pph23 = platFee * 0.02;
+  const biayaLayanan = platFee + ppnPlatform + adminBank - pph23;
+  const ppn = base * 0.11;
+  const grandTotal = base + biayaLayanan + ppn;
+  return {
+    platFeeRate,
+    platFee,
+    ppnPlatform,
+    adminBank,
+    pph23,
+    biayaLayanan,
+    ppn,
+    grandTotal,
+  };
 };
 
-const fmt = (n: number) => n.toLocaleString('id-ID');
+const fmt = (n: number) => n.toLocaleString("id-ID");
+
+const formatPoDate = (value?: string | null) => {
+  if (!value) return "Date not recorded";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date not recorded";
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -69,7 +138,9 @@ export default function Orders() {
   const [lastPage, setLastPage] = useState(1);
   const [totalOrders, setTotalOrders] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"all" | "operational" | "historical">("all");
+  const [activeTab, setActiveTab] = useState<
+    "all" | "operational" | "historical"
+  >("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPo, setExpandedPo] = useState<string | null>(null);
 
@@ -79,7 +150,9 @@ export default function Orders() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [issuingBastId, setIssuingBastId] = useState<string | null>(null);
-  const [triggeringBotPoId, setTriggeringBotPoId] = useState<string | null>(null);
+  const [triggeringBotPoId, setTriggeringBotPoId] = useState<string | null>(
+    null,
+  );
 
   // Import
   const [showImportModal, setShowImportModal] = useState(false);
@@ -96,7 +169,10 @@ export default function Orders() {
   useEffect(() => {
     const userSession = localStorage.getItem("user_session");
     const activeComp = localStorage.getItem("active_company");
-    if (!userSession || !activeComp) { navigate("/login"); return; }
+    if (!userSession || !activeComp) {
+      navigate("/login");
+      return;
+    }
     setUser(JSON.parse(userSession));
     setCompany(JSON.parse(activeComp));
     setLoading(false);
@@ -112,12 +188,20 @@ export default function Orders() {
 
   useEffect(() => {
     if (!company) return;
-    const timer = setTimeout(() => fetchOrders(company.id, 1, searchQuery, activeTab), 500);
+    const timer = setTimeout(
+      () => fetchOrders(company.id, 1, searchQuery, activeTab),
+      500,
+    );
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
   // ─── Data ────────────────────────────────────────────────────────────────
-  const fetchOrders = async (companyId: string | number, page: number, search = "", type = "all") => {
+  const fetchOrders = async (
+    companyId: string | number,
+    page: number,
+    search = "",
+    type = "all",
+  ) => {
     try {
       setRefreshing(true);
       const res = await getOrders(companyId, page, 10, search, type);
@@ -138,75 +222,191 @@ export default function Orders() {
   };
 
   const generateQRCode = useCallback(async (text: string) => {
-    try { return await QRCode.toDataURL(text, { width: 128 }); }
-    catch { return null; }
+    try {
+      return await QRCode.toDataURL(text, { width: 128 });
+    } catch {
+      return null;
+    }
   }, []);
 
   // ─── Excel Export ────────────────────────────────────────────────────────
   const exportToExcel = () => {
     if (orders.length === 0) return;
     const headers = [
-      "PO Number","Tender Title","Vendor Name","Order Date","PO Status","PO Currency",
-      "PO Total Amount","PO Created By","PO Approved By","DO Handed By","DO Received By",
-      "BAST Handed By","BAST Received By","Item Name","Item Code","Item Qty","Item UOM",
-      "Item Unit Price","Item Tax","Item Subtotal"
+      "PO Number",
+      "Tender Title",
+      "Vendor Name",
+      "Order Date",
+      "PO Status",
+      "PO Currency",
+      "PO Total Amount",
+      "PO Created By",
+      "PO Approved By",
+      "DO Handed By",
+      "DO Received By",
+      "BAST Handed By",
+      "BAST Received By",
+      "Item Name",
+      "Item Code",
+      "Item Qty",
+      "Item UOM",
+      "Item Unit Price",
+      "Item Tax",
+      "Item Subtotal",
     ];
     const rows: any[] = [];
-    orders.forEach(po => {
-      const doHBy  = po.delivery_orders?.map((d: any) => d.handed_by_name   || "").filter(Boolean).join("; ") || "";
-      const doRBy  = po.delivery_orders?.map((d: any) => d.received_by_name || "").filter(Boolean).join("; ") || "";
-      const bHBy   = po.basts?.map((b: any) => b.handed_by_name   || "").filter(Boolean).join("; ") || "";
-      const bRBy   = po.basts?.map((b: any) => b.received_by_name || "").filter(Boolean).join("; ") || "";
-      const base   = [po.po_number||"",po.rfq?.title||"Purchase Order",po.vendor_name||"",po.order_date||new Date(po.created_at).toLocaleDateString(),po.status||"issued",po.currency||"IDR",po.total_amount||0,po.created_by||"System",po.approved_by||"",doHBy,doRBy,bHBy,bRBy];
+    orders.forEach((po) => {
+      const doHBy =
+        po.delivery_orders
+          ?.map((d: any) => d.handed_by_name || "")
+          .filter(Boolean)
+          .join("; ") || "";
+      const doRBy =
+        po.delivery_orders
+          ?.map((d: any) => d.received_by_name || "")
+          .filter(Boolean)
+          .join("; ") || "";
+      const bHBy =
+        po.basts
+          ?.map((b: any) => b.handed_by_name || "")
+          .filter(Boolean)
+          .join("; ") || "";
+      const bRBy =
+        po.basts
+          ?.map((b: any) => b.received_by_name || "")
+          .filter(Boolean)
+          .join("; ") || "";
+      const base = [
+        po.po_number || "",
+        po.rfq?.title || "Purchase Order",
+        po.vendor_name || "",
+        formatPoDate(po.order_date || po.created_at),
+        po.status || "issued",
+        po.currency || "IDR",
+        po.total_amount || 0,
+        po.created_by || "System",
+        po.approved_by || "",
+        doHBy,
+        doRBy,
+        bHBy,
+        bRBy,
+      ];
       if (po.items?.length > 0) {
-        po.items.forEach((item: any) => rows.push([...base,item.inventory_name||"",item.inventory_code||"",item.qty||0,item.uom||"",item.unit_price||0,item.tax_amount||0,item.total_amount||0]));
+        po.items.forEach((item: any) =>
+          rows.push([
+            ...base,
+            item.inventory_name || "",
+            item.inventory_code || "",
+            item.qty || 0,
+            item.uom || "",
+            item.unit_price || 0,
+            item.tax_amount || 0,
+            item.total_amount || 0,
+          ]),
+        );
       } else {
-        rows.push([...base,"","",0,"",0,0,0]);
+        rows.push([...base, "", "", 0, "", 0, 0, 0]);
       }
     });
-    const csv = "\uFEFF" + [headers.join(","), ...rows.map(e => e.map((v: any) => `"${String(v).replace(/"/g,'""')}"`).join(","))].join("\n");
-    const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8;"}));
+    const csv =
+      "\uFEFF" +
+      [
+        headers.join(","),
+        ...rows.map((e) =>
+          e.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(","),
+        ),
+      ].join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    );
     const a = document.createElement("a");
-    a.href = url; a.download = `purchase_orders_detailed_${new Date().toISOString().slice(0,10)}.csv`;
-    a.style.visibility = "hidden"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    a.href = url;
+    a.download = `purchase_orders_detailed_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.style.visibility = "hidden";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   // ─── Actions ────────────────────────────────────────────────────────────
-  const showSuccess = (msg: string) => { setSuccessMessage(msg); setTimeout(() => setSuccessMessage(null), 3000); };
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
 
-  const handleSignDocument = async (type: 'bast'|'do', id: string, role: 'handed-by'|'received-by') => {
+  const handleSignDocument = async (
+    type: "bast" | "do",
+    id: string,
+    role: "handed-by" | "received-by",
+  ) => {
     if (!user || !company) return;
-    setProcessingId(id); setError(null);
+    setProcessingId(id);
+    setError(null);
     try {
-      const endpoint = type === 'bast' ? `/api/basts/${id}/sign-${role}` : `/api/do/${id}/sign-${role}`;
-      const data = role === 'handed-by'
-        ? { handed_by_user_id: user.id, handed_by_name: user.name, handed_by_position: "Manager" }
-        : { received_by_user_id: user.id, received_by_name: user.name, received_by_position: "Manager" };
+      const endpoint =
+        type === "bast"
+          ? `/api/basts/${id}/sign-${role}`
+          : `/api/do/${id}/sign-${role}`;
+      const data =
+        role === "handed-by"
+          ? {
+              handed_by_user_id: user.id,
+              handed_by_name: user.name,
+              handed_by_position: "Manager",
+            }
+          : {
+              received_by_user_id: user.id,
+              received_by_name: user.name,
+              received_by_position: "Manager",
+            };
       const res = await apiPost(endpoint, data);
       if (res?.do || res?.bast) {
         const signed = res.do || res.bast;
-        setOrders(prev => prev.map(po => ({
-          ...po,
-          delivery_orders: type==='do' ? po.delivery_orders?.map((d: any) => d.id===id ? signed : d) : po.delivery_orders,
-          basts: type==='bast' ? po.basts?.map((b: any) => b.id===id ? signed : b) : po.basts,
-        })));
+        setOrders((prev) =>
+          prev.map((po) => ({
+            ...po,
+            delivery_orders:
+              type === "do"
+                ? po.delivery_orders?.map((d: any) =>
+                    d.id === id ? signed : d,
+                  )
+                : po.delivery_orders,
+            basts:
+              type === "bast"
+                ? po.basts?.map((b: any) => (b.id === id ? signed : b))
+                : po.basts,
+          })),
+        );
       }
       showSuccess(`✓ Signed successfully as ${role}!`);
-      if (company) await fetchOrders(company.id, currentPage, searchQuery, activeTab);
+      if (company)
+        await fetchOrders(company.id, currentPage, searchQuery, activeTab);
     } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || "Failed to sign document");
-    } finally { setProcessingId(null); }
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to sign document",
+      );
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleConfirmPo = async (poId: string) => {
     if (!company) return;
-    setConfirmingId(poId); setError(null);
+    setConfirmingId(poId);
+    setError(null);
     try {
       await apiPost(`/api/orders/${poId}/confirm`, { company_id: company.id });
-      showSuccess("✓ PO confirmed! Proforma invoice has been published to buyer.");
+      showSuccess(
+        "✓ PO confirmed! Proforma invoice has been published to buyer.",
+      );
       fetchOrders(company.id, currentPage);
-    } catch (err: any) { setError(err.message || "Failed to confirm PO"); }
-    finally { setConfirmingId(null); }
+    } catch (err: any) {
+      setError(err.message || "Failed to confirm PO");
+    } finally {
+      setConfirmingId(null);
+    }
   };
 
   const handleBotConfirmPo = async (poId: string) => {
@@ -217,7 +417,7 @@ export default function Orders() {
       showSuccess("🤖 AI Bot vendor telah mengkonfirmasi PO!");
       fetchOrders(company.id, currentPage);
     } catch (err: any) {
-      setError(err.message || 'Gagal trigger AI Bot confirm PO');
+      setError(err.message || "Gagal trigger AI Bot confirm PO");
     } finally {
       setTriggeringBotPoId(null);
     }
@@ -225,92 +425,164 @@ export default function Orders() {
 
   const handleArrangeDelivery = async (poId: string, buyerAddress?: string) => {
     if (!company) return;
-    const tracking = window.prompt(`Enter Tracking Number / Resi (Optional)\nDelivery point: ${buyerAddress||"Buyer company address"}`);
+    const tracking = window.prompt(
+      `Enter Tracking Number / Resi (Optional)\nDelivery point: ${buyerAddress || "Buyer company address"}`,
+    );
     if (tracking === null) return;
-    setProcessingId(poId); setError(null);
+    setProcessingId(poId);
+    setError(null);
     try {
       await arrangeDelivery(poId, company.id, tracking);
       showSuccess("✓ Delivery arranged! Delivery Order published to buyer.");
       fetchOrders(company.id, currentPage);
-    } catch (err: any) { setError(err.message || "Failed to arrange delivery"); }
-    finally { setProcessingId(null); }
+    } catch (err: any) {
+      setError(err.message || "Failed to arrange delivery");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
-  const handleUpdateTrackingStatus = async (poId: string, status: 'packing'|'in_transit'|'delivered', currentPoStatus: string) => {
+  const handleUpdateTrackingStatus = async (
+    poId: string,
+    status: "packing" | "in_transit" | "delivered",
+    currentPoStatus: string,
+  ) => {
     if (!company) return;
-    let note: string|undefined;
-    if (status === 'in_transit') {
-      const resi = window.prompt('Enter Tracking Number / Resi (optional):');
+    let note: string | undefined;
+    if (status === "in_transit") {
+      const resi = window.prompt("Enter Tracking Number / Resi (optional):");
       if (resi === null) return;
       if (resi) note = resi;
     }
-    setProcessingId(poId); setError(null);
+    setProcessingId(poId);
+    setError(null);
     try {
       await updatePoTrackingStatus(poId, company.id, status, note);
-      const labels: Record<string,string> = {packing:'Goods Being Packed',in_transit:'In Transit',delivered:'Goods Delivered'};
-      showSuccess(`✓ Status updated: ${labels[status]}! Buyer has been notified.`);
+      const labels: Record<string, string> = {
+        packing: "Goods Being Packed",
+        in_transit: "In Transit",
+        delivered: "Goods Delivered",
+      };
+      showSuccess(
+        `✓ Status updated: ${labels[status]}! Buyer has been notified.`,
+      );
       fetchOrders(company.id, currentPage, searchQuery, activeTab);
-    } catch (err: any) { setError(err.message||'Failed to update tracking status'); }
-    finally { setProcessingId(null); }
+    } catch (err: any) {
+      setError(err.message || "Failed to update tracking status");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handlePublishInvoice = async (invoiceId: string) => {
     if (!company) return;
-    setProcessingId(invoiceId); setError(null);
+    setProcessingId(invoiceId);
+    setError(null);
     try {
       await publishInvoice(invoiceId, company.id);
       showSuccess("✓ Invoice published successfully! Sent to buyer finance.");
       fetchOrders(company.id, currentPage);
-    } catch (err: any) { setError(err.message||"Failed to publish invoice"); }
-    finally { setProcessingId(null); }
+    } catch (err: any) {
+      setError(err.message || "Failed to publish invoice");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleIssueBast = async (poId: string) => {
     if (!company || !user) return;
-    setIssuingBastId(poId); setError(null);
+    setIssuingBastId(poId);
+    setError(null);
     try {
-      const token = JSON.parse(localStorage.getItem("user_session")||"{}").token;
-      if (!token) { setError("Authentication token not found"); return; }
-      const po = orders.find(p => p.id === poId);
-      if (!po) { setError("Purchase order not found"); return; }
+      const token = JSON.parse(
+        localStorage.getItem("user_session") || "{}",
+      ).token;
+      if (!token) {
+        setError("Authentication token not found");
+        return;
+      }
+      const po = orders.find((p) => p.id === poId);
+      if (!po) {
+        setError("Purchase order not found");
+        return;
+      }
       const payload = {
-        po_id: poId, handed_by_name: user.name||company.name,
-        handed_by_position: user.role||"Manager", handed_by_user_id: user.id,
-        received_by_name: "Buyer Representative", received_by_position: "Procurement Manager",
-        items: po.items||[], handover_notes: `BAST for PO ${po.po_number}`, created_by: user.id,
+        po_id: poId,
+        handed_by_name: user.name || company.name,
+        handed_by_position: user.role || "Manager",
+        handed_by_user_id: user.id,
+        received_by_name: "Buyer Representative",
+        received_by_position: "Procurement Manager",
+        items: po.items || [],
+        handover_notes: `BAST for PO ${po.po_number}`,
+        created_by: user.id,
       };
       const res = await fetch(getFullApiUrl("/api/basts"), {
-        method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(payload)
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message||`Failed (${res.status})`); }
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.message || `Failed (${res.status})`);
+      }
       const data = await res.json();
-      showSuccess(`✓ BAST ${data.bast.bast_number} issued! Notification sent to buyer.`);
+      showSuccess(
+        `✓ BAST ${data.bast.bast_number} issued! Notification sent to buyer.`,
+      );
       fetchOrders(company.id, currentPage);
-    } catch (err: any) { setError(err.message||"Failed to issue BAST"); }
-    finally { setIssuingBastId(null); }
+    } catch (err: any) {
+      setError(err.message || "Failed to issue BAST");
+    } finally {
+      setIssuingBastId(null);
+    }
   };
 
   const handleImport = async () => {
     if (!importFile || !company) return;
-    setIsImporting(true); setImportError(null);
+    setIsImporting(true);
+    setImportError(null);
     try {
       const fd = new FormData();
       fd.append("company_id", String(company.id));
       fd.append("csv", importFile);
-      if (company.type==="buyer") await importHistoricalPo(fd); else await importCatalogue(fd);
+      if (company.type === "buyer") await importHistoricalPo(fd);
+      else await importCatalogue(fd);
       setImportSuccess(true);
-      setTimeout(() => { setShowImportModal(false); setImportSuccess(false); setImportFile(null); fetchOrders(company.id,1); }, 3000);
-    } catch (err: any) { setImportError(err.message||"Import failed."); }
-    finally { setIsImporting(false); }
+      setTimeout(() => {
+        setShowImportModal(false);
+        setImportSuccess(false);
+        setImportFile(null);
+        fetchOrders(company.id, 1);
+      }, 3000);
+    } catch (err: any) {
+      setImportError(err.message || "Import failed.");
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   // ─── Loading ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <Layout title="Purchase Order" subtitle="Loading your Purchase Orders...">
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"50vh", gap:14 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "50vh",
+            gap: 14,
+          }}
+        >
           <Loader2 size={32} className="animate-spin" color="#f59e0b" />
-          <span style={{ fontSize:13, color:"#6b7280" }}>Fetching PO data...</span>
+          <span style={{ fontSize: 13, color: "#6b7280" }}>
+            Fetching PO data...
+          </span>
         </div>
       </Layout>
     );
@@ -318,9 +590,11 @@ export default function Orders() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <Layout title="Purchase Order" subtitle="View and manage all purchase order documents.">
+    <Layout
+      title="Purchase Order"
+      subtitle="View and manage all purchase order documents."
+    >
       <div className="w-full space-y-4">
-
         {/* Header & Controls Toolbar */}
         <div className="flex items-center justify-between gap-3 flex-wrap bg-[var(--ui-bg-card)] border border-[var(--ui-border)] p-3.5 px-4 rounded-xl">
           <div className="flex items-center gap-3">
@@ -329,10 +603,16 @@ export default function Orders() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-[var(--ui-text-primary)] leading-tight">
-                {company?.type === "buyer" ? "Purchase Orders" : "Catalogue Items"} ({totalOrders})
+                {company?.type === "buyer"
+                  ? "Purchase Orders"
+                  : "Catalogue Items"}{" "}
+                ({totalOrders})
               </h2>
               <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">
-                Workspace: <span className="font-semibold text-orange-500">{company?.name}</span>
+                Workspace:{" "}
+                <span className="font-semibold text-orange-500">
+                  {company?.name}
+                </span>
               </p>
             </div>
           </div>
@@ -342,7 +622,8 @@ export default function Orders() {
               onClick={() => setShowImportModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
             >
-              <UploadCloud size={13} /> Import {company?.type === "buyer" ? "Historical PO" : "Catalogue"}
+              <UploadCloud size={13} /> Import{" "}
+              {company?.type === "buyer" ? "Historical PO" : "Catalogue"}
             </button>
             <button
               onClick={exportToExcel}
@@ -352,11 +633,16 @@ export default function Orders() {
               <FileSpreadsheet size={13} /> Export Excel
             </button>
             <button
-              onClick={() => fetchOrders(company.id, currentPage, searchQuery, activeTab)}
+              onClick={() =>
+                fetchOrders(company.id, currentPage, searchQuery, activeTab)
+              }
               disabled={refreshing}
               className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
             >
-              <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+              <RefreshCw
+                size={13}
+                className={refreshing ? "animate-spin" : ""}
+              />
             </button>
           </div>
         </div>
@@ -364,11 +650,17 @@ export default function Orders() {
         {/* Tabs & Search */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1 bg-[var(--ui-bg-input)] p-1 rounded-xl border border-[var(--ui-border)]">
-            {([{ id: "all", label: "All POs" }, { id: "operational", label: "Operational" }, { id: "historical", label: "Historical" }] as const).map(tab => (
+            {(
+              [
+                { id: "all", label: "All POs" },
+                { id: "operational", label: "Operational" },
+                { id: "historical", label: "Historical" },
+              ] as const
+            ).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                style={activeTab === tab.id ? { color: 'white' } : {}}
+                style={activeTab === tab.id ? { color: "white" } : {}}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === tab.id
                     ? "bg-orange-500 shadow-sm"
@@ -381,43 +673,54 @@ export default function Orders() {
           </div>
 
           <div className="relative min-w-[240px] flex-1 max-w-sm">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
+            />
             <input
               type="text"
               placeholder="Search by PO number, vendor, or user..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs outline-none focus:border-orange-400/60 transition-all"
             />
           </div>
         </div>
 
-          {/* Import Modal */}
-          {showImportModal && (
-            <ImportModal
-              companyType={company.type}
-              importFile={importFile}
-              isImporting={isImporting}
-              importError={importError}
-              importSuccess={importSuccess}
-              onFileChange={setImportFile}
-              onClose={() => setShowImportModal(false)}
-              onImport={handleImport}
-            />
-          )}
-
-
+        {/* Import Modal */}
+        {showImportModal && (
+          <ImportModal
+            companyType={company.type}
+            importFile={importFile}
+            isImporting={isImporting}
+            importError={importError}
+            importSuccess={importSuccess}
+            onFileChange={setImportFile}
+            onClose={() => setShowImportModal(false)}
+            onImport={handleImport}
+          />
+        )}
 
         {/* ── PO List ── */}
         {orders.length === 0 ? (
           <div className="border border-dashed border-[var(--ui-border)] rounded-xl py-20 flex flex-col items-center justify-center gap-3">
-            <FileText size={36} className="text-[var(--ui-text-muted)] opacity-20" />
-            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">No purchase orders found</p>
+            <FileText
+              size={36}
+              className="text-[var(--ui-text-muted)] opacity-20"
+            />
+            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">
+              No purchase orders found
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {orders.map(po => {
-              const { label, bg, color, Icon: StatusIcon } = getStatusBadge(po.status);
+            {orders.map((po) => {
+              const {
+                label,
+                bg,
+                color,
+                Icon: StatusIcon,
+              } = getStatusBadge(po.status);
               const isExpanded = expandedPo === po.id;
               const base = Number(po.total_amount);
 
@@ -428,7 +731,6 @@ export default function Orders() {
                 >
                   {/* PO Row — main info */}
                   <div className="p-4 flex items-start gap-4 flex-wrap">
-
                     {/* Left: PO identity */}
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -456,151 +758,251 @@ export default function Orders() {
                     {/* Meta chips */}
                     <div className="flex items-center gap-4 flex-shrink-0 flex-wrap">
                       <div className="text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">Vendor</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                          Vendor
+                        </p>
                         <p className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1">
-                          <Building size={11} className="text-[var(--ui-text-muted)]" />
+                          <Building
+                            size={11}
+                            className="text-[var(--ui-text-muted)]"
+                          />
                           {po.vendor_name || "N/A"}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">Date</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                          Date
+                        </p>
                         <p className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1">
-                          <Calendar size={11} className="text-[var(--ui-text-muted)]" />
-                          {po.order_date || new Date(po.created_at).toLocaleDateString()}
+                          <Calendar
+                            size={11}
+                            className="text-[var(--ui-text-muted)]"
+                          />
+                          {formatPoDate(po.order_date || po.created_at)}
                         </p>
                       </div>
                       {base > 0 && (
                         <div className="text-right">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">Amount</p>
-                          <p className="text-xs font-bold text-orange-500">IDR {fmt(base)}</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                            Amount
+                          </p>
+                          <p className="text-xs font-bold text-orange-500">
+                            IDR {fmt(base)}
+                          </p>
                         </div>
                       )}
                     </div>
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
-                      {company.type === 'vendor' && ['published','issued'].includes(po.status) && (
+                      {company.type === "vendor" &&
+                        ["published", "issued"].includes(po.status) && (
+                          <button
+                            onClick={() => handleConfirmPo(po.id)}
+                            disabled={confirmingId === po.id}
+                            style={{ color: "white" }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                          >
+                            {confirmingId === po.id ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={11} />
+                            )}{" "}
+                            Confirm
+                          </button>
+                        )}
+                      {company.type === "buyer" &&
+                        po.status === "issued" &&
+                        isDemoMode() && (
+                          <button
+                            onClick={() => handleBotConfirmPo(po.id)}
+                            disabled={triggeringBotPoId === po.id}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-[11px] font-bold text-white transition-all disabled:opacity-60"
+                          >
+                            {triggeringBotPoId === po.id ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <Bot size={11} />
+                            )}{" "}
+                            🤖 Bot Confirm PO
+                          </button>
+                        )}
+                      {company.type === "vendor" && po.status === "paid" && (
                         <button
-                          onClick={() => handleConfirmPo(po.id)}
-                          disabled={confirmingId === po.id}
-                          style={{ color: 'white' }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-[11px] font-bold transition-all disabled:opacity-60"
-                        >
-                          {confirmingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <CheckCircle2 size={11}/>} Confirm
-                        </button>
-                      )}
-                      {company.type === 'buyer' && po.status === 'issued' && isDemoMode() && (
-                        <button
-                          onClick={() => handleBotConfirmPo(po.id)}
-                          disabled={triggeringBotPoId === po.id}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-[11px] font-bold text-white transition-all disabled:opacity-60"
-                        >
-                          {triggeringBotPoId === po.id ? <Loader2 size={11} className="animate-spin"/> : <Bot size={11}/>} 🤖 Bot Confirm PO
-                        </button>
-                      )}
-                      {company.type === 'vendor' && po.status === 'paid' && (
-                        <button
-                          onClick={() => handleUpdateTrackingStatus(po.id,'packing',po.status)}
+                          onClick={() =>
+                            handleUpdateTrackingStatus(
+                              po.id,
+                              "packing",
+                              po.status,
+                            )
+                          }
                           disabled={processingId === po.id}
-                          style={{ color: 'white' }}
+                          style={{ color: "white" }}
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-500 hover:bg-violet-600 text-[11px] font-bold transition-all disabled:opacity-60"
                         >
-                          {processingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <Package size={11}/>} Packing
+                          {processingId === po.id ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            <Package size={11} />
+                          )}{" "}
+                          Packing
                         </button>
                       )}
-                      {company.type === 'vendor' && po.status === 'packing' && (
+                      {company.type === "vendor" && po.status === "packing" && (
                         <button
-                          onClick={() => handleArrangeDelivery(po.id, po.buyer_address)}
+                          onClick={() =>
+                            handleArrangeDelivery(po.id, po.buyer_address)
+                          }
                           disabled={processingId === po.id}
-                          style={{ color: 'white' }}
+                          style={{ color: "white" }}
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-[11px] font-bold transition-all disabled:opacity-60"
                         >
-                          {processingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <Truck size={11}/>} Deliver
+                          {processingId === po.id ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            <Truck size={11} />
+                          )}{" "}
+                          Deliver
                         </button>
                       )}
-                      {company.type === 'vendor' && po.status === 'in_transit' && (
-                        <button
-                          onClick={() => handleUpdateTrackingStatus(po.id,'delivered',po.status)}
-                          disabled={processingId === po.id}
-                          style={{ color: 'white' }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all disabled:opacity-60"
-                        >
-                          {processingId === po.id ? <Loader2 size={11} className="animate-spin"/> : <CheckCircle2 size={11}/>} Delivered
-                        </button>
-                      )}
-                      {company.type === 'buyer' && po.delivery_orders?.some((d: any) => ['shipped','delivered'].includes(d.status)) && (
-                        <button
-                          onClick={() => navigate(`/receipts?po_id=${po.id}`)}
-                          style={{ color: 'white' }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all"
-                        >
-                          <Package size={11}/> Receive
-                        </button>
-                      )}
+                      {company.type === "vendor" &&
+                        po.status === "in_transit" && (
+                          <button
+                            onClick={() =>
+                              handleUpdateTrackingStatus(
+                                po.id,
+                                "delivered",
+                                po.status,
+                              )
+                            }
+                            disabled={processingId === po.id}
+                            style={{ color: "white" }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all disabled:opacity-60"
+                          >
+                            {processingId === po.id ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={11} />
+                            )}{" "}
+                            Delivered
+                          </button>
+                        )}
+                      {company.type === "buyer" &&
+                        po.delivery_orders?.some((d: any) =>
+                          ["shipped", "delivered"].includes(d.status),
+                        ) && (
+                          <button
+                            onClick={() => navigate(`/receipts?po_id=${po.id}`)}
+                            style={{ color: "white" }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all"
+                          >
+                            <Package size={11} /> Receive
+                          </button>
+                        )}
                       <button
                         onClick={() => setExpandedPo(isExpanded ? null : po.id)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 transition-all"
                       >
-                        {isExpanded ? <ChevronDown size={15}/> : <ChevronRight size={15}/>}
+                        {isExpanded ? (
+                          <ChevronDown size={15} />
+                        ) : (
+                          <ChevronRight size={15} />
+                        )}
                       </button>
                     </div>
                   </div>
 
                   {/* Fee Breakdown — inset */}
-                  {!po.is_historical && base > 0 && (() => {
-                    const invoice = po.invoices?.find((item: any) => item.type === "proforma");
-                    const calculated = calcFees(base);
-                    const platformFee = Number(invoice?.platform_fee ?? calculated.platFee);
-                    const ppnPlatform = Number(invoice?.ppn_platform ?? calculated.ppnPlatform);
-                    const adminBank = Number(invoice?.midtrans_fee ?? calculated.adminBank);
-                    const pph23 = Number(invoice?.pph23 ?? calculated.pph23);
-                    const ppn = Number(invoice?.ppn_fee ?? calculated.ppn);
-                    const biayaLayanan = platformFee + ppnPlatform + adminBank - pph23;
-                    const grandTotal = Number(invoice?.total_amount ?? base + biayaLayanan + ppn);
-                    const platformLabel = invoice?.billing_mode === "subscription_quota"
-                      ? "Platform Fee (Ditanggung Subscription GMV)"
-                      : `Platform Fee + PPN (${(calculated.platFeeRate * 100).toFixed(0)}% + 11%)`;
-                    const feeRows = [
-                      { label: "Subtotal Barang", value: base },
-                      { label: platformLabel, value: platformFee + ppnPlatform },
-                      { label: "Admin Bank", value: adminBank },
-                      { label: "PPH 23 (2%)", value: pph23 },
-                      { label: "Biaya Layanan", value: biayaLayanan },
-                      { label: "PPN (11%)", value: ppn },
-                    ];
-                    return (
-                      <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                        <div className="px-4 py-2 border-b border-[var(--ui-border)]">
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)]">Rincian Biaya</span>
-                        </div>
-                        <div className="divide-y divide-[var(--ui-border)]">
-                          {feeRows.map(row => (
-                            <div key={row.label} className="flex items-center justify-between px-4 py-1.5 text-xs">
-                              <span className="text-[var(--ui-text-muted)]">{row.label}</span>
-                              <span className="font-semibold text-[var(--ui-text-secondary)] tabular-nums">{fmt(Math.round(row.value))}</span>
+                  {!po.is_historical &&
+                    base > 0 &&
+                    (() => {
+                      const invoice = po.invoices?.find(
+                        (item: any) => item.type === "proforma",
+                      );
+                      const calculated = calcFees(base);
+                      const platformFee = Number(
+                        invoice?.platform_fee ?? calculated.platFee,
+                      );
+                      const ppnPlatform = Number(
+                        invoice?.ppn_platform ?? calculated.ppnPlatform,
+                      );
+                      const adminBank = Number(
+                        invoice?.midtrans_fee ?? calculated.adminBank,
+                      );
+                      const pph23 = Number(invoice?.pph23 ?? calculated.pph23);
+                      const ppn = Number(invoice?.ppn_fee ?? calculated.ppn);
+                      const biayaLayanan =
+                        platformFee + ppnPlatform + adminBank - pph23;
+                      const grandTotal = Number(
+                        invoice?.total_amount ?? base + biayaLayanan + ppn,
+                      );
+                      const platformLabel =
+                        invoice?.billing_mode === "subscription_quota"
+                          ? "Platform Fee (Ditanggung Subscription GMV)"
+                          : `Platform Fee + PPN (${(calculated.platFeeRate * 100).toFixed(0)}% + 11%)`;
+                      const feeRows = [
+                        { label: "Subtotal Barang", value: base },
+                        {
+                          label: platformLabel,
+                          value: platformFee + ppnPlatform,
+                        },
+                        { label: "Admin Bank", value: adminBank },
+                        { label: "PPH 23 (2%)", value: pph23 },
+                        { label: "Biaya Layanan", value: biayaLayanan },
+                        { label: "PPN (11%)", value: ppn },
+                      ];
+                      return (
+                        <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                          <div className="px-4 py-2 border-b border-[var(--ui-border)]">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)]">
+                              Rincian Biaya
+                            </span>
+                          </div>
+                          <div className="divide-y divide-[var(--ui-border)]">
+                            {feeRows.map((row) => (
+                              <div
+                                key={row.label}
+                                className="flex items-center justify-between px-4 py-1.5 text-xs"
+                              >
+                                <span className="text-[var(--ui-text-muted)]">
+                                  {row.label}
+                                </span>
+                                <span className="font-semibold text-[var(--ui-text-secondary)] tabular-nums">
+                                  {fmt(Math.round(row.value))}
+                                </span>
+                              </div>
+                            ))}
+                            <div className="flex items-center justify-between px-4 py-2.5">
+                              <span className="text-xs font-bold text-[var(--ui-text-primary)] uppercase tracking-wide">
+                                Total
+                              </span>
+                              <span className="text-sm font-bold text-orange-500 tabular-nums">
+                                IDR {fmt(Math.round(grandTotal))}
+                              </span>
                             </div>
-                          ))}
-                          <div className="flex items-center justify-between px-4 py-2.5">
-                            <span className="text-xs font-bold text-[var(--ui-text-primary)] uppercase tracking-wide">Total</span>
-                            <span className="text-sm font-bold text-orange-500 tabular-nums">IDR {fmt(Math.round(grandTotal))}</span>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })()}
+                      );
+                    })()}
 
                   {/* Expanded Details */}
                   {isExpanded && (
                     <div className="border-t border-[var(--ui-border)]">
                       <PoExpandedDetails
-                        po={po} company={company} user={user}
-                        processingId={processingId} issuingBastId={issuingBastId}
+                        po={po}
+                        company={company}
+                        user={user}
+                        processingId={processingId}
+                        issuingBastId={issuingBastId}
                         generateQRCode={generateQRCode}
                         onSign={handleSignDocument}
                         onArrangeDelivery={handleArrangeDelivery}
                         onUpdateTrackingStatus={handleUpdateTrackingStatus}
                         onIssueBast={handleIssueBast}
-                        onPayInvoice={(inv) => { setSelectedInvoice(inv); setShowPaymentModal(true); }}
+                        onPayInvoice={(inv) => {
+                          setSelectedInvoice(inv);
+                          setShowPaymentModal(true);
+                        }}
                         onPublishInvoice={handlePublishInvoice}
                       />
                     </div>
@@ -613,21 +1015,33 @@ export default function Orders() {
 
         {/* ── Pagination ── */}
         {lastPage > 1 && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px",
-            marginTop: "20px",
-            paddingTop: "16px",
-            borderTop: "1px solid var(--ui-border)",
-          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "12px",
+              marginTop: "20px",
+              paddingTop: "16px",
+              borderTop: "1px solid var(--ui-border)",
+            }}
+          >
             {/* Summary */}
             <span style={{ fontSize: "12px", color: "var(--ui-text-muted)" }}>
-              Menampilkan halaman <strong style={{ color: "var(--ui-text-secondary)" }}>{currentPage}</strong> dari{" "}
-              <strong style={{ color: "var(--ui-text-secondary)" }}>{lastPage}</strong> &mdash;{" "}
-              <strong style={{ color: "var(--ui-text-secondary)" }}>{totalOrders}</strong> PO total
+              Menampilkan halaman{" "}
+              <strong style={{ color: "var(--ui-text-secondary)" }}>
+                {currentPage}
+              </strong>{" "}
+              dari{" "}
+              <strong style={{ color: "var(--ui-text-secondary)" }}>
+                {lastPage}
+              </strong>{" "}
+              &mdash;{" "}
+              <strong style={{ color: "var(--ui-text-secondary)" }}>
+                {totalOrders}
+              </strong>{" "}
+              PO total
             </span>
 
             {/* Page buttons */}
@@ -637,11 +1051,20 @@ export default function Orders() {
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage <= 1 || refreshing}
                 style={{
-                  display: "flex", alignItems: "center", gap: "4px",
-                  padding: "5px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "5px 12px",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  fontWeight: 600,
                   border: "1px solid var(--ui-border)",
-                  background: currentPage <= 1 ? "transparent" : "var(--ui-bg-input)",
-                  color: currentPage <= 1 ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
+                  background:
+                    currentPage <= 1 ? "transparent" : "var(--ui-bg-input)",
+                  color:
+                    currentPage <= 1
+                      ? "var(--ui-text-muted)"
+                      : "var(--ui-text-primary)",
                   cursor: currentPage <= 1 ? "not-allowed" : "pointer",
                   opacity: currentPage <= 1 ? 0.4 : 1,
                   transition: "all 0.15s",
@@ -670,26 +1093,45 @@ export default function Orders() {
 
                 return pages.map((p, idx) =>
                   p === "..." ? (
-                    <span key={`ellipsis-${idx}`} style={{ padding: "0 4px", color: "var(--ui-text-muted)", fontSize: "12px" }}>…</span>
+                    <span
+                      key={`ellipsis-${idx}`}
+                      style={{
+                        padding: "0 4px",
+                        color: "var(--ui-text-muted)",
+                        fontSize: "12px",
+                      }}
+                    >
+                      …
+                    </span>
                   ) : (
                     <button
                       key={p}
                       onClick={() => handlePageChange(p as number)}
                       disabled={refreshing}
                       style={{
-                        width: "30px", height: "30px", borderRadius: "8px",
-                        fontSize: "12px", fontWeight: p === currentPage ? 700 : 500,
+                        width: "30px",
+                        height: "30px",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        fontWeight: p === currentPage ? 700 : 500,
                         border: "1px solid",
-                        borderColor: p === currentPage ? "#f97316" : "var(--ui-border)",
-                        background: p === currentPage ? "rgba(249,115,22,0.12)" : "var(--ui-bg-input)",
-                        color: p === currentPage ? "#f97316" : "var(--ui-text-secondary)",
+                        borderColor:
+                          p === currentPage ? "#f97316" : "var(--ui-border)",
+                        background:
+                          p === currentPage
+                            ? "rgba(249,115,22,0.12)"
+                            : "var(--ui-bg-input)",
+                        color:
+                          p === currentPage
+                            ? "#f97316"
+                            : "var(--ui-text-secondary)",
                         cursor: "pointer",
                         transition: "all 0.15s",
                       }}
                     >
                       {p}
                     </button>
-                  )
+                  ),
                 );
               })()}
 
@@ -698,11 +1140,22 @@ export default function Orders() {
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage >= lastPage || refreshing}
                 style={{
-                  display: "flex", alignItems: "center", gap: "4px",
-                  padding: "5px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "5px 12px",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  fontWeight: 600,
                   border: "1px solid var(--ui-border)",
-                  background: currentPage >= lastPage ? "transparent" : "var(--ui-bg-input)",
-                  color: currentPage >= lastPage ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
+                  background:
+                    currentPage >= lastPage
+                      ? "transparent"
+                      : "var(--ui-bg-input)",
+                  color:
+                    currentPage >= lastPage
+                      ? "var(--ui-text-muted)"
+                      : "var(--ui-text-primary)",
                   cursor: currentPage >= lastPage ? "not-allowed" : "pointer",
                   opacity: currentPage >= lastPage ? 0.4 : 1,
                   transition: "all 0.15s",
@@ -719,7 +1172,10 @@ export default function Orders() {
           <PaymentModal
             invoice={selectedInvoice}
             onClose={() => setShowPaymentModal(false)}
-            onSuccess={() => { setShowPaymentModal(false); fetchOrders(company.id, currentPage, searchQuery, activeTab); }}
+            onSuccess={() => {
+              setShowPaymentModal(false);
+              fetchOrders(company.id, currentPage, searchQuery, activeTab);
+            }}
           />
         )}
       </div>
