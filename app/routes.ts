@@ -90,6 +90,9 @@ export default [
       id: "company-my-rank",
     }),
     route(":companySlug/orders", "routes/orders.tsx", { id: "company-orders" }),
+    route(":companySlug/direct-po", "routes/direct-po.tsx", {
+      id: "company-direct-po",
+    }),
     route(":companySlug/receipts", "routes/receipts.tsx", {
       id: "company-receipts",
     }),
@@ -139,6 +142,7 @@ export default [
     route("negotiation", "routes/negotiation.tsx"),
     route("my-rank", "routes/my-rank.tsx"),
     route("orders", "routes/orders.tsx"),
+    route("direct-po", "routes/direct-po.tsx"),
     route("receipts", "routes/receipts.tsx"),
     route("payment-history", "routes/payment-history.tsx"),
     route("returns", "routes/returns.tsx"),

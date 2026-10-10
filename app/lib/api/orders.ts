@@ -40,6 +40,17 @@ export const approveRfq = (
   managerId: string | number,
 ) => apiPost(`/api/rfqs/${rfqId}/approve`, { manager_id: managerId });
 
+export const createDirectPurchaseOrder = (payload: {
+  company_id: string;
+  rfq_id: string;
+  vendor_name: string;
+  vendor_address?: string;
+  currency?: string;
+  purchase_category?: string;
+  purchase_type?: string;
+  expected_receiving_date?: string;
+}) => apiPost("/api/orders/direct", payload);
+
 // --- Proposals ---
 export const submitProposal = (payload: any) => {
   if (payload instanceof FormData) {

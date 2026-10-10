@@ -39,6 +39,14 @@ export default function Checkout() {
   const [wmsInstalled, setWmsInstalled] = useState(false);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [warehouseId, setWarehouseId] = useState("");
+  const [deliveryPointBeforeWarehouse, setDeliveryPointBeforeWarehouse] =
+    useState("");
+  const [procurementMode, setProcurementMode] = useState<"tender" | "direct">(
+    () =>
+      new URLSearchParams(window.location.search).get("mode") === "direct"
+        ? "direct"
+        : "tender",
+  );
   const [revisionRfqId] = useState(() =>
     new URLSearchParams(window.location.search).get("revise"),
   );
@@ -156,13 +164,18 @@ export default function Checkout() {
         setPrDuration(Number(rfq.duration_days || 7));
         setPrDepartment(rfq.department || "General Procurement");
         setDeliveryPoint(rfq.delivery_point || "");
+        setDeliveryPointBeforeWarehouse(rfq.delivery_point || "");
         setWarehouseId(rfq.warehouse_id || "");
+        setProcurementMode(
+          rfq.procurement_mode === "direct" ? "direct" : "tender",
+        );
         setCart(
           (rfq.items || []).map((item: any) => ({
-            id: item.catalogue_id,
+            id: item.catalogue_id || `manual-${item.id}`,
+            manual: !item.catalogue_id,
             item_code: item.catalogue?.item_code || "",
-            name: item.catalogue?.name || "Unnamed item",
-            uom: item.catalogue?.uom || "unit",
+            name: item.catalogue?.name || item.item_name || "",
+            uom: item.catalogue?.uom || item.uom || "unit",
             image_path: item.catalogue?.image_path || null,
             qty: Number(item.qty || 1),
             estimated_price: Number(item.estimated_price || 0),
@@ -213,6 +226,14 @@ export default function Checkout() {
     (sum, item) => sum + Number(item.estimated_price || 0) * item.qty,
     0,
   );
+  const selectedWarehouse = warehouses.find(
+    (warehouse: any) => String(warehouse.id) === String(warehouseId),
+  );
+  const warehouseDeliveryPoint = selectedWarehouse
+    ? [selectedWarehouse.name, selectedWarehouse.address]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
 
   const updateEstimatedPrice = (id: string, price: number) => {
     const newCart = cart.map((i) =>
@@ -226,6 +247,28 @@ export default function Checkout() {
     setCart((items) =>
       items.map((item) =>
         item.id === id ? { ...item, qty: Math.max(1, qty || 1) } : item,
+      ),
+    );
+  };
+
+  const addManualItem = () => {
+    setCart((items) => [
+      ...items,
+      {
+        id: `manual-${crypto.randomUUID()}`,
+        manual: true,
+        name: "",
+        uom: "unit",
+        qty: 1,
+        estimated_price: 0,
+      },
+    ]);
+  };
+
+  const updateManualItem = (id: string, field: string, value: string) => {
+    setCart((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item,
       ),
     );
   };
@@ -248,6 +291,7 @@ export default function Checkout() {
       formData.append("description", prDesc);
       formData.append("duration_days", prDuration.toString());
       formData.append("status", "pending_approval");
+      formData.append("procurement_mode", procurementMode);
       formData.append("delivery_point", deliveryPoint);
       if (wmsInstalled && warehouseId)
         formData.append("warehouse_id", warehouseId);
@@ -280,7 +324,12 @@ export default function Checkout() {
       }
 
       cart.forEach((item, index) => {
-        formData.append(`items[${index}][catalogue_id]`, item.id);
+        if (item.manual) {
+          formData.append(`items[${index}][item_name]`, item.name);
+          formData.append(`items[${index}][uom]`, item.uom || "unit");
+        } else {
+          formData.append(`items[${index}][catalogue_id]`, item.id);
+        }
         formData.append(`items[${index}][qty]`, item.qty.toString());
         formData.append(
           `items[${index}][estimated_price]`,
@@ -414,6 +463,15 @@ export default function Checkout() {
                     </span>
                   </div>
                 )}
+                {procurementMode === "direct" && (
+                  <button
+                    type="button"
+                    onClick={addManualItem}
+                    className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50"
+                  >
+                    + Add manual item
+                  </button>
+                )}
               </div>
 
               <div className="divide-y divide-[var(--ui-border)]">
@@ -438,12 +496,32 @@ export default function Checkout() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[var(--ui-text-primary)] truncate">
-                        {item.name}
-                      </p>
-                      <p className="text-[10px] text-[var(--ui-text-muted)] font-mono">
-                        {item.item_code || "—"}
-                      </p>
+                      {item.manual ? (
+                        <div>
+                          <input
+                            required
+                            placeholder="Item name"
+                            value={item.name}
+                            onChange={(event) =>
+                              updateManualItem(
+                                item.id,
+                                "name",
+                                event.target.value,
+                              )
+                            }
+                            className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs text-[var(--ui-text-primary)]"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <p className="font-semibold text-[var(--ui-text-primary)] truncate">
+                            {item.name}
+                          </p>
+                          <p className="text-[10px] text-[var(--ui-text-muted)] font-mono">
+                            {item.item_code || "—"}
+                          </p>
+                        </>
+                      )}
                     </div>
 
                     <label className="w-20 shrink-0">
@@ -513,6 +591,37 @@ export default function Checkout() {
               </h3>
 
               <div className="space-y-3 text-xs">
+                <fieldset className="space-y-2">
+                  <legend className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)]">
+                    Procurement route
+                  </legend>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => setProcurementMode("tender")}
+                      className={`border p-3 text-left transition-colors ${procurementMode === "tender" ? "border-orange-500 bg-orange-500/5" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)]"}`}
+                    >
+                      <span className="block font-semibold text-[var(--ui-text-primary)]">
+                        Tender
+                      </span>
+                      <span className="mt-0.5 block text-[10px] text-[var(--ui-text-muted)]">
+                        Invite vendors after approval.
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProcurementMode("direct")}
+                      className={`border p-3 text-left transition-colors ${procurementMode === "direct" ? "border-orange-500 bg-orange-500/5" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)]"}`}
+                    >
+                      <span className="block font-semibold text-[var(--ui-text-primary)]">
+                        Direct purchase
+                      </span>
+                      <span className="mt-0.5 block text-[10px] text-[var(--ui-text-muted)]">
+                        For urgent buying. No tender is published.
+                      </span>
+                    </button>
+                  </div>
+                </fieldset>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">
@@ -583,7 +692,25 @@ export default function Checkout() {
                     </label>
                     <select
                       value={warehouseId}
-                      onChange={(e) => setWarehouseId(e.target.value)}
+                      onChange={(e) => {
+                        const nextWarehouseId = e.target.value;
+                        if (!nextWarehouseId) {
+                          setWarehouseId("");
+                          setDeliveryPoint(deliveryPointBeforeWarehouse);
+                          return;
+                        }
+                        const warehouse = warehouses.find(
+                          (item: any) =>
+                            String(item.id) === String(nextWarehouseId),
+                        );
+                        setDeliveryPointBeforeWarehouse(deliveryPoint);
+                        setWarehouseId(nextWarehouseId);
+                        setDeliveryPoint(
+                          [warehouse?.name, warehouse?.address]
+                            .filter(Boolean)
+                            .join(" · "),
+                        );
+                      }}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
                     >
                       <option value="">No WMS warehouse selected</option>
@@ -594,12 +721,14 @@ export default function Checkout() {
                         .map((warehouse: any) => (
                           <option key={warehouse.id} value={warehouse.id}>
                             {warehouse.name} · {warehouse.code}
+                            {warehouse.address ? ` · ${warehouse.address}` : ""}
                           </option>
                         ))}
                     </select>
                     <p className="text-[11px] text-[var(--ui-text-muted)]">
                       Goods Receipt for this PR will automatically enter the
-                      selected WMS warehouse.
+                      selected WMS warehouse. Its address becomes the delivery
+                      point.
                     </p>
                   </div>
                 )}
@@ -612,8 +741,15 @@ export default function Checkout() {
                     <select
                       value={deliveryPoint}
                       onChange={(e) => setDeliveryPoint(e.target.value)}
-                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
+                      disabled={Boolean(warehouseId)}
+                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all disabled:cursor-not-allowed disabled:opacity-60"
                     >
+                      {warehouseId && (
+                        <option value={warehouseDeliveryPoint}>
+                          Warehouse:{" "}
+                          {warehouseDeliveryPoint || "Address not recorded"}
+                        </option>
+                      )}
                       {companyAddresses.map((address) => (
                         <option key={address.id} value={address.value}>
                           {address.label}: {address.value}
@@ -625,8 +761,9 @@ export default function Checkout() {
                       placeholder="e.g. Jl. Sudirman No. 123, Jakarta"
                       value={deliveryPoint}
                       onChange={(e) => setDeliveryPoint(e.target.value)}
+                      disabled={Boolean(warehouseId)}
                       rows={2}
-                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all resize-none"
+                      className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all resize-none disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   )}
                 </div>

@@ -224,6 +224,16 @@ export default function MyPurchaseRequisitionDetail() {
               Revise &amp; resubmit
             </button>
           )}
+          {request.status === "approved" &&
+            request.procurement_mode === "direct" && (
+              <button
+                type="button"
+                onClick={() => navigate(`/direct-po?pr=${request.id}`)}
+                className="inline-flex items-center gap-1.5 rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-600"
+              >
+                Create direct PO
+              </button>
+            )}
           {request.status === "active" && (
             <button
               type="button"
@@ -330,7 +340,7 @@ export default function MyPurchaseRequisitionDetail() {
                               </div>
                             )}
                             <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
-                              {cat?.name || "Unknown Item"}
+                              {cat?.name || item.item_name || "Manual item"}
                             </div>
                             {cat?.item_code && (
                               <div className="text-[10px] text-[var(--ui-text-muted)]">
@@ -339,7 +349,8 @@ export default function MyPurchaseRequisitionDetail() {
                             )}
                             <div className="flex items-center justify-between mt-2 gap-2">
                               <span className="text-[11px] text-[var(--ui-text-secondary)]">
-                                {item.qty} {cat?.uom || "pcs"} &times; Rp{" "}
+                                {item.qty} {cat?.uom || item.uom || "unit"}{" "}
+                                &times; Rp{" "}
                                 {Number(unitPrice).toLocaleString("id-ID")}
                               </span>
                               <span className="text-xs font-bold text-orange-400 shrink-0">
@@ -451,7 +462,9 @@ export default function MyPurchaseRequisitionDetail() {
                                       </div>
                                     )}
                                     <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
-                                      {cat?.name || "Unknown Item"}
+                                      {cat?.name ||
+                                        item.item_name ||
+                                        "Manual item"}
                                     </div>
                                     {cat?.item_code && (
                                       <div className="text-[10px] text-[var(--ui-text-muted)]">
@@ -462,7 +475,7 @@ export default function MyPurchaseRequisitionDetail() {
                                 </div>
                               </td>
                               <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
-                                {item.qty} {cat?.uom || "pcs"}
+                                {item.qty} {cat?.uom || item.uom || "unit"}
                               </td>
                               <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
                                 Rp {Number(unitPrice).toLocaleString("id-ID")}
