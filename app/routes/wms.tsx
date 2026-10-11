@@ -63,38 +63,20 @@ const toNumeric = (value: unknown): number => {
     const negative = trimmed.startsWith("-");
     const digits = negative ? trimmed.slice(1) : trimmed;
 
-    // 1) Native parse first — works for US/backend style: "4", "4.000", "1234.56", "-4.000"
+    // 1) Native parse first — works for backend numbers and standard decimals: "20", "20.000", "1234.56"
     const native = Number(trimmed);
     if (!Number.isNaN(native)) {
+      // If there are multiple dots (e.g. "1.000.000"), it was explicitly formatted with thousand separators
       const hasDots = (digits.match(/\./g) || []).length;
       if (hasDots > 1) {
         const stripped = Number(digits.replace(/\./g, "").replace(/,/g, "."));
         if (!Number.isNaN(stripped)) return negative ? -stripped : stripped;
       }
-      if (hasDots === 1) {
-        const [beforeDot, afterDot] = digits.split(".");
-        if (
-          afterDot &&
-          afterDot.length === 3 &&
-          /^\d+$/.test(afterDot) &&
-          // Ambiguous: "4.000" (4) vs "12.500" (12500).
-          // Treat as thousand separator ONLY when digits before dot are
-          // >= 2 characters (>= 10 thousand) OR the afterDot has non-zero
-          // digits AND the overall length looks like a real thousand group.
-          (beforeDot.length >= 2 || /[1-9]/.test(afterDot)) &&
-          beforeDot.length + afterDot.length >= 5
-        ) {
-          const asThousand = Number(digits.replace(/\./g, ""));
-          if (!Number.isNaN(asThousand)) {
-            return negative ? -asThousand : asThousand;
-          }
-        }
-      }
       return native;
     }
 
-    // 2) Native failed (pure id-ID formatting): strip thousand separators
-    //    then treat comma as decimal separator.
+    // 2) Native failed (pure id-ID formatting, e.g. "1.500,50" or "20,5"):
+    //    strip thousand dots then treat comma as decimal separator.
     const normalized = digits.replace(/\./g, "").replace(/,/g, ".");
     const n = Number(normalized);
     if (!Number.isNaN(n)) return negative ? -n : n;
@@ -109,8 +91,7 @@ const formatQuantity = (value: unknown, maximumFractionDigits = 3): string => {
     return String(num);
   }
   return new Intl.NumberFormat("id-ID", {
-    maximumFractionDigits,
-    ...(Number.isInteger(num) ? { maximumFractionDigits: 0 } : {}),
+    maximumFractionDigits: Number.isInteger(num) ? 0 : maximumFractionDigits,
   }).format(num);
 };
 
@@ -194,7 +175,7 @@ function PickerBrowseButton({
               <span className="ml-auto tabular-nums font-semibold text-[var(--ui-text-success)]">
                 available{" "}
                 {formatQuantity(
-                  Number(selected.on_hand) - Number(selected.allocated),
+                  toNumeric(selected.on_hand) - toNumeric(selected.allocated),
                 )}
               </span>
             </div>
@@ -1541,16 +1522,132 @@ export default function WmsPage() {
               </form>
               <form
                 className={card + " space-y-3"}
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  run(async () => {
-                    await putAwayStock(company.id, putawayForm);
-                    setPutawayForm({
-                      ...putawayForm,
-                      sku: "",
-                      to_bin_id: "",
-                      quantity: "",
+                  if (!putawayForm.warehouse_id) {
+                    await Swal.fire({
+                      icon: "warning",
+                      title: "Pilih Gudang",
+                      text: "Silakan pilih gudang terlebih dahulu.",
+                      confirmButtonColor: "#f97316",
                     });
+                    return;
+                  }
+                  if (!putawayForm.sku) {
+                    await Swal.fire({
+                      icon: "warning",
+                      title: "Pilih Item",
+                      text: "Silakan pilih item inventori yang akan dipindahkan.",
+                      confirmButtonColor: "#f97316",
+                    });
+                    return;
+                  }
+                  if (!putawayForm.quantity || Number(putawayForm.quantity) <= 0) {
+                    await Swal.fire({
+                      icon: "warning",
+                      title: "Jumlah Tidak Valid",
+                      text: "Masukkan jumlah unit yang valid (lebih dari 0).",
+                      confirmButtonColor: "#f97316",
+                    });
+                    return;
+                  }
+                  if (!putawayForm.from_bin_id) {
+                    await Swal.fire({
+                      icon: "warning",
+                      title: "Pilih Bin Asal",
+                      text: "Silakan pilih bin asal (from bin).",
+                      confirmButtonColor: "#f97316",
+                    });
+                    return;
+                  }
+                  if (!putawayForm.to_bin_id) {
+                    await Swal.fire({
+                      icon: "warning",
+                      title: "Pilih Bin Tujuan",
+                      text: "Silakan pilih bin tujuan (destination bin).",
+                      confirmButtonColor: "#f97316",
+                    });
+                    return;
+                  }
+                  if (putawayForm.from_bin_id === putawayForm.to_bin_id) {
+                    await Swal.fire({
+                      icon: "warning",
+                      title: "Bin Tidak Valid",
+                      text: "Bin asal dan bin tujuan tidak boleh sama.",
+                      confirmButtonColor: "#f97316",
+                    });
+                    return;
+                  }
+
+                  const fromBinItem = selections["putaway_from_bin"];
+                  const fromBinName =
+                    (fromBinItem && "title" in fromBinItem
+                      ? fromBinItem.title
+                      : null) ||
+                    warehouses
+                      .find((w: any) => String(w.id) === putawayForm.warehouse_id)
+                      ?.bins?.find(
+                        (b: any) => String(b.id) === putawayForm.from_bin_id,
+                      )?.code ||
+                    "bin asal";
+
+                  const toBinItem = selections["putaway_to_bin"];
+                  const toBinName =
+                    (toBinItem && "title" in toBinItem
+                      ? toBinItem.title
+                      : null) ||
+                    warehouses
+                      .find((w: any) => String(w.id) === putawayForm.warehouse_id)
+                      ?.bins?.find(
+                        (b: any) => String(b.id) === putawayForm.to_bin_id,
+                      )?.code ||
+                    "bin tujuan";
+
+                  const confirmResult = await Swal.fire({
+                    title: "Konfirmasi Put Away",
+                    text: `Pindahkan ${formatQuantity(putawayForm.quantity)} unit ${putawayForm.sku} dari ${fromBinName} ke ${toBinName}?`,
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Ya, Put Away",
+                    cancelButtonText: "Batal",
+                    confirmButtonColor: "#f97316",
+                  });
+
+                  if (!confirmResult.isConfirmed) return;
+
+                  const movedQty = putawayForm.quantity;
+                  const movedSku = putawayForm.sku;
+
+                  run(async () => {
+                    try {
+                      await putAwayStock(company.id, putawayForm);
+                      setPutawayForm({
+                        ...putawayForm,
+                        sku: "",
+                        to_bin_id: "",
+                        quantity: "",
+                      });
+                      setSelections((prev) => ({
+                        ...prev,
+                        putaway_sku: null,
+                        putaway_to_bin: null,
+                      }));
+                      await Swal.fire({
+                        icon: "success",
+                        title: "Put Away Berhasil",
+                        text: `${formatQuantity(movedQty)} unit ${movedSku} berhasil dipindahkan ke ${toBinName}.`,
+                        timer: 2000,
+                        showConfirmButton: false,
+                      });
+                    } catch (err: any) {
+                      await Swal.fire({
+                        icon: "error",
+                        title: "Put Away Gagal",
+                        text: err.message || "Gagal memproses put away.",
+                        confirmButtonColor: "#f97316",
+                      });
+                      throw err;
+                    }
                   });
                 }}
               >
@@ -1606,8 +1703,12 @@ export default function WmsPage() {
                     onClick={() => openPicker("putaway_to_bin")}
                   />
                 </div>
-                <button className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
-                  Confirm put away
+                <button
+                  disabled={busy}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {busy ? <Loader2 size={15} className="animate-spin" /> : null}
+                  {busy ? "Confirming put away…" : "Confirm put away"}
                 </button>
               </form>
             </div>
@@ -2284,10 +2385,32 @@ export default function WmsPage() {
         onClose={closePicker}
         onSelect={(item: StockPickerItem) => {
           switch (picker.kind) {
-            case "putaway_sku":
-              setPutawayForm({ ...putawayForm, sku: item.sku });
-              setSelections((prev) => ({ ...prev, putaway_sku: item }));
+            case "putaway_sku": {
+              const matchedBin = item.bin_id
+                ? putawayBinItems.all.find(
+                    (b: any) => String(b.id) === String(item.bin_id),
+                  )
+                : item.bin_location
+                  ? putawayBinItems.all.find(
+                      (b: any) =>
+                        b.title === item.bin_location ||
+                        b.subtitle
+                          ?.toLowerCase()
+                          .includes(item.bin_location!.toLowerCase()),
+                    )
+                  : null;
+              setPutawayForm((prev) => ({
+                ...prev,
+                sku: item.sku,
+                from_bin_id: matchedBin ? matchedBin.id : prev.from_bin_id,
+              }));
+              setSelections((prev) => ({
+                ...prev,
+                putaway_sku: item,
+                ...(matchedBin ? { putaway_from_bin: matchedBin } : {}),
+              }));
               break;
+            }
             case "allocate_sku":
               setAllocateForm({ ...allocateForm, sku: item.sku });
               setSelections((prev) => ({ ...prev, allocate_sku: item }));

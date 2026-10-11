@@ -19,47 +19,20 @@ const toNumeric = (value: unknown): number => {
     const negative = trimmed.startsWith("-");
     const digits = negative ? trimmed.slice(1) : trimmed;
 
-    // 1) Native parse first — works for US/backend style: "4", "4.000", "1234.56", "-4.000"
+    // 1) Native parse first — works for backend numbers and standard decimals: "20", "20.000", "1234.56"
     const native = Number(trimmed);
     if (!Number.isNaN(native)) {
-      // Native parse valid -> use it. EXCEPT if the string uses id-ID thousand
-      // separator "." AND the native parse produced a fraction that looks
-      // wrong (e.g. user typed "4.500" and meant 4500, not 4.5).
-      // Heuristic: treat "." as thousand separator ONLY when there are
-      // MULTIPLE dots, OR the digits after a dot are exactly 3 AND the
-      // native number ends with .000 integer anyway (4.000 → still 4).
+      // If there are multiple dots (e.g. "1.000.000"), it was explicitly formatted with thousand separators
       const hasDots = (digits.match(/\./g) || []).length;
       if (hasDots > 1) {
         const stripped = Number(digits.replace(/\./g, "").replace(/,/g, "."));
         if (!Number.isNaN(stripped)) return negative ? -stripped : stripped;
       }
-      // Single dot: check if it's clearly a thousand separator (3 trailing
-      // digits AND overall >= 1000 after stripping). Otherwise keep native
-      // parse (e.g. "4.000" native = 4 → correct for 4 units).
-      if (hasDots === 1) {
-        const [beforeDot, afterDot] = digits.split(".");
-        if (
-          afterDot &&
-          afterDot.length === 3 &&
-          /^\d+$/.test(afterDot) &&
-          // Ambiguous: "4.000" (4) vs "12.500" (12500).
-          // Treat as thousand separator ONLY when digits before dot are
-          // >= 2 characters (>= 10 thousand) OR the afterDot has non-zero
-          // digits AND the overall length looks like a real thousand group.
-          (beforeDot.length >= 2 || /[1-9]/.test(afterDot)) &&
-          beforeDot.length + afterDot.length >= 5
-        ) {
-          const asThousand = Number(digits.replace(/\./g, ""));
-          if (!Number.isNaN(asThousand)) {
-            return negative ? -asThousand : asThousand;
-          }
-        }
-      }
       return native;
     }
 
-    // 2) Native failed (pure id-ID formatting): strip thousand separators
-    //    then treat comma as decimal separator.
+    // 2) Native failed (pure id-ID formatting, e.g. "1.500,50" or "20,5"):
+    //    strip thousand dots then treat comma as decimal separator.
     const normalized = digits.replace(/\./g, "").replace(/,/g, ".");
     const n = Number(normalized);
     if (!Number.isNaN(n)) return negative ? -n : n;
@@ -74,8 +47,7 @@ const formatQty = (value: unknown, maximumFractionDigits = 3): string => {
     return String(num);
   }
   return new Intl.NumberFormat("id-ID", {
-    maximumFractionDigits,
-    ...(Number.isInteger(num) ? { maximumFractionDigits: 0 } : {}),
+    maximumFractionDigits: Number.isInteger(num) ? 0 : maximumFractionDigits,
   }).format(num);
 };
 
