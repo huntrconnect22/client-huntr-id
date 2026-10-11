@@ -8,6 +8,7 @@ import {
   Building2,
   Check,
   ChevronRight,
+  Layers,
   Loader2,
   PackageCheck,
   Plus,
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import Layout from "../components/Layout";
 import { WmsOverview, WmsWorkflowGuide } from "../components/wms/WmsOverview";
+import { RackManagement } from "../components/wms/RackManagement";
 import type { PickerItem } from "../components/wms/GenericPickerModal";
 import { GenericPickerModal } from "../components/wms/GenericPickerModal";
 import type { StockPickerItem } from "../components/wms/StockPickerModal";
@@ -790,6 +792,7 @@ export default function WmsPage() {
   const tabs = [
     ["Overview", BarChart3],
     ["Stock", Boxes],
+    ["Rak & Lokasi", Layers],
     ["Receiving & Put Away", ArrowDownToLine],
     ["Allocation & Packing", PackageCheck],
     ["Transfers", Truck],
@@ -2370,6 +2373,41 @@ export default function WmsPage() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+        {tab === "Rak & Lokasi" && (
+          <div className="space-y-4">
+            {warehouses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] py-16 text-center">
+                <Layers size={36} className="text-[var(--ui-text-muted)] opacity-40" />
+                <div>
+                  <p className="font-semibold text-[var(--ui-text-primary)]">Belum ada gudang</p>
+                  <p className="mt-1 text-xs text-[var(--ui-text-muted)]">
+                    Buat gudang terlebih dahulu di tab Warehouses, lalu kembali ke sini untuk mengatur rak.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTab("Warehouses")}
+                  className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-semibold !text-white"
+                >
+                  Buka Tab Warehouses
+                </button>
+              </div>
+            ) : (
+              <RackManagement
+                companyId={company.id}
+                warehouses={warehouses}
+                onRefresh={refresh}
+                onNavigateToPutAway={(warehouseId, _binId) => {
+                  setPutawayForm((prev: any) => ({
+                    ...prev,
+                    warehouse_id: warehouseId,
+                  }));
+                  setTab("Receiving & Put Away");
+                }}
+              />
+            )}
           </div>
         )}
       </div>

@@ -37,6 +37,32 @@ export const createWarehouseBin = (
     warehouse_id: warehouseId,
     company_id: companyId,
   });
+export const updateWarehouseBin = (
+  companyId: string,
+  warehouseId: string,
+  binId: string,
+  data: any,
+) =>
+  apiPut<any>(`/api/wms/warehouses/${warehouseId}/bins/${binId}`, {
+    ...data,
+    company_id: companyId,
+  });
+export const deleteWarehouseBin = (
+  companyId: string,
+  warehouseId: string,
+  binId: string,
+) =>
+  apiDelete<any>(
+    `/api/wms/warehouses/${warehouseId}/bins/${binId}?${companyQuery(companyId)}`,
+  );
+export const getWarehouseBinStock = (
+  companyId: string,
+  warehouseId: string,
+  binId: string,
+) =>
+  apiGet<any>(
+    `/api/wms/warehouses/${warehouseId}/bins/${binId}/stock?${companyQuery(companyId)}`,
+  );
 export const getWarehouseBins = (companyId: string, warehouseId: string) =>
   apiGet<any>(
     `/api/wms/warehouses/${warehouseId}/bins?${companyQuery(companyId)}`,
@@ -45,8 +71,22 @@ export const getWmsCatalogue = (companyId: string) =>
   apiGet<any>(`/api/wms/catalogue?${companyQuery(companyId)}`);
 export const getInboundPurchaseOrders = (companyId: string) =>
   apiGet<any>(`/api/wms/inbound-orders?${companyQuery(companyId)}`);
-export const getWmsStock = (companyId: string) =>
-  apiGet<any>(`/api/wms/stock?${companyQuery(companyId)}`);
+export const getWmsStock = (
+  companyId: string,
+  filters?: {
+    warehouse_id?: string;
+    bin_id?: string;
+    bin_location?: string;
+    search?: string;
+  },
+) => {
+  const query = new URLSearchParams({ company_id: companyId });
+  if (filters?.warehouse_id) query.set("warehouse_id", filters.warehouse_id);
+  if (filters?.bin_id) query.set("bin_id", filters.bin_id);
+  if (filters?.bin_location) query.set("bin_location", filters.bin_location);
+  if (filters?.search) query.set("search", filters.search);
+  return apiGet<any>(`/api/wms/stock?${query.toString()}`);
+};
 export const setWmsReorderLevel = (
   companyId: string,
   stockId: number,
