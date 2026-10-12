@@ -91,10 +91,27 @@ export const setWmsReorderLevel = (
   companyId: string,
   stockId: number,
   reorder_level: number,
+  lead_time_days?: number,
 ) =>
   apiPut<any>(`/api/wms/stock/${stockId}/reorder-level`, {
     company_id: companyId,
     reorder_level,
+    ...(lead_time_days !== undefined ? { lead_time_days } : {}),
+  });
+
+export const createWmsReorderPo = (
+  companyId: string,
+  stockId: number,
+  payload: {
+    quantity: number;
+    vendor_name?: string;
+    expected_receiving_date?: string;
+    notes?: string;
+  },
+) =>
+  apiPost<any>(`/api/wms/stock/${stockId}/reorder-po`, {
+    company_id: companyId,
+    ...payload,
   });
 export const receiveStock = (companyId: string, data: any) =>
   apiPost<any>(`/api/wms/receiving`, { ...data, company_id: companyId });

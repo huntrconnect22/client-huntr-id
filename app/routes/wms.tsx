@@ -2,19 +2,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import {
   Activity,
+  AlertTriangle,
   ArrowDownToLine,
   BarChart3,
   Boxes,
   Building2,
   Check,
   ChevronRight,
+  Clock,
   Layers,
   Loader2,
+  Package,
   PackageCheck,
   Plus,
   Printer,
   RefreshCw,
   Search,
+  ShoppingCart,
   Truck,
   Warehouse as WarehouseIcon,
   X,
@@ -47,6 +51,7 @@ import {
   receiveStock,
   releaseWmsOrder,
   setWmsReorderLevel,
+  createWmsReorderPo,
   shipWmsOrder,
   startWmsPicking,
   transferStock,
@@ -354,6 +359,88 @@ export default function WmsPage() {
   const [reorderLevels, setReorderLevels] = useState<Record<number, string>>(
     {},
   );
+  const [leadTimes, setLeadTimes] = useState<Record<number, string>>({});
+  const [reorderModalItem, setReorderModalItem] = useState<any | null>(null);
+  const [reorderForm, setReorderForm] = useState({
+    quantity: "",
+    vendor_name: "",
+    expected_receiving_date: "",
+    notes: "",
+  });
+  const [submittingReorder, setSubmittingReorder] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const paramTab = new URLSearchParams(window.location.search).get("tab");
+      if (paramTab) {
+        if (paramTab === "Reports") setTab("Reports");
+        else if (paramTab === "Stock" || paramTab === "Inventory") setTab("Stock");
+        else if (paramTab === "Receiving") setTab("Receiving & Put Away");
+      }
+    }
+  }, []);
+
+  const handleOpenReorderModal = (item: any) => {
+    const leadDays = toNumeric(item.lead_time_days || 0);
+    const estDate = leadDays > 0
+      ? new Date(Date.now() + leadDays * 86400000).toISOString().split("T")[0]
+      : new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+
+    const currentAvailable = item.available !== undefined
+      ? toNumeric(item.available)
+      : toNumeric(item.on_hand) - toNumeric(item.allocated);
+    const minLevel = toNumeric(item.reorder_level);
+    const suggested = item.suggested_qty
+      ? String(item.suggested_qty)
+      : String(Math.max(1, Math.round(minLevel * 2 - currentAvailable)));
+
+    setReorderForm({
+      quantity: suggested,
+      vendor_name: "",
+      expected_receiving_date: estDate,
+      notes: `Replenishment order for SKU ${item.sku}`,
+    });
+    setReorderModalItem(item);
+  };
+
+  const handleSubmitReorderPo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reorderModalItem || !company?.id) return;
+    const qty = toNumeric(reorderForm.quantity);
+    if (qty <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Jumlah tidak valid",
+        text: "Jumlah pesanan harus lebih besar dari 0.",
+      });
+      return;
+    }
+    setSubmittingReorder(true);
+    try {
+      const res = await createWmsReorderPo(company.id, reorderModalItem.id, {
+        quantity: qty,
+        vendor_name: reorderForm.vendor_name || undefined,
+        expected_receiving_date: reorderForm.expected_receiving_date || undefined,
+        notes: reorderForm.notes || undefined,
+      });
+      await Swal.fire({
+        icon: "success",
+        title: "Purchase Order Diterbitkan!",
+        text: res?.message || `PO berhasil dibuat dan dijadwalkan masuk di Inbound Orders WMS.`,
+      });
+      setReorderModalItem(null);
+      await refresh();
+      setTab("Receiving & Put Away");
+    } catch (err: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal membuat PO",
+        text: err?.message || "Terjadi kesalahan saat membuat Purchase Order.",
+      });
+    } finally {
+      setSubmittingReorder(false);
+    }
+  };
   useEffect(() => {
     try {
       setCompany(JSON.parse(localStorage.getItem("active_company") || "null"));
@@ -522,6 +609,32 @@ export default function WmsPage() {
   const hasStockFilters = Boolean(
     stockSearch || stockWarehouseId || stockCategory,
   );
+
+  // Bin type order & labels for display grouping
+  const BIN_TYPE_ORDER = ["receiving", "quarantine", "storage", "picking", "packing", "shipping", "other"];
+  const BIN_TYPE_LABELS: Record<string, { label: string; description: string; color: string }> = {
+    receiving:  { label: "Receiving",  description: "Barang masuk, belum diinspeksi / put away", color: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" },
+    quarantine: { label: "Quarantine", description: "Barang ditahan untuk inspeksi lebih lanjut",  color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" },
+    storage:    { label: "Storage",    description: "Stok utama siap digunakan",                   color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+    picking:    { label: "Picking",    description: "Area picking untuk pemenuhan order",           color: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20" },
+    packing:    { label: "Packing",    description: "Sedang dikemas untuk pengiriman",              color: "text-pink-600 dark:text-pink-400 bg-pink-500/10 border-pink-500/20" },
+    shipping:   { label: "Shipping",   description: "Siap kirim / dalam pengiriman",                color: "text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
+    other:      { label: "Other",      description: "Bin tanpa tipe khusus",                         color: "text-[var(--ui-text-secondary)] bg-[var(--ui-bg-input)] border-[var(--ui-border)]" },
+  };
+
+  const stockGroupedByBinType = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    for (const item of filteredStock) {
+      const rawType = (item.bin_type || "other").toLowerCase();
+      const key = BIN_TYPE_ORDER.includes(rawType) ? rawType : "other";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    }
+    return BIN_TYPE_ORDER
+      .filter((k) => groups[k]?.length > 0)
+      .map((k) => ({ type: k, items: groups[k] }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredStock]);
 
   const cataloguePickerItems: PickerItem[] = useMemo(
     () =>
@@ -838,6 +951,28 @@ export default function WmsPage() {
             Saving transaction…
           </div>
         )}
+        {report?.low_stock_items && report.low_stock_items.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm">
+            <div className="flex items-start gap-2.5 text-amber-600 dark:text-amber-400">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold">
+                  {report.low_stock_items.length} Barang Perlu Pemesanan Ulang (Low Stock Alert)
+                </p>
+                <p className="text-xs text-[var(--ui-text-muted)]">
+                  Stok barang telah mencapai atau di bawah Reorder Point. Periksa lead time dan segera terbitkan PO.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setTab("Reports")}
+              className="inline-flex items-center gap-1.5 rounded bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+            >
+              <ShoppingCart size={13} />
+              Review & Buat PO
+            </button>
+          </div>
+        )}
         {tab === "Overview" && (
           <WmsOverview
             dash={dash}
@@ -1055,138 +1190,213 @@ export default function WmsPage() {
                 </div>
               </div>
               {filteredStock.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[850px] text-left text-sm">
-                    <thead className="bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Item</th>
-                        <th className="py-3 font-semibold">Location</th>
-                        <th className="py-3 text-right font-semibold">
-                          On hand
-                        </th>
-                        <th className="py-3 text-right font-semibold">
-                          Reserved
-                        </th>
-                        <th className="py-3 text-right font-semibold">
-                          Available
-                        </th>
-                        <th className="px-4 py-3 font-semibold">
-                          Reorder point
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredStock.map((x: any) => {
-                        const available =
-                          toNumeric(x.on_hand) - toNumeric(x.allocated);
-                        const belowReorder =
-                          toNumeric(x.reorder_level) > 0 &&
-                          available <= toNumeric(x.reorder_level);
-
-                        return (
-                          <tr
-                            key={x.id}
-                            className="border-t border-[var(--ui-border)] hover:bg-[var(--ui-bg-input)]/60"
+                <div className="divide-y divide-[var(--ui-border)]">
+                  {stockGroupedByBinType.map(({ type, items }) => {
+                    const meta = BIN_TYPE_LABELS[type] ?? BIN_TYPE_LABELS["other"];
+                    return (
+                      <div key={type}>
+                        {/* Section header per bin type */}
+                        <div className={`flex items-center gap-2 border-b border-[var(--ui-border)] px-4 py-2 ${meta.color.includes("bg-") ? "" : ""}`}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${meta.color}`}
                           >
-                            <td className="px-4 py-3 align-middle">
-                              <p className="font-semibold text-[var(--ui-text-primary)]">
-                                {x.item_name}
-                              </p>
-                              <div className="mt-1 flex items-center gap-2 text-xs">
-                                <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--ui-text-secondary)]">
-                                  {x.sku}
-                                </span>
-                                <span className="text-[var(--ui-text-muted)]">
-                                  {x.catalogue_category || "Uncategorised"}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-3 align-middle">
-                              <p className="font-medium">{x.warehouse_name}</p>
-                              <p className="mt-0.5 font-mono text-xs text-[var(--ui-text-muted)]">
-                                {x.bin_location || "No bin assigned"}
-                              </p>
-                            </td>
-                            <td className="py-3 text-right align-middle tabular-nums">
-                              {formatQuantity(x.on_hand)}{" "}
-                              <span className="text-xs text-[var(--ui-text-muted)]">
-                                {x.uom}
-                              </span>
-                            </td>
-                            <td className="py-3 text-right align-middle tabular-nums text-[var(--ui-text-secondary)]">
-                              {formatQuantity(x.allocated)}
-                            </td>
-                            <td className="py-3 text-right align-middle tabular-nums">
-                              <span
-                                className={
-                                  belowReorder
-                                    ? "font-semibold text-amber-600"
-                                    : "font-semibold text-emerald-600"
-                                }
-                              >
-                                {formatQuantity(available)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 align-middle">
-                              <div className="flex items-center gap-2">
-                                <input
-                                  aria-label={`Reorder level ${x.sku}`}
-                                  type="number"
-                                  min="0"
-                                  step="0.001"
-                                  className={input + " w-24 px-2 py-1"}
-                                  value={
-                                    reorderLevels[x.id] !== undefined
-                                      ? reorderLevels[x.id]
-                                      : String(toNumeric(x.reorder_level))
-                                  }
-                                  onChange={(e) =>
-                                    setReorderLevels({
-                                      ...reorderLevels,
-                                      [x.id]: e.target.value,
-                                    })
-                                  }
-                                />
-                                <button
-                                  onClick={async () => {
-                                    try {
-                                      await setWmsReorderLevel(
-                                        company.id,
-                                        x.id,
-                                        toNumeric(
-                                          reorderLevels[x.id] ??
-                                            x.reorder_level ??
-                                            0,
-                                        ),
-                                      );
-                                      await Swal.fire({
-                                        icon: "success",
-                                        title: "Reorder level saved",
-                                        text: `${x.sku} is updated.`,
-                                        timer: 1400,
-                                        showConfirmButton: false,
-                                      });
-                                      await refresh();
-                                    } catch (error: any) {
-                                      await Swal.fire({
-                                        icon: "error",
-                                        title: "Unable to save",
-                                        text:
-                                          error.message || "Please try again.",
-                                      });
-                                    }
-                                  }}
-                                  className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-card)]"
-                                >
-                                  Save
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                            {meta.label}
+                          </span>
+                          <span className="text-xs text-[var(--ui-text-muted)]">{meta.description}</span>
+                          <span className="ml-auto shrink-0 rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-0.5 text-[11px] font-medium text-[var(--ui-text-secondary)]">
+                            {items.length} record{items.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[850px] text-left text-sm">
+                            <thead className="bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
+                              <tr>
+                                <th className="px-4 py-3 font-semibold">Item</th>
+                                <th className="py-3 font-semibold">Location</th>
+                                <th className="py-3 text-right font-semibold">On hand</th>
+                                <th className="py-3 text-right font-semibold">Reserved</th>
+                                <th className="py-3 text-right font-semibold">Available</th>
+                                <th className="px-4 py-3 font-semibold">Reorder point & Lead time</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {items.map((x: any) => {
+                                const available =
+                                  toNumeric(x.on_hand) - toNumeric(x.allocated);
+                                const belowReorder =
+                                  toNumeric(x.reorder_level) > 0 &&
+                                  available <= toNumeric(x.reorder_level);
+                                const currentLeadDays =
+                                  leadTimes[x.id] !== undefined
+                                    ? toNumeric(leadTimes[x.id])
+                                    : toNumeric(x.lead_time_days || 0);
+
+                                return (
+                                  <tr
+                                    key={x.id}
+                                    className="border-t border-[var(--ui-border)] hover:bg-[var(--ui-bg-input)]/60"
+                                  >
+                                    <td className="px-4 py-3 align-middle">
+                                      <p className="font-semibold text-[var(--ui-text-primary)]">
+                                        {x.item_name}
+                                      </p>
+                                      <div className="mt-1 flex items-center gap-2 text-xs">
+                                        <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--ui-text-secondary)]">
+                                          {x.sku}
+                                        </span>
+                                        <span className="text-[var(--ui-text-muted)]">
+                                          {x.catalogue_category || "Uncategorised"}
+                                        </span>
+                                        {belowReorder && (
+                                          <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                                            Stok Menipis
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="py-3 align-middle">
+                                      <p className="font-medium">{x.warehouse_name}</p>
+                                      <p className="mt-0.5 font-mono text-xs text-[var(--ui-text-muted)]">
+                                        {x.bin_location || "No bin assigned"}
+                                      </p>
+                                    </td>
+                                    <td className="py-3 text-right align-middle tabular-nums">
+                                      {formatQuantity(x.on_hand)}{" "}
+                                      <span className="text-xs text-[var(--ui-text-muted)]">
+                                        {x.uom}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 text-right align-middle tabular-nums text-[var(--ui-text-secondary)]">
+                                      {formatQuantity(x.allocated)}
+                                    </td>
+                                    <td className="py-3 text-right align-middle tabular-nums">
+                                      <span
+                                        className={
+                                          belowReorder
+                                            ? "font-semibold text-amber-600"
+                                            : "font-semibold text-emerald-600"
+                                        }
+                                      >
+                                        {formatQuantity(available)}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 align-middle">
+                                      <div className="flex flex-col gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="flex flex-col">
+                                            <span className="text-[10px] text-[var(--ui-text-muted)]">Min. Stok</span>
+                                            <input
+                                              aria-label={`Reorder level ${x.sku}`}
+                                              type="number"
+                                              min="0"
+                                              step="0.001"
+                                              className={input + " w-20 px-2 py-1 text-xs"}
+                                              value={
+                                                reorderLevels[x.id] !== undefined
+                                                  ? reorderLevels[x.id]
+                                                  : String(toNumeric(x.reorder_level))
+                                              }
+                                              onChange={(e) =>
+                                                setReorderLevels({
+                                                  ...reorderLevels,
+                                                  [x.id]: e.target.value,
+                                                })
+                                              }
+                                            />
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <span className="text-[10px] text-[var(--ui-text-muted)]">Lead Time (hr)</span>
+                                            <input
+                                              aria-label={`Lead time ${x.sku}`}
+                                              type="number"
+                                              min="0"
+                                              step="1"
+                                              placeholder="0"
+                                              className={input + " w-16 px-2 py-1 text-xs"}
+                                              value={
+                                                leadTimes[x.id] !== undefined
+                                                  ? leadTimes[x.id]
+                                                  : String(toNumeric(x.lead_time_days || 0))
+                                              }
+                                              onChange={(e) =>
+                                                setLeadTimes({
+                                                  ...leadTimes,
+                                                  [x.id]: e.target.value,
+                                                })
+                                              }
+                                            />
+                                          </div>
+                                          <button
+                                            onClick={async () => {
+                                              try {
+                                                await setWmsReorderLevel(
+                                                  company.id,
+                                                  x.id,
+                                                  toNumeric(
+                                                    reorderLevels[x.id] ??
+                                                      x.reorder_level ??
+                                                      0,
+                                                  ),
+                                                  toNumeric(
+                                                    leadTimes[x.id] ??
+                                                      x.lead_time_days ??
+                                                      0,
+                                                  ),
+                                                );
+                                                await Swal.fire({
+                                                  icon: "success",
+                                                  title: "Pengaturan Disimpan",
+                                                  text: `Reorder point dan lead time untuk ${x.sku} berhasil diperbarui.`,
+                                                  timer: 1400,
+                                                  showConfirmButton: false,
+                                                });
+                                                await refresh();
+                                              } catch (error: any) {
+                                                await Swal.fire({
+                                                  icon: "error",
+                                                  title: "Unable to save",
+                                                  text:
+                                                    error.message || "Please try again.",
+                                                });
+                                              }
+                                            }}
+                                            className="self-end rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-card)]"
+                                          >
+                                            Save
+                                          </button>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px]">
+                                          {currentLeadDays > 0 ? (
+                                            <span className="text-[var(--ui-text-muted)]">
+                                              ⏱️ Est. tiba: {currentLeadDays} hari
+                                            </span>
+                                          ) : (
+                                            <span className="text-[var(--ui-text-muted)]">
+                                              Lead time: -
+                                            </span>
+                                          )}
+                                          {belowReorder && (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleOpenReorderModal(x)}
+                                              className="inline-flex items-center gap-1 rounded bg-amber-600 px-2 py-0.5 font-semibold text-white hover:bg-amber-700"
+                                            >
+                                              <ShoppingCart size={11} />
+                                              Pesan Sekarang
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-8 text-center">
@@ -2349,27 +2559,101 @@ export default function WmsPage() {
               </div>
             </div>
             <div className={card}>
-              <h3 className="font-bold">Replenishment alerts</h3>
-              <div className="mt-3 divide-y divide-[var(--ui-border)]">
-                {(report?.low_stock_items || []).map((x: any) => (
-                  <div
-                    key={`${x.sku}-${x.warehouse_name}-${x.bin_location}`}
-                    className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
-                  >
-                    <span className="font-semibold">
-                      {x.sku} · {x.item_name}
-                    </span>
-                    <span className="text-[var(--ui-text-secondary)]">
-                      {x.warehouse_name} / {x.bin_location} · available{" "}
-                      {formatQuantity(x.available)} · minimum{" "}
-                      {formatQuantity(x.reorder_level)}
-                    </span>
-                  </div>
-                ))}
-                {!report?.low_stock_items?.length && (
-                  <p className="py-4 text-sm text-[var(--ui-text-muted)]">
-                    No items currently below reorder level.
+              <div className="flex items-center justify-between border-b border-[var(--ui-border)] pb-3">
+                <div>
+                  <h3 className="flex items-center gap-2 font-bold text-base">
+                    <AlertTriangle className="text-amber-500" size={18} />
+                    Replenishment alerts (Barang di Bawah Reorder Point)
+                  </h3>
+                  <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+                    Daftar stok yang telah mencapai atau di bawah batas minimum pemesanan ulang
                   </p>
+                </div>
+                <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
+                  {report?.low_stock_items?.length || 0} SKU Perlu PO
+                </span>
+              </div>
+
+              <div className="mt-3 divide-y divide-[var(--ui-border)]">
+                {(report?.low_stock_items || []).map((x: any) => {
+                  const leadDays = toNumeric(x.lead_time_days || 0);
+                  const deficit = Math.max(0, toNumeric(x.reorder_level) - toNumeric(x.available));
+                  return (
+                    <div
+                      key={`${x.sku}-${x.warehouse_name}-${x.bin_location}`}
+                      className="flex flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[var(--ui-text-primary)]">
+                            {x.item_name}
+                          </span>
+                          <span className="rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--ui-text-secondary)]">
+                            {x.sku}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--ui-text-secondary)]">
+                          <span>
+                            📍 {x.warehouse_name} ({x.bin_location || "Tanpa Bin"})
+                          </span>
+                          <span>·</span>
+                          <span>
+                            Tersedia:{" "}
+                            <strong className="text-amber-500">
+                              {formatQuantity(x.available)} {x.uom || "unit"}
+                            </strong>
+                          </span>
+                          <span>·</span>
+                          <span>
+                            Min. Reorder: {formatQuantity(x.reorder_level)} {x.uom || "unit"}
+                          </span>
+                          {deficit > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="font-medium text-rose-500">
+                                Defisit: {formatQuantity(deficit)} {x.uom || "unit"}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          {leadDays > 0 ? (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">
+                              <Clock size={13} />
+                              Lead time: {leadDays} hari · Estimasi barang tiba:{" "}
+                              {x.estimated_arrival
+                                ? new Date(x.estimated_arrival).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
+                                : `${leadDays} hari setelah pemesanan`}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[var(--ui-text-muted)]">
+                              <Clock size={13} /> Lead time belum diatur
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          onClick={() => handleOpenReorderModal(x)}
+                          className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ui-text-brand)] px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95"
+                        >
+                          <ShoppingCart size={14} />
+                          Buat Purchase Order (PO)
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {!report?.low_stock_items?.length && (
+                  <div className="py-6 text-center text-sm text-[var(--ui-text-muted)]">
+                    <PackageCheck size={28} className="mx-auto mb-1 text-emerald-500 opacity-80" />
+                    Semua stok aman. Tidak ada barang di bawah reorder point.
+                  </div>
                 )}
               </div>
             </div>
@@ -2806,6 +3090,162 @@ export default function WmsPage() {
           }
         })()}
       />
+      {reorderModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg space-y-5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-6 shadow-2xl">
+            <div className="flex items-start justify-between border-b border-[var(--ui-border)] pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-[var(--ui-text-primary)]">
+                  Buat Purchase Order (Reorder Point)
+                </h3>
+                <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+                  Pemesanan ulang otomatis untuk stok yang menipis
+                </p>
+              </div>
+              <button
+                onClick={() => setReorderModalItem(null)}
+                className="rounded p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 p-3.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-[var(--ui-text-muted)]">Barang:</span>
+                <span className="font-semibold text-[var(--ui-text-primary)]">
+                  {reorderModalItem.sku} · {reorderModalItem.item_name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--ui-text-muted)]">Gudang Tujuan:</span>
+                <span className="font-medium">{reorderModalItem.warehouse_name || "Semua Gudang"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--ui-text-muted)]">Stok Tersedia / Reorder Point:</span>
+                <span className="font-medium text-amber-500">
+                  {formatQuantity(
+                    reorderModalItem.available !== undefined
+                      ? reorderModalItem.available
+                      : toNumeric(reorderModalItem.on_hand) - toNumeric(reorderModalItem.allocated)
+                  )}{" "}
+                  / {formatQuantity(reorderModalItem.reorder_level)} {reorderModalItem.uom || "unit"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--ui-text-muted)]">Lead Time Pemasok:</span>
+                <span className="font-medium">
+                  {toNumeric(reorderModalItem.lead_time_days) > 0
+                    ? `${reorderModalItem.lead_time_days} hari`
+                    : "Belum diatur"}
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmitReorderPo} className="space-y-4 text-sm">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  Jumlah Pesanan (Quantity)*
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0.001"
+                    required
+                    className={input}
+                    placeholder="Contoh: 50"
+                    value={reorderForm.quantity}
+                    onChange={(e) =>
+                      setReorderForm({ ...reorderForm, quantity: e.target.value })
+                    }
+                  />
+                  <span className="shrink-0 text-xs font-medium text-[var(--ui-text-muted)]">
+                    {reorderModalItem.uom || "unit"}
+                  </span>
+                </div>
+                {reorderModalItem.suggested_qty && (
+                  <p className="mt-1 text-[11px] text-[var(--ui-text-muted)]">
+                    Saran sistem: {formatQuantity(reorderModalItem.suggested_qty)}{" "}
+                    {reorderModalItem.uom || "unit"} (untuk memulihkan stok optimal)
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  Nama Vendor / Supplier (Opsional)
+                </label>
+                <input
+                  type="text"
+                  className={input}
+                  placeholder="Contoh: PT Sumber Pemasok Utama"
+                  value={reorderForm.vendor_name}
+                  onChange={(e) =>
+                    setReorderForm({ ...reorderForm, vendor_name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  Estimasi Tanggal Tiba (Expected Receiving Date)
+                </label>
+                <input
+                  type="date"
+                  className={input}
+                  value={reorderForm.expected_receiving_date}
+                  onChange={(e) =>
+                    setReorderForm({
+                      ...reorderForm,
+                      expected_receiving_date: e.target.value,
+                    })
+                  }
+                />
+                <p className="mt-1 text-[11px] text-[var(--ui-text-muted)]">
+                  Dihitung otomatis dari lead time (hari ini +{" "}
+                  {toNumeric(reorderModalItem.lead_time_days) || 7} hari).
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  Catatan Pemesanan (Opsional)
+                </label>
+                <textarea
+                  rows={2}
+                  className={input + " resize-none"}
+                  placeholder="Catatan tambahan untuk pemesanan..."
+                  value={reorderForm.notes}
+                  onChange={(e) =>
+                    setReorderForm({ ...reorderForm, notes: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 border-t border-[var(--ui-border)] pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReorderModalItem(null)}
+                  className="rounded-md border border-[var(--ui-border)] px-4 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)]"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReorder}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {submittingReorder && (
+                    <Loader2 size={13} className="animate-spin" />
+                  )}
+                  Konfirmasi & Terbitkan PO
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

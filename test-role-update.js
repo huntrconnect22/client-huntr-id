@@ -10,7 +10,7 @@ const userSession = localStorage.getItem('user_session');
 const companySession = localStorage.getItem('active_company');
 
 if (!userSession || !companySession) {
-    console.log('❌ Missing session data needed for testing');
+    console.log('Missing session data needed for testing');
 } else {
     const user = JSON.parse(userSession);
     const company = JSON.parse(companySession);
