@@ -169,8 +169,12 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
       <button
         onClick={() => {
-          navigate("/notifications");
           onClose();
+          if (window.location.pathname === "/notifications") {
+            window.location.reload();
+          } else {
+            navigate("/notifications");
+          }
         }}
         style={{
           width: "100%",

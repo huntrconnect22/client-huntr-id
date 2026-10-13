@@ -35,19 +35,35 @@ export default function Notifications() {
 
   const handleMarkAsRead = async (id: string, url?: string) => {
     if (!user) return;
+    const navigateOrReload = (target: string) => {
+      try {
+        const targetUrl = new URL(target, window.location.origin);
+        if (
+          window.location.href === targetUrl.href ||
+          window.location.pathname + window.location.search === target ||
+          window.location.pathname === targetUrl.pathname
+        ) {
+          window.location.reload();
+        } else {
+          window.location.href = target;
+        }
+      } catch {
+        window.location.href = target;
+      }
+    };
+
     try {
       await markNotificationAsRead(id, user.id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: new Date() } : n));
       if (url) {
-        // Use window.location.href instead of navigate() so that clicking a
-        // notification always triggers a full page reload/data refresh even
-        // when the target URL is the same as the currently active route.
-        window.location.href = url;
+        navigateOrReload(url);
       }
     } catch (err) {
       console.error("Failed to mark notification as read", err);
-      // Still navigate even if marking-read failed
-      if (url) window.location.href = url;
+      // Still navigate/reload even if marking-read failed
+      if (url) {
+        navigateOrReload(url);
+      }
     }
   };
 

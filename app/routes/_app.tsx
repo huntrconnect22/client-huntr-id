@@ -465,9 +465,34 @@ export default function AppShell() {
         fetchUnreadCount(user.id);
       }
       setShowNotifications(false);
-      if (n.data?.url) navigate(n.data.url);
+      const url = n.data?.url;
+      if (url) {
+        const targetUrl = new URL(url, window.location.origin);
+        if (
+          window.location.href === targetUrl.href ||
+          window.location.pathname + window.location.search === url ||
+          window.location.pathname === targetUrl.pathname
+        ) {
+          window.location.reload();
+        } else {
+          window.location.href = url;
+        }
+      }
     } catch (err) {
       console.error("Failed to handle notification click", err);
+      const url = n.data?.url;
+      if (url) {
+        const targetUrl = new URL(url, window.location.origin);
+        if (
+          window.location.href === targetUrl.href ||
+          window.location.pathname + window.location.search === url ||
+          window.location.pathname === targetUrl.pathname
+        ) {
+          window.location.reload();
+        } else {
+          window.location.href = url;
+        }
+      }
     }
   };
 
