@@ -1019,31 +1019,33 @@ export default function Orders() {
                         { label: "PPN (11%)", value: ppn },
                       ];
                       return (
-                        <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                          <div className="px-4 py-2 border-b border-[var(--ui-border)]">
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)]">
-                              Rincian Biaya
-                            </span>
-                          </div>
-                          <div className="divide-y divide-[var(--ui-border)]">
-                            {feeRows.map((row) => (
-                              <div
-                                key={row.label}
-                                className="flex items-center justify-between px-4 py-1.5 text-xs"
-                              >
-                                <span className="text-[var(--ui-text-muted)]">
-                                  {row.label}
-                                </span>
-                                <span className="font-semibold text-[var(--ui-text-secondary)] tabular-nums">
-                                  {fmt(Math.round(row.value))}
-                                </span>
-                              </div>
-                            ))}
-                            <div className="flex items-center justify-between px-4 py-2.5">
-                              <span className="text-xs font-bold text-[var(--ui-text-primary)] uppercase tracking-wide">
+                        <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 px-4 py-2.5">
+                          <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
+                            <div className="flex items-center pr-3 border-r border-[var(--ui-border)] flex-shrink-0">
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)]">
+                                Rincian Biaya
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-5 sm:gap-6 flex-shrink-0">
+                              {feeRows.map((row) => (
+                                <div
+                                  key={row.label}
+                                  className="flex flex-col flex-shrink-0"
+                                >
+                                  <span className="text-[10px] text-[var(--ui-text-muted)] whitespace-nowrap">
+                                    {row.label}
+                                  </span>
+                                  <span className="text-xs font-semibold text-[var(--ui-text-secondary)] tabular-nums whitespace-nowrap">
+                                    {fmt(Math.round(row.value))}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex flex-col flex-shrink-0 pl-4 border-l border-[var(--ui-border)] ml-auto text-right">
+                              <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--ui-text-primary)] whitespace-nowrap">
                                 Total
                               </span>
-                              <span className="text-sm font-bold text-orange-500 tabular-nums">
+                              <span className="text-xs sm:text-sm font-bold text-orange-500 tabular-nums whitespace-nowrap">
                                 IDR {fmt(Math.round(grandTotal))}
                               </span>
                             </div>
