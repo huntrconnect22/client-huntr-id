@@ -29,7 +29,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export function meta({ data }: Route.MetaArgs) {
   const p = data?.product;
-  if (!p) return [{ title: "Product Not Found | Huntr.id" }];
+  if (!p) return [{ title: "Product Detail | Huntr.id" }];
   const title = `${p.name} | Huntr.id`;
   const desc  = (p.specifications || `Buy ${p.name} on Huntr.id.`).substring(0, 160);
   const canonical = `https://app.huntr.id/marketplace/${p.id}`;
@@ -125,6 +125,13 @@ export default function MarketplaceDetail() {
       .catch(() => setError("Failed to load product details."))
       .finally(() => setLoading(false));
   }, [id, loaderData]);
+
+  /* ── Sync page title ── */
+  useEffect(() => {
+    if (item?.name) {
+      document.title = `${item.name} | Huntr.id`;
+    }
+  }, [item?.name]);
 
   /* ── Cart sync ── */
   useEffect(() => {

@@ -35,6 +35,42 @@ export const adminActivateCompanySubscription = (companyId: string, payload: {
   payment_verified: true;
 }) => apiPost(`/api/admin/companies/${companyId}/subscription`, payload);
 
+export const adminUpdateCompanySubscriptionScheme = (companyId: string, payload: {
+  plan: "annual_upfront_po" | "saas_subscription" | "per_po" | "gmv_subscription";
+  fee_percent?: number;
+  ppn_percent?: number;
+  pph23_percent?: number;
+  saas_fee?: number;
+  saas_cycle?: "monthly" | "annual";
+  gmv_limit?: number;
+  overflow_strategy?: "transaction_fee" | "renewal_required";
+  payment_verified?: boolean;
+  use_historical_po?: boolean;
+}) => apiPost(`/api/admin/companies/${companyId}/subscription-scheme`, payload);
+
+export const adminGetSubscriptionSettings = () =>
+  apiGet("/api/admin/subscription-settings");
+
+export const adminUpdateSubscriptionSettings = (payload: {
+  allow_all_migration?: boolean;
+  default_plan?: string;
+  fee_percent?: number;
+  ppn_percent?: number;
+  pph23_percent?: number;
+  saas_fee?: number;
+  saas_cycle?: "monthly" | "annual";
+  per_po_rate?: number;
+}) => apiPost("/api/admin/subscription-settings", payload);
+
+export const adminBulkApplySubscription = (payload: {
+  plan: "annual_upfront_po" | "saas_subscription" | "per_po";
+  fee_percent?: number;
+  ppn_percent?: number;
+  pph23_percent?: number;
+  saas_fee?: number;
+  overflow_strategy?: "transaction_fee" | "renewal_required";
+}) => apiPost("/api/admin/subscription-settings/bulk-apply", payload);
+
 // Catalogue
 export const adminGetCatalogue = (params?: { page?: number; per_page?: number; search?: string }) => {
   const query = new URLSearchParams();

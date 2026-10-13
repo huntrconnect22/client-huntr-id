@@ -10,14 +10,30 @@ import Swal from "sweetalert2";
 
 function resolveBaseUrl(): string {
   const url = import.meta.env.VITE_API_URL || "";
+  if (typeof window === "undefined") {
+    // In SSR (Node.js environment):
+    // Map localhost:8443 (self-signed HTTPS) to http://localhost:8000 (HTTP)
+    // so Node.js fetch does not fail with DEPTH_ZERO_SELF_SIGNED_CERT.
+    if (url.includes("localhost:8443") || url.includes("127.0.0.1:8443")) {
+      return "http://localhost:8000";
+    }
+    if (!url) {
+      return "http://localhost:8000";
+    }
+  }
   return url.replace(/\/$/, "");
 }
 
 const BASE_URL = resolveBaseUrl();
 
 function getAdminHeaders(): Record<string, string> {
-  const token = sessionStorage.getItem("admin_session_token");
-  return token ? { "X-Admin-Authorization": token } : {};
+  if (typeof window === "undefined") return {};
+  try {
+    const token = sessionStorage.getItem("admin_session_token");
+    return token ? { "X-Admin-Authorization": token } : {};
+  } catch {
+    return {};
+  }
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
