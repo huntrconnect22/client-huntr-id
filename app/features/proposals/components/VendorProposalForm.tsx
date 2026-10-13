@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, Building2, DollarSign, Clock, Upload, CheckCircle2, Info, ShieldCheck, Loader2 } from "lucide-react";
+import { ChevronLeft, Building2, DollarSign, Clock, Upload, CheckCircle2, Info, ShieldCheck, Loader2, CheckSquare, Square, PackageCheck } from "lucide-react";
 
 export function VendorProposalForm({
   selectedRfq,
@@ -68,48 +68,160 @@ export function VendorProposalForm({
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4 text-xs">
           
-          {/* Itemized Price Offers */}
+          {/* Itemized Price Offers with Item Participation Checklist */}
           <section className="space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-[var(--ui-border)] text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-              <DollarSign size={14} className="text-orange-500" /> Itemized Price Offers
+            <div className="flex items-center justify-between gap-2 pb-2 border-b border-[var(--ui-border)] flex-wrap">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                <DollarSign size={14} className="text-orange-500" /> Penawaran Harga per Barang
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newItems = form.items.map((it: any) => ({ ...it, is_participating: true }));
+                    updateForm("items", newItems);
+                  }}
+                  className="text-[11px] font-semibold text-orange-500 hover:underline"
+                >
+                  Pilih Semua
+                </button>
+                <span className="text-[var(--ui-text-muted)]">·</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newItems = form.items.map((it: any) => ({ ...it, is_participating: false }));
+                    updateForm("items", newItems);
+                  }}
+                  className="text-[11px] font-semibold text-[var(--ui-text-muted)] hover:underline"
+                >
+                  Kosongkan
+                </button>
+              </div>
             </div>
+
+            <div className="p-2.5 rounded-xl border border-orange-500/20 bg-orange-500/5 text-xs text-[var(--ui-text-secondary)] flex items-start gap-2">
+              <Info size={14} className="text-orange-500 mt-0.5 shrink-0" />
+              <span>
+                <b>Partisipasi Multi-Barang:</b> Centang hanya barang-barang yang dapat perusahaan Anda sediakan. Anda tidak wajib menawarkan semua barang di RFQ ini.
+              </span>
+            </div>
+
             <div className="space-y-2">
               {form.items.map((item: any, idx: number) => {
-                const rfqItem = selectedRfq.items?.find((i:any) => i.id === item.rfq_item_id);
+                const rfqItem = selectedRfq.items?.find((i: any) => i.id === item.rfq_item_id);
+                const isParticipating = item.is_participating !== false;
+                const unitPrice = parseFloat(item.price_offer) || 0;
+                const subtotal = isParticipating ? unitPrice * (rfqItem?.qty || 1) : 0;
+
                 return (
-                  <div key={item.rfq_item_id} className="p-3 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-between gap-3 flex-wrap">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-[var(--ui-text-primary)]">{item.catalogue?.name}</p>
-                      <p className="text-[10px] text-[var(--ui-text-muted)] font-mono mt-0.5 flex items-center gap-2 flex-wrap">
-                        <span>{item.catalogue?.item_code}</span>
-                        <span>·</span>
-                        <span className="font-bold text-orange-500">{rfqItem?.qty} Units Requested</span>
-                        {rfqItem?.estimated_price > 0 && (
-                          <>
-                            <span>·</span>
-                            <span className="text-[var(--ui-text-secondary)] font-semibold bg-[var(--ui-bg-card)] px-1.5 py-0.5 rounded border border-[var(--ui-border)]">
-                              Target Buyer: Rp {Number(rfqItem.estimated_price).toLocaleString()} / unit
-                            </span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <div className="relative w-44">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[var(--ui-text-muted)]">Rp</span>
-                      <input 
-                        value={item.price_offer} 
-                        onChange={e => {
+                  <div
+                    key={item.rfq_item_id}
+                    className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 flex-wrap ${
+                      isParticipating
+                        ? "border-orange-500/40 bg-[var(--ui-bg-input)]"
+                        : "border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => {
                           const newItems = [...form.items];
-                          newItems[idx].price_offer = e.target.value;
+                          newItems[idx].is_participating = !isParticipating;
                           updateForm("items", newItems);
                         }}
-                        type="number" min="0" required placeholder="0"
-                        className="w-full pl-7 pr-2.5 py-1.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs font-bold text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
-                      />
+                        className="mt-0.5 text-orange-500 hover:opacity-80 transition shrink-0"
+                        title={isParticipating ? "Hapus dari penawaran" : "Ikuti tender untuk barang ini"}
+                      >
+                        {isParticipating ? <CheckSquare size={16} /> : <Square size={16} className="text-[var(--ui-text-muted)]" />}
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-[var(--ui-text-primary)]">{item.catalogue?.name}</p>
+                          {isParticipating ? (
+                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-500">
+                              Ditawarkan
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-[var(--ui-border)] text-[var(--ui-text-muted)]">
+                              Tidak Ditawarkan
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[var(--ui-text-muted)] font-mono mt-0.5 flex items-center gap-2 flex-wrap">
+                          <span>{item.catalogue?.item_code}</span>
+                          <span>·</span>
+                          <span className="font-bold text-orange-500">{rfqItem?.qty} Units Requested</span>
+                          {rfqItem?.estimated_price > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="text-[var(--ui-text-secondary)] font-semibold bg-[var(--ui-bg-card)] px-1.5 py-0.5 rounded border border-[var(--ui-border)]">
+                                Target Buyer: Rp {Number(rfqItem.estimated_price).toLocaleString()} / unit
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {isParticipating && subtotal > 0 && (
+                        <div className="text-right hidden sm:block">
+                          <span className="text-[9px] font-bold uppercase text-[var(--ui-text-muted)] block">Subtotal</span>
+                          <span className="text-xs font-bold text-orange-500">
+                            Rp {subtotal.toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      )}
+                      <div className="relative w-44">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[var(--ui-text-muted)]">Rp</span>
+                        <input
+                          value={item.price_offer}
+                          disabled={!isParticipating}
+                          onChange={e => {
+                            const newItems = [...form.items];
+                            newItems[idx].price_offer = e.target.value;
+                            updateForm("items", newItems);
+                          }}
+                          type="number"
+                          min="0"
+                          required={isParticipating}
+                          placeholder={isParticipating ? "0" : "Tidak ditawarkan"}
+                          className={`w-full pl-7 pr-2.5 py-1.5 rounded-lg border text-xs font-bold outline-none transition ${
+                            isParticipating
+                              ? "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-primary)] focus:border-orange-400/60"
+                              : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] text-[var(--ui-text-muted)] cursor-not-allowed opacity-50"
+                          }`}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Total Proposal Summary */}
+            <div className="p-3 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-between flex-wrap gap-2 text-xs">
+              <span className="text-[var(--ui-text-muted)]">
+                Barang yang Diikuti:{" "}
+                <b className="text-[var(--ui-text-primary)]">
+                  {form.items.filter((it: any) => it.is_participating !== false).length} dari {form.items.length} Barang
+                </b>
+              </span>
+              <div className="text-right">
+                <span className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] mr-2">Total Nilai Penawaran:</span>
+                <span className="text-sm font-extrabold text-orange-500">
+                  Rp{" "}
+                  {form.items
+                    .filter((it: any) => it.is_participating !== false)
+                    .reduce((sum: number, it: any) => {
+                      const rItem = selectedRfq.items?.find((i: any) => i.id === it.rfq_item_id);
+                      return sum + ((parseFloat(it.price_offer) || 0) * (rItem?.qty || 1));
+                    }, 0)
+                    .toLocaleString("id-ID")}
+                </span>
+              </div>
             </div>
           </section>
 

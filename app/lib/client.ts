@@ -35,7 +35,13 @@ async function handleResponse<T>(res: Response): Promise<T> {
   
   if (!res.ok) {
     if (res.status === 401) {
-      clearAuthSession();
+      // Only clear session if we're not currently on an auth flow page.
+      // Clearing during /onboarding or /register causes a redirect loop.
+      const onAuthFlow = typeof window !== 'undefined' &&
+        (/\/(onboarding|register|login)/.test(window.location.pathname));
+      if (!onAuthFlow) {
+        clearAuthSession();
+      }
     }
 
     // Demo mode — tampilkan Swal dan lempar error silent

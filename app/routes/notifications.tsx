@@ -38,11 +38,19 @@ export default function Notifications() {
     try {
       await markNotificationAsRead(id, user.id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: new Date() } : n));
-      if (url) navigate(url);
+      if (url) {
+        // Use window.location.href instead of navigate() so that clicking a
+        // notification always triggers a full page reload/data refresh even
+        // when the target URL is the same as the currently active route.
+        window.location.href = url;
+      }
     } catch (err) {
       console.error("Failed to mark notification as read", err);
+      // Still navigate even if marking-read failed
+      if (url) window.location.href = url;
     }
   };
+
 
   const handleReadAll = async () => {
     if (!user) return;

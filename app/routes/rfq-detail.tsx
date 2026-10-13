@@ -168,6 +168,36 @@ export default function RfqDetail() {
     }
   };
 
+  const handleAwardMultiWinners = async (
+    awards: Array<{ proposal_id: string; item_ids: string[] }>,
+    awardMode: "multi_vendor" = "multi_vendor"
+  ) => {
+    if (isProcessing.current || !user || !rfq?.id) return;
+    isProcessing.current = true;
+    setError(null);
+    try {
+      await apiPost(`/api/rfqs/${rfq.id}/award-winners`, {
+        awards,
+        award_mode: awardMode,
+        user_id: user.id,
+      });
+      setSuccessMessage("Pemenang tender berhasil ditetapkan! PO diterbitkan hanya untuk item yang di-checklist.");
+      if (id) await loadRfq(id);
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err: any) {
+      setError(err.message || "Gagal menetapkan pemenang tender");
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menetapkan Pemenang",
+        text: err.message || "Gagal menetapkan pemenang tender",
+      });
+    } finally {
+      setTimeout(() => {
+        isProcessing.current = false;
+      }, 500);
+    }
+  };
+
   useEventBusListener(["negotiation.responded"], () => {
     if (id) loadRfq(id);
   });
@@ -298,6 +328,7 @@ export default function RfqDetail() {
                 )}
 
                 <ProposalRankings
+                  rfq={rfq}
                   rankings={rankings}
                   canApproveOrAward={canApproveOrAward}
                   isRfqAlreadyAwarded={isRfqAlreadyAwarded}
@@ -305,6 +336,7 @@ export default function RfqDetail() {
                   isProcessing={isProcessing.current}
                   onNegotiate={(p) => { setSelectedNegProposal(p); setShowNegModal(true); }}
                   onAward={handleAwardWinner}
+                  onAwardMulti={handleAwardMultiWinners}
                   onAIRank={handleAiRank}
                   aiRankLoading={aiRankLoading}
                   showAiPanel={showAiPanel}

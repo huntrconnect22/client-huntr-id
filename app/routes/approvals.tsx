@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router";
 import { useAppShell } from "../routes/_app";
 import Swal from "sweetalert2";
+import { RejectPRModal } from "../components/RejectPRModal";
 
 const btnSecondary =
   "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors disabled:opacity-50";
@@ -60,6 +61,7 @@ export default function Approvals() {
   const [awardedProposals, setAwardedProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   const isOwner = activeCompany?.owner_id === user?.id;
   const isManager = user?.role === "manager" || isOwner;
@@ -127,36 +129,15 @@ export default function Approvals() {
     }
   };
 
-  const handleReject = async (rfqId: string) => {
-    if (!user) return;
-
-    const { value: reason } = await Swal.fire({
-      title: "Reject Purchase Request",
-      input: "textarea",
-      inputLabel: "Reason for rejection",
-      inputPlaceholder: "Please provide a reason for rejecting this PR...",
-      inputAttributes: { "aria-label": "Type your rejection reason here" },
-      showCancelButton: true,
-      confirmButtonText: "Reject",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
-      inputValidator: (value) => {
-        if (!value) return "You need to provide a reason for rejection!";
-        if (value.length < 10) return "Reason must be at least 10 characters long";
-      },
-    });
-
-    if (!reason) return;
-
+  const handleReject = async (rfqId: string, reason: string) => {
     setProcessingId(rfqId);
     try {
       await apiPost(`/api/rfqs/${rfqId}/reject`, { reason });
       setRequests((prev) => prev.filter((r) => r.id !== rfqId));
-      Swal.fire({ icon: "success", title: "Rejected!", text: "PR has been rejected." });
+      Swal.fire({ icon: "success", title: "PR Ditolak!", text: "PR telah berhasil ditolak.", timer: 2000, showConfirmButton: false });
     } catch (err) {
       console.error("Failed to reject PR", err);
-      Swal.fire({ icon: "error", title: "Error!", text: "Failed to reject PR. Check console for details." });
+      Swal.fire({ icon: "error", title: "Error!", text: "Gagal menolak PR." });
     } finally {
       setProcessingId(null);
     }
@@ -167,6 +148,21 @@ export default function Approvals() {
 
   return (
     <Layout title="Manager Approvals" subtitle="Review purchase requisitions and awarded winners.">
+      {/* Reject PR Modal */}
+      {rejectingId && (() => {
+        const req = requests.find(r => r.id === rejectingId);
+        return (
+          <RejectPRModal
+            prId={String(rejectingId).substring(0, 8).toUpperCase()}
+            prTitle={req?.title}
+            onClose={() => setRejectingId(null)}
+            onConfirm={async (reason) => {
+              await handleReject(rejectingId, reason);
+              setRejectingId(null);
+            }}
+          />
+        );
+      })()}
       <div className="w-full flex flex-col gap-6">
 
         {/* Pending PRs */}
@@ -250,7 +246,7 @@ export default function Approvals() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleReject(req.id)}
+                            onClick={() => setRejectingId(req.id)}
                                 disabled={processingId === req.id}
                                 className={btnReject}
                               >
@@ -320,7 +316,7 @@ export default function Approvals() {
                         <>
                           <button
                             type="button"
-                            onClick={() => handleReject(req.id)}
+                            onClick={() => setRejectingId(req.id)}
                             disabled={processingId === req.id}
                             className={btnReject}
                           >

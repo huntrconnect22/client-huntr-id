@@ -83,6 +83,12 @@ export const adminGetUsers = (params?: { page?: number; per_page?: number; searc
 export const adminDeleteUser = (userId: string) =>
   apiDelete(`/api/admin/users/${userId}`);
 
+export const adminChangeUserPassword = (userId: string | number, payload: {
+  password: string;
+  password_confirmation: string;
+}) => apiPost(`/api/admin/users/${userId}/change-password`, payload);
+
+
 export const adminGetCompanyImports = (companyId: string, params?: { page?: number; per_page?: number }) => {
   const query = new URLSearchParams();
   if (params?.page) query.append("page", params.page.toString());

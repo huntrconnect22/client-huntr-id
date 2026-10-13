@@ -127,6 +127,27 @@ export const proposalService = {
   },
 
   /**
+   * Award multiple proposals as winners (Split Award: 2-5 vendors with item checklist)
+   */
+  async awardMultiWinners(
+    rfqId: string | number,
+    awards: Array<{ proposal_id: string | number; item_ids: Array<string | number> }>,
+    awardMode: "multi_vendor" | "single" = "multi_vendor",
+    userId?: string
+  ): Promise<any> {
+    try {
+      return await apiPost(`/api/rfqs/${rfqId}/award-winners`, {
+        awards,
+        award_mode: awardMode,
+        user_id: userId,
+      });
+    } catch (error) {
+      console.error("Failed to award multiple winners:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Send negotiation
    */
   async sendNegotiation(proposalId: string | number, data: any): Promise<any> {

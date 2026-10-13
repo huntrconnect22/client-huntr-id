@@ -99,95 +99,122 @@ export const useOnboardingViewModel = () => {
 
   // --- Inisialisasi Sesi User ---
   useEffect(() => {
-    const session = localStorage.getItem("user_session");
-    if (!session) {
-      navigate("/login");
-      return;
-    }
-    const u = JSON.parse(session);
-    setUser(u);
+    let cancelled = false;
 
-    const paramType = searchParams.get("type");         // "buyer" | "vendor"
-    const fromCompanyId = searchParams.get("from_company"); // existing company id
+    const init = async () => {
+      // Small delay to handle race condition:
+      // register() sets localStorage then navigate('/onboarding') fires,
+      // but React re-renders before the write is fully flushed.
+      await new Promise(r => setTimeout(r, 80));
+      if (cancelled) return;
 
-    // Apply URL-specified type lock
-    const initialUpdates: Partial<CompanyFormData> = {
-      email: u.email || "",
-      phone: u.whatsapp || "",
-    };
-    if (paramType === "buyer" || paramType === "vendor") {
-      initialUpdates.type = paramType;
-    }
+      const session = localStorage.getItem("user_session");
+      if (!session) {
+        navigate("/login");
+        return;
+      }
 
-    if (fromCompanyId) {
-      // Pre-fill from source company
-      getMyCompanies()
-        .then((data) => {
-          const list: any[] = Array.isArray(data?.companies) ? data.companies : [];
-          const src = list.find((c) => c.id === fromCompanyId);
-          if (src) {
-            setFormData(prev => ({
-              ...prev,
-              ...initialUpdates,
-              company_name: src.name || "",
-              tax_id: src.tax_id || "",
-              country: src.country || "ID",
-              email: src.email || u.email || "",
-              phone: src.phone || u.whatsapp || "",
-              industry_type: src.industry_type || "",
-              address: src.address || "",
-              provincy_country: src.provincy_country || "",
-              city: src.city || "",
-              regency: src.regency || "",
-              zip_code: src.zip_code || "",
-              bank_name: src.bank_name || "",
-              bank_account: src.bank_account || "",
-              bank_account_name: src.bank_account_name || "",
-              region: src.region || "",
-            }));
+      let u: any;
+      try {
+        u = JSON.parse(session);
+        // If nested format {user: {...}}, unwrap
+        if (u?.user && !u?.id) u = u.user;
+      } catch {
+        navigate("/login");
+        return;
+      }
 
-            // Only pre-populate NPWP verified data if source company is actually approved (not rejected/pending)
-            if (src.tax_id && src.status === "approved") {
-              setNpwpVerifiedData({
-                npwp: src.tax_id,
-                nama: src.name || "",
-                alamat: src.address || "",
-                statusWp: "VALID",
-                statusSpt: "VALID",
-                city: src.city,
-                regency: src.regency,
-                zip_code: src.zip_code,
-                provincy_country: src.provincy_country,
-                bank_name: src.bank_name,
-                bank_account: src.bank_account,
-                bank_account_name: src.bank_account_name,
-                industry_type: src.industry_type,
-              });
-            }
+      if (cancelled) return;
+      setUser(u);
 
-            // If source company already has documents and is approved, copy them over
-            if (src.status === "approved" && Array.isArray(src.documents) && src.documents.length > 0) {
-              const copiedDocs = src.documents.map((d: any) => ({
-                name: d.name || d.type || "Document",
-                type: d.type || "Document",
-                file_path: d.file_path,
-              })).filter((d: any) => !!d.file_path);
+      const paramType = searchParams.get("type");         // "buyer" | "vendor"
+      const fromCompanyId = searchParams.get("from_company"); // existing company id
 
-              if (copiedDocs.length > 0) {
-                setUploadedDocs(copiedDocs);
+      // Apply URL-specified type lock
+      const initialUpdates: Partial<CompanyFormData> = {
+        email: u.email || "",
+        phone: u.whatsapp || "",
+      };
+      if (paramType === "buyer" || paramType === "vendor") {
+        initialUpdates.type = paramType;
+      }
+
+      if (fromCompanyId) {
+        // Pre-fill from source company
+        getMyCompanies()
+          .then((data) => {
+            if (cancelled) return;
+            const list: any[] = Array.isArray(data?.companies) ? data.companies : [];
+            const src = list.find((c) => c.id === fromCompanyId);
+            if (src) {
+              setFormData(prev => ({
+                ...prev,
+                ...initialUpdates,
+                company_name: src.name || "",
+                tax_id: src.tax_id || "",
+                country: src.country || "ID",
+                email: src.email || u.email || "",
+                phone: src.phone || u.whatsapp || "",
+                industry_type: src.industry_type || "",
+                address: src.address || "",
+                provincy_country: src.provincy_country || "",
+                city: src.city || "",
+                regency: src.regency || "",
+                zip_code: src.zip_code || "",
+                bank_name: src.bank_name || "",
+                bank_account: src.bank_account || "",
+                bank_account_name: src.bank_account_name || "",
+                region: src.region || "",
+              }));
+
+              // Only pre-populate NPWP verified data if source company is actually approved (not rejected/pending)
+              if (src.tax_id && src.status === "approved") {
+                setNpwpVerifiedData({
+                  npwp: src.tax_id,
+                  nama: src.name || "",
+                  alamat: src.address || "",
+                  statusWp: "VALID",
+                  statusSpt: "VALID",
+                  city: src.city,
+                  regency: src.regency,
+                  zip_code: src.zip_code,
+                  provincy_country: src.provincy_country,
+                  bank_name: src.bank_name,
+                  bank_account: src.bank_account,
+                  bank_account_name: src.bank_account_name,
+                  industry_type: src.industry_type,
+                });
               }
+
+              // If source company already has documents and is approved, copy them over
+              if (src.status === "approved" && Array.isArray(src.documents) && src.documents.length > 0) {
+                const copiedDocs = src.documents.map((d: any) => ({
+                  name: d.name || d.type || "Document",
+                  type: d.type || "Document",
+                  file_path: d.file_path,
+                })).filter((d: any) => !!d.file_path);
+
+                if (copiedDocs.length > 0) {
+                  setUploadedDocs(copiedDocs);
+                }
+              }
+            } else {
+              setFormData(prev => ({ ...prev, ...initialUpdates }));
             }
-          } else {
-            setFormData(prev => ({ ...prev, ...initialUpdates }));
-          }
-        })
-        .catch(() => {
-          setFormData(prev => ({ ...prev, ...initialUpdates }));
-        });
-    } else {
-      setFormData(prev => ({ ...prev, ...initialUpdates }));
-    }
+          })
+          .catch(() => {
+            // If fetching companies fails (e.g. 401 from backend), still continue onboarding
+            if (!cancelled) setFormData(prev => ({ ...prev, ...initialUpdates }));
+          });
+      } else {
+        setFormData(prev => ({ ...prev, ...initialUpdates }));
+      }
+    };
+
+    init();
+    return () => { cancelled = true; };
   }, [navigate, searchParams]);
+
 
   /**
    * Mengupdate field form secara dinamis

@@ -44,7 +44,15 @@ export class SessionManager {
   static getUser(): User | null {
     try {
       const userStr = localStorage.getItem(this.USER_KEY);
-      return userStr ? JSON.parse(userStr) : null;
+      if (!userStr) return null;
+      const parsed = JSON.parse(userStr);
+      if (parsed?.user) {
+        return {
+          ...parsed.user,
+          token: parsed.user.token || parsed.token || localStorage.getItem('auth_token') || localStorage.getItem('token') || '',
+        };
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -52,12 +60,24 @@ export class SessionManager {
 
   static setUser(user: User) {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    if (user?.token) {
+      localStorage.setItem('auth_token', user.token);
+    }
     this.notify();
   }
 
   static getToken(): string | null {
     const user = this.getUser();
-    return user?.token || null;
+    if (user?.token) return user.token;
+    if ((user as any)?.user?.token) return (user as any).user.token;
+    if ((user as any)?.access_token) return (user as any).access_token;
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      if (authToken) return authToken;
+      const plainToken = localStorage.getItem('token');
+      if (plainToken) return plainToken;
+    } catch {}
+    return null;
   }
 
   static clearUser() {

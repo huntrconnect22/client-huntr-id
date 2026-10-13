@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
     plugins: [tailwindcss(), reactRouter()],
     resolve: {
       tsconfigPaths: true,
+      dedupe: ["react", "react-dom"],
     },
     server: {
       proxy: {

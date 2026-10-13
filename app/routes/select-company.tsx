@@ -5,6 +5,7 @@ import {
   LayoutGrid, LogOut,
 } from "lucide-react";
 import { getMyCompanies } from "../lib/api";
+import { SessionManager } from "../lib/session";
 import ThemeToggle from "../components/ThemeToggle";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useLanguage } from "../context/LanguageContext";
@@ -39,6 +40,7 @@ export default function SelectCompany() {
 
   const handleLogin = () => {
     if (!selected) return;
+    SessionManager.setCompany(selected);
     localStorage.setItem("active_company", JSON.stringify(selected));
     const slug = selected.slug || selected.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     navigate(`/${slug}`);
@@ -47,6 +49,7 @@ export default function SelectCompany() {
   const handleRegisterNew = () => navigate("/onboarding");
 
   const handleSignOut = () => { 
+    SessionManager.clearAll();
     localStorage.removeItem("user_session");
     localStorage.removeItem("active_company");
     localStorage.removeItem("huntr_cart");

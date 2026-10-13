@@ -34,22 +34,17 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  // Get theme from localStorage on client side to avoid hydration mismatch
-  const [theme, setTheme] = React.useState<string | null>(null);
-
   React.useEffect(() => {
     try {
       const t = localStorage.getItem('huntr_theme');
       if (t) {
-        setTheme(t);
         document.documentElement.setAttribute('data-theme', t);
       } else {
         const sys = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        setTheme(sys);
         document.documentElement.setAttribute('data-theme', sys);
       }
     } catch (e) {
-      setTheme('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
     }
   }, []);
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Eye, EyeOff, MessageSquareCode, ArrowLeft, User, Phone, Mail, Lock, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { register, sendOtp, verifyOtp, loadOtpSession, clearOtpSession, getCsrfCookie } from "../lib/api";
+import { SessionManager } from "../lib/session";
 import { isValidWhatsapp } from "../lib/whatsapp";
 import AuthLayout from "../components/AuthLayout";
 import { useLanguage } from "../context/LanguageContext";
@@ -124,17 +125,22 @@ export default function Register() {
       };
 
       const userPayload = await register(registerPayload);
+      const registeredUser = (userPayload as any)?.user || userPayload;
       
       const user = {
-        id: userPayload?.id,
-        name: userPayload?.name || form.name,
-        email: userPayload?.email || form.email,
-        whatsapp: userPayload?.whatsapp || phone,
-        role: userPayload?.role || null,
-        token: userPayload?.token || null,
+        id: registeredUser?.id,
+        name: registeredUser?.name || form.name,
+        email: registeredUser?.email || form.email,
+        whatsapp: registeredUser?.whatsapp || phone,
+        role: registeredUser?.role || "manager",
+        token: registeredUser?.token || (userPayload as any)?.token || null,
       };
 
+      SessionManager.setUser(user);
       localStorage.setItem("user_session", JSON.stringify(user));
+      if (user.token) {
+        localStorage.setItem("auth_token", user.token);
+      }
       localStorage.removeItem("active_company");
       
       if (returnTo) {

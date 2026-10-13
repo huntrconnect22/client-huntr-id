@@ -67,13 +67,28 @@ export const verify2FALogin = async (payload: {
 export const register = async (payload: {
   name: string; whatsapp: string; password: string; email?: string;
 }) => {
+  const normalizedWhatsapp = normalizeWhatsapp(payload.whatsapp);
   const normalized = {
     ...payload,
-    whatsapp: normalizeWhatsapp(payload.whatsapp),
+    whatsapp: normalizedWhatsapp,
     device_name: getDeviceIdentity(),
   };
-  await apiPost("/api/auth/register", normalized);
-  return login({ email: payload.email || payload.whatsapp, password: payload.password });
+  const res = await apiPost<{ user?: any; token?: string; [key: string]: any }>("/api/auth/register", normalized);
+  const user = res?.user || res;
+  const token = user?.token || res?.token;
+
+  if (user) {
+    if (token) user.token = token;
+    SessionManager.setUser(user);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("user_session", JSON.stringify(user));
+      if (token) {
+        localStorage.setItem("auth_token", token);
+      }
+    }
+  }
+
+  return user;
 };
 
 export const logout = () => apiPost("/api/auth/logout", {});

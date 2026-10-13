@@ -248,9 +248,15 @@ export default function Proposals() {
       return;
     }
     
-    const missingPrices = form.items.some((it: any) => !it.price_offer || parseFloat(it.price_offer) <= 0);
+    const participatingItems = form.items.filter((it: any) => it.is_participating !== false);
+    if (participatingItems.length === 0) {
+      setError("Silakan pilih minimal 1 barang yang ingin Anda ikuti tendernya.");
+      return;
+    }
+    
+    const missingPrices = participatingItems.some((it: any) => !it.price_offer || parseFloat(it.price_offer) <= 0);
     if (missingPrices) {
-      setError("Please provide a valid price offer for all items.");
+      setError("Silakan masukkan harga penawaran yang valid untuk semua barang yang Anda pilih.");
       return;
     }
 
@@ -267,7 +273,7 @@ export default function Proposals() {
       
       if (form.document) formData.append("document", form.document);
 
-      form.items.forEach((it: any, idx: number) => {
+      participatingItems.forEach((it: any, idx: number) => {
         formData.append(`items[${idx}][rfq_item_id]`, it.rfq_item_id.toString());
         formData.append(`items[${idx}][price_offer]`, it.price_offer.toString());
       });
