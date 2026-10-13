@@ -22,6 +22,7 @@ import { isAgenticProcurementEnabled } from "../lib/features";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import Toast from "../components/Toast";
 import { useLanguage } from "../context/LanguageContext";
+import type { Route } from "./+types/marketplace";
 
 const CATEGORY_CONFIG: { key: string; label: string; Icon: LucideIcon }[] = [
   { key: "all", label: "All", Icon: LayoutGrid },
@@ -42,7 +43,39 @@ const CATEGORY_CONFIG: { key: string; label: string; Icon: LucideIcon }[] = [
   { key: "other", label: "Other", Icon: Bookmark },
 ];
 
-export default function Marketplace() {
+/* ── SSR Loader ────────────────────────────────────────────────────── */
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const search = url.searchParams.get("search") || "";
+  const page = Number(url.searchParams.get("page")) || 1;
+  const category = url.searchParams.get("category") || undefined;
+
+  try {
+    const res = await getCatalogues({
+      search: search || undefined,
+      page,
+      category: category === "All" ? undefined : category,
+    });
+    const items = res?.data && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+    const totalPages = res?.last_page || 1;
+    return { items, totalPages };
+  } catch {
+    return { items: [], totalPages: 1 };
+  }
+}
+
+export function meta({ params }: Route.MetaArgs) {
+  const companySlug = params?.companySlug;
+  const title = companySlug
+    ? `Marketplace - ${companySlug.replace(/-/g, " ").toUpperCase()} | Huntr.id`
+    : "Marketplace | Huntr.id";
+  return [
+    { title },
+    { name: "description", content: "Explore verified B2B vendors and industrial products on Huntr Marketplace." },
+  ];
+}
+
+export default function Marketplace({ loaderData }: Route.ComponentProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
@@ -54,12 +87,13 @@ export default function Marketplace() {
   const currentPage = Number(searchParams.get("page")) || 1;
 
   const [localSearch, setLocalSearch] = useState(searchTerm);
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<any[]>(() => loaderData?.items || []);
+  const [loading, setLoading] = useState<boolean>(() => !loaderData?.items || loaderData.items.length === 0);
   const [cart, setCart] = useState<CartItem[]>(() => loadCart());
   const [activeCompany, setActiveCompany] = useState<any>(null);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState<number>(() => loaderData?.totalPages || 1);
   const [isAgenticEnabled, setIsAgenticEnabled] = useState(false);
+  const isInitialMount = useRef(true);
 
   // AI state
   const [aiMode, setAiMode] = useState(false);
@@ -209,6 +243,12 @@ export default function Marketplace() {
   }, [localSearch, searchTerm]);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (loaderData?.items && loaderData.items.length > 0) {
+        return;
+      }
+    }
     if (!searchTerm) {
       setAiMode(false); setAiSummary(null); setAiIntent(null);
       setComparisonText(null); setIsLoadingComparison(false);

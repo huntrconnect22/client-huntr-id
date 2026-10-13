@@ -33,6 +33,19 @@ export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/png", href: "/assets/img/logo/favicon.png" },
 ];
 
+function CanonicalLink() {
+  let pathname = "";
+  try {
+    const location = useLocation();
+    pathname = location?.pathname || "";
+  } catch {
+    if (typeof window !== "undefined") {
+      pathname = window.location.pathname;
+    }
+  }
+  return <link rel="canonical" href={`https://app.huntr.id${pathname}`} />;
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     try {
@@ -48,15 +61,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const location = useLocation();
-  const canonicalUrl = `https://app.huntr.id${location.pathname}`;
-
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href={canonicalUrl} />
+        <CanonicalLink />
         {/* Restore theme before first paint — fallback to system preference */}
         <script
           dangerouslySetInnerHTML={{

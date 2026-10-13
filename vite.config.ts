@@ -10,7 +10,10 @@ export default defineConfig(({ mode }) => {
     plugins: [tailwindcss(), reactRouter()],
     resolve: {
       tsconfigPaths: true,
-      dedupe: ["react", "react-dom"],
+      dedupe: ["react", "react-dom", "react-router"],
+    },
+    optimizeDeps: {
+      include: ["react", "react-dom", "react-router"],
     },
     server: {
       proxy: {
