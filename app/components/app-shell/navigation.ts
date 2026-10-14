@@ -16,6 +16,7 @@ import {
   Briefcase,
   FileText,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { isNavItemDisabledInDemo } from "../../lib/demo-mode";
 import type { TranslationKey } from "../../context/LanguageContext";
@@ -116,6 +117,13 @@ export function buildNavItems({
                   label: "Huntr Catalog",
                   labelKey: "nav.items.huntrCatalog",
                   Icon: Package,
+                  section: "procurement",
+                },
+                {
+                  to: `${companyPrefix}/crowd-buy`,
+                  label: "Crowd Buy",
+                  labelKey: "nav.items.crowdBuy",
+                  Icon: Users,
                   section: "procurement",
                 },
                 {

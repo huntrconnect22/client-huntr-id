@@ -36,6 +36,7 @@ const en = {
       paymentHistory: "Payment History",
       company: "Company",
       settings: "Settings",
+      crowdBuy: "Crowd Buy",
     },
   },
 
@@ -742,8 +743,8 @@ const en = {
     backToMarketplace: "Back to Marketplace",
     heading: "Welcome Back",
     subheading: "Sign in to your Huntr.id account to manage company procurement",
-    emailLabel: "Email or WhatsApp",
-    emailPlaceholder: "Email or WhatsApp number",
+    emailLabel: "Email Address",
+    emailPlaceholder: "Enter your email address",
     passwordLabel: "Password",
     rememberMe: "Remember Me",
     forgotPassword: "Forgot Password?",

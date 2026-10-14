@@ -24,6 +24,8 @@ export default [
   route("verify", "routes/verify.tsx"),
   route("tender/:id", "routes/tender-public.tsx"),
   route("t/:id", "routes/tender-public.tsx", { id: "tender-short" }),
+  route("crowd-buy/p/:id", "routes/crowd-buy-public.tsx", { id: "crowd-buy-public" }),
+  route("cb/:id", "routes/crowd-buy-public.tsx", { id: "crowd-buy-short" }),
 
   // ── Authenticated routes (inside persistent AppShell) ─────────────────────
   layout("routes/_app.tsx", [
@@ -34,6 +36,16 @@ export default [
     route(":companySlug/dashboard", "routes/home.tsx", {
       id: "company-dashboard",
     }),
+    route(
+      ":companySlug/crowd-buy",
+      "routes/crowd-buy.tsx",
+      { id: "company-crowd-buy" },
+    ),
+    route(
+      ":companySlug/crowd-buy/:id",
+      "routes/crowd-buy-detail.tsx",
+      { id: "company-crowd-buy-detail" },
+    ),
     route(
       ":companySlug/agentic-procurement",
       "routes/agentic-procurement.tsx",

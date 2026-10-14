@@ -38,6 +38,7 @@ const id: Translations = {
       paymentHistory: "Riwayat Pembayaran",
       company: "Perusahaan",
       settings: "Pengaturan",
+      crowdBuy: "Crowd Buy",
     },
   },
 
@@ -744,8 +745,8 @@ const id: Translations = {
     backToMarketplace: "Kembali ke Marketplace",
     heading: "Selamat Datang Kembali",
     subheading: "Masuk ke akun Huntr.id Anda untuk mengelola pengadaan perusahaan",
-    emailLabel: "Email atau WhatsApp",
-    emailPlaceholder: "Email atau nomor WhatsApp",
+    emailLabel: "Alamat Email",
+    emailPlaceholder: "Masukkan alamat email Anda",
     passwordLabel: "Kata Sandi",
     rememberMe: "Ingat Saya",
     forgotPassword: "Lupa Kata Sandi?",
