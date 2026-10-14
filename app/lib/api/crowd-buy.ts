@@ -122,6 +122,104 @@ export const crowdBuyApi = {
     );
   },
 
+  // ── Buyer Initiatives (Demand Pooling & Group Buying) ───────────────────────
+  async getBuyerInitiatives(params?: {
+    status?: string;
+    campaign_type?: string;
+    search?: string;
+    page?: number;
+  }): Promise<PaginatedResponse<CrowdBuyCampaign>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set("status", params.status);
+    if (params?.campaign_type) query.set("campaign_type", params.campaign_type);
+    if (params?.search) query.set("search", params.search);
+    if (params?.page) query.set("page", String(params.page));
+
+    return apiGet<PaginatedResponse<CrowdBuyCampaign>>(
+      `/api/crowd-buy/initiatives?${query.toString()}`
+    );
+  },
+
+  async createBuyerInitiative(data: {
+    campaign_type: "buyer_catalog" | "collective_rfq";
+    title: string;
+    description?: string;
+    category: string;
+    unit: string;
+    target_quantity: number;
+    ends_at: string;
+    supplier_company_id?: string;
+    catalogue_id?: string;
+    base_price?: number;
+    target_price?: number;
+    min_order_qty?: number;
+    max_order_qty?: number;
+    max_quantity?: number | null;
+    lead_time_days?: number | null;
+    delivery_terms?: string;
+    return_policy?: string;
+    image_path?: string;
+    price_tiers?: CrowdBuyPriceTier[];
+    initial_quantity?: number;
+    initial_shipping_address?: CrowdBuyShippingAddress;
+  }): Promise<{ message: string; campaign: CrowdBuyCampaign; invite_code: string }> {
+    return apiPost<{ message: string; campaign: CrowdBuyCampaign; invite_code: string }>(
+      "/api/crowd-buy/initiatives",
+      data
+    );
+  },
+
+  async acceptSupplierBid(
+    campaignId: string,
+    bidId: string
+  ): Promise<{ message: string; campaign: CrowdBuyCampaign }> {
+    return apiPost<{ message: string; campaign: CrowdBuyCampaign }>(
+      `/api/crowd-buy/initiatives/${campaignId}/accept-bid/${bidId}`,
+      {}
+    );
+  },
+
+  async resolveInviteCode(inviteCode: string): Promise<{
+    campaign: CrowdBuyCampaign;
+    is_valid: boolean;
+  }> {
+    return apiGet<{
+      campaign: CrowdBuyCampaign;
+      is_valid: boolean;
+    }>(`/api/crowd-buy/invite/${inviteCode}`);
+  },
+
+  // ── Supplier Collective RFQ Bidding ─────────────────────────────────────────
+  async getCollectiveRfqs(params?: {
+    category?: string;
+    search?: string;
+    page?: number;
+  }): Promise<PaginatedResponse<CrowdBuyCampaign>> {
+    const query = new URLSearchParams();
+    if (params?.category) query.set("category", params.category);
+    if (params?.search) query.set("search", params.search);
+    if (params?.page) query.set("page", String(params.page));
+
+    return apiGet<PaginatedResponse<CrowdBuyCampaign>>(
+      `/api/crowd-buy/supplier/collective-rfqs?${query.toString()}`
+    );
+  },
+
+  async submitSupplierBid(
+    campaignId: string,
+    data: {
+      offered_unit_price: number;
+      min_order_qty?: number;
+      lead_time_days?: number;
+      notes?: string;
+    }
+  ): Promise<{ message: string; bid: any }> {
+    return apiPost<{ message: string; bid: any }>(
+      `/api/crowd-buy/supplier/collective-rfqs/${campaignId}/bids`,
+      data
+    );
+  },
+
   // ── Supplier Management ─────────────────────────────────────────────────────
   async getSupplierCampaigns(params?: {
     status?: string;

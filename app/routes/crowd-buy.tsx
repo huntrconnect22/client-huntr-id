@@ -17,13 +17,20 @@ import {
   ArrowRight,
   ShieldCheck,
   RotateCw,
+  Sparkles,
+  Share2,
+  Gavel,
+  Check,
 } from "lucide-react";
 import { crowdBuyApi, type PaginatedResponse } from "../lib/api/crowd-buy";
-import type { CrowdBuyCampaign, CrowdBuyOrder } from "../features/crowd-buy/types";
+import type { CrowdBuyCampaign, CrowdBuyOrder, CrowdBuyBid } from "../features/crowd-buy/types";
 import { CampaignCard } from "../features/crowd-buy/components/CampaignCard";
 import { OrderModal } from "../features/crowd-buy/components/OrderModal";
 import { SupplierCampaignModal } from "../features/crowd-buy/components/SupplierCampaignModal";
 import { SupplierFulfillmentModal } from "../features/crowd-buy/components/SupplierFulfillmentModal";
+import { BuyerInitiativeModal } from "../features/crowd-buy/components/BuyerInitiativeModal";
+import { InviteShareModal } from "../features/crowd-buy/components/InviteShareModal";
+import { SupplierBiddingModal } from "../features/crowd-buy/components/SupplierBiddingModal";
 import { isVendorBuyerMode } from "../lib/viewMode";
 import Swal from "sweetalert2";
 
@@ -31,16 +38,21 @@ export default function CrowdBuyPage() {
   const { companySlug } = useParams<{ companySlug: string }>();
   const isVendorView = isVendorBuyerMode();
 
-  // Active Tab: 'catalog' | 'my-orders' | 'supplier' | 'admin'
+  // Active Tab: 'catalog' | 'initiatives' | 'my-orders' | 'supplier'
   const [activeTab, setActiveTab] = useState<string>("catalog");
 
   // Catalog State
   const [campaigns, setCampaigns] = useState<CrowdBuyCampaign[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [campaignTypeFilter, setCampaignTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("ending_soonest");
   const [loadingCatalog, setLoadingCatalog] = useState(true);
+
+  // Buyer Initiatives State
+  const [myInitiatives, setMyInitiatives] = useState<CrowdBuyCampaign[]>([]);
+  const [loadingInitiatives, setLoadingInitiatives] = useState(false);
 
   // Buyer Orders State
   const [myOrders, setMyOrders] = useState<CrowdBuyOrder[]>([]);
@@ -54,6 +66,9 @@ export default function CrowdBuyPage() {
   // Modals
   const [selectedCampaignForOrder, setSelectedCampaignForOrder] = useState<CrowdBuyCampaign | null>(null);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [isBuyerModalOpen, setIsBuyerModalOpen] = useState(false);
+  const [selectedCampaignForShare, setSelectedCampaignForShare] = useState<CrowdBuyCampaign | null>(null);
+  const [selectedCampaignForBid, setSelectedCampaignForBid] = useState<CrowdBuyCampaign | null>(null);
   const [editingCampaign, setEditingCampaign] = useState<CrowdBuyCampaign | null>(null);
   const [fulfillingOrder, setFulfillingOrder] = useState<CrowdBuyOrder | null>(null);
 
@@ -66,7 +81,17 @@ export default function CrowdBuyPage() {
         search: searchQuery || undefined,
         sort: sortBy,
       });
-      setCampaigns(res.data || []);
+
+      let data = res.data || [];
+      if (campaignTypeFilter === "supplier_promo") {
+        data = data.filter((c) => !c.creator_type || c.creator_type === "supplier");
+      } else if (campaignTypeFilter === "buyer_catalog") {
+        data = data.filter((c) => c.campaign_type === "buyer_catalog");
+      } else if (campaignTypeFilter === "collective_rfq") {
+        data = data.filter((c) => c.campaign_type === "collective_rfq");
+      }
+
+      setCampaigns(data);
     } catch (err) {
       console.error("Failed to load campaigns", err);
     } finally {
@@ -83,12 +108,26 @@ export default function CrowdBuyPage() {
   useEffect(() => {
     if (activeTab === "catalog") {
       loadCatalog();
+    } else if (activeTab === "initiatives") {
+      loadBuyerInitiatives();
     } else if (activeTab === "my-orders") {
       loadMyOrders();
     } else if (activeTab === "supplier") {
       loadSupplierData();
     }
-  }, [activeTab, selectedCategory, sortBy]);
+  }, [activeTab, selectedCategory, campaignTypeFilter, sortBy]);
+
+  const loadBuyerInitiatives = async () => {
+    setLoadingInitiatives(true);
+    try {
+      const res = await crowdBuyApi.getBuyerInitiatives();
+      setMyInitiatives(res.data || []);
+    } catch (err) {
+      console.error("Failed to load buyer initiatives", err);
+    } finally {
+      setLoadingInitiatives(false);
+    }
+  };
 
   const loadMyOrders = async () => {
     setLoadingOrders(true);
@@ -115,6 +154,35 @@ export default function CrowdBuyPage() {
       console.error("Failed to load supplier data", err);
     } finally {
       setLoadingSupplier(false);
+    }
+  };
+
+  const handleAcceptBid = async (campaignId: string, bidId: string) => {
+    const result = await Swal.fire({
+      title: "Terima Penawaran Supplier Ini?",
+      text: "Dengan menerima penawaran ini, supplier terpilih akan menjadi pemasok resmi untuk Group Buy ini dan harga dasar akan diperbarui.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#4f46e5",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Ya, Terima Penawaran",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await crowdBuyApi.acceptSupplierBid(campaignId, bidId);
+        Swal.fire({
+          icon: "success",
+          title: "Penawaran Diterima!",
+          text: "Supplier telah ditetapkan dan campaign sekarang aktif untuk proses pemesanan & pembayaran.",
+          confirmButtonColor: "#4f46e5",
+        });
+        loadBuyerInitiatives();
+        loadCatalog();
+      } catch (err: any) {
+        Swal.fire("Error", err.message || "Gagal menerima penawaran.", "error");
+      }
     }
   };
 
@@ -170,11 +238,11 @@ export default function CrowdBuyPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-slate-800 gap-3">
+        <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-2 sm:pb-0">
           <button
             onClick={() => setActiveTab("catalog")}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === "catalog"
                 ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
                 : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
@@ -185,8 +253,25 @@ export default function CrowdBuyPage() {
           </button>
 
           <button
+            onClick={() => setActiveTab("initiatives")}
+            className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+              activeTab === "initiatives"
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>Inisiasi Saya</span>
+            {myInitiatives.length > 0 && (
+              <span className="px-1.5 py-0.2 text-[10px] bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 rounded-full font-bold">
+                {myInitiatives.length}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab("my-orders")}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === "my-orders"
                 ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
                 : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
@@ -204,10 +289,10 @@ export default function CrowdBuyPage() {
           {isVendorView && (
             <button
               onClick={() => setActiveTab("supplier")}
-              className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+              className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 activeTab === "supplier"
                   ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                  : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
               <Building2 className="w-4 h-4" />
@@ -216,18 +301,28 @@ export default function CrowdBuyPage() {
           )}
         </div>
 
-        {activeTab === "supplier" && (
+        <div className="flex items-center gap-2 pb-2 sm:pb-0">
           <button
-            onClick={() => {
-              setEditingCampaign(null);
-              setIsSupplierModalOpen(true);
-            }}
-            className="mb-2 py-2 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+            onClick={() => setIsBuyerModalOpen(true)}
+            className="py-2 px-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-95 shrink-0"
           >
-            <Plus className="w-4 h-4" />
-            <span>Buat Campaign</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Mulai Inisiasi Group Buy</span>
           </button>
-        )}
+
+          {activeTab === "supplier" && (
+            <button
+              onClick={() => {
+                setEditingCampaign(null);
+                setIsSupplierModalOpen(true);
+              }}
+              className="py-2 px-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buat Promo Supplier</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── TAB 1: CATALOGUE ─────────────────────────────────────────────── */}
@@ -275,6 +370,28 @@ export default function CrowdBuyPage() {
             </div>
           </div>
 
+          {/* Campaign Type Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {[
+              { id: "all", label: "Semua Tipe" },
+              { id: "supplier_promo", label: "Promo Supplier" },
+              { id: "buyer_catalog", label: "Group Buy Buyer" },
+              { id: "collective_rfq", label: "Collective RFQ (Lelang)" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setCampaignTypeFilter(t.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 ${
+                  campaignTypeFilter === t.id
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-slate-300"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
           {/* Campaign Grid */}
           {loadingCatalog ? (
             <div className="py-20 text-center space-y-3">
@@ -297,8 +414,220 @@ export default function CrowdBuyPage() {
                   campaign={camp}
                   companySlug={companySlug}
                   onJoinClick={(c) => setSelectedCampaignForOrder(c)}
+                  onShareClick={(c) => setSelectedCampaignForShare(c)}
                 />
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TAB: BUYER INITIATIVES (INISIASI SAYA) ───────────────────────── */}
+      {activeTab === "initiatives" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                Inisiasi Group Buying & Collective RFQ Saya
+                <Sparkles className="w-4 h-4 text-amber-500" />
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Kelola group buying yang Anda inisiasi dan pantau penawaran masuk dari para supplier
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsBuyerModalOpen(true)}
+              className="py-2 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Inisiasi Kebutuhan Baru</span>
+            </button>
+          </div>
+
+          {loadingInitiatives ? (
+            <div className="py-20 text-center space-y-3">
+              <RotateCw className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
+              <p className="text-xs text-slate-500">Memuat inisiasi Anda...</p>
+            </div>
+          ) : myInitiatives.length === 0 ? (
+            <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-3">
+              <Sparkles className="w-10 h-10 text-amber-400 mx-auto" />
+              <h3 className="font-semibold text-slate-800 dark:text-slate-200">
+                Belum ada inisiasi yang Anda buat
+              </h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                Anda bisa memulai Group Buying dari produk katalog supplier yang sudah ada, atau membuat Collective RFQ untuk spesifikasi barang custom dan mengundang rekan usaha lain.
+              </p>
+              <button
+                onClick={() => setIsBuyerModalOpen(true)}
+                className="mt-2 py-2 px-4 text-xs font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                Mulai Inisiasi Sekarang
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myInitiatives.map((camp) => {
+                const isRfq = camp.campaign_type === "collective_rfq";
+                const bids = camp.bids || [];
+
+                return (
+                  <div
+                    key={camp.id}
+                    className="p-5 md:p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs space-y-4"
+                  >
+                    {/* Top Row: Code, Badges, Actions */}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
+                          {camp.code}
+                        </span>
+                        <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
+                          isRfq
+                            ? "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                            : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                        }`}>
+                          {isRfq ? "Collective RFQ" : "Group Buy Katalog"}
+                        </span>
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                          camp.status === "active"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                            : camp.status === "bidding"
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        }`}>
+                          {camp.status.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedCampaignForShare(camp)}
+                          className="py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>Undang Buyer Lain</span>
+                        </button>
+
+                        <Link
+                          to={companySlug ? `/${companySlug}/crowd-buy/${camp.id}` : `/crowd-buy/p/${camp.id}`}
+                          className="py-1.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          Lihat Detail
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Title & Description */}
+                    <div>
+                      <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                        {camp.title}
+                      </h4>
+                      {camp.description && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                          {camp.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Stats & Progress */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                      <div>
+                        <span className="text-slate-400 block text-[11px]">Terkumpul / Target:</span>
+                        <strong className="text-slate-800 dark:text-slate-200">
+                          {camp.current_quantity} / {camp.target_quantity} {camp.unit}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[11px]">Progres Kuota:</span>
+                        <strong className="text-indigo-600 dark:text-indigo-400">
+                          {camp.progress_percentage}%
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[11px]">
+                          {isRfq ? "Ekspektasi Harga:" : "Harga Satuan:"}
+                        </span>
+                        <strong className="text-slate-800 dark:text-slate-200">
+                          Rp {Number(camp.base_price).toLocaleString("id-ID")}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[11px]">Sisa Waktu:</span>
+                        <strong className="text-slate-800 dark:text-slate-200">
+                          {camp.days_remaining > 0 ? `${camp.days_remaining} hari` : "Berakhir"}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Supplier Bids Section (For Collective RFQ) */}
+                    {isRfq && (
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <Gavel className="w-4 h-4 text-indigo-600" />
+                            Penawaran Supplier ({bids.length} masuk)
+                          </span>
+                        </div>
+
+                        {bids.length === 0 ? (
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl text-center text-xs text-slate-500">
+                            Belum ada penawaran supplier yang masuk. Penawaran akan muncul di sini saat supplier mengajukan bidding.
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {bids.map((bid) => (
+                              <div
+                                key={bid.id}
+                                className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors ${
+                                  bid.status === "accepted"
+                                    ? "bg-emerald-50/70 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800"
+                                    : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700"
+                                }`}
+                              >
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <strong className="text-slate-900 dark:text-white">
+                                      {bid.supplier_company?.name || "Supplier Huntr"}
+                                    </strong>
+                                    {bid.status === "accepted" && (
+                                      <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-600 text-white rounded-full flex items-center gap-1">
+                                        <Check className="w-3 h-3" /> Pemenang Dipilih
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-slate-600 dark:text-slate-300">
+                                    Harga Ditawarkan:{" "}
+                                    <strong className="text-indigo-600 dark:text-indigo-400 text-sm">
+                                      Rp {Number(bid.offered_unit_price).toLocaleString("id-ID")}
+                                    </strong>{" "}
+                                    / {camp.unit} • MOQ: {bid.min_order_qty} • Lead Time: {bid.lead_time_days || 7} hari
+                                  </div>
+                                  {bid.notes && (
+                                    <p className="text-[11px] text-slate-500 italic mt-0.5">
+                                      "{bid.notes}"
+                                    </p>
+                                  )}
+                                </div>
+
+                                {camp.status === "bidding" && bid.status === "pending" && (
+                                  <button
+                                    onClick={() => handleAcceptBid(camp.id, bid.id)}
+                                    className="py-1.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                                  >
+                                    Terima Penawaran Ini
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -514,6 +843,49 @@ export default function CrowdBuyPage() {
           onOrderSuccess={() => {
             loadCatalog();
             loadMyOrders();
+          }}
+        />
+      )}
+
+      {isBuyerModalOpen && (
+        <BuyerInitiativeModal
+          onClose={() => setIsBuyerModalOpen(false)}
+          onSuccess={(newCampaign) => {
+            setIsBuyerModalOpen(false);
+            Swal.fire({
+              icon: "success",
+              title: "Inisiasi Berhasil Dibuat!",
+              text: "Inisiasi Group Buying Anda sekarang aktif. Bagikan link undangan ke rekan bisnis Anda untuk mulai mengumpulkan volume.",
+              confirmButtonColor: "#4f46e5",
+            });
+            loadBuyerInitiatives();
+            loadCatalog();
+            setSelectedCampaignForShare(newCampaign);
+          }}
+        />
+      )}
+
+      {selectedCampaignForShare && (
+        <InviteShareModal
+          campaign={selectedCampaignForShare}
+          onClose={() => setSelectedCampaignForShare(null)}
+        />
+      )}
+
+      {selectedCampaignForBid && (
+        <SupplierBiddingModal
+          campaign={selectedCampaignForBid}
+          onClose={() => setSelectedCampaignForBid(null)}
+          onSuccess={() => {
+            setSelectedCampaignForBid(null);
+            Swal.fire({
+              icon: "success",
+              title: "Penawaran Terkirim!",
+              text: "Penawaran harga Anda telah diajukan ke inisiator Collective RFQ.",
+              confirmButtonColor: "#10b981",
+            });
+            loadCatalog();
+            loadSupplierData();
           }}
         />
       )}

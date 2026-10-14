@@ -13,19 +13,43 @@ import {
   AlertCircle,
   Share2,
   RotateCw,
+  Sparkles,
+  Gavel,
+  Check,
+  Users,
+  Plus,
 } from "lucide-react";
 import { crowdBuyApi } from "../lib/api/crowd-buy";
 import type { CrowdBuyCampaign } from "../features/crowd-buy/types";
 import { CampaignProgressBar } from "../features/crowd-buy/components/CampaignProgressBar";
 import { OrderModal } from "../features/crowd-buy/components/OrderModal";
+import { InviteShareModal } from "../features/crowd-buy/components/InviteShareModal";
+import { SupplierBiddingModal } from "../features/crowd-buy/components/SupplierBiddingModal";
+import { isVendorBuyerMode } from "../lib/viewMode";
 import Swal from "sweetalert2";
 
 export default function CrowdBuyDetailPage() {
   const { id, companySlug } = useParams<{ id: string; companySlug: string }>();
+  const isVendorView = isVendorBuyerMode();
   const [campaign, setCampaign] = useState<CrowdBuyCampaign | null>(null);
   const [participantsCount, setParticipantsCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isBiddingModalOpen, setIsBiddingModalOpen] = useState(false);
+
+  const reloadCampaign = () => {
+    if (!id) return;
+    crowdBuyApi
+      .getCampaignDetail(id)
+      .then((res) => {
+        setCampaign(res.campaign);
+        setParticipantsCount(res.participants_count || 0);
+      })
+      .catch((err) => {
+        console.error("Failed to reload campaign", err);
+      });
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -42,18 +66,37 @@ export default function CrowdBuyDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleShare = () => {
-    if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
-      Swal.fire({
-        toast: true,
-        position: "top-end",
-        icon: "success",
-        title: "Tautan campaign disalin ke clipboard!",
-        showConfirmButton: false,
-        timer: 2000,
-      });
+  const handleAcceptBid = async (bidId: string) => {
+    if (!campaign) return;
+    const result = await Swal.fire({
+      title: "Terima Penawaran Supplier Ini?",
+      text: "Dengan menerima penawaran ini, supplier terpilih akan menjadi pemasok resmi untuk Group Buy ini.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#4f46e5",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Ya, Terima Penawaran",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await crowdBuyApi.acceptSupplierBid(campaign.id, bidId);
+        Swal.fire({
+          icon: "success",
+          title: "Penawaran Diterima!",
+          text: "Supplier telah ditetapkan dan campaign sekarang aktif untuk proses pemesanan & pembayaran.",
+          confirmButtonColor: "#4f46e5",
+        });
+        reloadCampaign();
+      } catch (err: any) {
+        Swal.fire("Error", err.message || "Gagal menerima penawaran.", "error");
+      }
     }
+  };
+
+  const handleShare = () => {
+    setIsShareModalOpen(true);
   };
 
   if (loading) {
@@ -104,19 +147,29 @@ export default function CrowdBuyDetailPage() {
             {/* Header info */}
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-1 text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full">
                     {campaign.category}
                   </span>
+                  {campaign.creator_type === "buyer" && (
+                    <span className="px-2.5 py-1 text-xs font-bold bg-amber-500 text-white rounded-full flex items-center gap-1 shadow-xs">
+                      <Sparkles className="w-3.5 h-3.5" /> Inisiasi Buyer
+                    </span>
+                  )}
+                  {campaign.campaign_type === "collective_rfq" && (
+                    <span className="px-2.5 py-1 text-xs font-bold bg-purple-600 text-white rounded-full flex items-center gap-1 shadow-xs">
+                      <Gavel className="w-3.5 h-3.5" /> Collective RFQ
+                    </span>
+                  )}
                   <span className="text-xs text-slate-400 font-mono">
                     {campaign.code}
                   </span>
                 </div>
                 <button
                   onClick={handleShare}
-                  className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition-colors flex items-center gap-1 text-xs"
+                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold rounded-xl transition-colors flex items-center gap-1.5 text-xs shadow-xs"
                 >
-                  <Share2 className="w-4 h-4" /> Bagikan
+                  <Share2 className="w-3.5 h-3.5" /> Undang / Bagikan
                 </button>
               </div>
 
@@ -124,14 +177,23 @@ export default function CrowdBuyDetailPage() {
                 {campaign.title}
               </h1>
 
-              {/* Supplier Info */}
-              <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
-                <span>Disediakan oleh:</span>
-                <strong className="text-slate-800 dark:text-slate-200 font-semibold">
-                  {campaign.supplier?.name}
-                </strong>
-                <ShieldCheck className="w-4 h-4 text-indigo-600" aria-label="Supplier Terverifikasi Huntr" />
-                {campaign.supplier?.city && <span>• {campaign.supplier.city}</span>}
+              {/* Supplier or Initiator Info */}
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 pt-1">
+                {campaign.campaign_type === "collective_rfq" && !campaign.supplier ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    Diinisiasi oleh: <strong>{campaign.initiator_company?.name || "Buyer Huntr"}</strong> • Tahap Penawaran Supplier (Bidding)
+                  </span>
+                ) : (
+                  <>
+                    <span>Disediakan oleh:</span>
+                    <strong className="text-slate-800 dark:text-slate-200 font-semibold">
+                      {campaign.supplier?.name || "Supplier Huntr"}
+                    </strong>
+                    <ShieldCheck className="w-4 h-4 text-indigo-600" aria-label="Supplier Terverifikasi Huntr" />
+                    {campaign.supplier?.city && <span>• {campaign.supplier.city}</span>}
+                  </>
+                )}
               </div>
             </div>
 
@@ -238,6 +300,80 @@ export default function CrowdBuyDetailPage() {
                 </p>
               </div>
             </div>
+            {/* Supplier Bids Section for Collective RFQ */}
+            {campaign.campaign_type === "collective_rfq" && (
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <Gavel className="w-4 h-4 text-indigo-600" />
+                    Penawaran Supplier Terdaftar ({campaign.bids?.length || 0})
+                  </h3>
+                  {isVendorView && campaign.status === "bidding" && (
+                    <button
+                      onClick={() => setIsBiddingModalOpen(true)}
+                      className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Ajukan Penawaran</span>
+                    </button>
+                  )}
+                </div>
+
+                {!campaign.bids || campaign.bids.length === 0 ? (
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-center text-xs text-slate-500">
+                    Belum ada penawaran supplier yang diajukan untuk Collective RFQ ini.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {campaign.bids.map((bid) => (
+                      <div
+                        key={bid.id}
+                        className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors ${
+                          bid.status === "accepted"
+                            ? "bg-emerald-50/70 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800"
+                            : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <strong className="text-slate-900 dark:text-white text-sm">
+                              {bid.supplier_company?.name || "Supplier Huntr"}
+                            </strong>
+                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" aria-label="Supplier Terverifikasi" />
+                            {bid.status === "accepted" && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-600 text-white rounded-full flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Pemenang Dipilih
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-slate-600 dark:text-slate-300">
+                            Harga Satuan:{" "}
+                            <strong className="text-indigo-600 dark:text-indigo-400 text-sm">
+                              Rp {Number(bid.offered_unit_price).toLocaleString("id-ID")}
+                            </strong>{" "}
+                            / {campaign.unit} • MOQ: {bid.min_order_qty} • Lead Time: {bid.lead_time_days || 7} hari
+                          </div>
+                          {bid.notes && (
+                            <p className="text-[11px] text-slate-500 italic mt-0.5">
+                              "{bid.notes}"
+                            </p>
+                          )}
+                        </div>
+
+                        {campaign.status === "bidding" && bid.status === "pending" && (
+                          <button
+                            onClick={() => handleAcceptBid(bid.id)}
+                            className="py-1.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                          >
+                            Terima Penawaran
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -245,7 +381,9 @@ export default function CrowdBuyDetailPage() {
         <div className="space-y-4">
           <div className="sticky top-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
             <div>
-              <span className="text-xs text-slate-500">Harga Dasar Satuan:</span>
+              <span className="text-xs text-slate-500">
+                {campaign.status === "bidding" ? "Ekspektasi Target Harga:" : "Harga Dasar Satuan:"}
+              </span>
               <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
                 Rp {Number(campaign.base_price).toLocaleString("id-ID")}
                 <span className="text-xs font-normal text-slate-500"> / {campaign.unit}</span>
@@ -262,7 +400,7 @@ export default function CrowdBuyDetailPage() {
                 <strong>{new Date(campaign.ends_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</strong>
               </div>
               <div className="flex justify-between">
-                <span>Status Campaign:</span>
+                <span>Status:</span>
                 <span className="capitalize font-semibold text-emerald-600">{campaign.status}</span>
               </div>
             </div>
@@ -274,11 +412,38 @@ export default function CrowdBuyDetailPage() {
               >
                 <span>Gabung Crowd Buy Sekarang</span>
               </button>
+            ) : campaign.status === "bidding" ? (
+              <div className="space-y-2">
+                <button
+                  onClick={() => setIsOrderModalOpen(true)}
+                  className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-2xl font-bold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Ikut Gabung Pool Kebutuhan</span>
+                </button>
+
+                {isVendorView && (
+                  <button
+                    onClick={() => setIsBiddingModalOpen(true)}
+                    className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-2xl font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Gavel className="w-4 h-4" />
+                    <span>Ajukan Penawaran Supplier (Bidding)</span>
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-center text-xs text-slate-500 font-medium">
                 Campaign ini sedang tidak menerima pesanan baru.
               </div>
             )}
+
+            <button
+              onClick={handleShare}
+              className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-semibold text-xs transition-colors flex items-center justify-center gap-2"
+            >
+              <Share2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>Undang Rekan Buyer (Share Link)</span>
+            </button>
 
             <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl text-[11px] text-slate-500 space-y-1">
               <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold">
@@ -293,18 +458,38 @@ export default function CrowdBuyDetailPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       {isOrderModalOpen && (
         <OrderModal
           campaign={campaign}
           isOpen={isOrderModalOpen}
           onClose={() => setIsOrderModalOpen(false)}
           onOrderSuccess={() => {
-            // refresh
-            crowdBuyApi.getCampaignDetail(id!).then((res) => {
-              setCampaign(res.campaign);
-              setParticipantsCount(res.participants_count || 0);
+            reloadCampaign();
+          }}
+        />
+      )}
+
+      {isShareModalOpen && (
+        <InviteShareModal
+          campaign={campaign}
+          onClose={() => setIsShareModalOpen(false)}
+        />
+      )}
+
+      {isBiddingModalOpen && (
+        <SupplierBiddingModal
+          campaign={campaign}
+          onClose={() => setIsBiddingModalOpen(false)}
+          onSuccess={() => {
+            setIsBiddingModalOpen(false);
+            Swal.fire({
+              icon: "success",
+              title: "Penawaran Terkirim!",
+              text: "Penawaran harga Anda berhasil diajukan untuk Collective RFQ ini.",
+              confirmButtonColor: "#10b981",
             });
+            reloadCampaign();
           }}
         />
       )}

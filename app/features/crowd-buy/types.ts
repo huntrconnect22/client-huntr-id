@@ -1,6 +1,7 @@
 export type CampaignStatus =
   | "draft"
   | "pending_review"
+  | "bidding"
   | "scheduled"
   | "active"
   | "suspended"
@@ -29,10 +30,38 @@ export interface CrowdBuyPriceTier {
   unit_price: number;
 }
 
+export interface CrowdBuyBid {
+  id: string;
+  campaign_id: string;
+  supplier_company_id: string;
+  supplier_user_id?: string;
+  offered_unit_price: number;
+  min_order_qty: number;
+  lead_time_days?: number | null;
+  notes?: string | null;
+  status: "pending" | "accepted" | "rejected" | "withdrawn";
+  created_at: string;
+  supplier_company?: {
+    id: string;
+    name: string;
+    logo_path?: string | null;
+    logo_url?: string | null;
+  };
+  supplier_user?: {
+    id: string;
+    name: string;
+    email?: string;
+  };
+}
+
 export interface CrowdBuyCampaign {
   id: string;
   code: string;
-  supplier_company_id: string;
+  creator_type?: "supplier" | "buyer";
+  campaign_type?: "supplier_promo" | "buyer_catalog" | "collective_rfq";
+  initiator_company_id?: string | null;
+  invite_code?: string | null;
+  supplier_company_id?: string | null;
   created_by: string;
   catalogue_id?: string | null;
   title: string;
@@ -40,6 +69,7 @@ export interface CrowdBuyCampaign {
   category: string;
   unit: string;
   base_price: number;
+  target_price?: number | null;
   target_quantity: number;
   max_quantity?: number | null;
   min_order_qty: number;
@@ -57,6 +87,7 @@ export interface CrowdBuyCampaign {
   is_target_reached: boolean;
   days_remaining: number;
   is_active: boolean;
+  is_buyer_initiated?: boolean;
   review_notes?: string | null;
   reviewed_at?: string | null;
   created_at: string;
@@ -72,8 +103,19 @@ export interface CrowdBuyCampaign {
     industry_type?: string;
     status?: string;
   };
+  initiator_company?: {
+    id: string;
+    name: string;
+    logo_path?: string | null;
+    logo_url?: string | null;
+    country?: string;
+    region?: string;
+    city?: string;
+  };
   price_tiers?: CrowdBuyPriceTier[];
   orders_count?: number;
+  bids?: CrowdBuyBid[];
+  bids_count?: number;
 }
 
 export interface CrowdBuyShippingAddress {
