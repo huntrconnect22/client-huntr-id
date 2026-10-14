@@ -93,37 +93,46 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
       return;
     }
 
-    if (activeTab === "buyer_catalog" && !supplierCompanyId) {
-      // Dummy / fallback supplier ID if user hasn't selected a specific UUID
-      // We can prompt or pass an empty/valid fallback
-    }
-
     setIsSubmitting(true);
-
     try {
-      const payload: any = {
-        campaign_type: activeTab,
-        title,
-        description,
-        category,
-        unit,
-        target_quantity: Number(targetQuantity),
-        min_order_qty: Number(minOrderQty),
-        ends_at: `${endsAt} 23:59:59`,
-        initial_quantity: Number(initialQuantity) || 0,
-      };
-
       if (activeTab === "buyer_catalog") {
-        payload.supplier_company_id = supplierCompanyId || "00000000-0000-0000-0000-000000000000";
-        payload.base_price = Number(basePrice);
-        payload.lead_time_days = Number(leadTimeDays);
-        payload.price_tiers = priceTiers.filter((t) => t.min_quantity > 0 && t.unit_price > 0);
-      } else {
-        payload.target_price = Number(targetPrice);
-      }
+        const payload = {
+          campaign_type: "buyer_catalog" as const,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          category,
+          unit,
+          target_quantity: Number(targetQuantity),
+          min_order_qty: Number(minOrderQty) || 1,
+          ends_at: endsAt,
+          base_price: Number(basePrice),
+          lead_time_days: Number(leadTimeDays) || 7,
+          supplier_company_id: supplierCompanyId || undefined,
+          initial_quantity: Number(initialQuantity) || undefined,
+          price_tiers: priceTiers.map((t) => ({
+            min_quantity: Number(t.min_quantity),
+            unit_price: Number(t.unit_price),
+          })),
+        };
 
-      const res = await crowdBuyApi.createBuyerInitiative(payload);
-      onSuccess(res.campaign);
+        const res = await crowdBuyApi.createBuyerInitiative(payload);
+        onSuccess(res.campaign);
+      } else {
+        const payload = {
+          campaign_type: "collective_rfq" as const,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          category,
+          unit,
+          target_quantity: Number(targetQuantity),
+          target_price: Number(targetPrice),
+          ends_at: endsAt,
+          initial_quantity: Number(initialQuantity) || undefined,
+        };
+
+        const res = await crowdBuyApi.createBuyerInitiative(payload);
+        onSuccess(res.campaign);
+      }
     } catch (err: any) {
       setErrorMessage(
         err.response?.data?.message || err.message || "Gagal membuat inisiasi Crowd Buy."
@@ -134,18 +143,18 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-lg max-w-2xl w-full shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30">
+            <div className="w-9 h-9 rounded-md bg-orange-500 text-white flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 Inisiasi Group Buying (Buyer)
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Sparkles className="w-3.5 h-3.5 text-orange-500" />
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Pegang kendali pengadaan — ajak sesama buyer patungan volume untuk harga terbaik
@@ -154,36 +163,36 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Selection (2 Options) */}
-        <div className="px-6 pt-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="grid grid-cols-2 gap-3 pb-4">
+        <div className="px-5 pt-3.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="grid grid-cols-2 gap-2.5 pb-3.5">
             <button
               type="button"
               onClick={() => setActiveTab("buyer_catalog")}
-              className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+              className={`p-3 rounded-md border text-left transition-all flex items-start gap-2.5 ${
                 activeTab === "buyer_catalog"
-                  ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-600/20 shadow-sm"
-                  : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300"
+                  ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/30 text-orange-900 dark:text-orange-200"
+                  : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"
               }`}
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                className={`w-7 h-7 rounded flex items-center justify-center shrink-0 ${
                   activeTab === "buyer_catalog"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    ? "bg-orange-500 text-white"
                     : "bg-slate-100 dark:bg-slate-700 text-slate-500"
                 }`}
               >
-                <ShoppingBag className="w-4 h-4" />
+                <ShoppingBag className="w-3.5 h-3.5" />
               </div>
               <div>
                 <div className="text-xs font-bold">Opsi 1: Dari Katalog Produk</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
                   Pilih barang dari supplier terdaftar & ajak buyer lain pesan bareng
                 </div>
               </div>
@@ -192,24 +201,24 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab("collective_rfq")}
-              className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
+              className={`p-3 rounded-md border text-left transition-all flex items-start gap-2.5 ${
                 activeTab === "collective_rfq"
-                  ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-600/20 shadow-sm"
-                  : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300"
+                  ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/30 text-orange-900 dark:text-orange-200"
+                  : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/60 text-slate-700 dark:text-slate-300"
               }`}
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                className={`w-7 h-7 rounded flex items-center justify-center shrink-0 ${
                   activeTab === "collective_rfq"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    ? "bg-orange-500 text-white"
                     : "bg-slate-100 dark:bg-slate-700 text-slate-500"
                 }`}
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-3.5 h-3.5" />
               </div>
               <div>
                 <div className="text-xs font-bold">Opsi 2: Collective RFQ (Custom)</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
                   Ajukan spesifikasi custom, kumpulkan volume, lalu lelang ke supplier
                 </div>
               </div>
@@ -218,9 +227,9 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1">
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
+            <div className="p-3 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
               <span>{errorMessage}</span>
             </div>
@@ -243,7 +252,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               }
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
             />
           </div>
 
@@ -263,12 +272,12 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               }
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
             />
           </div>
 
           {/* Category & Unit */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Kategori Produk
@@ -276,7 +285,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
               >
                 <option value="Packaging & Logistics">Packaging & Logistics</option>
                 <option value="Raw Materials">Raw Materials</option>
@@ -297,13 +306,13 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 placeholder="pcs, box, kg, drum, pack"
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
               />
             </div>
           </div>
 
           {/* Target Quantity & Deadline */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Target Total Kuota ({unit}) *
@@ -314,29 +323,29 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 required
                 value={targetQuantity}
                 onChange={(e) => setTargetQuantity(Number(e.target.value))}
-                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
               />
               <span className="text-[10px] text-slate-400">Total volume gabungan seluruh buyer</span>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Batas Waktu Pengumpulan (Deadline) *
+                Batas Waktu Pengumpulan *
               </label>
               <input
                 type="date"
                 required
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
               />
             </div>
           </div>
 
           {/* Opsi 1 Specific: Pricing & Supplier */}
           {activeTab === "buyer_catalog" ? (
-            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Harga Normal / Base Price (Rp) *
@@ -347,7 +356,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                     required
                     value={basePrice}
                     onChange={(e) => setBasePrice(Number(e.target.value))}
-                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
                   />
                 </div>
 
@@ -360,32 +369,32 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                     min="1"
                     value={leadTimeDays}
                     onChange={(e) => setLeadTimeDays(Number(e.target.value))}
-                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
                   />
                 </div>
               </div>
 
               {/* Price Tiers */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Tier Diskon Volume (Makin banyak makin murah)
                   </label>
                   <button
                     type="button"
                     onClick={handleAddTier}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Tambah Tier
                   </button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {priceTiers.map((tier, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
+                      className="flex items-center gap-2 p-2 rounded-md bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
                     >
                       <span className="text-slate-500 shrink-0 text-[11px]">Min:</span>
                       <input
@@ -395,10 +404,10 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                         onChange={(e) =>
                           handleUpdateTier(idx, "min_quantity", Number(e.target.value))
                         }
-                        className="w-24 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-xs"
+                        className="w-20 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-white text-xs"
                       />
                       <span className="text-slate-500 shrink-0 text-[11px]">{unit}</span>
-                      <span className="text-slate-500 shrink-0 text-[11px] ml-2">Harga: Rp</span>
+                      <span className="text-slate-500 shrink-0 text-[11px] ml-1">Harga: Rp</span>
                       <input
                         type="number"
                         min="1"
@@ -406,7 +415,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                         onChange={(e) =>
                           handleUpdateTier(idx, "unit_price", Number(e.target.value))
                         }
-                        className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-xs"
+                        className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-white text-xs"
                       />
                       <button
                         type="button"
@@ -422,20 +431,20 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
             </div>
           ) : (
             /* Opsi 2 Specific: Target Price for Collective RFQ */
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Ekspektasi / Target Harga Per Unit (Rp) *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-medium">Rp</span>
+                  <span className="absolute left-3 top-2 text-xs text-slate-400 font-medium">Rp</span>
                   <input
                     type="number"
                     min="1"
                     required
                     value={targetPrice}
                     onChange={(e) => setTargetPrice(Number(e.target.value))}
-                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500 font-semibold"
                   />
                 </div>
                 <span className="text-[10px] text-slate-400 mt-1 block">
@@ -446,12 +455,12 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
           )}
 
           {/* Initial Order Commitment */}
-          <div className="p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 space-y-2">
+          <div className="p-3.5 rounded-md bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
+              <span className="text-xs font-bold text-orange-950 dark:text-orange-200">
                 Komitmen Pesanan Awal Anda ({unit})
               </span>
-              <span className="text-[11px] text-indigo-600 dark:text-indigo-400">
+              <span className="text-[11px] text-orange-600 dark:text-orange-400 font-medium">
                 Otomatis dihitung dalam progress
               </span>
             </div>
@@ -463,17 +472,17 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               min="1"
               value={initialQuantity}
               onChange={(e) => setInitialQuantity(Number(e.target.value))}
-              className="w-full text-xs bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full text-xs bg-white dark:bg-slate-900 border border-orange-300 dark:border-orange-700 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
             />
           </div>
         </form>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
+            className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
           >
             Batal
           </button>
@@ -482,11 +491,11 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-semibold text-xs transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Memproses...
               </>
             ) : (

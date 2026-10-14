@@ -73,7 +73,7 @@ export default function CrowdBuyDetailPage() {
       text: "Dengan menerima penawaran ini, supplier terpilih akan menjadi pemasok resmi untuk Group Buy ini.",
       icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#4f46e5",
+      confirmButtonColor: "#f97316",
       cancelButtonColor: "#64748b",
       confirmButtonText: "Ya, Terima Penawaran",
       cancelButtonText: "Batal",
@@ -86,7 +86,7 @@ export default function CrowdBuyDetailPage() {
           icon: "success",
           title: "Penawaran Diterima!",
           text: "Supplier telah ditetapkan dan campaign sekarang aktif untuk proses pemesanan & pembayaran.",
-          confirmButtonColor: "#4f46e5",
+          confirmButtonColor: "#f97316",
         });
         reloadCampaign();
       } catch (err: any) {
@@ -102,7 +102,7 @@ export default function CrowdBuyDetailPage() {
   if (loading) {
     return (
       <div className="py-24 text-center space-y-3">
-        <RotateCw className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
+        <RotateCw className="w-7 h-7 animate-spin mx-auto text-orange-500" />
         <p className="text-xs text-slate-500">Memuat detail campaign...</p>
       </div>
     );
@@ -110,12 +110,12 @@ export default function CrowdBuyDetailPage() {
 
   if (!campaign) {
     return (
-      <div className="py-24 text-center space-y-3">
-        <Package className="w-12 h-12 text-slate-300 mx-auto" />
-        <h3 className="font-semibold text-slate-800 dark:text-slate-200">Campaign tidak ditemukan</h3>
+      <div className="py-20 text-center space-y-3">
+        <Package className="w-10 h-10 text-slate-300 mx-auto" />
+        <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Campaign tidak ditemukan</h3>
         <Link
           to={`/${companySlug || ""}/crowd-buy`}
-          className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-orange-600 hover:underline"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Katalog
         </Link>
@@ -126,7 +126,7 @@ export default function CrowdBuyDetailPage() {
   const backUrl = companySlug ? `/${companySlug}/crowd-buy` : `/crowd-buy`;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-3 md:p-6 animate-fade-in">
+    <div className="space-y-4 max-w-6xl mx-auto p-2 md:p-6 animate-fade-in">
       {/* Back button */}
       <div>
         <Link
@@ -139,26 +139,26 @@ export default function CrowdBuyDetailPage() {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 cols) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           {/* Main Hero Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs p-6 md:p-8 space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 md:p-6 space-y-5 shadow-xs">
             {/* Header info */}
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-1 text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-full">
+                  <span className="px-2 py-0.5 text-[11px] font-semibold bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60 rounded">
                     {campaign.category}
                   </span>
                   {campaign.creator_type === "buyer" && (
-                    <span className="px-2.5 py-1 text-xs font-bold bg-amber-500 text-white rounded-full flex items-center gap-1 shadow-xs">
-                      <Sparkles className="w-3.5 h-3.5" /> Inisiasi Buyer
+                    <span className="px-2 py-0.5 text-[11px] font-semibold bg-orange-500 text-white rounded flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Inisiasi Buyer
                     </span>
                   )}
                   {campaign.campaign_type === "collective_rfq" && (
-                    <span className="px-2.5 py-1 text-xs font-bold bg-purple-600 text-white rounded-full flex items-center gap-1 shadow-xs">
-                      <Gavel className="w-3.5 h-3.5" /> Collective RFQ
+                    <span className="px-2 py-0.5 text-[11px] font-semibold bg-slate-800 text-white dark:bg-slate-700 rounded flex items-center gap-1">
+                      <Gavel className="w-3 h-3" /> Collective RFQ
                     </span>
                   )}
                   <span className="text-xs text-slate-400 font-mono">
@@ -167,21 +167,21 @@ export default function CrowdBuyDetailPage() {
                 </div>
                 <button
                   onClick={handleShare}
-                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold rounded-xl transition-colors flex items-center gap-1.5 text-xs shadow-xs"
+                  className="px-2.5 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60 font-semibold rounded-md transition-colors flex items-center gap-1.5 text-xs"
                 >
                   <Share2 className="w-3.5 h-3.5" /> Undang / Bagikan
                 </button>
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
                 {campaign.title}
               </h1>
 
               {/* Supplier or Initiator Info */}
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 pt-1">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 pt-0.5">
                 {campaign.campaign_type === "collective_rfq" && !campaign.supplier ? (
-                  <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                    <Users className="w-4 h-4" />
+                  <span className="text-orange-700 dark:text-orange-400 font-medium flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" />
                     Diinisiasi oleh: <strong>{campaign.initiator_company?.name || "Buyer Huntr"}</strong> • Tahap Penawaran Supplier (Bidding)
                   </span>
                 ) : (
@@ -190,7 +190,7 @@ export default function CrowdBuyDetailPage() {
                     <strong className="text-slate-800 dark:text-slate-200 font-semibold">
                       {campaign.supplier?.name || "Supplier Huntr"}
                     </strong>
-                    <ShieldCheck className="w-4 h-4 text-indigo-600" aria-label="Supplier Terverifikasi Huntr" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" aria-label="Supplier Terverifikasi Huntr" />
                     {campaign.supplier?.city && <span>• {campaign.supplier.city}</span>}
                   </>
                 )}
@@ -198,7 +198,7 @@ export default function CrowdBuyDetailPage() {
             </div>
 
             {/* Media Image / Illustration */}
-            <div className="w-full h-72 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl overflow-hidden flex items-center justify-center">
+            <div className="w-full h-64 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex items-center justify-center border border-slate-200/60 dark:border-slate-700/60">
               {campaign.image_url ? (
                 <img
                   src={campaign.image_url}
@@ -207,20 +207,20 @@ export default function CrowdBuyDetailPage() {
                 />
               ) : (
                 <div className="text-center text-slate-400">
-                  <Layers className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <span className="text-xs uppercase font-bold tracking-wider">Crowd Buy Bulk Sourcing</span>
+                  <Layers className="w-10 h-10 mx-auto mb-1.5 opacity-40" />
+                  <span className="text-[11px] uppercase font-bold tracking-wider">Crowd Buy Bulk Sourcing</span>
                 </div>
               )}
             </div>
 
             {/* Progress Section */}
-            <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-800 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                   Progres Target Pembelian
                 </span>
                 <span className="text-xs text-slate-500 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  <Clock className="w-3.5 h-3.5 text-orange-500" />
                   {campaign.days_remaining > 0 ? `${campaign.days_remaining} hari tersisa` : "Telah Berakhir"}
                 </span>
               </div>
@@ -234,7 +234,7 @@ export default function CrowdBuyDetailPage() {
                 isTargetReached={campaign.is_target_reached}
               />
 
-              <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-0.5">
                 <span>Total Partisipan: <strong>{participantsCount} Perusahaan</strong></span>
                 <span>MOQ per Buyer: <strong>{campaign.min_order_qty} {campaign.unit}</strong></span>
               </div>
@@ -242,22 +242,22 @@ export default function CrowdBuyDetailPage() {
 
             {/* Price Tiers (Volume Discounts) */}
             {campaign.price_tiers && campaign.price_tiers.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="space-y-2.5">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Tingkatan Harga Grosir (Volume Discount Tiers)
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {campaign.price_tiers.map((tier, idx) => (
                     <div
                       key={idx}
-                      className="p-3.5 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl space-y-1"
+                      className="p-3 bg-orange-50/40 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/50 rounded-md space-y-0.5"
                     >
-                      <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+                      <span className="text-[11px] font-medium text-orange-700 dark:text-orange-400">
                         {tier.max_quantity
                           ? `${tier.min_quantity} - ${tier.max_quantity} ${campaign.unit}`
                           : `≥ ${tier.min_quantity} ${campaign.unit}`}
                       </span>
-                      <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                      <div className="text-base font-bold text-slate-900 dark:text-white">
                         Rp {Number(tier.unit_price).toLocaleString("id-ID")}
                         <span className="text-xs font-normal text-slate-500"> / {campaign.unit}</span>
                       </div>
@@ -268,8 +268,8 @@ export default function CrowdBuyDetailPage() {
             )}
 
             {/* Description & Specifications */}
-            <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+            <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Deskripsi & Ketentuan Produk
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
@@ -278,40 +278,41 @@ export default function CrowdBuyDetailPage() {
             </div>
 
             {/* Delivery & Return Policy */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl space-y-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-100 dark:border-slate-800 space-y-1">
                 <h4 className="font-semibold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Truck className="w-4 h-4 text-indigo-600" /> Ketentuan Pengiriman
+                  <Truck className="w-3.5 h-3.5 text-orange-500" /> Ketentuan Pengiriman
                 </h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {campaign.delivery_terms || "Sesuai kesepakatan logistik standard."}
                 </p>
-                <div className="text-[11px] text-slate-400 mt-2">
+                <div className="text-[11px] text-slate-400 mt-1">
                   Lead time: {campaign.lead_time_days || 7} hari kerja setelah target terpenuhi.
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl space-y-1.5">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-100 dark:border-slate-800 space-y-1">
                 <h4 className="font-semibold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-indigo-600" /> Kebijakan Retur & Komplain
+                  <ShieldCheck className="w-3.5 h-3.5 text-orange-500" /> Kebijakan Retur & Komplain
                 </h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {campaign.return_policy || "Retur diterima bila terdapat cacat produksi / kerusakan pengiriman."}
                 </p>
               </div>
             </div>
+
             {/* Supplier Bids Section for Collective RFQ */}
             {campaign.campaign_type === "collective_rfq" && (
-              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                    <Gavel className="w-4 h-4 text-indigo-600" />
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Gavel className="w-3.5 h-3.5 text-orange-500" />
                     Penawaran Supplier Terdaftar ({campaign.bids?.length || 0})
                   </h3>
                   {isVendorView && campaign.status === "bidding" && (
                     <button
                       onClick={() => setIsBiddingModalOpen(true)}
-                      className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5"
+                      className="py-1 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-md shadow-xs transition-colors flex items-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Ajukan Penawaran</span>
@@ -320,35 +321,35 @@ export default function CrowdBuyDetailPage() {
                 </div>
 
                 {!campaign.bids || campaign.bids.length === 0 ? (
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-center text-xs text-slate-500">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-200/60 dark:border-slate-700/60 text-center text-xs text-slate-500">
                     Belum ada penawaran supplier yang diajukan untuk Collective RFQ ini.
                   </div>
                 ) : (
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {campaign.bids.map((bid) => (
                       <div
                         key={bid.id}
-                        className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors ${
+                        className={`p-3 rounded-md border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs transition-colors ${
                           bid.status === "accepted"
                             ? "bg-emerald-50/70 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800"
                             : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700"
                         }`}
                       >
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <strong className="text-slate-900 dark:text-white text-sm">
+                            <strong className="text-slate-900 dark:text-white text-xs">
                               {bid.supplier_company?.name || "Supplier Huntr"}
                             </strong>
-                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" aria-label="Supplier Terverifikasi" />
+                            <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" aria-label="Supplier Terverifikasi" />
                             {bid.status === "accepted" && (
-                              <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-600 text-white rounded-full flex items-center gap-1">
+                              <span className="px-1.5 py-0.2 text-[10px] font-bold bg-emerald-600 text-white rounded flex items-center gap-1">
                                 <Check className="w-3 h-3" /> Pemenang Dipilih
                               </span>
                             )}
                           </div>
                           <div className="text-slate-600 dark:text-slate-300">
                             Harga Satuan:{" "}
-                            <strong className="text-indigo-600 dark:text-indigo-400 text-sm">
+                            <strong className="text-orange-600 dark:text-orange-400 font-semibold">
                               Rp {Number(bid.offered_unit_price).toLocaleString("id-ID")}
                             </strong>{" "}
                             / {campaign.unit} • MOQ: {bid.min_order_qty} • Lead Time: {bid.lead_time_days || 7} hari
@@ -363,7 +364,7 @@ export default function CrowdBuyDetailPage() {
                         {campaign.status === "bidding" && bid.status === "pending" && (
                           <button
                             onClick={() => handleAcceptBid(bid.id)}
-                            className="py-1.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                            className="py-1 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold text-xs transition-colors shrink-0 self-start sm:self-auto"
                           >
                             Terima Penawaran
                           </button>
@@ -378,19 +379,19 @@ export default function CrowdBuyDetailPage() {
         </div>
 
         {/* Right Sticky Card: Purchase Action */}
-        <div className="space-y-4">
-          <div className="sticky top-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
+        <div className="space-y-3">
+          <div className="sticky top-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
             <div>
               <span className="text-xs text-slate-500">
                 {campaign.status === "bidding" ? "Ekspektasi Target Harga:" : "Harga Dasar Satuan:"}
               </span>
-              <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
                 Rp {Number(campaign.base_price).toLocaleString("id-ID")}
                 <span className="text-xs font-normal text-slate-500"> / {campaign.unit}</span>
               </div>
             </div>
 
-            <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300 py-3 border-y border-slate-100 dark:border-slate-800">
+            <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 py-2.5 border-y border-slate-100 dark:border-slate-800">
               <div className="flex justify-between">
                 <span>Minimal Order (MOQ):</span>
                 <strong>{campaign.min_order_qty} {campaign.unit}</strong>
@@ -408,7 +409,7 @@ export default function CrowdBuyDetailPage() {
             {campaign.is_active ? (
               <button
                 onClick={() => setIsOrderModalOpen(true)}
-                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-2xl font-bold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <span>Gabung Crowd Buy Sekarang</span>
               </button>
@@ -416,7 +417,7 @@ export default function CrowdBuyDetailPage() {
               <div className="space-y-2">
                 <button
                   onClick={() => setIsOrderModalOpen(true)}
-                  className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-2xl font-bold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <span>Ikut Gabung Pool Kebutuhan</span>
                 </button>
@@ -424,30 +425,30 @@ export default function CrowdBuyDetailPage() {
                 {isVendorView && (
                   <button
                     onClick={() => setIsBiddingModalOpen(true)}
-                    className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-2xl font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-md font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Gavel className="w-4 h-4" />
-                    <span>Ajukan Penawaran Supplier (Bidding)</span>
+                    <Gavel className="w-3.5 h-3.5" />
+                    <span>Ajukan Penawaran Supplier</span>
                   </button>
                 )}
               </div>
             ) : (
-              <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-center text-xs text-slate-500 font-medium">
+              <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-md text-center text-xs text-slate-500 font-medium">
                 Campaign ini sedang tidak menerima pesanan baru.
               </div>
             )}
 
             <button
               onClick={handleShare}
-              className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-semibold text-xs transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-md font-medium text-xs transition-colors flex items-center justify-center gap-1.5"
             >
-              <Share2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <Share2 className="w-3.5 h-3.5 text-orange-500" />
               <span>Undang Rekan Buyer (Share Link)</span>
             </button>
 
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl text-[11px] text-slate-500 space-y-1">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 space-y-1">
               <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 Jaminan Transaksi Aman Huntr
               </div>
               <p>
@@ -487,7 +488,7 @@ export default function CrowdBuyDetailPage() {
               icon: "success",
               title: "Penawaran Terkirim!",
               text: "Penawaran harga Anda berhasil diajukan untuk Collective RFQ ini.",
-              confirmButtonColor: "#10b981",
+              confirmButtonColor: "#f97316",
             });
             reloadCampaign();
           }}

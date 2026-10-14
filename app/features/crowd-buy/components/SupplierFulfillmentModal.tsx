@@ -48,7 +48,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
         icon: "success",
         title: "Pemenuhan Diperbarui!",
         text: `Status pesanan ${order.order_number} berhasil diperbarui menjadi ${status}.`,
-        confirmButtonColor: "#4f46e5",
+        confirmButtonColor: "#f97316",
       });
 
       onClose();
@@ -61,35 +61,35 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
           <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-indigo-600" />
-            <h3 className="font-semibold text-slate-900 dark:text-white text-base">
+            <Truck className="w-5 h-5 text-orange-500" />
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm">
               Fulfillment Pesanan
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           {errorMsg && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-md text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-xs space-y-1">
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-md border border-slate-100 dark:border-slate-800 text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-slate-500">Order:</span>
-              <strong className="text-slate-800 dark:text-slate-200">{order.order_number}</strong>
+              <strong className="text-slate-800 dark:text-slate-200 font-mono">{order.order_number}</strong>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Pembeli:</span>
@@ -110,7 +110,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
             <select
               value={status}
               onChange={(e: any) => setStatus(e.target.value)}
-              className="w-full text-xs py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+              className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
             >
               <option value="processing">Sedang Dipersiapkan / Packing (processing)</option>
               <option value="shipped">Sedang Dikirim (shipped)</option>
@@ -130,7 +130,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
                   value={carrier}
                   onChange={(e) => setCarrier(e.target.value)}
                   placeholder="misal: JNE Trucking / Indah Cargo / Armada Internal"
-                  className="w-full text-xs py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
                 />
               </div>
 
@@ -144,7 +144,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   placeholder="misal: JNE-0982736182"
-                  className="w-full text-xs py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
                 />
               </div>
             </>
@@ -159,22 +159,22 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Catatan untuk pembeli terkait proses pengiriman..."
-              className="w-full text-xs py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+              className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="py-2 px-4 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+              className="py-1.5 px-3.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="py-2 px-5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl transition-all shadow-md shadow-indigo-600/20"
+              className="py-1.5 px-4 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-md transition-colors"
             >
               {loading ? "Menyimpan..." : "Update Status"}
             </button>
