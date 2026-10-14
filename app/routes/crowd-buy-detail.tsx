@@ -26,11 +26,13 @@ import { OrderModal } from "../features/crowd-buy/components/OrderModal";
 import { InviteShareModal } from "../features/crowd-buy/components/InviteShareModal";
 import { SupplierBiddingModal } from "../features/crowd-buy/components/SupplierBiddingModal";
 import { isVendorBuyerMode } from "../lib/viewMode";
+import { SessionManager } from "../lib/session";
 import Swal from "sweetalert2";
 
 export default function CrowdBuyDetailPage() {
   const { id, companySlug } = useParams<{ id: string; companySlug: string }>();
   const isVendorView = isVendorBuyerMode();
+  const currentCompany = SessionManager.getCompany();
   const [campaign, setCampaign] = useState<CrowdBuyCampaign | null>(null);
   const [participantsCount, setParticipantsCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -406,37 +408,65 @@ export default function CrowdBuyDetailPage() {
               </div>
             </div>
 
-            {campaign.is_active ? (
-              <button
-                onClick={() => setIsOrderModalOpen(true)}
-                className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <span>Gabung Crowd Buy Sekarang</span>
-              </button>
-            ) : campaign.status === "bidding" ? (
-              <div className="space-y-2">
-                <button
-                  onClick={() => setIsOrderModalOpen(true)}
-                  className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
-                >
-                  <span>Ikut Gabung Pool Kebutuhan</span>
-                </button>
+            {/* ── Join / Order Button ── */}
+            {(() => {
+              // Check if the current user is the campaign initiator
+              const isInitiator =
+                !!currentCompany?.id &&
+                !!campaign.initiator_company_id &&
+                String(currentCompany.id) === String(campaign.initiator_company_id);
 
-                {isVendorView && (
+              if (isInitiator) {
+                return (
+                  <div className="p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 rounded-md text-center space-y-1">
+                    <p className="text-xs font-bold text-orange-800 dark:text-orange-300">Anda adalah Inisiator Campaign Ini</p>
+                    <p className="text-[11px] text-orange-700 dark:text-orange-400 leading-snug">
+                      Komitmen pesanan awal Anda sudah terhitung dalam progress. Bagikan link undangan untuk mengajak buyer lain bergabung.
+                    </p>
+                  </div>
+                );
+              }
+
+              if (campaign.is_active) {
+                return (
                   <button
-                    onClick={() => setIsBiddingModalOpen(true)}
-                    className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-md font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+                    onClick={() => setIsOrderModalOpen(true)}
+                    className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
                   >
-                    <Gavel className="w-3.5 h-3.5" />
-                    <span>Ajukan Penawaran Supplier</span>
+                    <span>Gabung Crowd Buy Sekarang</span>
                   </button>
-                )}
-              </div>
-            ) : (
-              <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-md text-center text-xs text-slate-500 font-medium">
-                Campaign ini sedang tidak menerima pesanan baru.
-              </div>
-            )}
+                );
+              }
+
+              if (campaign.status === "bidding") {
+                return (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setIsOrderModalOpen(true)}
+                      className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      <span>Ikut Gabung Pool Kebutuhan</span>
+                    </button>
+
+                    {isVendorView && (
+                      <button
+                        onClick={() => setIsBiddingModalOpen(true)}
+                        className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-md font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Gavel className="w-3.5 h-3.5" />
+                        <span>Ajukan Penawaran Supplier</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-md text-center text-xs text-slate-500 font-medium">
+                  Campaign ini sedang tidak menerima pesanan baru.
+                </div>
+              );
+            })()}
 
             <button
               onClick={handleShare}
