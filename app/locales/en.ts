@@ -739,7 +739,7 @@ const en = {
   login: {
     visualTitle: "Enterprise B2B Procurement",
     visualText: "Streamline operations, automate RFQ workflows, and connect with verified enterprise vendors.",
-    features: "✓ Verified Vendor Network|✓ Automated RFQ Flow|✓ Smart PO Matching",
+    features: "Verified Vendor Network|Automated RFQ Flow|Smart PO Matching",
     backToMarketplace: "Back to Marketplace",
     heading: "Welcome Back",
     subheading: "Sign in to your Huntr.id account to manage company procurement",
@@ -767,7 +767,7 @@ const en = {
   register: {
     visualTitle: "Join the Procurement Ecosystem",
     visualText: "Connect your company with hundreds of verified buyers & vendors across Indonesia.",
-    features: "✓ Guided Onboarding|✓ WhatsApp Verification|✓ Enterprise-Grade Security",
+    features: "Guided Onboarding|WhatsApp Verification|Enterprise-Grade Security",
     docsTitle: "Required Documents",
     backToMarketplace: "Back to Marketplace",
     heading: "Create Company Account",
@@ -801,7 +801,7 @@ const en = {
   forgotPassword: {
     visualTitle: "Account Recovery",
     visualText: "Securely reset your password using WhatsApp verification to regain access to your procurement dashboard.",
-    features: "✓ Fast OTP Verification|✓ Secure Password Reset|✓ Multi-device Sync",
+    features: "Fast OTP Verification|Secure Password Reset|Multi-device Sync",
     backToLogin: "Back to Login",
     back: "Back",
     headingStep1: "Forgot Password",

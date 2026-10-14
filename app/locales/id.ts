@@ -741,7 +741,7 @@ const id: Translations = {
   login: {
     visualTitle: "Pengadaan B2B Enterprise",
     visualText: "Sederhanakan operasional, otomatiskan alur RFQ, dan terhubung dengan vendor enterprise terverifikasi.",
-    features: "✓ Jaringan Vendor Terverifikasi|✓ Alur RFQ Otomatis|✓ Pencocokan PO Cerdas",
+    features: "Jaringan Vendor Terverifikasi|Alur RFQ Otomatis|Pencocokan PO Cerdas",
     backToMarketplace: "Kembali ke Marketplace",
     heading: "Selamat Datang Kembali",
     subheading: "Masuk ke akun Huntr.id Anda untuk mengelola pengadaan perusahaan",
@@ -769,7 +769,7 @@ const id: Translations = {
   register: {
     visualTitle: "Bergabung dengan Ekosistem Pengadaan",
     visualText: "Hubungkan perusahaan Anda dengan ratusan buyer & vendor terverifikasi di seluruh Indonesia.",
-    features: "✓ Onboarding Terpandu|✓ Verifikasi WhatsApp|✓ Keamanan Berstandar Enterprise",
+    features: "Onboarding Terpandu|Verifikasi WhatsApp|Keamanan Berstandar Enterprise",
     docsTitle: "Syarat Kelengkapan Berkas",
     backToMarketplace: "Kembali ke Marketplace",
     heading: "Buat Akun Perusahaan",
@@ -803,7 +803,7 @@ const id: Translations = {
   forgotPassword: {
     visualTitle: "Pemulihan Akun",
     visualText: "Reset kata sandi Anda dengan aman menggunakan verifikasi WhatsApp untuk mendapatkan kembali akses ke dasbor pengadaan Anda.",
-    features: "✓ Verifikasi OTP Cepat|✓ Reset Kata Sandi Aman|✓ Sinkronisasi Multi-perangkat",
+    features: "Verifikasi OTP Cepat|Reset Kata Sandi Aman|Sinkronisasi Multi-perangkat",
     backToLogin: "Kembali ke Login",
     back: "Kembali",
     headingStep1: "Lupa Kata Sandi",

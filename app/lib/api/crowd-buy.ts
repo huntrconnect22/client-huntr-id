@@ -140,6 +140,14 @@ export const crowdBuyApi = {
     );
   },
 
+  async getSuppliers(): Promise<
+    Array<{ id: string; name: string; email?: string; industry_type?: string; logo_path?: string }>
+  > {
+    return apiGet<
+      Array<{ id: string; name: string; email?: string; industry_type?: string; logo_path?: string }>
+    >("/api/crowd-buy/suppliers");
+  },
+
   async createBuyerInitiative(data: {
     campaign_type: "buyer_catalog" | "collective_rfq";
     title: string;

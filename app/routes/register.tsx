@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Loader2, Eye, EyeOff, MessageSquareCode, ArrowLeft, User, Phone, Mail, Lock, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, MessageSquareCode, ArrowLeft, User, Phone, Mail, Lock, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
 import { register, sendOtp, verifyOtp, loadOtpSession, clearOtpSession, getCsrfCookie } from "../lib/api";
 import { SessionManager } from "../lib/session";
 import { isValidWhatsapp } from "../lib/whatsapp";
@@ -356,15 +356,15 @@ export default function Register() {
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5">
-            <span className="shrink-0 text-base">⚠️</span>
+          <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5">
+            <AlertCircle size={16} className="shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium flex items-center gap-2.5">
-            <span className="shrink-0 text-base">✓</span>
+          <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium flex items-center gap-2.5">
+            <CheckCircle2 size={16} className="shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}

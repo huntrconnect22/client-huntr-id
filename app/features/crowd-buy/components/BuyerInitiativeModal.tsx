@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   Users,
@@ -11,8 +11,11 @@ import {
   ArrowRight,
   AlertCircle,
   Building2,
+  Search,
+  CheckCircle2,
 } from "lucide-react";
 import { crowdBuyApi } from "../../../lib/api/crowd-buy";
+import { getCatalogues } from "../../../lib/api/catalogue";
 import type { CrowdBuyCampaign, CrowdBuyPriceTier } from "../types";
 
 interface BuyerInitiativeModalProps {
@@ -46,6 +49,19 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
 
   // Opsi 1 Specific (Group Buy dari Katalog Supplier)
   const [supplierCompanyId, setSupplierCompanyId] = useState("");
+  const [suppliers, setSuppliers] = useState<
+    Array<{ id: string; name: string; industry_type?: string; logo_path?: string }>
+  >([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [catalogueId, setCatalogueId] = useState<string | null>(null);
+
+  // Search catalog items (optional helper)
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState("");
+  const [catalogSearchResults, setCatalogSearchResults] = useState<any[]>([]);
+  const [isSearchingCatalog, setIsSearchingCatalog] = useState(false);
+  const [showCatalogDropdown, setShowCatalogDropdown] = useState(false);
+  const catalogSearchRef = useRef<HTMLDivElement>(null);
+
   const [basePrice, setBasePrice] = useState<number>(25000);
   const [leadTimeDays, setLeadTimeDays] = useState<number>(7);
   const [priceTiers, setPriceTiers] = useState<
@@ -54,6 +70,73 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
     { min_quantity: 100, unit_price: 23500 },
     { min_quantity: 500, unit_price: 21000 },
   ]);
+
+  // Load suppliers list on mount
+  useEffect(() => {
+    let mounted = true;
+    setLoadingSuppliers(true);
+    crowdBuyApi
+      .getSuppliers()
+      .then((data) => {
+        if (mounted && Array.isArray(data)) {
+          setSuppliers(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load suppliers:", err);
+      })
+      .finally(() => {
+        if (mounted) setLoadingSuppliers(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Close catalog search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        catalogSearchRef.current &&
+        !catalogSearchRef.current.contains(e.target as Node)
+      ) {
+        setShowCatalogDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSearchCatalog = async (q: string) => {
+    setCatalogSearchQuery(q);
+    if (!q.trim()) {
+      setCatalogSearchResults([]);
+      setShowCatalogDropdown(false);
+      return;
+    }
+    setIsSearchingCatalog(true);
+    try {
+      const res = await getCatalogues({ search: q.trim(), per_page: 5 });
+      const items = res?.data && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+      setCatalogSearchResults(items);
+      setShowCatalogDropdown(true);
+    } catch {
+      setCatalogSearchResults([]);
+    } finally {
+      setIsSearchingCatalog(false);
+    }
+  };
+
+  const handleSelectCatalogItem = (item: any) => {
+    setTitle(item.name || "");
+    if (item.category) setCategory(item.category);
+    if (item.uom) setUnit(item.uom);
+    if (item.company_id) setSupplierCompanyId(item.company_id);
+    if (item.id) setCatalogueId(item.id);
+    setShowCatalogDropdown(false);
+    setCatalogSearchQuery(item.name || "");
+  };
 
   // Opsi 2 Specific (Collective RFQ / Custom Demand Pool)
   const [targetPrice, setTargetPrice] = useState<number>(20000);
@@ -93,6 +176,19 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
       return;
     }
 
+    if (activeTab === "buyer_catalog") {
+      if (!supplierCompanyId) {
+        setErrorMessage(
+          "Silakan pilih Supplier / Vendor penyedia barang untuk inisiasi dari katalog produk. Jika Anda belum memiliki supplier tertentu, silakan beralih ke 'Opsi 2: Collective RFQ (Custom)'."
+        );
+        return;
+      }
+      if (basePrice <= 0) {
+        setErrorMessage("Harga normal produk (Base Price) harus lebih besar dari 0.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       if (activeTab === "buyer_catalog") {
@@ -107,7 +203,8 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
           ends_at: endsAt,
           base_price: Number(basePrice),
           lead_time_days: Number(leadTimeDays) || 7,
-          supplier_company_id: supplierCompanyId || undefined,
+          supplier_company_id: supplierCompanyId,
+          catalogue_id: catalogueId || undefined,
           initial_quantity: Number(initialQuantity) || undefined,
           price_tiers: priceTiers.map((t) => ({
             min_quantity: Number(t.min_quantity),
@@ -232,6 +329,99 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
             <div className="p-3 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
               <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* Opsi 1 Specific: Supplier Selection & Catalog Picker */}
+          {activeTab === "buyer_catalog" && (
+            <div className="p-3.5 bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/50 rounded-lg space-y-3">
+              {/* Optional Quick Catalog Search */}
+              <div ref={catalogSearchRef} className="relative">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Cari dari Katalog Produk Huntr (Opsional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={catalogSearchQuery}
+                    onChange={(e) => handleSearchCatalog(e.target.value)}
+                    placeholder="Ketik nama produk katalog untuk auto-fill data & supplier..."
+                    className="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md pl-8 pr-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  />
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                  {isSearchingCatalog && (
+                    <div className="w-3.5 h-3.5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin absolute right-2.5 top-2.5" />
+                  )}
+                </div>
+
+                {showCatalogDropdown && catalogSearchResults.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg z-20 max-h-48 overflow-y-auto">
+                    {catalogSearchResults.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectCatalogItem(item)}
+                        className="w-full p-2 text-left hover:bg-orange-50 dark:hover:bg-slate-800 border-b last:border-0 border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
+                            {item.name}
+                          </p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                            Vendor: {item.company?.name || "Vendor Huntr"} • {item.category}
+                          </p>
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 shrink-0 font-medium">
+                          Pilih
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Required Supplier Dropdown */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-orange-500" />
+                  Supplier / Vendor Penyedia Barang *
+                </label>
+                <select
+                  value={supplierCompanyId}
+                  onChange={(e) => setSupplierCompanyId(e.target.value)}
+                  required
+                  className="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium"
+                >
+                  <option value="">
+                    {loadingSuppliers
+                      ? "Memuat daftar supplier..."
+                      : "-- Pilih Supplier / Vendor Terdaftar --"}
+                  </option>
+                  {suppliers.map((sup) => (
+                    <option key={sup.id} value={sup.id}>
+                      {sup.name} {sup.industry_type ? `(${sup.industry_type})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Notice helper */}
+              {!supplierCompanyId && (
+                <div className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-400 bg-white/70 dark:bg-slate-900/60 p-2 rounded border border-orange-200/60 dark:border-orange-900/40">
+                  <span className="shrink-0">💡</span>
+                  <p className="leading-snug">
+                    Belum menentukan supplier atau butuh barang custom?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("collective_rfq")}
+                      className="text-orange-600 dark:text-orange-400 font-semibold underline hover:no-underline"
+                    >
+                      Beralih ke Opsi 2 (Collective RFQ)
+                    </button>{" "}
+                    agar para supplier yang mengajukan penawaran harga.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

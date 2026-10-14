@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Loader2, Eye, EyeOff, ShieldCheck, Key, ArrowLeft, Mail, Lock, LogIn } from "lucide-react";
+import { Loader2, Eye, EyeOff, ShieldCheck, Key, ArrowLeft, Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 import { login, verify2FALogin, getCsrfCookie } from "../lib/api/auth";
 import AuthLayout from "../components/AuthLayout";
 import { useLanguage } from "../context/LanguageContext";
@@ -224,7 +224,7 @@ export default function Login() {
 
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5 animate-in fade-in">
-              <span className="shrink-0 text-base">⚠️</span>
+              <AlertCircle size={16} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -289,7 +289,7 @@ export default function Login() {
 
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-2.5">
-              <span>⚠️</span>
+              <AlertCircle size={16} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
