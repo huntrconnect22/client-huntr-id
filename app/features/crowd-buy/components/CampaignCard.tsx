@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Clock, ShieldCheck, TrendingUp, Users, ArrowRight, Layers, Share2, Sparkles, Gavel } from "lucide-react";
 import type { CrowdBuyCampaign } from "../types";
 import { CampaignProgressBar } from "./CampaignProgressBar";
+import { SessionManager } from "../../../lib/session";
 
 interface CampaignCardProps {
   campaign: CrowdBuyCampaign;
@@ -17,6 +18,12 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
   onJoinClick,
   onShareClick,
 }) => {
+  const currentCompany = SessionManager.getCompany();
+  const isInitiator =
+    !!currentCompany?.id &&
+    !!campaign.initiator_company_id &&
+    String(currentCompany.id) === String(campaign.initiator_company_id);
+
   const detailUrl = companySlug
     ? `/${companySlug}/crowd-buy/${campaign.id}`
     : `/crowd-buy/p/${campaign.id}`;
@@ -56,7 +63,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
           </span>
           {isBuyerInitiated && (
             <span className="px-2 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Inisiasi Buyer
+              <Sparkles className="w-3 h-3" /> {isInitiator ? "Inisiator Anda" : "Inisiasi Buyer"}
             </span>
           )}
           {isCollectiveRfq && isBidding && (
@@ -159,14 +166,23 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
           >
             Detail
           </Link>
-          {onJoinClick && (campaign.is_active || isBidding) && (
-            <button
-              onClick={() => onJoinClick(campaign)}
-              className="flex-1 py-1.5 px-3 text-center text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-md transition-colors flex items-center justify-center gap-1"
+          {isInitiator ? (
+            <span
+              className="flex-1 py-1.5 px-2 text-center text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-md select-none flex items-center justify-center"
+              title="Anda adalah pembuat campaign ini. Kebutuhan awal Anda sudah tercatat otomatis."
             >
-              <span>{isBidding ? "Ikut Pool" : "Gabung"}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+              Inisiator
+            </span>
+          ) : (
+            onJoinClick && (campaign.is_active || isBidding) && (
+              <button
+                onClick={() => onJoinClick(campaign)}
+                className="flex-1 py-1.5 px-3 text-center text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-md transition-colors flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>{isBidding ? "Ikut Pool" : "Gabung"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )
           )}
         </div>
       </div>

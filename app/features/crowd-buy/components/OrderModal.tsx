@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X, ShoppingBag, ShieldCheck, Truck, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { CrowdBuyCampaign, CrowdBuyShippingAddress } from "../types";
 import { crowdBuyApi } from "../../../lib/api/crowd-buy";
+import { SessionManager } from "../../../lib/session";
 import Swal from "sweetalert2";
 
 interface OrderModalProps {
@@ -17,6 +18,12 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   onClose,
   onOrderSuccess,
 }) => {
+  const currentCompany = SessionManager.getCompany();
+  const isInitiator =
+    !!currentCompany?.id &&
+    !!campaign.initiator_company_id &&
+    String(currentCompany.id) === String(campaign.initiator_company_id);
+
   const [quantity, setQuantity] = useState<number>(campaign.min_order_qty || 1);
   const [address, setAddress] = useState<CrowdBuyShippingAddress>({
     recipient_name: "",
@@ -31,6 +38,32 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  if (isInitiator) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 p-6 text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900 dark:text-white text-base">
+              Anda Adalah Inisiator Campaign Ini
+            </h3>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Sebagai inisiator/pembuat campaign, kuantitas awal Anda sudah otomatis terhitung ke dalam pool. Anda tidak dapat melakukan order tambahan ke campaign milik sendiri.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Determine active unit price based on tiers
   const getUnitPriceForQty = (qty: number): number => {

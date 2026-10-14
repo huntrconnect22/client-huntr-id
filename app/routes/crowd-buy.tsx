@@ -32,6 +32,7 @@ import { BuyerInitiativeModal } from "../features/crowd-buy/components/BuyerInit
 import { InviteShareModal } from "../features/crowd-buy/components/InviteShareModal";
 import { SupplierBiddingModal } from "../features/crowd-buy/components/SupplierBiddingModal";
 import { isVendorBuyerMode } from "../lib/viewMode";
+import { SessionManager } from "../lib/session";
 import Swal from "sweetalert2";
 
 export default function CrowdBuyPage() {
@@ -414,7 +415,23 @@ export default function CrowdBuyPage() {
                   key={camp.id}
                   campaign={camp}
                   companySlug={companySlug}
-                  onJoinClick={(c) => setSelectedCampaignForOrder(c)}
+                  onJoinClick={(c) => {
+                    const currentCompany = SessionManager.getCompany();
+                    if (
+                      currentCompany?.id &&
+                      c.initiator_company_id &&
+                      String(currentCompany.id) === String(c.initiator_company_id)
+                    ) {
+                      Swal.fire({
+                        icon: "info",
+                        title: "Inisiator Campaign",
+                        text: "Anda adalah pembuat campaign ini. Kebutuhan awal Anda sudah tercatat otomatis.",
+                        confirmButtonColor: "#f97316",
+                      });
+                      return;
+                    }
+                    setSelectedCampaignForOrder(c);
+                  }}
                   onShareClick={(c) => setSelectedCampaignForShare(c)}
                 />
               ))}
