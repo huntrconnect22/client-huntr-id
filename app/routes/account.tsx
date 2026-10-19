@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
+import { useLocation } from "react-router";
 import { AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 import {
@@ -16,6 +17,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function AccountSettings() {
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
+  const { search } = useLocation();
   const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [activeCompany, setActiveCompany] = useState<any>(null);
@@ -34,6 +36,13 @@ export default function AccountSettings() {
       setActiveCompany(JSON.parse(companySession));
     }
   }, []);
+
+  useEffect(() => {
+    if (new URLSearchParams(search).get("tab") === "subscription") {
+      setActiveTab("subscription");
+      setMobileSelectedTab("subscription");
+    }
+  }, [search]);
 
   const handleUserUpdate = (updatedUser: any) => {
     setUser(updatedUser);

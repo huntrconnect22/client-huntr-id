@@ -1,8 +1,11 @@
-import { apiGet } from "../client";
+import { apiGet, apiPost } from "../client";
 
 export interface GmvSubscriptionSummary {
   id: string;
   plan: string;
+  enterprise_plan?: string | null;
+  billing_cycle?: string | null;
+  tax_quota?: { limit: number; used: number; ends_at: string } | null;
   status: "active" | "renewal_required" | "expired" | string;
   overflow_strategy: "transaction_fee" | "renewal_required";
   upfront_fee: number;
@@ -16,3 +19,77 @@ export interface GmvSubscriptionSummary {
 
 export const getCompanySubscription = (companyId: string) =>
   apiGet(`/api/companies/${encodeURIComponent(companyId)}/subscription`);
+
+export const getSubscriptionAccess = (companyId: string) =>
+  apiGet<{ access: { overdue: boolean; overdue_since: string | null; active_enterprise: boolean } }>(`/api/companies/${encodeURIComponent(companyId)}/subscription/access`);
+
+export interface EnterprisePlan {
+  key: string;
+  name: string;
+  monthly_price: number | null;
+  annual_price: number | null;
+  users: number | null;
+  tax_documents_per_year: number | null;
+  support: string | null;
+  warehouses: number | null;
+}
+
+export interface EnterpriseAddon {
+  key: string;
+  name: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  billing_cycle: "monthly" | "one_time";
+}
+
+export interface EnterpriseCatalog {
+  version: string;
+  plans: EnterprisePlan[];
+  addons: EnterpriseAddon[];
+  vendor_free: boolean;
+  checkout_enabled: boolean;
+  onboarding_business_days: { min: number; max: number };
+}
+
+export const getEnterpriseCatalog = () =>
+  apiGet<EnterpriseCatalog>("/api/subscription/plans");
+
+export interface SubscriptionCheckout {
+  id: string;
+  order_id: string;
+  enterprise_plan: string;
+  billing_cycle: string;
+  amount: number;
+  payment_method: string;
+  purchase_type: "plan" | "addon" | "addons";
+  addon_key: string | null;
+  addons_snapshot?: { key: string; name: string; quantity: number; price: number; billing_cycle: string }[] | null;
+  quantity: number;
+  status: string;
+  payment_info: { va_number?: string; bill_key?: string; biller_code?: string; expiry_time?: string } | null;
+}
+
+export const createSubscriptionCheckout = (companyId: string, data: Record<string, unknown>) =>
+  apiPost<{checkout: SubscriptionCheckout}>(`/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts`, data);
+export const getCurrentSubscriptionCheckout = (companyId: string) =>
+  apiGet<{checkout: SubscriptionCheckout | null}>(`/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts/current`);
+export const refreshSubscriptionCheckout = (companyId: string, checkoutId: string) =>
+  apiGet<{checkout: SubscriptionCheckout}>(`/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts/${encodeURIComponent(checkoutId)}`);
+
+export interface PricingAnnouncement {
+  id: string;
+  code: string;
+  published_at: string;
+}
+
+export const getPricingAnnouncement = (companyId: string) =>
+  apiGet<{ announcement: PricingAnnouncement | null }>(
+    `/api/companies/${encodeURIComponent(companyId)}/subscription/pricing-announcement`,
+  );
+
+export const acknowledgePricingAnnouncement = (companyId: string, announcementId: string) =>
+  apiPost<{ acknowledged: boolean }>(
+    `/api/companies/${encodeURIComponent(companyId)}/subscription/pricing-announcement/${encodeURIComponent(announcementId)}/acknowledge`,
+    {},
+  );

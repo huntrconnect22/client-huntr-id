@@ -1,10 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Zap, Clock, ShieldCheck, PhoneCall, ArrowRight, Bot, RefreshCw, Cpu } from "lucide-react";
+import {
+  Zap,
+  Clock,
+  ShieldCheck,
+  PhoneCall,
+  ArrowRight,
+  Bot,
+  RefreshCw,
+  Cpu,
+} from "lucide-react";
 import Swal from "sweetalert2";
 import { getTrialInfo } from "../../../lib/trial";
 import { getAiUsage } from "../../../lib/api/ai";
-import { getCompanySubscription, type GmvSubscriptionSummary } from "../../../lib/api/subscription";
+import {
+  getCompanySubscription,
+  type GmvSubscriptionSummary,
+} from "../../../lib/api/subscription";
 import { useLanguage } from "../../../context/LanguageContext";
+import { EnterprisePlans } from "./EnterprisePlans";
 
 interface AccountSubscriptionTabProps {
   user: any;
@@ -24,7 +37,9 @@ export function AccountSubscriptionTab({
     month: string;
   } | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(false);
-  const [subscription, setSubscription] = useState<GmvSubscriptionSummary | null>(null);
+  const [subscriptionReady, setSubscriptionReady] = useState(false);
+  const [subscription, setSubscription] =
+    useState<GmvSubscriptionSummary | null>(null);
 
   const fetchUsage = async () => {
     if (!activeCompany?.id) return;
@@ -46,20 +61,30 @@ export function AccountSubscriptionTab({
   }, [activeCompany?.id]);
 
   useEffect(() => {
-    if (!activeCompany?.id) {
-      setSubscription(null);
-      return;
-    }
+    let current = true;
+    setSubscriptionReady(false);
+    setSubscription(null);
+    if (!activeCompany?.id) return () => { current = false; };
 
     getCompanySubscription(activeCompany.id)
-      .then((response: any) => setSubscription(response?.subscription ?? null))
-      .catch(() => setSubscription(null));
+      .then((response: any) => {
+        if (!response || !("subscription" in response)) throw new Error("Subscription unavailable");
+        if (current) { setSubscription(response.subscription ?? null); setSubscriptionReady(true); }
+      })
+      .catch(() => { if (current) setSubscriptionReady(false); });
+    return () => { current = false; };
   }, [activeCompany?.id]);
 
   const numberLocale = locale === "en" ? "en-US" : "id-ID";
-  const formatRupiah = (value: number) => `Rp ${value.toLocaleString(numberLocale)}`;
-  const quotaPercent = subscription
-    ? Math.min(100, ((subscription.current_realized_gmv + subscription.reserved_gmv) / subscription.gmv_limit) * 100)
+  const formatRupiah = (value: number) =>
+    `Rp ${value.toLocaleString(numberLocale)}`;
+  const quotaPercent = subscription && subscription.gmv_limit > 0
+    ? Math.min(
+        100,
+        ((subscription.current_realized_gmv + subscription.reserved_gmv) /
+          subscription.gmv_limit) *
+          100,
+      )
     : 0;
 
   const handleContactSales = () => {
@@ -69,8 +94,8 @@ export function AccountSubscriptionTab({
         <div style="text-align: left; font-size: 13px; color: var(--ui-text-secondary, #4b5563); line-height: 1.6;">
           <p style="margin-bottom: 12px;">${
             locale === "en"
-              ? "Get dedicated enterprise access, ERP integrations, and unlimited quotas for your whole organization:"
-              : "Dapatkan akses enterprise khusus, integrasi ERP, dan kuota tanpa batas untuk seluruh organisasi Anda:"
+              ? "Discuss enterprise plans and onboarding with the Huntr team:"
+              : "Konsultasikan paket enterprise dan onboarding dengan tim Huntr:"
           }</p>
           <div style="background: rgba(249, 115, 22, 0.08); padding: 12px; border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.2); margin-bottom: 12px;">
             <div style="font-weight: 700; color: #f97316; margin-bottom: 4px;">Huntr Enterprise Solutions</div>
@@ -81,7 +106,8 @@ export function AccountSubscriptionTab({
         </div>
       `,
       icon: "info",
-      confirmButtonText: locale === "en" ? "Contact via WhatsApp" : "Hubungi via WhatsApp",
+      confirmButtonText:
+        locale === "en" ? "Contact via WhatsApp" : "Hubungi via WhatsApp",
       showCancelButton: true,
       cancelButtonText: locale === "en" ? "Close" : "Tutup",
       confirmButtonColor: "#f97316",
@@ -90,7 +116,7 @@ export function AccountSubscriptionTab({
         const text = encodeURIComponent(
           locale === "en"
             ? "Hello Huntr Team, I am interested in the Huntr.id Enterprise Plan."
-            : "Halo Tim Huntr, saya tertarik dengan paket Enterprise Huntr.id"
+            : "Halo Tim Huntr, saya tertarik dengan paket Enterprise Huntr.id",
         );
         window.open(`https://wa.me/6281234567890?text=${text}`, "_blank");
       }
@@ -108,6 +134,16 @@ export function AccountSubscriptionTab({
         </p>
       </div>
 
+      {activeCompany?.type === "buyer" && (
+        <EnterprisePlans
+          companyId={activeCompany.id}
+          subscriptionReady={subscriptionReady}
+          activePlan={subscription?.enterprise_plan && subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now() ? subscription.enterprise_plan : null}
+          canManage={user?.role === "manager" || String(activeCompany.owner_id) === String(user?.id)}
+          onPaid={() => { window.dispatchEvent(new Event("huntr:subscription-updated")); getCompanySubscription(activeCompany.id).then((response: any) => setSubscription(response?.subscription ?? null)); }}
+        />
+      )}
+
       {/* AI Usage Card Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
@@ -122,7 +158,10 @@ export function AccountSubscriptionTab({
             disabled={loadingUsage}
             className="text-[11px] text-orange-500 hover:text-orange-600 flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw size={11} className={loadingUsage ? "animate-spin" : ""} />
+            <RefreshCw
+              size={11}
+              className={loadingUsage ? "animate-spin" : ""}
+            />
             <span>{t("settings.subscription.refresh")}</span>
           </button>
         </div>
@@ -131,67 +170,94 @@ export function AccountSubscriptionTab({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
               <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <Cpu size={12} className="text-orange-500" /> {t("settings.subscription.totalAiRequests")}
+                <Cpu size={12} className="text-orange-500" />{" "}
+                {t("settings.subscription.totalAiRequests")}
               </span>
               <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
                 {usageData?.total_requests?.toLocaleString(numberLocale) ?? 0}
-                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">calls</span>
+                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">
+                  calls
+                </span>
               </div>
             </div>
 
             <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
               <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <Zap size={12} className="text-amber-500" /> {t("settings.subscription.tokensConsumed")}
+                <Zap size={12} className="text-amber-500" />{" "}
+                {t("settings.subscription.tokensConsumed")}
               </span>
               <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
                 {usageData?.total_tokens?.toLocaleString(numberLocale) ?? 0}
-                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">tokens</span>
+                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">
+                  tokens
+                </span>
               </div>
             </div>
 
             <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
               <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <ShieldCheck size={12} className="text-emerald-500" /> {t("settings.subscription.quotaStatus")}
+                <ShieldCheck size={12} className="text-emerald-500" />{" "}
+                {t("settings.subscription.quotaStatus")}
               </span>
               <div className="text-sm font-bold text-emerald-500 mt-1 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                {t("settings.subscription.trialUnlimited")}
+                {subscription?.enterprise_plan ? "Tersedia" : t("settings.subscription.trialUnlimited")}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {subscription && (
+      {subscription && !subscription.enterprise_plan && subscription.gmv_limit > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
-              <Zap size={13} className="text-orange-500" /> {t("settings.subscription.gmvQuota")}
+              <Zap size={13} className="text-orange-500" />{" "}
+              {t("settings.subscription.gmvQuota")}
             </span>
-            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${subscription.status === "active" ? "text-emerald-500 bg-emerald-500/10" : "text-amber-500 bg-amber-500/10"}`}>
-              {subscription.status === "active" ? t("settings.subscription.statusActive") : t("settings.subscription.statusNeedsRenewal")}
+            <span
+              className={`text-[10px] font-bold px-2 py-1 rounded-full ${subscription.status === "active" ? "text-emerald-500 bg-emerald-500/10" : "text-amber-500 bg-amber-500/10"}`}
+            >
+              {subscription.status === "active"
+                ? t("settings.subscription.statusActive")
+                : t("settings.subscription.statusNeedsRenewal")}
             </span>
           </div>
           <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 text-xs">
               <div>
-                <p className="m-0 text-[var(--ui-text-muted)]">{t("settings.subscription.realizedGmv")}</p>
+                <p className="m-0 text-[var(--ui-text-muted)]">
+                  {t("settings.subscription.realizedGmv")}
+                </p>
                 <p className="m-0 mt-1 text-base font-bold text-[var(--ui-text-primary)]">
-                  {formatRupiah(subscription.current_realized_gmv + subscription.reserved_gmv)}
-                  <span className="font-normal text-[var(--ui-text-muted)]"> / {formatRupiah(subscription.gmv_limit)}</span>
+                  {formatRupiah(
+                    subscription.current_realized_gmv +
+                      subscription.reserved_gmv,
+                  )}
+                  <span className="font-normal text-[var(--ui-text-muted)]">
+                    {" "}
+                    / {formatRupiah(subscription.gmv_limit)}
+                  </span>
                 </p>
               </div>
               <span className="font-semibold text-orange-500">
-                {t("settings.subscription.remainingGmv", { amount: formatRupiah(subscription.available_gmv) })}
+                {t("settings.subscription.remainingGmv", {
+                  amount: formatRupiah(subscription.available_gmv),
+                })}
               </span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-[var(--ui-bg-card)] overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all" style={{ width: `${quotaPercent}%` }} />
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all"
+                style={{ width: `${quotaPercent}%` }}
+              />
             </div>
             <p className="m-0 text-[11px] text-[var(--ui-text-muted)]">
               {t("settings.subscription.gmvLimitFeeNote", {
                 fee: formatRupiah(subscription.upfront_fee),
-                date: new Date(subscription.ends_at).toLocaleDateString(numberLocale),
+                date: new Date(subscription.ends_at).toLocaleDateString(
+                  numberLocale,
+                ),
                 overflowNote:
                   subscription.overflow_strategy === "transaction_fee"
                     ? t("settings.subscription.overflowTransactionFee")
@@ -202,7 +268,13 @@ export function AccountSubscriptionTab({
         </div>
       )}
 
-      <div className="space-y-3">
+      {subscription?.enterprise_plan ? (
+        <div className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 text-sm">
+          <h3 className="m-0 font-bold">{({ enterprise_starter: "Enterprise Starter", enterprise_growth: "Enterprise Growth", enterprise_pro: "Enterprise Pro" } as Record<string, string>)[subscription.enterprise_plan] || subscription.enterprise_plan}</h3>
+          <p className="mb-0 mt-2 text-[var(--ui-text-muted)]">{subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now() ? "Aktif" : "Perlu diperpanjang"} · {subscription.billing_cycle === "annual" ? "Tahunan" : "Bulanan"} · Berlaku hingga {new Date(subscription.ends_at).toLocaleDateString(numberLocale)}</p>
+          {subscription.tax_quota && <p className="mb-0 mt-2 text-[var(--ui-text-muted)]">e-Faktur: {subscription.tax_quota.used.toLocaleString(numberLocale)} / {subscription.tax_quota.limit.toLocaleString(numberLocale)} dokumen digunakan · Tahun paket berakhir {new Date(subscription.tax_quota.ends_at).toLocaleDateString(numberLocale)}</p>}
+        </div>
+      ) : <div className="space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
           {t("settings.subscription.currentPlan")}
         </span>
@@ -236,7 +308,11 @@ export function AccountSubscriptionTab({
             </div>
 
             <div>
-              {trial.isExpired ? (
+              {activeCompany?.type === "vendor" ? (
+                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Gratis
+                </span>
+              ) : trial.isExpired ? (
                 <span className="px-3 py-1 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-red-400" />
                   {t("settings.subscription.statusExpired")}
@@ -256,36 +332,42 @@ export function AccountSubscriptionTab({
           </div>
 
           {/* Progress Timeline */}
-          <div className="space-y-2 p-4 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)]">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-[var(--ui-text-primary)] flex items-center gap-1.5">
-                <Clock size={14} className="text-orange-500" />
-                {t("settings.subscription.remainingTrialTime")}
-              </span>
-              <span className="font-bold text-orange-500">
-                {trial.isExpired
-                  ? t("settings.subscription.expiredTime")
-                  : t("settings.subscription.daysRemainingText", { days: trial.daysRemaining })}
-              </span>
+          {activeCompany?.type !== "vendor" && (
+            <div className="space-y-2 p-4 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)]">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-[var(--ui-text-primary)] flex items-center gap-1.5">
+                  <Clock size={14} className="text-orange-500" />
+                  {t("settings.subscription.remainingTrialTime")}
+                </span>
+                <span className="font-bold text-orange-500">
+                  {trial.isExpired
+                    ? t("settings.subscription.expiredTime")
+                    : t("settings.subscription.daysRemainingText", {
+                        days: trial.daysRemaining,
+                      })}
+                </span>
+              </div>
+              {/* Progress Bar */}
+              <div className="w-full h-2.5 rounded-full bg-[var(--ui-bg-input)] overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    trial.isExpired
+                      ? "bg-red-500"
+                      : trial.isUrgent
+                        ? "bg-gradient-to-r from-red-500 to-amber-500"
+                        : "bg-gradient-to-r from-orange-500 to-amber-400"
+                  }`}
+                  style={{ width: `${trial.percentRemaining}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-[var(--ui-text-muted)] pt-1">
+                <span>{t("settings.subscription.validUntil")}</span>
+                <span className="font-medium text-[var(--ui-text-primary)]">
+                  {trial.formattedEndDate}
+                </span>
+              </div>
             </div>
-            {/* Progress Bar */}
-            <div className="w-full h-2.5 rounded-full bg-[var(--ui-bg-input)] overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  trial.isExpired
-                    ? "bg-red-500"
-                    : trial.isUrgent
-                    ? "bg-gradient-to-r from-red-500 to-amber-500"
-                    : "bg-gradient-to-r from-orange-500 to-amber-400"
-                }`}
-                style={{ width: `${trial.percentRemaining}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-[var(--ui-text-muted)] pt-1">
-              <span>{t("settings.subscription.validUntil")}</span>
-              <span className="font-medium text-[var(--ui-text-primary)]">{trial.formattedEndDate}</span>
-            </div>
-          </div>
+          )}
 
           {/* Features Matrix */}
           <div className="space-y-2.5">
@@ -295,11 +377,15 @@ export function AccountSubscriptionTab({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[var(--ui-text-secondary)]">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>{t("settings.subscription.features.unlimitedPrRfq")}</span>
+                <span>
+                  {t("settings.subscription.features.unlimitedPrRfq")}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
-                <span>{t("settings.subscription.features.multiTierApproval")}</span>
+                <span>
+                  {t("settings.subscription.features.multiTierApproval")}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={15} className="text-emerald-500" />
@@ -337,7 +423,7 @@ export function AccountSubscriptionTab({
             </button>
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

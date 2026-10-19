@@ -1,6 +1,15 @@
-import React, { useState } from "react";
+import { useState, type ComponentType } from "react";
 import {
-  Building2, ShieldCheck, LogOut, Users, X, Menu, CreditCard, Package,
+  Building2,
+  ShieldCheck,
+  LogOut,
+  Users,
+  X,
+  Menu,
+  CreditCard,
+  Package,
+  LayoutDashboard,
+  ReceiptText,
 } from "lucide-react";
 import ThemeToggle from "../ThemeToggle";
 import AdminCompaniesTab from "./AdminCompaniesTab";
@@ -8,255 +17,138 @@ import AdminCatalogueTab from "./AdminCatalogueTab";
 import AdminTransactionsTab from "./AdminTransactionsTab";
 import AdminUsersTab from "./AdminUsersTab";
 import AdminAdminsTab from "./AdminAdminsTab";
+import AdminSubscriptionTab from "./AdminSubscriptionTab";
+import AdminOverview from "./AdminOverview";
 import type { AdminUser } from "./shared";
 
-function useIsMobile(bp = 640) {
-  const [mob, setMob] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < bp : false
-  );
-  React.useEffect(() => {
-    const fn = () => setMob(window.innerWidth < bp);
-    window.addEventListener("resize", fn);
-    return () => window.removeEventListener("resize", fn);
-  }, [bp]);
-  return mob;
-}
-
-export type TabId = "companies" | "catalogue" | "transactions" | "users" | "admins";
-
-const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: "companies",    label: "Companies",    icon: <Building2 size={16} /> },
-  { id: "catalogue",   label: "Catalogue",    icon: <Package size={16} /> },
-  { id: "transactions", label: "Transactions", icon: <CreditCard size={16} /> },
-  { id: "users",       label: "Users",        icon: <Users size={16} /> },
-  { id: "admins",      label: "Admins",       icon: <ShieldCheck size={16} /> },
+export type TabId =
+  | "overview"
+  | "companies"
+  | "catalogue"
+  | "transactions"
+  | "subscription"
+  | "users"
+  | "admins";
+const tabs: {
+  id: TabId;
+  label: string;
+  icon: ComponentType<{ size?: number }>;
+}[] = [
+  { id: "overview", label: "Ringkasan", icon: LayoutDashboard },
+  { id: "subscription", label: "Subscription", icon: CreditCard },
+  { id: "transactions", label: "Transaksi PO", icon: ReceiptText },
+  { id: "companies", label: "Perusahaan", icon: Building2 },
+  { id: "catalogue", label: "Katalog", icon: Package },
+  { id: "users", label: "Pengguna", icon: Users },
+  { id: "admins", label: "Admin", icon: ShieldCheck },
 ];
 
-interface Props {
+export default function AdminDashboard({
+  admin,
+  activeTab,
+  onTabChange,
+  onLogout,
+}: {
   admin: AdminUser;
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   onLogout: () => void;
-}
-
-export default function AdminDashboard({ admin, activeTab, onTabChange, onLogout }: Props) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const isMobile = useIsMobile();
-
+}) {
+  const [open, setOpen] = useState(false);
+  const navigation = (
+    <nav className="space-y-1" aria-label="Navigasi admin">
+      {tabs.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          onClick={() => {
+            onTabChange(id);
+            setOpen(false);
+          }}
+          aria-current={activeTab === id ? "page" : undefined}
+          className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium ${activeTab === id ? "bg-orange-500/10 text-orange-500" : "text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)]"}`}
+        >
+          <Icon size={17} />
+          {label}
+        </button>
+      ))}
+    </nav>
+  );
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-
-      {/* ── Top bar ── */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
-          background: "var(--ui-bg-header)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderBottom: "1px solid var(--ui-border)",
-          padding: "0 clamp(12px, 4vw, 24px)",
-          minHeight: 56,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
+    <div className="min-h-screen bg-[var(--ui-bg-page)] text-[var(--ui-text-primary)] lg:flex">
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Left: logo + title */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <img
-            src="/assets/img/logo/sidebar.png"
-            alt="Huntr.id"
-            style={{ height: 26, objectFit: "contain" }}
-          />
-          {!isMobile && (
+        <div className="mb-7 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/assets/img/logo/sidebar.png"
+              alt="Huntr"
+              className="h-7 w-auto"
+            />
             <div>
-              <div style={{ fontWeight: 800, fontSize: 13, color: "var(--ui-text-primary)", letterSpacing: "-0.3px" }}>
-                Admin Portal
-              </div>
-              <div style={{ fontSize: 9, color: "var(--huntr-amber)", letterSpacing: "0.1em", fontWeight: 700, textTransform: "uppercase" }}>
-                Global Operations
+              <div className="text-sm font-bold">Admin Portal</div>
+              <div className="text-xs text-[var(--ui-text-muted)]">
+                Operasional platform
               </div>
             </div>
-          )}
+          </div>
+          <button
+            className="lg:hidden"
+            aria-label="Tutup menu"
+            onClick={() => setOpen(false)}
+          >
+            <X size={18} />
+          </button>
         </div>
-
-        {/* Center: desktop nav tabs */}
-        {!isMobile && (
-          <nav style={{ display: "flex", gap: 2, flex: 1, justifyContent: "center", overflowX: "auto" }}>
-            {TABS.map((t) => {
-              const isActive = activeTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => onTabChange(t.id)}
-                  style={{
-                    padding: "6px 14px",
-                    borderRadius: 8,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                    background: isActive ? "var(--ui-primary-muted)" : "transparent",
-                    color: isActive ? "var(--ui-primary)" : "var(--ui-text-muted)",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </nav>
-        )}
-
-        {/* Right: theme toggle + user + sign out + hamburger */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <ThemeToggle />
-
-          {!isMobile && (
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)" }}>{admin.name}</div>
-              <div style={{ fontSize: 10, color: "var(--ui-text-muted)" }}>{admin.email}</div>
-            </div>
-          )}
-
+        {navigation}
+        <div className="mt-auto border-t border-[var(--ui-border)] pt-4">
+          <div className="truncate text-sm font-semibold">{admin.name}</div>
+          <div className="truncate text-xs text-[var(--ui-text-muted)]">
+            {admin.email}
+          </div>
           <button
             onClick={onLogout}
-            title="Sign Out"
-            style={{
-              display: "flex", alignItems: "center", gap: 5,
-              padding: "6px 12px", borderRadius: 8,
-              background: "var(--ui-logout-bg)", border: "1px solid var(--ui-logout-border)",
-              color: "var(--ui-logout-text)", fontSize: 12, fontWeight: 700,
-              cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
-            }}
+            className="mt-3 flex items-center gap-2 text-xs font-semibold text-[var(--ui-text-secondary)]"
           >
-            <LogOut size={13} />
-            {!isMobile && "Sign Out"}
+            <LogOut size={15} />
+            Keluar
           </button>
-
-          {isMobile && (
+        </div>
+      </aside>
+      <div className="min-w-0 flex-1">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--ui-border)] bg-[var(--ui-bg-header)] px-4 lg:px-7">
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setDrawerOpen(true)}
-              aria-label="Open menu"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 36, height: 36, borderRadius: 8,
-                background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)",
-                color: "var(--ui-text-primary)", cursor: "pointer",
-              }}
+              className="lg:hidden"
+              aria-label="Buka menu"
+              onClick={() => setOpen(true)}
             >
-              <Menu size={17} />
+              <Menu size={20} />
             </button>
-          )}
-        </div>
-      </header>
-
-      {/* ── Mobile drawer ── */}
-      {isMobile && drawerOpen && (
-        <div
-          onClick={() => setDrawerOpen(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "absolute", top: 0, right: 0, bottom: 0, width: "70vw", maxWidth: 280,
-              background: "var(--ui-bg-card)", borderLeft: "1px solid var(--ui-border)",
-              display: "flex", flexDirection: "column", padding: "20px 16px", gap: 6,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 14, color: "var(--ui-text-primary)" }}>{admin.name}</div>
-                <div style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>{admin.email}</div>
-              </div>
-              <button onClick={() => setDrawerOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 4, display: "flex" }}>
-                <X size={18} />
-              </button>
-            </div>
-            <div style={{ height: 1, background: "var(--ui-border)", marginBottom: 8 }} />
-            {TABS.map((t) => {
-              const isActive = activeTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => { onTabChange(t.id); setDrawerOpen(false); }}
-                  style={{
-                    padding: "11px 14px", borderRadius: 9, fontSize: 14, fontWeight: 700, textAlign: "left",
-                    background: isActive ? "var(--ui-primary-muted)" : "transparent",
-                    color: isActive ? "var(--ui-primary)" : "var(--ui-text-primary)",
-                    border: isActive ? "1px solid var(--ui-primary-border)" : "1px solid transparent",
-                    cursor: "pointer", display: "flex", alignItems: "center", gap: 10, transition: "all 0.15s",
-                  }}
-                >
-                  {t.icon}
-                  {t.label}
-                </button>
-              );
-            })}
+            <span className="text-sm font-semibold">
+              {tabs.find((tab) => tab.id === activeTab)?.label}
+            </span>
           </div>
-        </div>
-      )}
-
-      {/* ── Mobile bottom tab bar ── */}
-      {isMobile && (
-        <nav
-          style={{
-            position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90,
-            background: "var(--ui-bg-header)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-            borderTop: "1px solid var(--ui-border)", display: "flex",
-            paddingBottom: "env(safe-area-inset-bottom)",
-          }}
-        >
-          {TABS.map((t) => {
-            const isActive = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => onTabChange(t.id)}
-                style={{
-                  flex: 1, padding: "10px 4px 8px", border: "none", background: "transparent",
-                  color: isActive ? "var(--ui-primary)" : "var(--ui-text-muted)",
-                  fontSize: 9, fontWeight: 700, cursor: "pointer",
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-                  borderTop: isActive ? "2px solid var(--ui-primary)" : "2px solid transparent",
-                  transition: "all 0.15s",
-                }}
-              >
-                {t.icon}
-                {t.label.slice(0, 5)}
-              </button>
-            );
-          })}
-        </nav>
-      )}
-
-      {/* ── Main content ── */}
-      <main
-        style={{
-          flex: 1,
-          padding: "clamp(16px, 3vw, 28px)",
-          maxWidth: 1280,
-          margin: "0 auto",
-          width: "100%",
-          paddingBottom: isMobile
-            ? "calc(env(safe-area-inset-bottom) + 72px)"
-            : "clamp(16px, 3vw, 28px)",
-        }}
-      >
-        {activeTab === "companies"    && <AdminCompaniesTab />}
-        {activeTab === "catalogue"    && <AdminCatalogueTab />}
-        {activeTab === "transactions" && <AdminTransactionsTab />}
-        {activeTab === "users"        && <AdminUsersTab />}
-        {activeTab === "admins"       && <AdminAdminsTab />}
-      </main>
+          <ThemeToggle />
+        </header>
+        <main className="mx-auto w-full max-w-[1440px] p-4 sm:p-6 lg:p-7">
+          {activeTab === "overview" && (
+            <AdminOverview onNavigate={onTabChange} />
+          )}
+          {activeTab === "subscription" && <AdminSubscriptionTab />}
+          {activeTab === "companies" && <AdminCompaniesTab />}
+          {activeTab === "catalogue" && <AdminCatalogueTab />}
+          {activeTab === "transactions" && <AdminTransactionsTab />}
+          {activeTab === "users" && <AdminUsersTab />}
+          {activeTab === "admins" && <AdminAdminsTab />}
+        </main>
+      </div>
     </div>
   );
 }

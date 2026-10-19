@@ -23,6 +23,8 @@ import { getMyCompanies, switchActiveCompany } from "../lib/api/company";
 import { getTrialInfo } from "../lib/trial";
 import GlobalCartPanel from "../components/GlobalCartPanel";
 import TrialBanner from "../components/TrialBanner";
+import PricingAnnouncement from "../features/account/components/PricingAnnouncement";
+import { SubscriptionOverdueNotice } from "../components/app-shell/SubscriptionOverdueNotice";
 
 import { SidebarNav } from "../components/app-shell/SidebarNav";
 import { SidebarBottomSection } from "../components/app-shell/SidebarBottomSection";
@@ -35,6 +37,7 @@ import { isAgenticProcurementEnabled } from "../lib/features";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { getWmsApps } from "../lib/api/wms";
+import { getSubscriptionAccess } from "../lib/api/subscription";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
 export interface AppShellContext {
@@ -49,7 +52,7 @@ export function useAppShell() {
 }
 
 export default function AppShell() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const { lastEvent } = useEventBus();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
@@ -111,6 +114,32 @@ export default function AppShell() {
   const [allUserCompanies, setAllUserCompanies] = useState<any[]>([]);
   const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
   const [wmsInstalled, setWmsInstalled] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [subscriptionAccess, setSubscriptionAccess] = useState<{ companyId: string; overdue: boolean; overdueSince: string | null } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    let requestId = 0;
+    const companyId = activeCompany?.id;
+    setSubscriptionAccess(null);
+    setHasActiveSubscription(false);
+    const load = () => {
+      if (!companyId || activeCompany?.type !== "buyer") return;
+      const currentRequest = ++requestId;
+      getSubscriptionAccess(companyId).then((response) => {
+        if (!active || currentRequest !== requestId || !response || !("access" in response)) return;
+        setHasActiveSubscription(response.access?.active_enterprise === true);
+        setSubscriptionAccess({ companyId, overdue: response.access?.overdue === true, overdueSince: response.access?.overdue_since ?? null });
+      }).catch(() => {});
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    load();
+    window.addEventListener("huntr:subscription-updated", load);
+    window.addEventListener("focus", load);
+    document.addEventListener("visibilitychange", onVisible);
+    const timer = window.setInterval(load, 60_000);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener("huntr:subscription-updated", load); window.removeEventListener("focus", load); document.removeEventListener("visibilitychange", onVisible); };
+  }, [activeCompany?.id, activeCompany?.type]);
 
   const loadWmsInstallation = useCallback(async () => {
     if (!activeCompany?.id) {
@@ -425,6 +454,10 @@ export default function AppShell() {
           .replace(/(^-|-$)/g, "")
       : "");
   const companyPrefix = companySlug ? `/${companySlug}` : "";
+  const isSubscriptionOverdue = Boolean(activeCompany?.id && subscriptionAccess?.companyId === activeCompany.id && subscriptionAccess?.overdue);
+  const canManageSubscription = isOwner || user?.role === "manager";
+  const isWmsPage = /(?:^|\/)wms\/?$/.test(pathname);
+  const isNewPrCheckout = /(?:^|\/)checkout\/?$/.test(pathname) && !new URLSearchParams(search).has("revise");
 
   const NAV = buildNavItems({
     isPendingCompany,
@@ -711,7 +744,7 @@ export default function AppShell() {
           </div>
 
           <div className="huntr-header-actions">
-            {trialInfo.hasTrial && isBuyerComp && !isMobile && (
+            {trialInfo.hasTrial && isBuyerComp && !hasActiveSubscription && !isMobile && (
               <button
                 type="button"
                 onClick={() => navigate(`${companyPrefix}/account`)}
@@ -930,7 +963,16 @@ export default function AppShell() {
           </div>
         </header>
 
-        {isBuyerComp && <TrialBanner trial={trialInfo} />}
+        {isBuyerComp && !hasActiveSubscription && !isSubscriptionOverdue && <TrialBanner trial={trialInfo} />}
+        {isSubscriptionOverdue && <SubscriptionOverdueNotice overdueSince={subscriptionAccess?.overdueSince ?? null} companyPrefix={companyPrefix} canManage={canManageSubscription} />}
+        {user?.id && activeCompany?.id && (isBuyerComp || isVendorComp) && (
+          <PricingAnnouncement
+            key={`${user.id}:${activeCompany.id}`}
+            companyId={activeCompany.id}
+            companyType={isBuyerComp ? "buyer" : "vendor"}
+            companyPrefix={companyPrefix}
+          />
+        )}
 
         <div className="huntr-page-content">
           {activeCompany &&
@@ -943,6 +985,8 @@ export default function AppShell() {
               verificationNotes={activeCompany.verification_notes}
               onSwitchCompany={handleSwitchCompany}
             />
+          ) : isSubscriptionOverdue && (isWmsPage || isNewPrCheckout) ? (
+            <SubscriptionOverdueNotice page isWms={isWmsPage} overdueSince={subscriptionAccess?.overdueSince ?? null} companyPrefix={companyPrefix} canManage={canManageSubscription} />
           ) : (
             <Outlet context={shellContext} />
           )}

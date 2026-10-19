@@ -4,7 +4,15 @@ import AdminLogin from "../components/admin/AdminLogin";
 import AdminDashboard from "../components/admin/AdminDashboard";
 import type { AdminUser } from "../components/admin/shared";
 
-const VALID_TABS = ["companies", "catalogue", "transactions", "users", "admins"] as const;
+const VALID_TABS = [
+  "overview",
+  "companies",
+  "catalogue",
+  "transactions",
+  "subscription",
+  "users",
+  "admins",
+] as const;
 type TabId = (typeof VALID_TABS)[number];
 
 function isValidTab(s: string | undefined): s is TabId {
@@ -18,7 +26,7 @@ export default function AdminPortal() {
   const navigate = useNavigate();
 
   // Resolve active tab from URL, fallback to "companies"
-  const activeTab: TabId = isValidTab(tab) ? tab : "companies";
+  const activeTab: TabId = isValidTab(tab) ? tab : "overview";
 
   useEffect(() => {
     const stored = sessionStorage.getItem("admin_session");
@@ -36,7 +44,7 @@ export default function AdminPortal() {
     sessionStorage.setItem("admin_session", JSON.stringify(a));
     setAdmin(a);
     setView("dashboard");
-    navigate("/admin/companies", { replace: true });
+    navigate("/admin/overview", { replace: true });
   };
 
   const handleLogout = () => {

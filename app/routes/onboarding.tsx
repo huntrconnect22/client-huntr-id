@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { 
   Building2, MapPin, CreditCard, FileText, UploadCloud, 
@@ -7,6 +7,8 @@ import {
 
 // --- MVVM: ViewModel ---
 import { useOnboardingViewModel } from "../features/onboarding/hooks/useOnboardingViewModel";
+import { useOnboardingPricing } from "../features/onboarding/hooks/useOnboardingPricing";
+import { getEnterpriseCatalog } from "../lib/api/subscription";
 
 // --- UI: Components ---
 import { StepTracker } from "../features/onboarding/components/StepTracker";
@@ -36,9 +38,13 @@ const STEP_ICONS = [
 export default function Onboarding() {
   const { t } = useLanguage();
   const vm = useOnboardingViewModel();
+  const pricing = useOnboardingPricing(vm.slide === 6 && vm.formData.type === "buyer");
   const navigate = useNavigate();
   const docInputRef = useRef<HTMLInputElement>(null);
   const [docType, setDocType] = useState("NPWP");
+  const [checkingPricing, setCheckingPricing] = useState(false);
+
+  useEffect(() => { vm.setTermsAccepted(false); }, [vm.slide, vm.formData.type]);
 
   const stepLabels = t("onboarding.stepMeta").split("|");
   const stepMeta = STEP_ICONS.map((step, idx) => ({
@@ -93,6 +99,9 @@ export default function Onboarding() {
         return t("onboarding.validation.noValidRows");
       }
     }
+    if (vm.slide === 6 && vm.formData.type === "buyer" && (!pricing.catalog || pricing.loading || pricing.error)) {
+      return "Harga paket belum dapat dimuat. Coba lagi sebelum melanjutkan.";
+    }
     if (vm.slide === 6 && !vm.termsAccepted) {
       return t("onboarding.validation.acceptTerms");
     }
@@ -111,6 +120,24 @@ export default function Onboarding() {
     
     vm.setError(null);
     if (vm.slide === 6) {
+      if (vm.formData.type === "buyer") {
+        setCheckingPricing(true);
+        try {
+          const latest = await getEnterpriseCatalog();
+          if (!latest?.version) throw new Error("Harga paket belum dapat diperiksa. Coba lagi.");
+          if (latest.version !== pricing.catalog?.version) {
+            vm.setTermsAccepted(false);
+            pricing.retry();
+            vm.setError("Harga paket telah berubah. Periksa kembali informasi terbaru sebelum menyetujui.");
+            return;
+          }
+        } catch (error: any) {
+          vm.setError(error.message || "Harga paket belum dapat diperiksa. Coba lagi.");
+          return;
+        } finally {
+          setCheckingPricing(false);
+        }
+      }
       try {
         await vm.handleCompanySubmit();
       } catch (err: any) {
@@ -198,6 +225,7 @@ export default function Onboarding() {
             {/* Render Slide Content */}
             <SlideContent 
               vm={vm} 
+              pricing={pricing}
               docType={docType} 
               setDocType={setDocType} 
               docInputRef={docInputRef}
@@ -218,11 +246,11 @@ export default function Onboarding() {
               {vm.slide < 7 && (
                 <button 
                   onClick={nextSlide} 
-                  disabled={vm.isLoading} 
+                  disabled={vm.isLoading || checkingPricing}
                   className="flex items-center gap-2 px-7 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-500/20"
                 >
-                  {vm.isLoading ? <Loader2 className="animate-spin" size={16} /> : vm.slide === 6 ? t("onboarding.agreeAndContinue") : t("onboarding.next")} 
-                  {!vm.isLoading && <ChevronRight size={16} />}
+                  {vm.isLoading || checkingPricing ? <Loader2 className="animate-spin" size={16} /> : vm.slide === 6 ? t("onboarding.agreeAndContinue") : t("onboarding.next")}
+                  {!vm.isLoading && !checkingPricing && <ChevronRight size={16} />}
                 </button>
               )}
             </footer>
