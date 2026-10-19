@@ -25,6 +25,7 @@ import GlobalCartPanel from "../components/GlobalCartPanel";
 import TrialBanner from "../components/TrialBanner";
 import PricingAnnouncement from "../features/account/components/PricingAnnouncement";
 import { SubscriptionOverdueNotice } from "../components/app-shell/SubscriptionOverdueNotice";
+import { SubscriptionOverdueAlert } from "../components/app-shell/SubscriptionOverdueAlert";
 
 import { SidebarNav } from "../components/app-shell/SidebarNav";
 import { SidebarBottomSection } from "../components/app-shell/SidebarBottomSection";
@@ -964,7 +965,12 @@ export default function AppShell() {
         </header>
 
         {isBuyerComp && !hasActiveSubscription && !isSubscriptionOverdue && <TrialBanner trial={trialInfo} />}
-        {isSubscriptionOverdue && <SubscriptionOverdueNotice overdueSince={subscriptionAccess?.overdueSince ?? null} companyPrefix={companyPrefix} canManage={canManageSubscription} />}
+        {isSubscriptionOverdue && user?.id && (
+          <>
+            <SubscriptionOverdueAlert userId={String(user.id)} companyId={String(activeCompany.id)} companyPrefix={companyPrefix} overdueSince={subscriptionAccess?.overdueSince ?? null} canManage={canManageSubscription} />
+            <SubscriptionOverdueNotice overdueSince={subscriptionAccess?.overdueSince ?? null} companyPrefix={companyPrefix} canManage={canManageSubscription} />
+          </>
+        )}
         {user?.id && activeCompany?.id && (isBuyerComp || isVendorComp) && (
           <PricingAnnouncement
             key={`${user.id}:${activeCompany.id}`}
