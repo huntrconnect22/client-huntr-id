@@ -26,6 +26,8 @@ export const crowdBuyApi = {
     sort?: string;
     page?: number;
     per_page?: number;
+    campaign_type?: string;
+    creator_type?: string;
   }): Promise<PaginatedResponse<CrowdBuyCampaign>> {
     const query = new URLSearchParams();
     if (params?.search) query.set("search", params.search);
@@ -35,6 +37,8 @@ export const crowdBuyApi = {
     if (params?.sort) query.set("sort", params.sort);
     if (params?.page) query.set("page", String(params.page));
     if (params?.per_page) query.set("per_page", String(params.per_page));
+    if (params?.campaign_type) query.set("campaign_type", params.campaign_type);
+    if (params?.creator_type) query.set("creator_type", params.creator_type);
 
     return apiGet<PaginatedResponse<CrowdBuyCampaign>>(
       `/api/crowd-buy/campaigns?${query.toString()}`

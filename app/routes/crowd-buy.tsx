@@ -77,24 +77,25 @@ export default function CrowdBuyPage() {
   const loadCatalog = async () => {
     setLoadingCatalog(true);
     try {
+      // Map front-end filter names to API params
+      const campaignTypeParam =
+        campaignTypeFilter === "auto_demand" ? "auto_demand_aggregation" :
+        campaignTypeFilter === "collective_rfq" ? "collective_rfq" :
+        campaignTypeFilter === "buyer_catalog" ? "buyer_catalog" :
+        undefined;
+
+      const creatorTypeParam =
+        campaignTypeFilter === "supplier_promo" ? "supplier" : undefined;
+
       const res = await crowdBuyApi.getPublicCampaigns({
         category: selectedCategory !== "all" ? selectedCategory : undefined,
         search: searchQuery || undefined,
         sort: sortBy,
+        campaign_type: campaignTypeParam,
+        creator_type: creatorTypeParam,
       });
 
-      let data = res.data || [];
-      if (campaignTypeFilter === "auto_demand") {
-        data = data.filter((c) => c.campaign_type === "auto_demand_aggregation" || c.is_monthly_recurring || c.is_auto_demand);
-      } else if (campaignTypeFilter === "supplier_promo") {
-        data = data.filter((c) => (!c.creator_type || c.creator_type === "supplier") && c.campaign_type !== "auto_demand_aggregation");
-      } else if (campaignTypeFilter === "buyer_catalog") {
-        data = data.filter((c) => c.campaign_type === "buyer_catalog");
-      } else if (campaignTypeFilter === "collective_rfq") {
-        data = data.filter((c) => c.campaign_type === "collective_rfq");
-      }
-
-      setCampaigns(data);
+      setCampaigns(res.data || []);
     } catch (err) {
       console.error("Failed to load campaigns", err);
     } finally {
