@@ -61,6 +61,9 @@ export const crowdBuyApi = {
     data: {
       quantity: number;
       shipping_address: CrowdBuyShippingAddress;
+      is_monthly_commitment?: boolean;
+      monthly_commitment_qty?: number;
+      delivery_point?: string;
       notes?: string;
     }
   ): Promise<{ message: string; order: CrowdBuyOrder }> {
@@ -372,5 +375,22 @@ export const crowdBuyApi = {
       message: string;
       results: { successful: number; failed: number };
     }>("/api/admin/crowd-buy/evaluate", {});
+  },
+
+  async getHistoricalDemands(params?: { min_freq?: number; limit?: number }): Promise<{
+    total: number;
+    demands: any[];
+  }> {
+    const query = new URLSearchParams();
+    if (params?.min_freq) query.set("min_freq", String(params.min_freq));
+    if (params?.limit) query.set("limit", String(params.limit));
+    return apiGet<{ total: number; demands: any[] }>(`/api/admin/crowd-buy/historical-demands?${query.toString()}`);
+  },
+
+  async triggerAutoAggregate(params?: { min_freq?: number; limit?: number }): Promise<{
+    message: string;
+    data: any;
+  }> {
+    return apiPost<{ message: string; data: any }>("/api/admin/crowd-buy/auto-aggregate", params || {});
   },
 };

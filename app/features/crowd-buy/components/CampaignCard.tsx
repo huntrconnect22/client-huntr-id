@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router";
-import { Clock, ShieldCheck, TrendingUp, Users, ArrowRight, Layers, Share2, Sparkles, Gavel } from "lucide-react";
+import { Clock, ShieldCheck, TrendingUp, Users, ArrowRight, Layers, Share2, Sparkles, Gavel, Calendar } from "lucide-react";
 import type { CrowdBuyCampaign } from "../types";
 import { CampaignProgressBar } from "./CampaignProgressBar";
 import { SessionManager } from "../../../lib/session";
@@ -28,6 +28,10 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
     ? `/${companySlug}/crowd-buy/${campaign.id}`
     : `/crowd-buy/p/${campaign.id}`;
 
+  const isAutoDemand =
+    campaign.campaign_type === "auto_demand_aggregation" ||
+    !!campaign.is_monthly_recurring ||
+    !!campaign.is_auto_demand;
   const isBuyerInitiated = campaign.creator_type === "buyer" || campaign.is_buyer_initiated;
   const isCollectiveRfq = campaign.campaign_type === "collective_rfq";
   const isBidding = campaign.status === "bidding";
@@ -61,7 +65,12 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
           <span className="px-2 py-0.5 text-[10px] font-semibold bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-300 rounded border border-slate-200/80 dark:border-slate-700">
             {campaign.category}
           </span>
-          {isBuyerInitiated && (
+          {isAutoDemand && (
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-600 text-white rounded flex items-center gap-1 shadow-xs">
+              <Sparkles className="w-3 h-3" /> Auto Demand PO
+            </span>
+          )}
+          {isBuyerInitiated && !isAutoDemand && (
             <span className="px-2 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> {isInitiator ? "Inisiator Anda" : "Inisiasi Buyer"}
             </span>
@@ -110,6 +119,11 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
                 <Users className="w-3 h-3 text-orange-500" />
                 Inisiator: <strong>{campaign.initiator_company?.name || "Buyer Huntr"}</strong>
               </span>
+            ) : isAutoDemand ? (
+              <span className="truncate max-w-[200px] text-blue-600 dark:text-blue-400 font-medium text-[11px] flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Algoritma Demand PO HUNTR
+              </span>
             ) : (
               <>
                 <span className="truncate max-w-[200px] text-slate-600 dark:text-slate-400 font-medium text-[11px]">
@@ -131,7 +145,11 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
           <div className="mt-2.5 flex items-baseline gap-2">
             <div>
               <span className="text-[11px] text-slate-400 block">
-                {isCollectiveRfq && isBidding ? "Target Harga Satuan:" : "Harga Satuan:"}
+                {isCollectiveRfq && isBidding
+                  ? "Target Harga Satuan:"
+                  : isAutoDemand
+                  ? "Harga Terendah Historis:"
+                  : "Harga Satuan:"}
               </span>
               <div className="text-base font-bold text-slate-900 dark:text-white">
                 Rp {Number(campaign.base_price).toLocaleString("id-ID")}
@@ -144,6 +162,14 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
               </span>
             )}
           </div>
+
+          {/* Monthly Delivery Schedule Banner */}
+          {isAutoDemand && (
+            <div className="mt-2 flex items-center gap-1.5 px-2 py-1 bg-orange-50 dark:bg-orange-950/40 border border-orange-200/80 dark:border-orange-800/60 rounded text-[11px] text-orange-800 dark:text-orange-300">
+              <Calendar className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
+              <span>Kirim <strong>Tgl {campaign.monthly_delivery_day || 27}</strong> / bulan ke delivery point</span>
+            </div>
+          )}
         </div>
 
         {/* Progress Bar */}
@@ -179,7 +205,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
                 onClick={() => onJoinClick(campaign)}
                 className="flex-1 py-1.5 px-3 text-center text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-md transition-colors flex items-center justify-center gap-1 cursor-pointer"
               >
-                <span>{isBidding ? "Ikut Pool" : "Gabung"}</span>
+                <span>{isBidding ? "Ikut Pool" : isAutoDemand ? "Ikut Komitmen" : "Gabung"}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )

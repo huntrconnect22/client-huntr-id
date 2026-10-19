@@ -127,6 +127,11 @@ export default function CrowdBuyDetailPage() {
 
   const backUrl = companySlug ? `/${companySlug}/crowd-buy` : `/crowd-buy`;
 
+  const isAutoDemand =
+    campaign.campaign_type === "auto_demand_aggregation" ||
+    !!campaign.is_monthly_recurring ||
+    !!campaign.is_auto_demand;
+
   return (
     <div className="space-y-4 max-w-6xl mx-auto p-2 md:p-6 animate-fade-in">
       {/* Back button */}
@@ -153,7 +158,12 @@ export default function CrowdBuyDetailPage() {
                   <span className="px-2 py-0.5 text-[11px] font-semibold bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60 rounded">
                     {campaign.category}
                   </span>
-                  {campaign.creator_type === "buyer" && (
+                  {isAutoDemand && (
+                    <span className="px-2 py-0.5 text-[11px] font-bold bg-blue-600 text-white rounded flex items-center gap-1 shadow-xs">
+                      <Sparkles className="w-3 h-3" /> Rekomendasi Rutin PO (Auto)
+                    </span>
+                  )}
+                  {campaign.creator_type === "buyer" && !isAutoDemand && (
                     <span className="px-2 py-0.5 text-[11px] font-semibold bg-orange-500 text-white rounded flex items-center gap-1">
                       <Sparkles className="w-3 h-3" /> Inisiasi Buyer
                     </span>
@@ -213,6 +223,35 @@ export default function CrowdBuyDetailPage() {
                   <span className="text-[11px] uppercase font-bold tracking-wider">Crowd Buy Bulk Sourcing</span>
                 </div>
               )}
+            </div>
+
+            {/* Delivery Schedule Banner (Setiap Tanggal 27) */}
+            <div className="p-4 bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-blue-500/10 dark:from-orange-950/40 dark:via-amber-950/30 dark:to-blue-950/20 rounded-lg border border-orange-200 dark:border-orange-800/80 flex items-start gap-3">
+              <div className="w-10 h-10 rounded-md bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                    Jadwal Pengiriman Rutin Bulanan
+                  </h3>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded">
+                    Setiap Tgl {campaign.monthly_delivery_day || 27}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  Barang akan dikirim setiap <strong>tanggal {campaign.monthly_delivery_day || 27} setiap bulannya</strong> ke lokasi sesuai delivery point perusahaan Anda.
+                </p>
+                {campaign.historical_metrics && (
+                  <div className="pt-1 flex flex-wrap items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Rata-rata volume bulanan: <strong>{campaign.historical_metrics.monthly_average_qty?.toLocaleString("id-ID") || "-"} {campaign.unit}</strong></span>
+                    <span>•</span>
+                    <span>Harga terendah historis: <strong className="text-emerald-600 dark:text-emerald-400">Rp {campaign.historical_metrics.lowest_historical_price?.toLocaleString("id-ID") || "-"}</strong></span>
+                    <span>•</span>
+                    <span>Dianalisis dari riwayat PO: <strong>{campaign.historical_metrics.buyer_companies_count || 1}+ Buyer</strong></span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Progress Section */}
@@ -433,7 +472,7 @@ export default function CrowdBuyDetailPage() {
                     onClick={() => setIsOrderModalOpen(true)}
                     className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
                   >
-                    <span>Gabung Crowd Buy Sekarang</span>
+                    <span>{isAutoDemand ? "Ikut Komitmen Pengadaan Bulanan" : "Gabung Crowd Buy Sekarang"}</span>
                   </button>
                 );
               }

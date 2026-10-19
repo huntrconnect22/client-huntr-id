@@ -57,8 +57,21 @@ export interface CrowdBuyBid {
 export interface CrowdBuyCampaign {
   id: string;
   code: string;
-  creator_type?: "supplier" | "buyer";
-  campaign_type?: "supplier_promo" | "buyer_catalog" | "collective_rfq";
+  creator_type?: "supplier" | "buyer" | "system";
+  campaign_type?: "supplier_promo" | "buyer_catalog" | "collective_rfq" | "auto_demand_aggregation";
+  is_monthly_recurring?: boolean;
+  monthly_delivery_day?: number;
+  is_auto_demand?: boolean;
+  monthly_delivery_schedule?: string;
+  historical_metrics?: {
+    monthly_average_qty?: number;
+    monthly_order_frequency?: number;
+    lowest_historical_price?: number;
+    avg_historical_price?: number;
+    buyer_companies_count?: number;
+    total_historical_orders?: number;
+    best_vendor_name?: string;
+  } | null;
   initiator_company_id?: string | null;
   invite_code?: string | null;
   supplier_company_id?: string | null;
@@ -153,6 +166,9 @@ export interface CrowdBuyOrder {
   buyer_company_id: string;
   user_id: string;
   quantity: number;
+  is_monthly_commitment?: boolean;
+  monthly_commitment_qty?: number | null;
+  delivery_point?: string | null;
   unit_price: number;
   subtotal: number;
   tax_amount: number;

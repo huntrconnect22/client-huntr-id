@@ -84,8 +84,10 @@ export default function CrowdBuyPage() {
       });
 
       let data = res.data || [];
-      if (campaignTypeFilter === "supplier_promo") {
-        data = data.filter((c) => !c.creator_type || c.creator_type === "supplier");
+      if (campaignTypeFilter === "auto_demand") {
+        data = data.filter((c) => c.campaign_type === "auto_demand_aggregation" || c.is_monthly_recurring || c.is_auto_demand);
+      } else if (campaignTypeFilter === "supplier_promo") {
+        data = data.filter((c) => (!c.creator_type || c.creator_type === "supplier") && c.campaign_type !== "auto_demand_aggregation");
       } else if (campaignTypeFilter === "buyer_catalog") {
         data = data.filter((c) => c.campaign_type === "buyer_catalog");
       } else if (campaignTypeFilter === "collective_rfq") {
@@ -376,6 +378,7 @@ export default function CrowdBuyPage() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             {[
               { id: "all", label: "Semua Tipe" },
+              { id: "auto_demand", label: "🤖 Rekomendasi Rutin PO (Auto)" },
               { id: "supplier_promo", label: "Promo Supplier" },
               { id: "buyer_catalog", label: "Group Buy Buyer" },
               { id: "collective_rfq", label: "Collective RFQ (Lelang)" },
@@ -392,6 +395,28 @@ export default function CrowdBuyPage() {
                 {t.label}
               </button>
             ))}
+          </div>
+
+          {/* Automated Demand Aggregation Callout Banner */}
+          <div className="p-3.5 bg-gradient-to-r from-blue-500/10 via-orange-500/10 to-amber-500/10 dark:from-blue-950/40 dark:via-orange-950/30 dark:to-amber-950/20 rounded-lg border border-blue-200 dark:border-blue-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                    Pengumpulan Permintaan Otomatis (Algoritma Riwayat PO)
+                  </h3>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded">
+                    Pengiriman Serentak Setiap Tgl 27 / Bulan
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
+                  Algoritma HUNTR secara otomatis menganalisis riwayat PO seluruh buyer untuk mengidentifikasi kebutuhan rutin bulanan dengan <strong>harga historis terendah</strong>. Anda cukup klik <strong>Ikut Komitmen</strong> dan tentukan kuantitas bulanan perusahaan. Barang dikirim setiap tanggal 27 setiap bulannya ke lokasi delivery point.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Campaign Grid */}

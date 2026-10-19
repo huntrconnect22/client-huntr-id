@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, ShoppingBag, ShieldCheck, Truck, AlertCircle, CheckCircle2 } from "lucide-react";
+import { X, ShoppingBag, ShieldCheck, Truck, AlertCircle, CheckCircle2, Calendar, Sparkles } from "lucide-react";
 import type { CrowdBuyCampaign, CrowdBuyShippingAddress } from "../types";
 import { crowdBuyApi } from "../../../lib/api/crowd-buy";
 import { SessionManager } from "../../../lib/session";
@@ -24,12 +24,20 @@ export const OrderModal: React.FC<OrderModalProps> = ({
     !!campaign.initiator_company_id &&
     String(currentCompany.id) === String(campaign.initiator_company_id);
 
+  const isAutoDemand =
+    campaign.campaign_type === "auto_demand_aggregation" ||
+    !!campaign.is_monthly_recurring ||
+    !!campaign.is_auto_demand;
+
   const [quantity, setQuantity] = useState<number>(campaign.min_order_qty || 1);
+  const [deliveryPoint, setDeliveryPoint] = useState<string>(
+    currentCompany?.address ? `Gudang Utama - ${currentCompany.address}` : ""
+  );
   const [address, setAddress] = useState<CrowdBuyShippingAddress>({
     recipient_name: "",
-    phone: "",
-    address: "",
-    city: "",
+    phone: currentCompany?.phone || "",
+    address: currentCompany?.address || "",
+    city: currentCompany?.city || "",
     province: "",
     postal_code: "",
   });
@@ -105,14 +113,25 @@ export const OrderModal: React.FC<OrderModalProps> = ({
     try {
       const res = await crowdBuyApi.createOrder(campaign.id, {
         quantity,
+        is_monthly_commitment: isAutoDemand,
+        monthly_commitment_qty: isAutoDemand ? quantity : undefined,
+        delivery_point: deliveryPoint || address.address,
         shipping_address: address,
         notes: notes || undefined,
       });
 
+      const successTitle = isAutoDemand
+        ? "Komitmen Rutin Berhasil Dibuat!"
+        : "Order Berhasil Dibuat!";
+
+      const successText = isAutoDemand
+        ? `Nomor komitmen order: ${res.order.order_number}. Komitmen kuantitas bulanan Anda sebesar ${quantity} ${campaign.unit} telah tercatat. Barang akan dikirim setiap tanggal ${campaign.monthly_delivery_day || 27} setiap bulannya ke lokasi sesuai delivery point.`
+        : `Nomor order Anda: ${res.order.order_number}. Anda dapat menyelesaikan pembayaran melalui menu Pesanan Saya.`;
+
       Swal.fire({
         icon: "success",
-        title: "Order Berhasil Dibuat!",
-        text: `Nomor order Anda: ${res.order.order_number}. Anda dapat menyelesaikan pembayaran melalui menu Pesanan Saya.`,
+        title: successTitle,
+        text: successText,
         confirmButtonText: "Lihat Pesanan",
         confirmButtonColor: "#f97316",
       }).then(() => {
@@ -137,10 +156,10 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white text-sm">
-                Gabung Crowd Buy
+                {isAutoDemand ? "Gabung Komitmen Pengadaan Rutin" : "Gabung Crowd Buy"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {campaign.code} • {campaign.category}
+                {isAutoDemand ? "Pengumpulan Permintaan Otomatis" : campaign.code} • {campaign.category}
               </p>
             </div>
           </div>
@@ -161,6 +180,26 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             </div>
           )}
 
+          {/* Delivery Schedule Banner (Tangal 27 Setiap Bulannya) */}
+          <div className="p-3.5 bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 dark:from-orange-950/40 dark:via-amber-950/30 dark:to-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800/80 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-md bg-orange-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                  Jadwal Pengiriman Rutin Bulanan
+                </h4>
+                <span className="px-1.5 py-0.2 text-[10px] font-bold bg-orange-500 text-white rounded">
+                  Setiap Tgl {campaign.monthly_delivery_day || 27}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                Barang akan dikirim setiap <strong>tanggal {campaign.monthly_delivery_day || 27} setiap bulannya</strong> ke lokasi sesuai delivery point perusahaan Anda.
+              </p>
+            </div>
+          </div>
+
           {/* Product Summary */}
           <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-md border border-slate-100 dark:border-slate-800 flex gap-3 items-center">
             <div className="w-12 h-12 rounded-md bg-slate-200 dark:bg-slate-700 shrink-0 overflow-hidden">
@@ -177,22 +216,41 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                 {campaign.title}
               </h4>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                MOQ: {campaign.min_order_qty} {campaign.unit} • Supplier: {campaign.supplier?.name}
+                MOQ: {campaign.min_order_qty} {campaign.unit} • Supplier: {campaign.supplier?.name || "Mitra Resmi HUNTR"}
               </p>
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className="text-xs font-bold text-orange-600 dark:text-orange-400">
                   Rp {currentUnitPrice.toLocaleString("id-ID")}
                 </span>
                 <span className="text-[11px] text-slate-500">/ {campaign.unit}</span>
+                {isAutoDemand && (
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.2 rounded ml-1">
+                    Harga Terendah Historis
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Quantity Selector */}
+          {/* Quantity Selector / Commitment Input */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Kuantitas Pemesanan ({campaign.unit})
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {isAutoDemand
+                  ? `Komitmen Kuantitas Pesanan Per Bulan (${campaign.unit}) *`
+                  : `Kuantitas Pemesanan (${campaign.unit}) *`}
+              </label>
+              {isAutoDemand && (
+                <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50 px-2 py-0.5 rounded">
+                  Komitmen Bulanan
+                </span>
+              )}
+            </div>
+            {isAutoDemand && (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
+                Isi estimasi komitmen kuantitas yang dibutuhkan rutin per bulan. Permintaan Anda digabungkan otomatis dengan buyer lain untuk mendapatkan harga pabrik terendah.
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -217,28 +275,47 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                 +
               </button>
               <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
-                Min. {campaign.min_order_qty} {campaign.unit}
+                Min. {campaign.min_order_qty} {campaign.unit} {isAutoDemand ? "/ bulan" : ""}
               </span>
             </div>
           </div>
 
-          {/* Shipping Address */}
+          {/* Shipping Address & Delivery Point */}
           <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
             <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
               <Truck className="w-3.5 h-3.5 text-orange-500" />
-              Alamat Pengiriman
+              Delivery Point & Alamat Pengiriman
             </h4>
+
+            {/* Delivery Point Input */}
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                Delivery Point / Titik Penerimaan Gudang *
+              </label>
+              <input
+                type="text"
+                required
+                value={deliveryPoint}
+                onChange={(e) => setDeliveryPoint(e.target.value)}
+                placeholder="misal: Gudang Utama Cikarang - Loading Dock 2"
+                className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+              />
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Barang akan dikirim setiap tanggal {campaign.monthly_delivery_day || 27} ke lokasi delivery point ini.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  Nama Penerima *
+                  Nama PIC Penerima *
                 </label>
                 <input
                   type="text"
                   required
                   value={address.recipient_name}
                   onChange={(e) => setAddress({ ...address, recipient_name: e.target.value })}
-                  placeholder="Nama PIC / Penerima"
+                  placeholder="Nama PIC / Bagian Logistik"
                   className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
                 />
               </div>
@@ -259,14 +336,14 @@ export const OrderModal: React.FC<OrderModalProps> = ({
 
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Alamat Lengkap Gudang / Toko *
+                Alamat Lengkap *
               </label>
               <textarea
                 required
                 rows={2}
                 value={address.address}
                 onChange={(e) => setAddress({ ...address, address: e.target.value })}
-                placeholder="Jl. Nama Jalan, No. Bangunan, RT/RW, Kelurahan, Kecamatan"
+                placeholder="Jl. Nama Jalan, No. Bangunan, Kawasan Industri / RT/RW, Kelurahan, Kecamatan"
                 className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
               />
             </div>
@@ -281,19 +358,19 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                   required
                   value={address.city}
                   onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  placeholder="misal: Jakarta Barat"
+                  placeholder="misal: Cikarang Barat / Kab. Bekasi"
                   className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
                 />
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  Catatan untuk Supplier (Opsional)
+                  Catatan Pengiriman (Opsional)
                 </label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="misal: packing pallet kayu"
+                  placeholder="misal: Drop off jam 09.00 - 15.00 WIB"
                   className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
                 />
               </div>
@@ -303,15 +380,21 @@ export const OrderModal: React.FC<OrderModalProps> = ({
           {/* Pricing Calculation Summary */}
           <div className="p-3.5 bg-orange-50/50 dark:bg-orange-950/30 rounded-md border border-orange-200 dark:border-orange-900/50 space-y-1.5">
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
-              <span>Subtotal ({quantity} {campaign.unit} × Rp {currentUnitPrice.toLocaleString("id-ID")})</span>
+              <span>
+                {isAutoDemand ? "Subtotal Komitmen Bulanan" : "Subtotal"} ({quantity} {campaign.unit} × Rp {currentUnitPrice.toLocaleString("id-ID")})
+              </span>
               <span className="font-medium text-slate-900 dark:text-white">Rp {subtotal.toLocaleString("id-ID")}</span>
             </div>
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
-              <span>Estimasi Biaya Kirim</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Berdasarkan kesepakatan</span>
+              <span>Jadwal Pengiriman Rutin</span>
+              <span className="text-orange-600 dark:text-orange-400 font-semibold">
+                Setiap Tgl {campaign.monthly_delivery_day || 27} / Bulan
+              </span>
             </div>
             <div className="pt-1.5 border-t border-orange-200/60 dark:border-orange-900/80 flex justify-between items-baseline">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">Total Pembayaran</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                {isAutoDemand ? "Total Estimasi Per Bulan" : "Total Pembayaran"}
+              </span>
               <span className="text-base font-bold text-orange-600 dark:text-orange-400">
                 Rp {total.toLocaleString("id-ID")}
               </span>
@@ -330,9 +413,13 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="flex-2 py-2 px-3 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-50 rounded-md transition-colors flex items-center justify-center gap-1.5"
+              className="flex-2 py-2 px-3 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-50 rounded-md transition-colors flex items-center justify-center gap-1.5 shadow-xs"
             >
-              {loading ? "Memproses..." : "Konfirmasi & Buat Order"}
+              {loading
+                ? "Memproses..."
+                : isAutoDemand
+                ? "Konfirmasi Komitmen Bulanan"
+                : "Konfirmasi & Buat Order"}
             </button>
           </div>
         </form>
