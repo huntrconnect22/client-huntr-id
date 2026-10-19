@@ -32,7 +32,7 @@ export const useCompanyViewModel = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [teamLoading, setTeamLoading] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ whatsapp: "", email: "", role: "" });
+  const [inviteForm, setInviteForm] = useState({ email: "", role: "" });
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 
@@ -170,11 +170,11 @@ export const useCompanyViewModel = () => {
     try {
       const res = await inviteUser({
         company_id: company.id,
-        ...inviteForm,
+        email: inviteForm.email,
+        role: inviteForm.role,
       });
-      setInviteSuccess("Invitation link generated! Opening WhatsApp...");
-      setInviteForm({ whatsapp: "", email: "", role: "" });
-      if (res.whatsapp_link) window.open(res.whatsapp_link, "_blank");
+      setInviteSuccess(res.message || `Undangan berhasil dikirim ke email ${inviteForm.email}!`);
+      setInviteForm({ email: "", role: "" });
       fetchTeamMembers(company.id);
     } catch (err: any) {
       setInviteError(err.message || "Failed to send invitation.");

@@ -28,7 +28,7 @@ export const getMyCompanies = () =>
 export const getHistoricalPos = (companyId: string | number) =>
   apiGet(`/api/orders/historical?company_id=${companyId}`);
 
-export const inviteUser = (payload: { company_id: string | number, whatsapp: string, email?: string, role: string }) =>
+export const inviteUser = (payload: { company_id: string | number; email: string; whatsapp?: string; role: string }) =>
   apiPost("/api/companies/invite", payload);
 
 export const acceptInvitation = (token: string) =>

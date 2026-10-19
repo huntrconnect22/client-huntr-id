@@ -26,8 +26,8 @@ export default function InviteAccept() {
       if (!userSession) {
         try {
           const info = await getInvitationInfo(token);
-          // Redirect to register, passing the token and pre-filled whatsapp
-          navigate(`/register?returnTo=/invite/accept?token=${token}&whatsapp=${encodeURIComponent(info.whatsapp)}`);
+          // Redirect to register, passing the token and pre-filled email & whatsapp
+          navigate(`/register?returnTo=/invite/accept?token=${token}&email=${encodeURIComponent(info.email || "")}&whatsapp=${encodeURIComponent(info.whatsapp || "")}`);
         } catch (err: any) {
           setStatus("error");
           setError(err.message || "Invitation is invalid or has expired.");

@@ -24,7 +24,7 @@ interface TeamManagementProps {
   teamMembers: TeamMember[];
   teamLoading: boolean;
   isInviting: boolean;
-  inviteForm: { whatsapp: string; email: string; role: string };
+  inviteForm: { email: string; role: string; whatsapp?: string };
   setInviteForm: (form: any) => void;
   handleInviteUser: (e: React.FormEvent) => void;
   inviteError: string | null;
@@ -197,39 +197,18 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               Invite Team Member
             </h3>
             <p className="text-xs text-[var(--ui-text-muted)] mt-1">
-              Add colleagues to your workspace via WhatsApp invitation.
+              Add colleagues to your workspace via Email invitation.
             </p>
           </div>
         </div>
 
         <form
           onSubmit={handleInviteUser}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
         >
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
-              WhatsApp Number
-            </span>
-            <div className="relative">
-              <MessageCircle
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
-              />
-              <input
-                required
-                placeholder="e.g. 628123456789"
-                value={inviteForm.whatsapp}
-                onChange={(e) =>
-                  setInviteForm({ ...inviteForm, whatsapp: e.target.value })
-                }
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
-              Email (Optional)
+              Email Address <span className="text-red-500">*</span>
             </span>
             <div className="relative">
               <Mail
@@ -238,6 +217,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               />
               <input
                 type="email"
+                required
                 placeholder="colleague@company.com"
                 value={inviteForm.email}
                 onChange={(e) =>
@@ -250,7 +230,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
-              Workspace Role
+              Workspace Role <span className="text-red-500">*</span>
             </span>
             <select
               required
@@ -298,7 +278,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               <Loader2 size={16} className="animate-spin" />
             ) : (
               <>
-                <MessageCircle size={16} /> Send Invite
+                <Mail size={16} /> Send Email Invite
               </>
             )}
           </button>
