@@ -12,6 +12,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { initiatePayment, getPaymentStatus } from "../lib/api";
+import { getInvoicePaymentBreakdown } from "../features/orders/lib/paymentBreakdown";
 
 interface PaymentModalProps {
   invoice: any;
@@ -26,6 +27,8 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const { baseAmount, adminBank, pph23, ppn, total: paymentTotal } =
+    getInvoicePaymentBreakdown(invoice);
 
   const isSuccess =
     paymentData &&
@@ -229,7 +232,6 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
         <div style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "14px" }}>
           {!paymentData ? (
             <>
-              {/* Fee Breakdown */}
               <div
                 style={{
                   border: "1px solid var(--ui-border)",
@@ -237,111 +239,42 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                   overflow: "hidden",
                 }}
               >
-                {/* Header row */}
                 <div
                   style={{
                     padding: "9px 14px",
                     borderBottom: "1px solid var(--ui-border)",
                     backgroundColor: "var(--ui-bg-input)",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: "var(--ui-text-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      color: "var(--ui-text-muted)",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                    }}
-                  >
-                    Rincian Biaya
-                  </span>
+                  Rincian Pembayaran
                 </div>
-
-                {/* Rows */}
                 <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: "9px" }}>
-                  <FeeRow
-                    label="Total Pembelian Barang"
-                    value={`IDR ${Number(invoice.base_amount || invoice.amount).toLocaleString("id-ID")}`}
-                  />
-
-                  {(Number(invoice.platform_fee) > 0 || Number(invoice.ppn_platform) > 0) && (
-                    <FeeRow
-                      label="Platform Fee + PPN"
-                      value={`+ IDR ${(Number(invoice.platform_fee) + Number(invoice.ppn_platform)).toLocaleString("id-ID")}`}
-                      valueColor="#f97316"
-                      dot="#f97316"
-                    />
-                  )}
-
-                  {Number(invoice.midtrans_fee) > 0 && (
-                    <FeeRow
-                      label="Admin Bank"
-                      value={`+ IDR ${Number(invoice.midtrans_fee).toLocaleString("id-ID")}`}
-                      valueColor="#3b82f6"
-                      dot="#3b82f6"
-                    />
-                  )}
-
-                  {Number(invoice.pph23) > 0 && (
-                    <FeeRow
-                      label="PPH 23 (2%)"
-                      value={`- IDR ${Number(invoice.pph23).toLocaleString("id-ID")}`}
-                      valueColor="#ef4444"
-                      dot="#ef4444"
-                    />
-                  )}
-
-                  {Number(invoice.ppn_fee) > 0 && (
-                    <FeeRow
-                      label="PPN 11%"
-                      value={`+ IDR ${Number(invoice.ppn_fee).toLocaleString("id-ID")}`}
-                      valueColor="#8b5cf6"
-                      dot="#8b5cf6"
-                    />
-                  )}
-
-                  {/* Divider */}
+                  {[
+                    { label: "Total Pembelian Barang", value: baseAmount },
+                    { label: "Admin Bank", value: adminBank },
+                    { label: "PPh 23", value: -pph23 },
+                    { label: "PPN", value: ppn },
+                  ].map((row) => (
+                    <div key={row.label} style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                      <span style={{ fontSize: "12px", color: "var(--ui-text-secondary)" }}>{row.label}</span>
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--ui-text-primary)" }}>
+                        {row.value < 0 ? "− " : ""}IDR {Math.round(Math.abs(row.value)).toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                  ))}
                   <div style={{ borderTop: "1px dashed var(--ui-border)", margin: "2px 0" }} />
-
-                  {/* Total */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        color: "var(--ui-text-secondary)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                      }}
-                    >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--ui-text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       Total Pembayaran
                     </span>
-                    <div style={{ textAlign: "right" }}>
-                      <div
-                        style={{
-                          fontSize: "17px",
-                          fontWeight: 800,
-                          color: "var(--ui-text-primary)",
-                          letterSpacing: "-0.02em",
-                          lineHeight: 1.1,
-                        }}
-                      >
-                        IDR {Number(invoice.total_amount || invoice.amount).toLocaleString("id-ID")}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "9px",
-                          color: "var(--ui-text-muted)",
-                          marginTop: "2px",
-                          fontWeight: 500,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        Sudah termasuk semua biaya
-                      </div>
-                    </div>
+                    <strong style={{ fontSize: "17px", color: "var(--ui-text-primary)" }}>
+                      IDR {Math.round(paymentTotal).toLocaleString("id-ID")}
+                    </strong>
                   </div>
                 </div>
               </div>
@@ -758,50 +691,6 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
-  );
-}
-
-/* ── Helper: Fee Row ── */
-function FeeRow({
-  label,
-  value,
-  valueColor,
-  dot,
-}: {
-  label: string;
-  value: string;
-  valueColor?: string;
-  dot?: string;
-}) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        {dot && (
-          <span
-            style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              backgroundColor: dot,
-              flexShrink: 0,
-            }}
-          />
-        )}
-        <span style={{ fontSize: "12px", color: "var(--ui-text-secondary)", fontWeight: 400 }}>
-          {label}
-        </span>
-      </div>
-      <span
-        style={{
-          fontSize: "12px",
-          fontWeight: 600,
-          color: valueColor || "var(--ui-text-primary)",
-          flexShrink: 0,
-        }}
-      >
-        {value}
-      </span>
     </div>
   );
 }

@@ -35,6 +35,7 @@ import {
 import PaymentModal from "../components/PaymentModal";
 import { ImportModal } from "../features/orders/components/ImportModal";
 import { PoExpandedDetails } from "../features/orders/components/PoExpandedDetails";
+import { getInvoicePaymentBreakdown } from "../features/orders/lib/paymentBreakdown";
 import { isDemoMode } from "../lib/demo-mode";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -79,34 +80,6 @@ const getStatusBadge = (status: string) => {
         Icon: Clock,
       };
   }
-};
-
-// ─── Fee Calculator ───────────────────────────────────────────────────────────
-const getPlatFeeRate = (base: number) => {
-  if (base <= 100_000_000) return 0.05;
-  if (base <= 250_000_000) return 0.03;
-  return 0.02;
-};
-
-const calcFees = (base: number) => {
-  const platFeeRate = getPlatFeeRate(base);
-  const platFee = base * platFeeRate;
-  const ppnPlatform = platFee * 0.11;
-  const adminBank = 4400;
-  const pph23 = platFee * 0.02;
-  const biayaLayanan = platFee + ppnPlatform + adminBank - pph23;
-  const ppn = base * 0.11;
-  const grandTotal = base + biayaLayanan + ppn;
-  return {
-    platFeeRate,
-    platFee,
-    ppnPlatform,
-    adminBank,
-    pph23,
-    biayaLayanan,
-    ppn,
-    grandTotal,
-  };
 };
 
 const fmt = (n: number) => n.toLocaleString("id-ID");
@@ -739,6 +712,10 @@ export default function Orders() {
               } = getStatusBadge(po.status);
               const isExpanded = expandedPo === po.id;
               const base = Number(po.total_amount);
+              const invoice =
+                po.invoices?.find((item: any) => item.type === "final") ||
+                po.invoices?.find((item: any) => item.type === "proforma");
+              const invoiceBreakdown = getInvoicePaymentBreakdown(invoice, base);
 
               return (
                 <div
@@ -979,80 +956,38 @@ export default function Orders() {
                     </div>
                   </div>
 
-                  {/* Fee Breakdown — inset */}
-                  {!po.is_historical &&
-                    base > 0 &&
-                    (() => {
-                      const invoice = po.invoices?.find(
-                        (item: any) => item.type === "proforma",
-                      );
-                      const calculated = calcFees(base);
-                      const platformFee = Number(
-                        invoice?.platform_fee ?? calculated.platFee,
-                      );
-                      const ppnPlatform = Number(
-                        invoice?.ppn_platform ?? calculated.ppnPlatform,
-                      );
-                      const adminBank = Number(
-                        invoice?.midtrans_fee ?? calculated.adminBank,
-                      );
-                      const pph23 = Number(invoice?.pph23 ?? calculated.pph23);
-                      const ppn = Number(invoice?.ppn_fee ?? calculated.ppn);
-                      const biayaLayanan =
-                        platformFee + ppnPlatform + adminBank - pph23;
-                      const grandTotal = Number(
-                        invoice?.total_amount ?? base + biayaLayanan + ppn,
-                      );
-                      const platformLabel =
-                        invoice?.billing_mode === "subscription_quota"
-                          ? "Platform Fee (Ditanggung Subscription GMV)"
-                          : `Platform Fee + PPN (${(calculated.platFeeRate * 100).toFixed(0)}% + 11%)`;
-                      const feeRows = [
-                        { label: "Subtotal Barang", value: base },
-                        {
-                          label: platformLabel,
-                          value: platformFee + ppnPlatform,
-                        },
-                        { label: "Admin Bank", value: adminBank },
-                        { label: "PPH 23 (2%)", value: pph23 },
-                        { label: "Biaya Layanan", value: biayaLayanan },
-                        { label: "PPN (11%)", value: ppn },
-                      ];
-                      return (
-                        <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 px-4 py-2.5">
-                          <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
-                            <div className="flex items-center pr-3 border-r border-[var(--ui-border)] flex-shrink-0">
-                              <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)]">
-                                Rincian Biaya
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-5 sm:gap-6 flex-shrink-0">
-                              {feeRows.map((row) => (
-                                <div
-                                  key={row.label}
-                                  className="flex flex-col flex-shrink-0"
-                                >
-                                  <span className="text-[10px] text-[var(--ui-text-muted)] whitespace-nowrap">
-                                    {row.label}
-                                  </span>
-                                  <span className="text-xs font-semibold text-[var(--ui-text-secondary)] tabular-nums whitespace-nowrap">
-                                    {fmt(Math.round(row.value))}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="flex flex-col flex-shrink-0 pl-4 border-l border-[var(--ui-border)] ml-auto text-right">
-                              <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--ui-text-primary)] whitespace-nowrap">
-                                Total
-                              </span>
-                              <span className="text-xs sm:text-sm font-bold text-orange-500 tabular-nums whitespace-nowrap">
-                                IDR {fmt(Math.round(grandTotal))}
-                              </span>
-                            </div>
+                  {!po.is_historical && base > 0 && (
+                    <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 px-4 py-2.5">
+                      <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)] whitespace-nowrap">
+                          Rincian pembayaran
+                        </span>
+                        {[
+                          { label: "Subtotal Barang", value: invoiceBreakdown.baseAmount },
+                          { label: "Admin Bank", value: invoiceBreakdown.adminBank },
+                          { label: "PPh 23", value: -invoiceBreakdown.pph23 },
+                          { label: "PPN", value: invoiceBreakdown.ppn },
+                        ].map((row) => (
+                          <div key={row.label} className="flex flex-col flex-shrink-0">
+                            <span className="text-[10px] text-[var(--ui-text-muted)] whitespace-nowrap">
+                              {row.label}
+                            </span>
+                            <span className="text-xs font-semibold text-[var(--ui-text-secondary)] tabular-nums whitespace-nowrap">
+                              {row.value < 0 ? "− " : ""}IDR {fmt(Math.round(Math.abs(row.value)))}
+                            </span>
                           </div>
+                        ))}
+                        <div className="ml-auto flex flex-col flex-shrink-0 pl-4 border-l border-[var(--ui-border)] text-right">
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--ui-text-primary)] whitespace-nowrap">
+                            Total
+                          </span>
+                          <span className="text-xs sm:text-sm font-bold text-orange-500 tabular-nums whitespace-nowrap">
+                            IDR {fmt(Math.round(invoiceBreakdown.total))}
+                          </span>
                         </div>
-                      );
-                    })()}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Expanded Details */}
                   {isExpanded && (

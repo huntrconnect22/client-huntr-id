@@ -17,34 +17,7 @@ import {
   FileCheck,
 } from "lucide-react";
 import { getFullApiUrl } from "../../../lib/api";
-
-// ─── Fee Calculator (mirrors CalculateInvoiceFeesAction.php) ──────────────────
-const getPlatFeeRate = (base: number) => {
-  if (base <= 100_000_000) return 0.05;
-  if (base <= 250_000_000) return 0.03;
-  return 0.02;
-};
-
-const calcFees = (base: number) => {
-  const platFeeRate = getPlatFeeRate(base);
-  const platFee = base * platFeeRate;
-  const ppnPlatform = platFee * 0.11;
-  const adminBank = 4400;
-  const pph23 = platFee * 0.02;
-  const biayaLayanan = platFee + ppnPlatform + adminBank - pph23;
-  const ppn = base * 0.11;
-  const grandTotal = base + biayaLayanan + ppn;
-  return {
-    platFeeRate,
-    platFee,
-    ppnPlatform,
-    adminBank,
-    pph23,
-    biayaLayanan,
-    ppn,
-    grandTotal,
-  };
-};
+import { getInvoicePaymentBreakdown } from "../lib/paymentBreakdown";
 
 const fmt = (n: number) => n.toLocaleString("id-ID");
 
@@ -136,7 +109,9 @@ export const PoExpandedDetails = ({
   const displayedInvoice =
     po.invoices?.find((i: any) => i.type === "final") ||
     po.invoices?.find((i: any) => i.type === "proforma");
-  const base = Number(po.total_amount || 0);
+  const displayedInvoiceTotal = displayedInvoice
+    ? getInvoicePaymentBreakdown(displayedInvoice).total
+    : 0;
   const isManager = user?.role === "manager" || company?.owner_id === user?.id;
   const isVendor = company?.type === "vendor";
   const isBuyer = company?.type === "buyer";
@@ -325,11 +300,7 @@ export const PoExpandedDetails = ({
                 </span>
                 <span className="font-bold text-orange-500 text-sm">
                   IDR{" "}
-                  {fmt(
-                    Number(
-                      displayedInvoice.total_amount || displayedInvoice.amount,
-                    ),
-                  )}
+                  {fmt(displayedInvoiceTotal)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
