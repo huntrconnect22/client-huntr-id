@@ -23,7 +23,7 @@ export const adminGetCompanies = (params?: { page?: number; per_page?: number; s
   return apiGet(`/api/admin/companies${queryString ? `?${queryString}` : ""}`);
 };
 
-export const adminAuditCompany = (id: string | number, payload: { action: "approve" | "decline"; notes?: string }) =>
+export const adminAuditCompany = (id: string | number, payload: { action: "approve" | "decline" | "request_docs"; notes?: string }) =>
   apiPost(`/api/admin/companies/${id}/audit`, payload);
 
 export const adminGetCompanySubscription = (companyId: string) =>

@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiPostForm } from "../client";
+import { apiGet, apiPost, apiPut, apiPostForm, apiDelete } from "../client";
 
 /**
  * Company API
@@ -17,6 +17,9 @@ export const verifyNpwp = (npwp: string) =>
 
 export const uploadCompanyDocument = (fd: FormData) =>
   apiPostForm("/api/companies/documents/upload", fd);
+
+export const deleteCompanyDocument = (companyId: string | number, documentId: string | number) =>
+  apiDelete(`/api/companies/${companyId}/documents/${documentId}`);
 
 export const uploadCompanyLogo = (formData: FormData) =>
   apiPostForm("/api/companies/logo/upload", formData);

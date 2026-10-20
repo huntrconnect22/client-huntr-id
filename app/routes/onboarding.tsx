@@ -1,14 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { 
-  Building2, MapPin, CreditCard, FileText, UploadCloud, 
-  LogIn, ChevronRight, ChevronLeft, Loader2, AlertCircle, ScrollText
+  Building2, MapPin, ScrollText, LogIn, 
+  ChevronRight, ChevronLeft, Loader2, AlertCircle, Sparkles
 } from "lucide-react";
 
 // --- MVVM: ViewModel ---
 import { useOnboardingViewModel } from "../features/onboarding/hooks/useOnboardingViewModel";
 import { useOnboardingPricing } from "../features/onboarding/hooks/useOnboardingPricing";
-import { getEnterpriseCatalog } from "../lib/api/subscription";
 
 // --- UI: Components ---
 import { StepTracker } from "../features/onboarding/components/StepTracker";
@@ -17,99 +16,55 @@ import ThemeToggle from "../components/ThemeToggle";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useLanguage } from "../context/LanguageContext";
 
-// --- Config: Metadata ---
-const TOTAL_SLIDES = 7;
+// --- Config: Express Onboarding (3 Ringkas + 1 Sukses) ---
+const TOTAL_SLIDES = 4;
 const STEP_ICONS = [
-  { id: 1, icon: Building2,   color: "#f97316" },
-  { id: 2, icon: MapPin,      color: "#f59e0b" },
-  { id: 3, icon: CreditCard,  color: "#fbbf24" },
-  { id: 4, icon: FileText,    color: "#f59e0b" },
-  { id: 5, icon: UploadCloud, color: "#10b981" },
-  { id: 6, icon: ScrollText,  color: "#8b5cf6" },
-  { id: 7, icon: LogIn,       color: "#fb923c" },
+  { id: 1, icon: Building2,  color: "#f97316", label: "Profil Perusahaan" },
+  { id: 2, icon: MapPin,     color: "#3b82f6", label: "Lokasi & Kontak" },
+  { id: 3, icon: ScrollText, color: "#8b5cf6", label: "Konfirmasi & Biaya" },
+  { id: 4, icon: LogIn,      color: "#10b981", label: "Workspace Siap" },
 ];
 
 /**
- * Onboarding Route Component
+ * Onboarding Route Component (Express Onboarding)
  * 
- * Tanggung jawab: Entry point untuk fitur onboarding.
- * Mengoordinasikan ViewModel, StepTracker, dan SlideContent.
+ * Tanggung jawab: Entry point untuk fitur onboarding kilat.
+ * 3 Langkah Cepat tanpa birokrasi dokumen di awal (Starter Tier Instant Access).
  */
 export default function Onboarding() {
   const { t } = useLanguage();
   const vm = useOnboardingViewModel();
-  const pricing = useOnboardingPricing(vm.slide === 6 && vm.formData.type === "buyer");
+  const pricing = useOnboardingPricing(vm.slide === 3 && vm.formData.type === "buyer");
   const navigate = useNavigate();
-  const docInputRef = useRef<HTMLInputElement>(null);
-  const [docType, setDocType] = useState("NPWP");
-  const [checkingPricing, setCheckingPricing] = useState(false);
 
-  useEffect(() => { vm.setTermsAccepted(false); }, [vm.slide, vm.formData.type]);
+  useEffect(() => { 
+    vm.setTermsAccepted(false); 
+  }, [vm.slide, vm.formData.type]);
 
-  const stepLabels = t("onboarding.stepMeta").split("|");
-  const stepMeta = STEP_ICONS.map((step, idx) => ({
-    ...step,
-    label: stepLabels[idx] || "",
-  }));
+  const stepMeta = STEP_ICONS;
 
   /**
-   * Check if country is Indonesia
-   */
-  const isIndonesia = (): boolean => {
-    const country = vm.formData.country?.toUpperCase();
-    return country === "ID" || country === "INDONESIA";
-  };
-
-  /**
-   * Local validation before moving to next slide
+   * Local validation before moving to next slide.
    */
   const validateCurrentSlide = (): string | null => {
     if (vm.slide === 1) {
-      if (!vm.formData.company_name.trim()) return t("onboarding.validation.companyName");
-      if (!vm.formData.type) return t("onboarding.validation.businessType");
-      if (!vm.formData.industry_type.trim()) return t("onboarding.validation.industryType");
-      // NPWP verification only required for Indonesia
-      if (isIndonesia() && !vm.npwpVerifiedData) {
-        return t("onboarding.validation.npwp");
+      if (!vm.formData.type) return "Silakan pilih peran bisnis (Buyer atau Vendor).";
+      if (!vm.formData.company_name?.trim()) return "Nama resmi perusahaan wajib diisi.";
+      if (!vm.formData.industry_type?.trim()) return "Silakan pilih jenis bidang industri.";
+    }
+    if (vm.slide === 2) {
+      if (!vm.formData.city?.trim() && !vm.formData.address?.trim()) {
+        return "Masukkan kota atau alamat operasional perusahaan Anda.";
       }
     }
-    if (vm.slide === 4) {
-      // Cek ada dokumen yang diupload
-      if (vm.uploadedDocs.length === 0) {
-        return t("onboarding.validation.uploadDoc");
-      }
-      
-      // Cek apakah semua dokumen memiliki file_path
-      const docsWithoutFilePath = vm.uploadedDocs.filter((d: any) => !d.file_path);
-      if (docsWithoutFilePath.length > 0) {
-        return t("onboarding.validation.failedDocs").replace("{count}", String(docsWithoutFilePath.length));
-      }
-    }
-    if (vm.slide === 5) {
-      if (!vm.selectedFile) {
-        return t("onboarding.validation.selectFile");
-      }
-      if (vm.isParsingFile) {
-        return t("onboarding.validation.waitParsing");
-      }
-      if (!vm.parsedData || vm.parsedData.totalRows === 0) {
-        return t("onboarding.validation.emptyFile");
-      }
-      if (vm.parsedData.validRowsCount === 0) {
-        return t("onboarding.validation.noValidRows");
-      }
-    }
-    if (vm.slide === 6 && vm.formData.type === "buyer" && (!pricing.catalog || pricing.loading || pricing.error)) {
-      return "Harga paket belum dapat dimuat. Coba lagi sebelum melanjutkan.";
-    }
-    if (vm.slide === 6 && !vm.termsAccepted) {
-      return t("onboarding.validation.acceptTerms");
+    if (vm.slide === 3 && !vm.termsAccepted) {
+      return "Anda harus menyetujui syarat & ketentuan layanan untuk mengaktifkan workspace.";
     }
     return null;
   };
 
   /**
-   * Navigate to next slide
+   * Navigate to next slide or trigger final registration
    */
   const nextSlide = async () => {
     const err = validateCurrentSlide();
@@ -119,25 +74,7 @@ export default function Onboarding() {
     }
     
     vm.setError(null);
-    if (vm.slide === 6) {
-      if (vm.formData.type === "buyer") {
-        setCheckingPricing(true);
-        try {
-          const latest = await getEnterpriseCatalog();
-          if (!latest?.version) throw new Error("Harga paket belum dapat diperiksa. Coba lagi.");
-          if (latest.version !== pricing.catalog?.version) {
-            vm.setTermsAccepted(false);
-            pricing.retry();
-            vm.setError("Harga paket telah berubah. Periksa kembali informasi terbaru sebelum menyetujui.");
-            return;
-          }
-        } catch (error: any) {
-          vm.setError(error.message || "Harga paket belum dapat diperiksa. Coba lagi.");
-          return;
-        } finally {
-          setCheckingPricing(false);
-        }
-      }
+    if (vm.slide === 3) {
       try {
         await vm.handleCompanySubmit();
       } catch (err: any) {
@@ -147,7 +84,7 @@ export default function Onboarding() {
     }
     
     if (vm.slide < TOTAL_SLIDES) {
-      vm.setSlide(p => p + 1);
+      vm.setSlide((p: number) => p + 1);
     }
   };
 
@@ -176,11 +113,11 @@ export default function Onboarding() {
       {/* Visual Decor: Background ambient blur matching AuthLayout */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-5%] w-[450px] h-[450px] rounded-full bg-orange-500/10 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-indigo-500/10 blur-[100px]" />
       </div>
 
       {/* Branding Header */}
-      <header className="sticky top-0 mb-6 w-full max-w-4xl flex items-center justify-between z-10 py-2">
+      <header className="sticky top-0 mb-6 w-full max-w-3xl flex items-center justify-between z-10 py-2">
         <div className="flex items-center gap-3">
           <img 
             src="/assets/img/logo/sidebar.png" 
@@ -189,7 +126,7 @@ export default function Onboarding() {
           />
           <div className="hidden sm:block pl-2 border-l border-[var(--ui-border)]">
             <div className="font-extrabold text-sm text-[var(--ui-text-primary)] tracking-tight">Huntr.id</div>
-            <div className="text-[9px] text-orange-400 tracking-widest font-bold uppercase">{t("onboarding.label")}</div>
+            <div className="text-[9px] text-orange-400 tracking-widest font-bold uppercase">Quick Onboarding</div>
           </div>
         </div>
         
@@ -199,17 +136,17 @@ export default function Onboarding() {
         </div>
       </header>
 
-      <main className="w-full max-w-4xl relative z-10 my-auto">
+      <main className="w-full max-w-3xl relative z-10 my-auto">
         {/* Step Tracker UI */}
         <StepTracker steps={stepMeta} currentSlide={vm.slide} />
 
         {/* Main Card Container */}
-        <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-2xl backdrop-blur-xl overflow-hidden shadow-2xl">
+        <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-3xl backdrop-blur-xl overflow-hidden shadow-2xl">
           {/* Top Progress Bar */}
           <div 
-            className="h-1 transition-all duration-500" 
+            className="h-1.5 transition-all duration-500" 
             style={{ 
-              background: `linear-gradient(90deg, ${stepMeta[Math.min(vm.slide - 1, 6)].color}, ${stepMeta[Math.min(vm.slide - 1, 6)].color}80)`,
+              background: `linear-gradient(90deg, ${stepMeta[Math.min(vm.slide - 1, 3)].color}, ${stepMeta[Math.min(vm.slide - 1, 3)].color}80)`,
               width: `${(vm.slide / TOTAL_SLIDES) * 100}%` 
             }} 
           />
@@ -217,8 +154,8 @@ export default function Onboarding() {
           <div className="p-6 md:p-8">
             {/* Global Error Display */}
             {vm.error && (
-              <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3.5 text-red-400 text-sm mb-6 flex items-center gap-2.5 animate-shake">
-                <AlertCircle size={17} className="shrink-0" /> <span>{vm.error}</span>
+              <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-4 text-red-400 text-sm mb-6 flex items-center gap-3 animate-shake">
+                <AlertCircle size={18} className="shrink-0" /> <span>{vm.error}</span>
               </div>
             )}
 
@@ -226,34 +163,44 @@ export default function Onboarding() {
             <SlideContent 
               vm={vm} 
               pricing={pricing}
-              docType={docType} 
-              setDocType={setDocType} 
-              docInputRef={docInputRef}
               handleLoginAsCompany={handleLoginAsCompany}
             />
 
-            {/* Navigation Buttons */}
-            <footer className="mt-8 md:mt-10 pt-6 border-t border-[var(--ui-border)] flex items-center justify-between gap-4">
-              {vm.slide > 1 && vm.slide < 7 && (
-                <button 
-                  onClick={() => vm.setSlide((p: any) => p - 1)} 
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30 font-semibold text-sm transition-all"
-                >
-                  <ChevronLeft size={16} /> {t("onboarding.back")}
-                </button>
-              )}
-              <div className="flex-1" />
-              {vm.slide < 7 && (
+            {/* Navigation Buttons (Only shown for steps 1 - 3) */}
+            {vm.slide < 4 && (
+              <footer className="mt-8 pt-6 border-t border-[var(--ui-border)] flex items-center justify-between gap-4">
+                {vm.slide > 1 ? (
+                  <button 
+                    onClick={() => vm.setSlide((p: number) => p - 1)} 
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30 font-semibold text-sm transition-all"
+                  >
+                    <ChevronLeft size={16} /> Kembali
+                  </button>
+                ) : (
+                  <div />
+                )}
+
                 <button 
                   onClick={nextSlide} 
-                  disabled={vm.isLoading || checkingPricing}
-                  className="flex items-center gap-2 px-7 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-500/20"
+                  disabled={vm.isLoading}
+                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-500/25"
                 >
-                  {vm.isLoading || checkingPricing ? <Loader2 className="animate-spin" size={16} /> : vm.slide === 6 ? t("onboarding.agreeAndContinue") : t("onboarding.next")}
-                  {!vm.isLoading && !checkingPricing && <ChevronRight size={16} />}
+                  {vm.isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} /> Menyiapkan Workspace…
+                    </>
+                  ) : vm.slide === 3 ? (
+                    <>
+                      Buat Workspace & Masuk <ChevronRight size={16} />
+                    </>
+                  ) : (
+                    <>
+                      Lanjutkan <ChevronRight size={16} />
+                    </>
+                  )}
                 </button>
-              )}
-            </footer>
+              </footer>
+            )}
           </div>
         </div>
       </main>

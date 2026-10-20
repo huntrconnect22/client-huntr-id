@@ -22,7 +22,8 @@ export interface Company {
   id: string;
   name: string;
   type: string;
-  status: "pending" | "approved" | "rejected";
+  status: "starter" | "pending" | "approved" | "rejected";
+  verification_tier?: "basic" | "standard" | "verified";
   tax_id?: string;
   formatted_tax_id?: string;
   country?: string;

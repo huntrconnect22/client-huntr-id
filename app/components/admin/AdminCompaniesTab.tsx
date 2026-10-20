@@ -14,16 +14,16 @@ export default function AdminCompaniesTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "starter" | "pending" | "approved" | "rejected">("all");
   const [viewCompany, setViewCompany] = useState<Company | null>(null);
-  const [auditModal, setAuditModal] = useState<{ company: Company; action: "approve" | "decline" } | null>(null);
+  const [auditModal, setAuditModal] = useState<{ company: Company; action: "approve" | "decline" | "request_docs" } | null>(null);
   const [showGlobalSubscriptionModal, setShowGlobalSubscriptionModal] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [perPage] = useState(15);
   const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
+  const [stats, setStats] = useState({ starter: 0, pending: 0, approved: 0, rejected: 0, total: 0 });
 
   const fetchCompanies = async (page = currentPage, s = search, status = filterStatus) => {
     setIsLoading(true);
@@ -47,7 +47,7 @@ export default function AdminCompaniesTab() {
     return () => clearTimeout(timer);
   }, [search, filterStatus]);
 
-  const openAuditFromView = (action: "approve" | "decline") => {
+  const openAuditFromView = (action: "approve" | "decline" | "request_docs") => {
     if (!viewCompany) return;
     setAuditModal({ company: viewCompany, action });
     setViewCompany(null);
@@ -111,8 +111,8 @@ export default function AdminCompaniesTab() {
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 6 }}>
-          {(["all", "pending", "approved", "rejected"] as const).map((s) => (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {(["all", "starter", "pending", "approved", "rejected"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}

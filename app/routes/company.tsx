@@ -4,7 +4,7 @@ import {
   Building2, MapPin, CreditCard, FileText, Users, Plus, X,
   Loader2, AlertCircle, Camera, ShieldCheck, Activity, Award,
   BarChart3, Download, CheckCircle2, Globe, Mail, Phone, Tag,
-  Hash, Calendar, TrendingUp, Star
+  Hash, Calendar, TrendingUp, Star, Trash2, Sparkles, Clock, Upload
 } from "lucide-react";
 import { useCompanyViewModel } from "../features/company/hooks/useCompanyViewModel";
 import { TeamManagement } from "../features/company/components/TeamManagement";
@@ -13,11 +13,14 @@ import { getAssetUrl } from "../lib/assets";
 export default function CompanyDetails() {
   const vm = useCompanyViewModel();
   const [profileBannerDismissed, setProfileBannerDismissed] = React.useState(false);
+  const [docType, setDocType] = React.useState("NPWP");
+  const docFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const statusCfg: any = {
+    starter:  { cls: "text-indigo-400  bg-indigo-400/10  border-indigo-400/20",  dot: "bg-indigo-400"  },
     approved: { cls: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", dot: "bg-emerald-500" },
-    pending:  { cls: "text-amber-500  bg-amber-500/10  border-amber-500/20",  dot: "bg-amber-500"  },
-    rejected: { cls: "text-red-500    bg-red-500/10    border-red-500/20",    dot: "bg-red-500"    },
+    pending:  { cls: "text-amber-500   bg-amber-500/10   border-amber-500/20",   dot: "bg-amber-500"   },
+    rejected: { cls: "text-red-500     bg-red-500/10     border-red-500/20",     dot: "bg-red-500"     },
   };
 
   const tabs = [
@@ -606,32 +609,199 @@ export default function CompanyDetails() {
 
             {/* ── Documents ── */}
             {vm.activeTab === "documents" && (
-              <div className="space-y-3 sm:space-y-4">
-                <SectionLabel>Corporate Documents</SectionLabel>
-                <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
-                  {!vm.company.documents || vm.company.documents?.length === 0 ? (
-                    <div className="py-8 sm:py-10 text-center">
-                      <FileText size={24} className="mx-auto text-[var(--ui-text-muted)] opacity-25 mb-2" />
-                      <p className="text-xs sm:text-sm text-[var(--ui-text-muted)]">No documents uploaded yet.</p>
+              <div className="space-y-4 sm:space-y-5">
+                {/* Status Guidance Card */}
+                {vm.company.status === "starter" && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/5 border border-indigo-500/25 flex items-start gap-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Sparkles size={18} />
                     </div>
-                  ) : (
-                    vm.company.documents?.map((doc: any) => (
-                      <div key={doc.id} className="p-3.5 sm:p-4 sm:px-5 flex items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 flex-shrink-0">
-                            <FileText size={15} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-indigo-300">
+                        Lengkapi Dokumen Verifikasi (Upgrade dari Akun Starter)
+                      </div>
+                      <p className="text-xs text-[var(--ui-text-muted)] mt-1 leading-relaxed">
+                        Perusahaan Anda saat ini berstatus <strong>Starter</strong>. Unggah dokumen legalitas (seperti NPWP, NIB, atau SIUP) di bawah ini. Begitu dokumen diunggah, akun akan otomatis diajukan ke tim admin untuk diverifikasi menjadi <strong>Full Access</strong> (dapat membuat tender RFQ dan bertransaksi).
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {vm.company.status === "pending" && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Clock size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-amber-300">
+                        Dokumen Sedang Dalam Peninjauan Admin
+                      </div>
+                      <p className="text-xs text-[var(--ui-text-muted)] mt-1 leading-relaxed">
+                        Dokumen legalitas Anda sudah diterima dan sedang dalam antrean review oleh tim admin Huntr. Anda tetap dapat menambahkan berkas pendukung lainnya jika diperlukan.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {vm.company.status === "approved" && (
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-3">
+                    <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                    <div className="text-xs text-emerald-300">
+                      <strong>Perusahaan Terverifikasi (Full Access):</strong> Seluruh dokumen legalitas telah diapprove. Anda dapat menambahkan berkas legalitas pembaruan kapan saja di bawah ini.
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Success Alert */}
+                {vm.docSuccess && (
+                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2 text-xs font-semibold text-emerald-400 animate-fade-in">
+                    <CheckCircle2 size={16} /> <span>{vm.docSuccess}</span>
+                  </div>
+                )}
+
+                {/* Upload Error Alert */}
+                {vm.docError && (
+                  <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 flex items-center gap-2 text-xs font-semibold text-red-400 animate-shake">
+                    <AlertCircle size={16} /> <span>{vm.docError}</span>
+                  </div>
+                )}
+
+                {/* Upload Form Box */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm">
+                  <div className="flex items-center justify-between mb-3.5">
+                    <div>
+                      <h4 className="text-sm font-bold text-[var(--ui-text-primary)]">Tambah Dokumen Legalitas Baru</h4>
+                      <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">Format file: PDF, JPG, PNG, DOCX (Maksimal 10MB)</p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                      Upload Berkas
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-1">
+                      <label className="text-[10px] font-bold text-[var(--ui-text-muted)] uppercase tracking-wider block mb-1.5">
+                        Jenis Dokumen *
+                      </label>
+                      <select
+                        value={docType}
+                        onChange={(e) => setDocType(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-xs transition-all focus:border-orange-500/50 appearance-none"
+                      >
+                        <option value="NPWP">NPWP (Nomor Pokok Wajib Pajak)</option>
+                        <option value="NIB">NIB (Nomor Induk Berusaha)</option>
+                        <option value="SIUP">SIUP (Surat Izin Usaha Perdagangan)</option>
+                        <option value="Akta Perusahaan">Akta Pendirian Perusahaan</option>
+                        <option value="KTP Direktur">KTP Direktur / Penanggung Jawab</option>
+                        <option value="SK Kemenkumham">SK Kemenkumham</option>
+                        <option value="Rekening Koran">Rekening Koran / Bukti Bank</option>
+                        <option value="SPPKP">SPPKP (Pengusaha Kena Pajak)</option>
+                        <option value="Other">Dokumen Lainnya</option>
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-2 flex items-end gap-2">
+                      <input
+                        ref={docFileInputRef}
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            vm.handleUploadDocument(file, docType);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => docFileInputRef.current?.click()}
+                        disabled={vm.docUploading}
+                        className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs transition-all shadow-md shadow-orange-500/20 flex items-center justify-center gap-2"
+                      >
+                        {vm.docUploading ? (
+                          <>
+                            <Loader2 size={15} className="animate-spin" /> Mengunggah Dokumen…
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={15} /> Pilih File & Unggah Sekarang
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* List of Uploaded Documents */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <SectionLabel>Daftar Dokumen Perusahaan ({vm.company.documents?.length || 0})</SectionLabel>
+                  </div>
+                  
+                  <div className="border border-[var(--ui-border)] rounded-2xl overflow-hidden bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
+                    {!vm.company.documents || vm.company.documents?.length === 0 ? (
+                      <div className="py-10 text-center">
+                        <FileText size={28} className="mx-auto text-[var(--ui-text-muted)] opacity-30 mb-2" />
+                        <p className="text-sm font-semibold text-[var(--ui-text-primary)]">Belum ada dokumen yang diunggah</p>
+                        <p className="text-xs text-[var(--ui-text-muted)] mt-1">Unggah berkas NPWP, NIB, atau SIUP di atas untuk melengkapi profil verifikasi.</p>
+                      </div>
+                    ) : (
+                      vm.company.documents?.map((doc: any) => (
+                        <div key={doc.id} className="p-3.5 sm:p-4 sm:px-5 flex items-center justify-between gap-3 group hover:bg-[var(--ui-bg-input)] transition-colors">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center flex-shrink-0 border border-orange-500/20">
+                              <FileText size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)] truncate">
+                                  {doc.type}
+                                </span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  Tersimpan
+                                </span>
+                              </div>
+                              <div className="text-[11px] sm:text-xs text-[var(--ui-text-muted)] truncate mt-0.5">
+                                {doc.name || 'Dokumen Resmi'}
+                              </div>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <div className="text-xs sm:text-sm font-semibold text-[var(--ui-text-primary)] truncate">{doc.type}</div>
-                            <div className="text-[11px] sm:text-xs text-[var(--ui-text-muted)] truncate">{doc.name || 'Official Document'}</div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <a 
+                              href={getAssetUrl(doc.url || doc.file_path)} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              title="Lihat / Unduh Dokumen"
+                              className="px-3 py-1.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:text-orange-500 hover:border-orange-500/50 transition-all flex items-center gap-1.5"
+                            >
+                              <Download size={13} /> <span className="hidden sm:inline">Unduh</span>
+                            </a>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Hapus dokumen ${doc.type} (${doc.name})?`)) {
+                                  vm.handleDeleteDocument(doc.id);
+                                }
+                              }}
+                              disabled={vm.docDeletingId === doc.id}
+                              title="Hapus Dokumen"
+                              className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 flex items-center justify-center transition-all disabled:opacity-40"
+                            >
+                              {vm.docDeletingId === doc.id ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={13} />
+                              )}
+                            </button>
                           </div>
                         </div>
-                        <a href={getAssetUrl(doc.url || doc.file_path)} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex items-center justify-center text-[var(--ui-text-muted)] hover:text-orange-500 hover:border-orange-500/50 transition-all flex-shrink-0">
-                          <Download size={13} />
-                        </a>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             )}

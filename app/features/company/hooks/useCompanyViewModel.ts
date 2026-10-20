@@ -2,12 +2,42 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { 
   getMyCompanies, updateCompany, uploadCompanyLogo, 
-  inviteUser, getTeamMembers, getCsrfCookie 
+  inviteUser, getTeamMembers, getCsrfCookie,
+  uploadCompanyDocument, deleteCompanyDocument 
 } from "../../../lib/api";
 
 export const useCompanyViewModel = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("profile");
+  const getInitialTab = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab") || params.get("section");
+      if (tabParam === "documents" || tabParam === "legal") return "documents";
+      if (tabParam && ["profile", "location", "banking", "documents", "performance", "team"].includes(tabParam)) {
+        return tabParam;
+      }
+    }
+    return "profile";
+  };
+
+  const [activeTab, setActiveTab] = useState<string>(getInitialTab);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const handleLocationChange = () => {
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get("tab") || params.get("section");
+        if (tabParam === "documents" || tabParam === "legal") setActiveTab("documents");
+        else if (tabParam && ["profile", "location", "banking", "documents", "performance", "team"].includes(tabParam)) {
+          setActiveTab(tabParam);
+        }
+      };
+
+      handleLocationChange();
+      window.addEventListener("popstate", handleLocationChange);
+      return () => window.removeEventListener("popstate", handleLocationChange);
+    }
+  }, []);
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -27,6 +57,12 @@ export const useCompanyViewModel = () => {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Document upload state
+  const [docUploading, setDocUploading] = useState(false);
+  const [docDeletingId, setDocDeletingId] = useState<string | number | null>(null);
+  const [docError, setDocError] = useState<string | null>(null);
+  const [docSuccess, setDocSuccess] = useState<string | null>(null);
 
   // Team state
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -214,6 +250,72 @@ export const useCompanyViewModel = () => {
     }));
   }, []);
 
+  /**
+   * Mengunggah dokumen legalitas perusahaan baru
+   */
+  const handleUploadDocument = async (file: File, type: string) => {
+    if (!company?.id) return;
+    setDocUploading(true);
+    setDocError(null);
+    setDocSuccess(null);
+    try {
+      const fd = new FormData();
+      fd.append("document", file);
+      fd.append("company_id", String(company.id));
+      fd.append("type", type);
+      const res = await uploadCompanyDocument(fd);
+      const uploadedDoc = res.document || {
+        id: res.id || Date.now().toString(),
+        name: file.name,
+        type: type,
+        file_path: res.file_path,
+        url: res.url,
+      };
+
+      const updatedDocs = [...(company.documents || []), uploadedDoc];
+      const updatedCompany = {
+        ...company,
+        documents: updatedDocs,
+        status: company.status === "starter" ? "pending" : company.status,
+        verification_tier: company.status === "starter" ? "standard" : company.verification_tier,
+      };
+
+      setCompany(updatedCompany);
+      localStorage.setItem("active_company", JSON.stringify(updatedCompany));
+      setDocSuccess(`Dokumen ${type} berhasil diunggah.`);
+      setTimeout(() => setDocSuccess(null), 3500);
+    } catch (err: any) {
+      console.error("Failed to upload document", err);
+      setDocError(err.message || "Gagal mengunggah dokumen.");
+    } finally {
+      setDocUploading(false);
+    }
+  };
+
+  /**
+   * Menghapus dokumen legalitas perusahaan
+   */
+  const handleDeleteDocument = async (docId: string | number) => {
+    if (!company?.id) return;
+    setDocDeletingId(docId);
+    setDocError(null);
+    try {
+      await deleteCompanyDocument(company.id, docId);
+      const updatedDocs = (company.documents || []).filter((d: any) => d.id !== docId);
+      const updatedCompany = {
+        ...company,
+        documents: updatedDocs,
+      };
+      setCompany(updatedCompany);
+      localStorage.setItem("active_company", JSON.stringify(updatedCompany));
+    } catch (err: any) {
+      console.error("Failed to delete document", err);
+      setDocError(err.message || "Gagal menghapus dokumen.");
+    } finally {
+      setDocDeletingId(null);
+    }
+  };
+
   return {
     navigate,
     activeTab, setActiveTab,
@@ -221,6 +323,7 @@ export const useCompanyViewModel = () => {
     companies, selectedWorkspace, showCompanyWorkspace, setShowCompanyWorkspace, companyListLoading,
     isEditing, setIsEditing, editForm, setEditForm, updateError, updatingCompany, handleSaveCompany,
     logoUploading, logoError, logoInputRef, handleLogoUpload,
+    docUploading, docDeletingId, docError, docSuccess, handleUploadDocument, handleDeleteDocument,
     teamMembers, teamLoading, isInviting, inviteForm, setInviteForm, handleInviteUser, inviteError, inviteSuccess,
     fetchTeamMembers, // Export for role change callback
     updateHqAddress, addHqAddress, removeHqAddress,

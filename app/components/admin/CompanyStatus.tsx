@@ -1,7 +1,14 @@
-import { Building2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Building2, CheckCircle2, XCircle, Clock, Sparkles } from "lucide-react";
 
 /* ─── Status meta ─────────────────────────────────────────────────── */
 export const STATUS_META = {
+  starter: {
+    color: "var(--ui-status-starter, #818cf8)",
+    bg: "rgba(129,140,248,0.10)",
+    border: "rgba(129,140,248,0.22)",
+    icon: <Sparkles size={11} />,
+    label: "Starter",
+  },
   pending: {
     color: "var(--ui-status-pending)",
     bg: "rgba(251,191,36,0.10)",
@@ -27,6 +34,7 @@ export const STATUS_META = {
 
 export const STAT_CARDS = [
   { key: "total" as const,    label: "Total",    gradient: "linear-gradient(135deg,#f59e0b,#ea580c)", icon: <Building2 size={18} /> },
+  { key: "starter" as const,  label: "Starter",  gradient: "linear-gradient(135deg,#818cf8,#6366f1)", icon: <Sparkles size={18} /> },
   { key: "pending" as const,  label: "Pending",  gradient: "linear-gradient(135deg,#f59e0b,#d97706)", icon: <Clock size={18} /> },
   { key: "approved" as const, label: "Approved", gradient: "linear-gradient(135deg,#10b981,#059669)", icon: <CheckCircle2 size={18} /> },
   { key: "rejected" as const, label: "Rejected", gradient: "linear-gradient(135deg,#ef4444,#dc2626)", icon: <XCircle size={18} /> },

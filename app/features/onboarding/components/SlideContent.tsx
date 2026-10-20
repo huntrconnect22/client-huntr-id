@@ -1,502 +1,219 @@
-import React from "react";
 import { 
-  Building2, MapPin, CreditCard, UploadCloud, FileText, 
-  LogIn, AlertCircle, Loader2, CheckCircle2, X, Plus, 
-  FileSpreadsheet, MapPinPlus, Table, FileCheck, Search, ChevronLeft, ChevronRight
+  Building2, MapPin, LogIn, AlertCircle, Loader2, CheckCircle2, 
+  Sparkles, ShieldCheck, ShoppingBag, Store, ChevronRight, Phone, Mail, Globe, ArrowRight,
+  HelpCircle, Compass, CreditCard, Receipt, Layers, Info
 } from "lucide-react";
 import { SlideSection, Field, FormLabel } from "./OnboardingUI";
-import { AddressAutocomplete } from "./AddressAutocomplete";
-import { LocationStep } from "./LocationStep";
-import { TermsContent } from "./TermsContent";
 
-const formatFileSize = (bytes: number) => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-
-const formatCurrency = (val?: number) => {
-  if (!val) return "Rp 0";
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
-};
-
-const Step5Content = ({ vm }: { vm: any }) => {
-  const { 
-    formData, selectedFile, handleFileSelect, 
-    isParsingFile, parseProgress, parsedData,
-    isImporting, importProgress, importStatusText 
-  } = vm;
-
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const pageSize = 8;
-
-  const filteredRows = React.useMemo(() => {
-    if (!parsedData?.rows) return [];
-    if (!searchTerm.trim()) return parsedData.rows;
-    const term = searchTerm.toLowerCase();
-    return parsedData.rows.filter((row: any) => {
-      return Object.values(row).some((val: any) => 
-        String(val).toLowerCase().includes(term)
-      );
-    });
-  }, [parsedData, searchTerm]);
-
-  const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
-  const paginatedRows = React.useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredRows.slice(start, start + pageSize);
-  }, [filteredRows, currentPage, pageSize]);
-
-  return (
-    <SlideSection title="Upload Data" subtitle="Import Initial Data & Verification" icon={<UploadCloud size={22} className="text-emerald-500" />} accentColor="#10b981">
-      {/* Penjelasan upload data berdasarkan tipe perusahaan */}
-      <div className="p-5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] mb-6">
-        <p className="text-sm text-[var(--ui-text-primary)] font-medium">
-          {formData.type === "buyer" 
-            ? "Silahkan upload historical purchase order anda disini untuk proses pembuatan analisa laporan pembelian anda dan proses migrasi data yang lebih cepat."
-            : "Silahkan upload List product catalog anda disini untuk proses pembuatan online catalog dan proses migrasi data yang lebih cepat."
-          }
-        </p>
-      </div>
-
-      {/* Template Excel Download */}
-      <div className="mb-6">
-        <h4 className="text-sm font-bold text-[var(--ui-text-primary)] mb-3">Template Standard Excel</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <a 
-            href="/assets/templates/buyer-purchase-order-template.xlsx" 
-            download
-            className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] hover:border-[var(--ui-border-input-focus)] transition-all flex items-center gap-3 group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <FileSpreadsheet size={20} className="text-emerald-500" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-[var(--ui-text-primary)]">Template Purchase Order (Buyer)</div>
-              <div className="text-xs text-[var(--ui-text-muted)]">Format Excel/CSV untuk data pembelian</div>
-            </div>
-          </a>
-          <a 
-            href="/assets/templates/vendor-catalog-template.xlsx" 
-            download
-            className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] hover:border-[var(--ui-border-input-focus)] transition-all flex items-center gap-3 group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <FileSpreadsheet size={20} className="text-blue-500" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-[var(--ui-text-primary)]">Template Product Catalog (Vendor)</div>
-              <div className="text-xs text-[var(--ui-text-muted)]">Format Excel/CSV untuk katalog produk</div>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      {/* Import Submission Progress Bar */}
-      {isImporting && (
-        <div className="mb-6 p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Loader2 className="animate-spin text-emerald-400" size={18} />
-              <span className="text-sm font-bold text-emerald-400">{importStatusText || "Mengimpor data..."}</span>
-            </div>
-            <span className="text-sm font-extrabold text-emerald-400">{importProgress}%</span>
-          </div>
-          <div className="w-full bg-[var(--ui-bg-input)] rounded-full h-3 overflow-hidden border border-emerald-500/20">
-            <div 
-              className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-300 shadow-md shadow-emerald-500/20"
-              style={{ width: `${importProgress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* File Parsing Progress Bar */}
-      {isParsingFile && (
-        <div className="mb-6 p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 animate-pulse">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Loader2 className="animate-spin text-emerald-400" size={18} />
-              <span className="text-sm font-bold text-emerald-400">Membaca & Memparsing File...</span>
-            </div>
-            <span className="text-sm font-extrabold text-emerald-400">{parseProgress}%</span>
-          </div>
-          <div className="w-full bg-[var(--ui-bg-input)] rounded-full h-3 overflow-hidden border border-emerald-500/20">
-            <div 
-              className="bg-emerald-500 h-full rounded-full transition-all duration-300"
-              style={{ width: `${parseProgress}%` }}
-            />
-          </div>
-          <p className="text-xs text-[var(--ui-text-muted)] mt-2 text-center">
-            Memverifikasi struktur kolom & ekstrak baris data
-          </p>
-        </div>
-      )}
-
-      {/* State 1: File Dropzone (no file selected or cleared) */}
-      {!selectedFile && !isParsingFile && (
-        <div className="p-8 md:p-12 border-2 border-dashed border-[var(--ui-border-input)] rounded-3xl text-center bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] transition-all group">
-          <div className="w-16 h-16 rounded-2xl bg-[var(--ui-bg-input)] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform border border-[var(--ui-border-input)]">
-            <FileSpreadsheet size={32} className="text-emerald-500" />
-          </div>
-          <p className="text-sm font-semibold text-[var(--ui-text-primary)] mb-1">Pilih File Excel (.xlsx, .xls, .ods) atau CSV</p>
-          <p className="text-xs text-[var(--ui-text-muted)] mb-6">Data akan diparsing dan ditinjau terlebih dahulu secara otomatis</p>
-          <label className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold cursor-pointer transition-all shadow-md shadow-emerald-500/20">
-            <UploadCloud size={18} />
-            Choose File
-            <input 
-              type="file" 
-              accept=".csv, .xlsx, .xls, .xlsm, .ods" 
-              onChange={e => {
-                const f = e.target.files?.[0] || null;
-                handleFileSelect(f);
-                e.target.value = '';
-              }} 
-              className="hidden" 
-            />
-          </label>
-        </div>
-      )}
-
-      {/* State 2: File Parsed and Ready with Preview */}
-      {selectedFile && !isParsingFile && parsedData && (
-        <div className="flex flex-col gap-6">
-          {/* File Information Card */}
-          <div className="p-4 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-                <FileCheck size={22} />
-              </div>
-              <div className="truncate">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-[var(--ui-text-primary)] truncate">{selectedFile.name}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                    Parsed
-                  </span>
-                </div>
-                <div className="text-xs text-[var(--ui-text-muted)] mt-0.5">
-                  Ukuran: {formatFileSize(selectedFile.size)} • Total Baris: {parsedData.totalRows}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleFileSelect(null)}
-              className="px-3 py-2 rounded-xl text-xs font-bold bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all shrink-0 flex items-center gap-1.5"
-            >
-              <X size={14} /> Ganti File
-            </button>
-          </div>
-
-          {/* Data Summary Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 flex flex-col justify-between">
-              <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Baris Data</span>
-              <div className="mt-2">
-                <span className="text-2xl font-black text-emerald-400">{parsedData.totalRows}</span>
-                <span className="text-xs text-[var(--ui-text-secondary)] ml-2">baris</span>
-              </div>
-              <div className="mt-1 text-[11px] text-emerald-400/80 flex items-center gap-1">
-                <CheckCircle2 size={12} /> {parsedData.validRowsCount} baris valid
-              </div>
-            </div>
-
-            {formData.type === "buyer" ? (
-              <>
-                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/15 flex flex-col justify-between">
-                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Purchase Orders</span>
-                  <div className="mt-2">
-                    <span className="text-2xl font-black text-blue-400">{parsedData.summary.totalPoCount || 0}</span>
-                    <span className="text-xs text-[var(--ui-text-secondary)] ml-2">PO</span>
-                  </div>
-                  <div className="mt-1 text-[11px] text-blue-400/80">
-                    Terdeteksi dari kolom Order No
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 flex flex-col justify-between">
-                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Estimasi Nominal</span>
-                  <div className="mt-2">
-                    <span className="text-xl font-black text-amber-400">{formatCurrency(parsedData.summary.totalAmount)}</span>
-                  </div>
-                  <div className="mt-1 text-[11px] text-amber-400/80">
-                    Kalkulasi total nilai transaksi
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/15 flex flex-col justify-between">
-                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Produk</span>
-                  <div className="mt-2">
-                    <span className="text-2xl font-black text-blue-400">{parsedData.summary.totalItems || parsedData.totalRows}</span>
-                    <span className="text-xs text-[var(--ui-text-secondary)] ml-2">item</span>
-                  </div>
-                  <div className="mt-1 text-[11px] text-blue-400/80">
-                    Item katalog terdeteksi
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/15 flex flex-col justify-between">
-                  <span className="text-xs text-[var(--ui-text-muted)] font-medium">Total Kategori</span>
-                  <div className="mt-2">
-                    <span className="text-2xl font-black text-purple-400">{parsedData.summary.categoriesCount || 0}</span>
-                    <span className="text-xs text-[var(--ui-text-secondary)] ml-2">kategori</span>
-                  </div>
-                  <div className="mt-1 text-[11px] text-purple-400/80">
-                    Kategori produk unik
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Preview Table Header & Search */}
-          <div className="flex flex-col gap-3 pt-2 border-t border-[var(--ui-border-input)]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Table size={18} className="text-emerald-500" />
-                <h4 className="text-sm font-bold text-[var(--ui-text-primary)]">Hasil Parsing Data (Preview)</h4>
-              </div>
-
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-                <input 
-                  type="text" 
-                  placeholder="Cari data..."
-                  value={searchTerm}
-                  onChange={e => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="pl-8 pr-3 py-1.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-xs text-[var(--ui-text-primary)] outline-none w-full sm:w-56"
-                />
-              </div>
-            </div>
-
-            {/* Scrollable Table */}
-            <div className="border border-[var(--ui-border-input)] rounded-2xl overflow-hidden bg-[var(--ui-bg-input)] shadow-inner">
-              <div className="overflow-x-auto max-h-[320px] scrollbar-thin scrollbar-thumb-[var(--ui-border-input)]">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--ui-bg-page)] text-[var(--ui-text-secondary)] font-bold sticky top-0 border-b border-[var(--ui-border-input)] z-10">
-                    <tr>
-                      <th className="p-3 w-12 text-center">#</th>
-                      <th className="p-3 w-20 text-center">Status</th>
-                      {parsedData.headers.slice(0, 7).map((h: string, idx: number) => (
-                        <th key={idx} className="p-3 whitespace-nowrap">{h}</th>
-                      ))}
-                      {parsedData.headers.length > 7 && (
-                        <th className="p-3 text-[var(--ui-text-muted)] whitespace-nowrap">+{parsedData.headers.length - 7} Kolom Lainnya</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--ui-border-input)] text-[var(--ui-text-primary)]">
-                    {paginatedRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={parsedData.headers.length + 2} className="p-6 text-center text-[var(--ui-text-muted)]">
-                          Tidak ada data yang cocok dengan pencarian.
-                        </td>
-                      </tr>
-                    ) : (
-                      paginatedRows.map((row: any, rIdx: number) => (
-                        <tr key={rIdx} className="hover:bg-emerald-500/5 transition-colors">
-                          <td className="p-3 text-center text-[var(--ui-text-muted)] font-medium">
-                            {(currentPage - 1) * pageSize + rIdx + 1}
-                          </td>
-                          <td className="p-3 text-center">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              <CheckCircle2 size={10} /> Valid
-                            </span>
-                          </td>
-                          {parsedData.headers.slice(0, 7).map((h: string, cIdx: number) => (
-                            <td key={cIdx} className="p-3 whitespace-nowrap max-w-[200px] truncate text-[var(--ui-text-secondary)]">
-                              {String(row[h] ?? '')}
-                            </td>
-                          ))}
-                          {parsedData.headers.length > 7 && (
-                            <td className="p-3 text-[var(--ui-text-muted)] italic text-[11px]">...</td>
-                          )}
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="p-3 bg-[var(--ui-bg-page)] border-t border-[var(--ui-border-input)] flex items-center justify-between text-xs text-[var(--ui-text-secondary)]">
-                <div>
-                  Menampilkan <strong>{Math.min((currentPage - 1) * pageSize + 1, filteredRows.length)}</strong> - <strong>{Math.min(currentPage * pageSize, filteredRows.length)}</strong> dari <strong>{filteredRows.length}</strong> data
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                    className="px-2.5 py-1 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--ui-bg-input-focus)]"
-                  >
-                    Prev
-                  </button>
-                  <span>{currentPage} / {totalPages}</span>
-                  <button
-                    disabled={currentPage >= totalPages}
-                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                    className="px-2.5 py-1 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--ui-bg-input-focus)]"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </SlideSection>
-  );
-};
+const rupiah = (value: number | null | undefined) =>
+  value == null ? "—" : `Rp ${value.toLocaleString("id-ID")}`;
+const numberFormat = (value: number | null | undefined) =>
+  value == null ? "—" : value.toLocaleString("id-ID");
 
 /**
- * SlideContent Component
+ * SlideContent Component (Express Onboarding)
  * 
- * Tanggung jawab: Me-render konten form spesifik berdasarkan slide aktif.
- * Memisahkan logika render yang panjang dari file route utama.
+ * Pengalaman Onboarding Kilat (1-2 Menit):
+ * - Slide 1: Peran Bisnis (Buyer/Vendor) & Profil Perusahaan
+ * - Slide 2: Lokasi & Kontak Operasional Dasar + Jaminan Akun Starter
+ * - Slide 3: Konfirmasi & Ketentuan Ringkas + Informasi Biaya
+ * - Slide 4: Workspace Siap & Masuk Dashboard
  */
-export const SlideContent = ({ vm, pricing, docType, setDocType, docInputRef, handleLoginAsCompany }: any) => {
+export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
   const {
-    slide, formData, updateField, isVerifyingNpwp, npwpVerifiedData, handleVerifyNpwp,
-    uploadedDocs, setUploadedDocs, isUploadingDoc, handleDocUpload,
-    selectedFile, setSelectedFile, companies, selectedCompany, setSelectedCompany,
+    slide, formData, updateField,
+    companies, selectedCompany, setSelectedCompany,
     termsAccepted, setTermsAccepted,
-    lockedType,         // "buyer" | "vendor" | null — locked when coming from workspace switcher
-    npwpConflict,       // { vendor, buyer } — detected conflicts
-    setNpwpConflict,
+    lockedType,
+    isVerifyingNpwp, npwpVerifiedData, handleVerifyNpwp, npwpConflict,
   } = vm;
-
-  /**
-   * Check if country is Indonesia
-   */
-  const isIndonesia = (): boolean => {
-    const country = formData.country?.toUpperCase();
-    return country === "ID" || country === "INDONESIA";
-  };
 
   switch (slide) {
     case 1:
       return (
-        <SlideSection title="Profil Perusahaan" subtitle="Informasi dasar & identitas" icon={<Building2 size={22} className="text-orange-500" />} accentColor="#f97316">
-          <div className="flex flex-col gap-2">
-            <FormLabel>Business Type *</FormLabel>
+        <SlideSection 
+          title="Profil & Peran Perusahaan" 
+          subtitle="Pilih peran bisnis Anda dan tentukan identitas workspace" 
+          icon={<Building2 size={22} className="text-orange-500" />} 
+          accentColor="#f97316"
+        >
+          {/* Role Selection Cards */}
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <FormLabel>Peran Bisnis Utama *</FormLabel>
+              <span className="text-[11px] text-[var(--ui-text-muted)] font-medium">Bisa disesuaikan nanti</span>
+            </div>
 
-            {/* If type is locked (coming from workspace switch), show read-only badge */}
             {lockedType ? (
-              <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-orange-500/40 bg-orange-500/10">
-                <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={16} className="text-white" />
+              <div className="flex items-center gap-3 p-4 rounded-2xl border-2 border-orange-500/40 bg-orange-500/10">
+                <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shrink-0 shadow-md shadow-orange-500/20">
+                  <CheckCircle2 size={18} className="text-white" />
                 </div>
                 <div>
                   <div className="text-sm font-bold text-orange-400 capitalize">{lockedType}</div>
-                  <div className="text-[10px] text-[var(--ui-text-muted)]">Tipe dikunci dari workspace sebelumnya</div>
+                  <div className="text-xs text-[var(--ui-text-muted)]">Peran dikunci dari workspace Anda sebelumnya</div>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {[{ v: "buyer", l: "Buyer" }, { v: "vendor", l: "Vendor" }].map(opt => (
-                  <button
-                    key={opt.v}
-                    type="button"
-                    onClick={() => updateField("type", opt.v)}
-                    className={`
-                      py-3 rounded-xl font-bold text-sm transition-all border-2
-                      ${formData.type === opt.v
-                        ? "bg-orange-500/10 border-orange-500/40 text-orange-400"
-                        : "bg-[var(--ui-bg-input)] border-[var(--ui-border-subtle)] text-[var(--ui-text-muted)] hover:border-[var(--ui-border-input)]"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Buyer Card */}
+                <button
+                  type="button"
+                  onClick={() => updateField("type", "buyer")}
+                  className={`
+                    p-4 md:p-5 rounded-2xl text-left transition-all relative overflow-hidden group border-2
+                    ${formData.type === "buyer"
+                      ? "bg-gradient-to-br from-orange-500/10 to-amber-500/5 border-orange-500 text-orange-400 shadow-lg shadow-orange-500/10"
+                      : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-orange-500/40 text-[var(--ui-text-primary)]"
+                    }
+                  `}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2.5">
+                    <div className={`
+                      w-11 h-11 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105
+                      ${formData.type === "buyer" 
+                        ? "bg-orange-500 text-white shadow-md shadow-orange-500/30" 
+                        : "bg-[var(--ui-bg-card)] text-[var(--ui-text-muted)] border border-[var(--ui-border)]"
                       }
-                    `}
-                  >
-                    {opt.l}
-                  </button>
-                ))}
-              </div>
-            )}
+                    `}>
+                      <Building2 size={20} />
+                    </div>
+                    {formData.type === "buyer" && (
+                      <span className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white shrink-0">
+                        <CheckCircle2 size={12} />
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-extrabold text-sm md:text-base text-[var(--ui-text-primary)] mb-1">
+                    Perusahaan Pembeli (Buyer)
+                  </div>
+                  <p className="text-xs text-[var(--ui-text-secondary)] leading-relaxed">
+                    Buat pengadaan tender RFQ, cari vendor terpercaya, bandingkan proposal, dan kelola Purchase Order.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/20">
+                      Tender & RFQ
+                    </span>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--ui-bg-card)] text-[var(--ui-text-muted)] border border-[var(--ui-border)]">
+                      Kelola Vendor
+                    </span>
+                  </div>
+                </button>
 
-            {!formData.type && (
-              <p className="text-[11px] text-amber-400/80 flex items-center gap-1 mt-0.5">
-                <AlertCircle size={11} /> Pilih Business Type terlebih dahulu
-              </p>
+                {/* Vendor Card */}
+                <button
+                  type="button"
+                  onClick={() => updateField("type", "vendor")}
+                  className={`
+                    p-4 md:p-5 rounded-2xl text-left transition-all relative overflow-hidden group border-2
+                    ${formData.type === "vendor"
+                      ? "bg-gradient-to-br from-indigo-500/10 to-blue-500/5 border-indigo-500 text-indigo-400 shadow-lg shadow-indigo-500/10"
+                      : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-indigo-500/40 text-[var(--ui-text-primary)]"
+                    }
+                  `}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2.5">
+                    <div className={`
+                      w-11 h-11 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105
+                      ${formData.type === "vendor" 
+                        ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30" 
+                        : "bg-[var(--ui-bg-card)] text-[var(--ui-text-muted)] border border-[var(--ui-border)]"
+                      }
+                    `}>
+                      <Store size={20} />
+                    </div>
+                    {formData.type === "vendor" && (
+                      <span className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-white shrink-0">
+                        <CheckCircle2 size={12} />
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-extrabold text-sm md:text-base text-[var(--ui-text-primary)] mb-1">
+                    Penyedia Barang / Jasa (Vendor)
+                  </div>
+                  <p className="text-xs text-[var(--ui-text-secondary)] leading-relaxed">
+                    Terbitkan katalog produk digital, terima undangan tender, ajukan penawaran harga, dan terima PO.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+                      Katalog Digital
+                    </span>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--ui-bg-card)] text-[var(--ui-text-muted)] border border-[var(--ui-border)]">
+                      Ikut Tender
+                    </span>
+                  </div>
+                </button>
+              </div>
             )}
           </div>
 
-
-
+          {/* NPWP (Opsional - Auto-Fill Nama Perusahaan) */}
           <div className="flex flex-col gap-2">
-            <FormLabel>Negara & Tax ID{isIndonesia() ? " (NPWP) *" : ""}</FormLabel>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <select
-                value={formData.country}
-                onChange={e => updateField("country", e.target.value)}
-                className="px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none"
-              >
-                <option value="ID">Indonesia</option>
-                <option value="MY">Malaysia</option>
-                <option value="SG">Singapore</option>
-              </select>
-              <div className="md:col-span-2 flex gap-2">
-                <input
-                  type="text"
-                  placeholder={formData.country === 'ID' ? "01.234.567.8-901.000" : "Tax ID / UEN"}
-                  value={formData.tax_id}
-                  onChange={e => updateField("tax_id", e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm"
-                />
-                {isIndonesia() && (
-                  <button
-                    onClick={handleVerifyNpwp}
-                    disabled={isVerifyingNpwp || !formData.tax_id}
-                    className={`px-4 md:px-6 rounded-xl font-bold text-xs transition-all ${npwpVerifiedData ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" : "bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20"}`}
-                  >
-                    {isVerifyingNpwp ? <Loader2 size={16} className="animate-spin" /> : npwpVerifiedData ? <CheckCircle2 size={16} /> : "Verifikasi"}
-                  </button>
-                )}
-              </div>
+            <div className="flex items-center justify-between">
+              <FormLabel>Nomor NPWP Perusahaan</FormLabel>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                Opsional
+              </span>
             </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Contoh: 01.234.567.8-901.000 (Boleh dilewati)"
+                value={formData.tax_id}
+                onChange={e => updateField("tax_id", e.target.value)}
+                className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-sm transition-all focus:border-orange-500/50"
+              />
+              <button
+                type="button"
+                onClick={handleVerifyNpwp}
+                disabled={isVerifyingNpwp || !formData.tax_id}
+                className={`px-4 md:px-5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 ${
+                  npwpVerifiedData 
+                    ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400" 
+                    : "bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                }`}
+              >
+                {isVerifyingNpwp ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : npwpVerifiedData ? (
+                  <>
+                    <CheckCircle2 size={15} /> Terverifikasi
+                  </>
+                ) : (
+                  "Cek NPWP"
+                )}
+              </button>
+            </div>
+            <p className="text-[11px] text-[var(--ui-text-muted)]">
+              💡 <strong>Opsional:</strong> Masukkan NPWP jika ingin mengisi nama perusahaan secara otomatis. Boleh dilewati jika belum memegang nomor NPWP.
+            </p>
+
+            {/* NPWP Verified Success Card */}
             {npwpVerifiedData && (
-              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col gap-1.5">
-                <div className="text-sm font-bold text-[var(--ui-text-primary)]">{npwpVerifiedData.nama}</div>
-                <div className="flex flex-wrap gap-2 mt-0.5">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border ${
-                    npwpVerifiedData.statusWp?.toUpperCase() === "VALID"
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                      : "bg-red-500/10 border-red-500/30 text-red-400"
-                  }`}>
-                    WP: {npwpVerifiedData.statusWp || npwpVerifiedData.status || "Aktif"}
-                  </span>
-                  {npwpVerifiedData.statusSpt && (
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest border ${
-                      npwpVerifiedData.statusSpt?.toUpperCase().startsWith("VALID")
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                        : "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                    }`}>
-                      SPT: {npwpVerifiedData.statusSpt}
-                    </span>
-                  )}
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-start gap-2.5 animate-fade-in">
+                <CheckCircle2 size={16} className="text-emerald-400 mt-0.5 shrink-0" />
+                <div className="text-xs">
+                  <div className="font-bold text-emerald-300">{npwpVerifiedData.nama}</div>
+                  <div className="text-[var(--ui-text-muted)] mt-0.5">
+                    Status WP: <strong className="text-emerald-400">{npwpVerifiedData.statusWp || "VALID"}</strong>
+                    {npwpVerifiedData.statusSpt && ` • SPT: ${npwpVerifiedData.statusSpt}`}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* NPWP Conflict Banner */}
+            {/* NPWP Conflict Banner if any */}
             {npwpConflict && formData.type && (() => {
               const duplicate = formData.type === "vendor" ? npwpConflict.vendor : npwpConflict.buyer;
               const crossType = formData.type === "vendor" ? npwpConflict.buyer : npwpConflict.vendor;
               if (duplicate) {
                 return (
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
+                  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30">
                     <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
                     <div>
                       <div className="text-sm font-bold text-red-400">NPWP sudah terdaftar sebagai {formData.type === "vendor" ? "Vendor" : "Buyer"}</div>
                       <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5">
-                        Anda tidak dapat mendaftar dua kali dengan tipe yang sama. Masuk ke workspace yang sudah ada: <strong className="text-red-300">{duplicate.name}</strong>
+                        Anda tidak dapat mendaftar dua kali dengan tipe yang sama: <strong className="text-red-300">{duplicate.name}</strong>
                       </div>
                     </div>
                   </div>
@@ -504,12 +221,12 @@ export const SlideContent = ({ vm, pricing, docType, setDocType, docInputRef, ha
               }
               if (crossType) {
                 return (
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+                  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
                     <CheckCircle2 size={16} className="text-indigo-400 mt-0.5 shrink-0" />
                     <div>
-                      <div className="text-sm font-bold text-indigo-300">NPWP ditemukan di workspace lain</div>
+                      <div className="text-sm font-bold text-indigo-300">NPWP ditemukan di sisi {crossType.type === "vendor" ? "Vendor" : "Buyer"}</div>
                       <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5">
-                        NPWP ini terdaftar sebagai <strong className="text-indigo-300">{crossType.type === "vendor" ? "Vendor" : "Buyer"}</strong>: <em>{crossType.name}</em>. Anda boleh mendaftarkan sisi {formData.type === "vendor" ? "Vendor" : "Buyer"}-nya.
+                        NPWP ini sudah ada untuk <em>{crossType.name}</em>. Anda dapat mendaftarkan sisi {formData.type === "vendor" ? "Vendor" : "Buyer"}-nya.
                       </div>
                     </div>
                   </div>
@@ -519,224 +236,381 @@ export const SlideContent = ({ vm, pricing, docType, setDocType, docInputRef, ha
             })()}
           </div>
 
-          <Field label="Nama Perusahaan *" value={formData.company_name} onChange={(v:any) => updateField("company_name", v)} placeholder="Contoh: PT Tunas Global Teknologi" />
+          {/* Company Name */}
+          <Field 
+            label="Nama Resmi Perusahaan *" 
+            value={formData.company_name} 
+            onChange={(v: any) => updateField("company_name", v)} 
+            placeholder="Contoh: PT Sinar Abadi Solusindo" 
+          />
 
-
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="flex flex-col gap-1.5">
-              <FormLabel>Jenis Industri *</FormLabel>
+          {/* Industry Selection */}
+          <div className="flex flex-col gap-1.5">
+            <FormLabel>Jenis Industri *</FormLabel>
+            <div className="relative">
               <select
                 value={formData.industry_type}
                 onChange={e => updateField("industry_type", e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none transition-all focus:border-orange-500/50"
               >
-                <option value="" className="bg-[var(--ui-bg-page)]">Pilih Jenis Industri...</option>
-                <option value="Technology" className="bg-[var(--ui-bg-page)]">Technology</option>
-                <option value="Manufacturing" className="bg-[var(--ui-bg-page)]">Manufacturing</option>
-                <option value="Logistics" className="bg-[var(--ui-bg-page)]">Logistics</option>
-                <option value="Healthcare" className="bg-[var(--ui-bg-page)]">Healthcare</option>
-                <option value="Retail" className="bg-[var(--ui-bg-page)]">Retail</option>
-                <option value="Finance" className="bg-[var(--ui-bg-page)]">Finance</option>
-                <option value="Construction" className="bg-[var(--ui-bg-page)]">Construction</option>
-                <option value="Services" className="bg-[var(--ui-bg-page)]">Services</option>
-                <option value="Other" className="bg-[var(--ui-bg-page)]">Other</option>
+                <option value="" className="bg-[var(--ui-bg-page)]">Pilih Bidang Industri...</option>
+                <option value="Technology" className="bg-[var(--ui-bg-page)]">Teknologi & IT</option>
+                <option value="Manufacturing" className="bg-[var(--ui-bg-page)]">Manufaktur & Pabrikasi</option>
+                <option value="Construction" className="bg-[var(--ui-bg-page)]">Konstruksi & Properti</option>
+                <option value="Logistics" className="bg-[var(--ui-bg-page)]">Logistik & Distribusi</option>
+                <option value="Retail" className="bg-[var(--ui-bg-page)]">Perdagangan / Retail / Grosir</option>
+                <option value="Healthcare" className="bg-[var(--ui-bg-page)]">Kesehatan & Farmasi</option>
+                <option value="Finance" className="bg-[var(--ui-bg-page)]">Finansial & Perbankan</option>
+                <option value="Services" className="bg-[var(--ui-bg-page)]">Jasa Profesional & Konsultan</option>
+                <option value="Other" className="bg-[var(--ui-bg-page)]">Lainnya</option>
               </select>
+              <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]">
+                <ChevronRight size={16} className="rotate-90" />
+              </div>
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <FormLabel>Keywords / Tags</FormLabel>
-            <textarea
-              value={formData.keywords}
-              onChange={e => updateField("keywords", e.target.value)}
-              placeholder="Contoh: industrial pump, hydraulic, spare parts"
-              className="w-full px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm resize-none"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field label="Telepon" value={formData.phone} onChange={(v:any) => updateField("phone", v)} />
-            <Field label="Email" value={formData.email} onChange={(v:any) => updateField("email", v)} type="email" />
           </div>
         </SlideSection>
       );
-    
+
     case 2:
       return (
-        <SlideSection title="Location" subtitle="Business address" icon={<MapPin size={22} className="text-amber-500" />} accentColor="#f59e0b">
-          <LocationStep 
-            formData={formData} 
-            updateField={updateField} 
-            updateHqAddress={vm.updateHqAddress}
-            addHqAddress={vm.addHqAddress}
-            removeHqAddress={vm.removeHqAddress}
-          />
+        <SlideSection 
+          title="Lokasi & Kontak Operasional" 
+          subtitle="Informasi agar mitra bisnis dan sistem Huntr dapat mengenali domisili operasional Anda" 
+          icon={<MapPin size={22} className="text-blue-500" />} 
+          accentColor="#3b82f6"
+        >
+          {/* Starter Guarantee Banner */}
+          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/5 border border-indigo-500/25 flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-indigo-300">
+                Pendaftaran Instan — Bebas Berkas di Awal
+              </div>
+              <p className="text-xs text-[var(--ui-text-muted)] mt-1 leading-relaxed">
+                Anda tidak perlu mengunggah NPWP, NIB, SIUP, atau nomor rekening bank hari ini. Anda langsung mendapatkan akses workspace penuh. Dokumen verifikasi dapat dilengkapi kapan saja di menu Pengaturan saat Anda siap bertransaksi.
+              </p>
+            </div>
+          </div>
+
+          {/* Location inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field 
+              label="Kota / Wilayah Operasional *" 
+              value={formData.city} 
+              onChange={(v: any) => updateField("city", v)} 
+              placeholder="Contoh: Jakarta Selatan, DKI Jakarta" 
+            />
+            <Field 
+              label="Alamat Kantor Singkat" 
+              value={formData.address} 
+              onChange={(v: any) => updateField("address", v)} 
+              placeholder="Contoh: Jl. Jend. Sudirman Kav. 21" 
+            />
+          </div>
+
+          {/* Contact inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field 
+              label="Email Resmi Perusahaan" 
+              value={formData.email} 
+              onChange={(v: any) => updateField("email", v)} 
+              type="email" 
+              placeholder="Contoh: info@perusahaan.com" 
+            />
+            <Field 
+              label="Telepon / WhatsApp Perusahaan" 
+              value={formData.phone} 
+              onChange={(v: any) => updateField("phone", v)} 
+              placeholder="Contoh: 081234567890" 
+            />
+          </div>
         </SlideSection>
       );
 
     case 3:
       return (
-        <SlideSection title="Banking" subtitle="Payment details" icon={<CreditCard size={22} className="text-yellow-500" />} accentColor="#fbbf24">
-          <div className="flex flex-col gap-1.5">
-            <FormLabel>Bank Name</FormLabel>
-            <select
-              value={formData.bank_name}
-              onChange={e => updateField("bank_name", e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none"
-            >
-              <option value="" className="bg-[var(--ui-bg-page)]">Select Bank...</option>
-              <option value="BNI" className="bg-[var(--ui-bg-page)]">BNI</option>
-              <option value="Mandiri" className="bg-[var(--ui-bg-page)]">Mandiri</option>
-              <option value="BCA" className="bg-[var(--ui-bg-page)]">BCA</option>
-              <option value="BRI" className="bg-[var(--ui-bg-page)]">BRI</option>
-            </select>
+        <SlideSection 
+          title="Konfirmasi & Buka Workspace" 
+          subtitle="Tinjau ringkasan data sebelum workspace perusahaan Anda diaktifkan" 
+          icon={<ShieldCheck size={22} className="text-purple-500" />} 
+          accentColor="#8b5cf6"
+        >
+          {/* Summary Card */}
+          <div className="p-5 md:p-6 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex flex-col gap-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--ui-border)]">
+              <div>
+                <span className="text-[10px] font-bold text-[var(--ui-text-muted)] uppercase tracking-wider">
+                  Ringkasan Workspace
+                </span>
+                <div className="text-base md:text-lg font-black text-[var(--ui-text-primary)] mt-0.5">
+                  {formData.company_name || "Nama Perusahaan"}
+                </div>
+              </div>
+              <span className={`
+                px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider
+                ${formData.type === "buyer" 
+                  ? "bg-orange-500/15 text-orange-400 border-orange-500/30" 
+                  : "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"
+                }
+              `}>
+                {formData.type === "buyer" ? "Peran: Buyer" : "Peran: Vendor"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[var(--ui-text-muted)] block">Industri:</span>
+                <span className="font-semibold text-[var(--ui-text-primary)]">{formData.industry_type || "-"}</span>
+              </div>
+              <div>
+                <span className="text-[var(--ui-text-muted)] block">Domisili / Kota:</span>
+                <span className="font-semibold text-[var(--ui-text-primary)]">{formData.city || formData.address || "-"}</span>
+              </div>
+              <div>
+                <span className="text-[var(--ui-text-muted)] block">Email:</span>
+                <span className="font-semibold text-[var(--ui-text-primary)]">{formData.email || "-"}</span>
+              </div>
+              <div>
+                <span className="text-[var(--ui-text-muted)] block">Kontak / Telepon:</span>
+                <span className="font-semibold text-[var(--ui-text-primary)]">{formData.phone || "-"}</span>
+              </div>
+              {formData.tax_id && (
+                <div>
+                  <span className="text-[var(--ui-text-muted)] block">NPWP Perusahaan:</span>
+                  <span className="font-semibold text-emerald-400">{formData.tax_id}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-[var(--ui-border)] flex items-center gap-2 text-xs text-indigo-400">
+              <Sparkles size={14} className="shrink-0" />
+              <span>Status awal: <strong>Akun Starter (Akses Eksplorasi Penuh Aktif)</strong></span>
+            </div>
           </div>
-          <Field label="Account Number" value={formData.bank_account} onChange={(v:any) => updateField("bank_account", v)} />
-          <Field label="Nama Pemilik Rekening" value={formData.bank_account_name} onChange={(v:any) => updateField("bank_account_name", v)} />
+
+          {/* Informasi Biaya & Ketentuan Layanan */}
+          <div className="flex flex-col gap-3">
+            {/* Kartu Ringkasan Biaya Utama */}
+            <div className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm font-bold text-[var(--ui-text-primary)]">
+                <CreditCard size={18} className="text-orange-500 shrink-0" />
+                <span>Informasi Biaya Penggunaan Platform</span>
+              </div>
+              <p className="text-xs text-[var(--ui-text-secondary)] leading-relaxed m-0">
+                {formData.type === "buyer" ? (
+                  <>
+                    <strong>Buyer</strong> dapat langsung menggunakan akun Starter untuk eksplorasi dan pembuatan tender. Tersedia pilihan paket Enterprise tahunan untuk kapasitas pengguna, e-Faktur, dan multi-warehouse yang lebih besar.
+                    <span className="text-orange-400 font-medium block mt-1">
+                      💡 Menyetujui ketentuan ini tidak menimbulkan tagihan atau pemotongan pembayaran otomatis apapun saat registrasi.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <strong>Vendor / Pemasok</strong> tidak dikenakan biaya langganan bulanan (bebas biaya subscription / gratis). Anda dapat langsung menerima permintaan penawaran (RFQ) dan tender setelah workspace dibuat.
+                  </>
+                )}
+              </p>
+            </div>
+
+            {/* Jika Buyer, Tampilkan Rincian Paket Enterprise & Add-on */}
+            {formData.type === "buyer" && (
+              <div className="flex flex-col gap-3">
+                {/* Enterprise Plans Grid */}
+                <div className="p-4 rounded-xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col gap-3">
+                  <div>
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-primary)] flex items-center gap-1.5">
+                      <Layers size={14} className="text-blue-400 shrink-0" />
+                      Pilihan Paket Enterprise (Opsional)
+                    </h5>
+                    <span className="text-[11px] text-[var(--ui-text-muted)] block mt-0.5">
+                      Harga tahunan dibayar penuh di awal. Paket dapat dipilih atau di-upgrade setelah onboarding selesai.
+                    </span>
+                  </div>
+
+                  {pricing?.loading && (
+                    <div className="flex items-center justify-center gap-2 py-4 text-xs text-[var(--ui-text-muted)]">
+                      <Loader2 size={16} className="animate-spin text-orange-500" />
+                      <span>Memuat katalog harga paket terbaru...</span>
+                    </div>
+                  )}
+
+                  {pricing?.error && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center justify-between">
+                      <span>Harga paket belum dapat dimuat saat ini.</span>
+                      <button
+                        type="button"
+                        onClick={pricing.retry}
+                        className="font-semibold underline hover:text-red-300"
+                      >
+                        Coba lagi
+                      </button>
+                    </div>
+                  )}
+
+                  {pricing?.catalog?.plans && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
+                      {pricing.catalog.plans.map((plan: any) => (
+                        <div
+                          key={plan.key}
+                          className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-3 flex flex-col justify-between hover:border-orange-500/30 transition-colors"
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-bold text-xs text-[var(--ui-text-primary)]">{plan.name}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 font-medium">Enterprise</span>
+                            </div>
+                            <div className="text-sm font-extrabold text-[var(--ui-text-primary)]">
+                              {rupiah(plan.monthly_price)}
+                              <span className="text-[11px] font-normal text-[var(--ui-text-muted)]"> / bln</span>
+                            </div>
+                            <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5 mb-2">
+                              {rupiah(plan.annual_price)} / tahun di muka
+                            </div>
+                          </div>
+                          
+                          <div className="border-t border-[var(--ui-border)] pt-2 space-y-1 text-[11px] text-[var(--ui-text-secondary)]">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[var(--ui-text-muted)]">Pengguna:</span>
+                              <span className="font-semibold">{numberFormat(plan.users)}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[var(--ui-text-muted)]">e-Faktur:</span>
+                              <span className="font-semibold">{numberFormat(plan.tax_documents_per_year)} / thn</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[var(--ui-text-muted)]">Gudang:</span>
+                              <span className="font-semibold">{numberFormat(plan.warehouses)}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[var(--ui-text-muted)]">Dukungan:</span>
+                              <span className="font-semibold truncate max-w-[90px]" title={plan.support}>{plan.support ?? "Standar"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add-ons Information */}
+                {pricing?.catalog?.addons && (
+                  <div className="p-3.5 rounded-xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs">
+                    <h5 className="font-bold text-xs text-[var(--ui-text-primary)] mb-1.5 flex items-center gap-1.5">
+                      <Receipt size={14} className="text-emerald-400 shrink-0" />
+                      Add-on Ekstra (Sesuai Kebutuhan)
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 my-2">
+                      {pricing.catalog.addons.map((addon: any) => (
+                        <div key={addon.key} className="p-2 rounded bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[11px]">
+                          <span className="font-semibold text-[var(--ui-text-primary)] block truncate">{addon.name}</span>
+                          <span className="text-emerald-400 font-bold">{rupiah(addon.price)}</span>
+                          <span className="text-[var(--ui-text-muted)]"> / {numberFormat(addon.quantity)} {addon.unit}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed m-0">
+                      Top-up dokumen berlaku hingga akhir tahun paket untuk e-Faktur buyer pemilik PO. Add-on pengguna & gudang berlaku per bulan.
+                    </p>
+                  </div>
+                )}
+
+                {/* Ketentuan Pembayaran & Fee Transaksi */}
+                <div className="p-3.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-[var(--ui-text-primary)]">
+                    <Info size={14} className="text-indigo-400 shrink-0" />
+                    <span>Pembayaran & Skema Transaksi Platform</span>
+                  </div>
+                  <p className="text-[11px] text-[var(--ui-text-secondary)] leading-relaxed m-0">
+                    Pembayaran langganan diproses melalui Midtrans berizin resmi BI. Tagihan resmi dikirim ke email perusahaan yang terdaftar. Onboarding teknis paket Enterprise memerlukan waktu {pricing?.catalog ? `${pricing.catalog.onboarding_business_days.min}–${pricing.catalog.onboarding_business_days.max}` : "1–3"} hari kerja.
+                  </p>
+                  <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed m-0 pt-1 border-t border-[var(--ui-border)]">
+                    Di luar masa pembebasan biaya platform atau paket Enterprise aktif, platform Huntr.id mengenakan skema biaya platform berjenjang sesuai nilai transaksi: <strong>5%</strong> (hingga Rp100 juta), <strong>3%</strong> (Rp100 juta hingga Rp250 juta), dan <strong>2%</strong> (di atas Rp250 juta).
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Terms Agreement Checkbox */}
+          <div className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)]">
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={e => setTermsAccepted(e.target.checked)}
+                className="mt-1 w-4 h-4 rounded text-orange-500 focus:ring-orange-500/30 cursor-pointer accent-orange-500 shrink-0"
+              />
+              <span className="text-xs text-[var(--ui-text-secondary)] leading-relaxed">
+                Saya telah membaca, memahami, dan menyetujui <span className="text-orange-400 font-semibold underline underline-offset-2">Syarat & Ketentuan Layanan</span>, <span className="text-orange-400 font-semibold underline underline-offset-2">Kebijakan Privasi</span>, serta <span className="text-orange-400 font-semibold underline underline-offset-2">Informasi Biaya Platform Huntr.id</span> di atas, serta menyatakan bahwa data yang saya daftarkan adalah benar.
+              </span>
+            </label>
+          </div>
         </SlideSection>
       );
 
     case 4:
       return (
-        <SlideSection title="Dokumen" subtitle="Dokumen perusahaan & legalitas" icon={<FileText size={22} className="text-orange-500" />} accentColor="#f59e0b">
-          {/* Informasi dokumen yang diperlukan */}
-          <div className="mb-4 p-4 rounded-xl bg-orange-500/5 border border-orange-500/10">
-            <p className="text-xs text-[var(--ui-text-secondary)] mb-1 font-medium">Dokumen yang direkomendasikan:</p>
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs px-2 py-1 bg-orange-500/10 text-orange-400 rounded-md">NPWP</span>
-              <span className="text-xs px-2 py-1 bg-orange-500/10 text-orange-400 rounded-md">KTP Direktur</span>
-              <span className="text-xs px-2 py-1 bg-orange-500/10 text-orange-400 rounded-md">Akta Perusahaan</span>
-              <span className="text-xs px-2 py-1 bg-orange-500/10 text-orange-400 rounded-md">NIB</span>
-              <span className="text-xs px-2 py-1 bg-orange-500/10 text-orange-400 rounded-md">SIUP</span>
+        <SlideSection 
+          title="Workspace Berhasil Dibuat!" 
+          subtitle="Selamat datang di platform pengadaan & tender modern Huntr.id" 
+          icon={<CheckCircle2 size={24} className="text-emerald-500" />} 
+          accentColor="#10b981"
+        >
+          <div className="flex flex-col gap-4 text-center items-center py-4">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+              <Sparkles size={32} />
             </div>
-            <p className="text-xs text-[var(--ui-text-muted)] mt-2">Upload minimal satu dokumen untuk verifikasi perusahaan</p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1 min-w-0 z-0">
-              <select 
-                value={docType} 
-                onChange={e => setDocType(e.target.value)} 
-                className="w-full px-4 pr-10 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none truncate"
-              >
-                {[
-                  "NPWP", 
-                  "SIUP", 
-                  "NIB", 
-                  "KTP Direktur", 
-                  "Akta Perusahaan", 
-                  "TDP (Tanda Daftar Perusahaan)",
-                  "SKDP (Surat Keterangan Domisili Perusahaan)",
-                  "Surat Izin Usaha Perdagangan (SIUP)",
-                  "Surat Izin Usaha Industri (SIUI)",
-                  "Other"
-                ].map(t => <option key={t} value={t} className="bg-[var(--ui-bg-page)] text-sm">{t}</option>)}
-              </select>
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]">
-                <ChevronRight size={16} className="rotate-90" />
-              </div>
+
+            <div className="max-w-md">
+              <h3 className="text-xl font-extrabold text-[var(--ui-text-primary)]">
+                {selectedCompany?.name || formData.company_name}
+              </h3>
+              <p className="text-xs text-[var(--ui-text-secondary)] mt-1.5 leading-relaxed">
+                Akun Starter perusahaan Anda telah siap. Anda dapat langsung mengundang rekan kerja, melihat katalog produk, atau mempublikasikan tender pengadaan pertama Anda.
+              </p>
             </div>
-            <button 
-              onClick={() => docInputRef.current?.click()} 
-              disabled={isUploadingDoc}
-              className={`w-full sm:w-12 h-12 rounded-xl text-white flex items-center justify-center transition-colors sm:shrink-0 z-10 ${isUploadingDoc ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
-            >
-              {isUploadingDoc ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
-            </button>
-          </div>
-          <input ref={docInputRef} type="file" className="hidden" onChange={e => {
-            if (e.target.files?.[0]) {
-              handleDocUpload(e.target.files[0], docType);
-              e.target.value = '';
-            }
-          }} />
-          
-          {vm.error && (
-            <div className="mt-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-              <div className="flex items-center gap-2 text-red-400 text-sm">
-                <AlertCircle size={14} />
-                <span>Gagal upload dokumen: {vm.error}</span>
-              </div>
-            </div>
-          )}
-          <div className="flex flex-col gap-3 mt-2">
-            {uploadedDocs.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-[var(--ui-border-input)] rounded-2xl">
-                <FileText size={32} className="mx-auto text-[var(--ui-text-muted)] mb-2" />
-                <p className="text-sm text-[var(--ui-text-secondary)]">Belum ada dokumen diupload</p>
-                <p className="text-xs text-[var(--ui-text-muted)] mt-1">Upload minimal satu dokumen perusahaan</p>
-              </div>
-            ) : (
-              uploadedDocs.map((d: any, i: number) => (
-                <div key={i} className="p-4 bg-[var(--ui-bg-input)] border border-[var(--ui-border-subtle)] rounded-xl flex items-center justify-between group hover:border-[var(--ui-border-input)] transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${d.file_path ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
-                      {d.file_path ? (
-                        <CheckCircle2 size={16} className="text-emerald-500" />
-                      ) : (
-                        <AlertCircle size={16} className="text-red-500" />
-                      )}
-                    </div>
+
+            {/* Selected Company Card */}
+            {companies && companies.length > 0 && (
+              <div className="w-full flex flex-col gap-2 mt-2">
+                {companies.map((c: any) => (
+                  <button 
+                    key={c.id} 
+                    onClick={() => setSelectedCompany(c)} 
+                    className={`
+                      p-4 rounded-xl text-left transition-all border flex items-center justify-between
+                      ${selectedCompany?.id === c.id 
+                        ? "bg-orange-500/10 border-orange-500/40 text-orange-400 shadow-sm shadow-orange-500/10" 
+                        : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-orange-500/30 text-[var(--ui-text-primary)]"
+                      }
+                    `}
+                  >
                     <div>
-                      <span className="text-sm font-medium text-[var(--ui-text-primary)]">{d.name}</span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-[var(--ui-text-muted)]">({d.type})</span>
-                        {!d.file_path && (
-                          <span className="text-xs px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded">Error: no file_path</span>
-                        )}
+                      <div className={`font-semibold text-sm ${selectedCompany?.id === c.id ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>
+                        {c.name}
+                      </div>
+                      <div className="text-[10px] text-[var(--ui-text-muted)] uppercase tracking-wider mt-0.5">
+                        Tipe: {c.type || formData.type || "Perusahaan"} • Starter Tier
                       </div>
                     </div>
-                  </div>
-                  <button onClick={() => setUploadedDocs((p: any) => p.filter((_: any, idx: number) => idx !== i))} className="p-2 hover:bg-red-500/10 rounded-lg transition-colors">
-                    <X size={16} className="text-red-400" />
+                    {selectedCompany?.id === c.id && (
+                      <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                        <CheckCircle2 size={12} className="text-white" />
+                      </div>
+                    )}
                   </button>
-                </div>
-              ))
+                ))}
+              </div>
             )}
-          </div>
-        </SlideSection>
-      );
 
-    case 5:
-      return <Step5Content vm={vm} />;
-
-    case 6:
-      return <TermsContent companyType={formData.type} accepted={termsAccepted} onAccept={setTermsAccepted} pricing={pricing} />;
-
-    case 7:
-      return (
-        <SlideSection title="Berhasil!" subtitle="Workspace perusahaan Anda telah siap" icon={<LogIn size={22} className="text-orange-500" />} accentColor="#f97316">
-          <div className="flex flex-col gap-3">
-            {companies.map((c: any) => (
-              <button 
-                key={c.id} 
-                onClick={() => setSelectedCompany(c)} 
-                className={`
-                  p-4 rounded-xl text-left transition-all border flex items-center justify-between
-                  ${selectedCompany?.id === c.id 
-                    ? "bg-orange-500/10 border-orange-500/40 text-orange-400 shadow-sm shadow-orange-500/10" 
-                    : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-orange-500/30 text-[var(--ui-text-primary)]"
-                  }
-                `}
-              >
-                <div>
-                  <div className={`font-semibold text-sm ${selectedCompany?.id === c.id ? "text-orange-400" : "text-[var(--ui-text-primary)]"}`}>{c.name}</div>
-                  <div className="text-[10px] text-[var(--ui-text-muted)] uppercase tracking-wider mt-0.5">Perusahaan Terdaftar</div>
-                </div>
-                {selectedCompany?.id === c.id && (
-                  <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={12} className="text-white" />
-                  </div>
-                )}
-              </button>
-            ))}
             <button 
               onClick={handleLoginAsCompany} 
-              className="w-full py-3 bg-orange-500 hover:bg-orange-600 rounded-xl text-white font-bold text-sm transition-all shadow-md shadow-orange-500/20 mt-2"
+              className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white font-bold text-sm transition-all shadow-lg shadow-orange-500/25 mt-3 flex items-center justify-center gap-2"
             >
-              Masuk ke Workspace
+              Masuk ke Workspace Sekarang <ArrowRight size={16} />
             </button>
           </div>
         </SlideSection>

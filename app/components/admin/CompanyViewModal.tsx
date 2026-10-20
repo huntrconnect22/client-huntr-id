@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Building2, CheckCircle2, FileText, Table, TrendingUp, X, XCircle } from "lucide-react";
+import { Building2, CheckCircle2, FileText, Table, TrendingUp, X, XCircle, Sparkles, Send } from "lucide-react";
 import { getAssetUrl } from "../../lib/assets";
 import { getImageUrl } from "./shared";
 import type { Company } from "./shared";
@@ -15,7 +15,7 @@ export default function CompanyViewModal({
 }: {
   company: Company;
   onClose: () => void;
-  onAudit: (action: "approve" | "decline") => void;
+  onAudit: (action: "approve" | "decline" | "request_docs") => void;
 }) {
   const [activeTab, setActiveTab] = useState<"details" | "imports" | "subscription">("details");
   const sm = STATUS_META[company.status] ?? STATUS_META.pending;
@@ -267,7 +267,7 @@ export default function CompanyViewModal({
           {activeTab === "subscription" && <SubscriptionTab company={company} />}
         </div>
 
-        {/* Modal footer — audit actions */}
+        {/* Modal footer — audit actions for PENDING companies */}
         {company.status === "pending" && (
           <div
             style={{
@@ -297,6 +297,40 @@ export default function CompanyViewModal({
               }}
             >
               <CheckCircle2 size={15} /> Approve
+            </button>
+          </div>
+        )}
+
+        {/* Modal footer — for STARTER companies (no docs yet): request docs or approve directly */}
+        {company.status === "starter" && (
+          <div
+            style={{
+              padding: "14px 20px", borderTop: "1px solid var(--ui-border)",
+              display: "flex", gap: 10, position: "sticky", bottom: 0,
+              background: "var(--ui-bg-card)", borderRadius: "0 0 16px 16px",
+            }}
+          >
+            <button
+              onClick={() => onAudit("request_docs")}
+              style={{
+                flex: 1, padding: "11px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer",
+                background: "rgba(129,140,248,0.10)", color: "#818cf8",
+                border: "1px solid rgba(129,140,248,0.25)", transition: "all 0.15s",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}
+            >
+              <Send size={14} /> Minta Dokumen
+            </button>
+            <button
+              onClick={() => onAudit("approve")}
+              style={{
+                flex: 2, padding: "11px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer",
+                background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff",
+                border: "none", boxShadow: "0 4px 14px rgba(16,185,129,0.25)", transition: "all 0.15s",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}
+            >
+              <CheckCircle2 size={15} /> Approve Langsung
             </button>
           </div>
         )}

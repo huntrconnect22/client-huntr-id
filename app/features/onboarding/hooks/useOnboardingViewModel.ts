@@ -457,7 +457,7 @@ export const useOnboardingViewModel = () => {
 
       setImportProgress(100);
       setImportStatusText("Selesai!");
-      setSlide(7); // Pindah ke slide sukses
+      setSlide(4); // Pindah ke slide sukses (Express Onboarding: 4 slide)
     } catch (err: any) {
       setError(err.message);
     } finally {

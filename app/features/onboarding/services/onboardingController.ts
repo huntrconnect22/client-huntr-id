@@ -90,20 +90,20 @@ export const OnboardingController = {
       }
       return hasFilePath;
     });
-    
-    if (validDocuments.length === 0) {
-      throw new Error('Tidak ada dokumen valid yang diupload. Pastikan dokumen berhasil diupload sebelum melanjutkan.');
-    }
+    // Documents are now optional — starter companies can register without them.
     
     const payload = {
       ...formData,
       name: formData.company_name,
       user_id: user?.id,
-      documents: validDocuments.map(d => ({
-        name: d.type,  // Nama dokumen (contoh: "NPWP", "KTP Direktur")
-        type: d.type,  // Jenis dokumen
-        file_path: d.file_path,  // Path file di server
-      })),
+      // Only include documents if they exist (starter tier can skip this)
+      ...(validDocuments.length > 0 ? {
+        documents: validDocuments.map(d => ({
+          name: d.type,
+          type: d.type,
+          file_path: d.file_path,
+        }))
+      } : {}),
     };
     
     console.log('Final payload for registration:', payload);

@@ -57,7 +57,8 @@ export default function SelectCompany() {
   };
 
   const statusMeta: Record<string, { color: string; bg: string; label: string }> = {
-    approved: { color: "#34d399", bg: "rgba(52,211,153,0.12)", label: "Verified" },
+    starter:  { color: "#818cf8", bg: "rgba(129,140,248,0.12)", label: "Starter"  },
+    approved: { color: "#34d399", bg: "rgba(52,211,153,0.12)",  label: "Verified" },
     pending:  { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  label: "Pending"  },
     rejected: { color: "#f87171", bg: "rgba(248,113,113,0.12)", label: "Rejected" },
   };

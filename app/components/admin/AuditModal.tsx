@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { X, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { X, CheckCircle2, XCircle, AlertCircle, Loader2, Send } from "lucide-react";
 import { adminAuditCompany } from "../../lib/api";
 import { lbl } from "./shared";
 import type { Company } from "./shared";
 
 interface Props {
   company: Company;
-  action: "approve" | "decline";
+  action: "approve" | "decline" | "request_docs";
   onClose: () => void;
   onDone: () => void;
 }
@@ -17,10 +17,17 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
   const [error, setError] = useState<string | null>(null);
 
   const isApprove = action === "approve";
-  const accentColor = isApprove ? "var(--ui-status-approved)" : "var(--ui-status-rejected)";
-  const accentColorRaw = isApprove ? "#34d399" : "#f87171";
+  const isRequestDocs = action === "request_docs";
+  const accentColor = isApprove
+    ? "var(--ui-status-approved)"
+    : isRequestDocs
+    ? "var(--ui-status-starter, #818cf8)"
+    : "var(--ui-status-rejected)";
+  const accentColorRaw = isApprove ? "#34d399" : isRequestDocs ? "#818cf8" : "#f87171";
   const accentBg = isApprove
     ? "rgba(52,211,153,0.10)"
+    : isRequestDocs
+    ? "rgba(129,140,248,0.10)"
     : "rgba(248,113,113,0.10)";
 
   const handleSubmit = async () => {
@@ -123,6 +130,8 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
           >
             {isApprove ? (
               <CheckCircle2 size={24} color={accentColorRaw} />
+            ) : isRequestDocs ? (
+              <Send size={22} color={accentColorRaw} />
             ) : (
               <XCircle size={24} color={accentColorRaw} />
             )}
@@ -137,7 +146,7 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
                 transition: "color 0.3s ease",
               }}
             >
-              {isApprove ? "Approve Company" : "Decline Company"}
+              {isApprove ? "Approve Company" : isRequestDocs ? "Minta Dokumen Verifikasi" : "Decline Company"}
             </h3>
             <p
               style={{
@@ -155,7 +164,11 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
         {/* Notes textarea */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={lbl}>
-            {isApprove ? "Approval Notes (optional)" : "Reason for Decline *"}
+            {isApprove
+              ? "Approval Notes (optional)"
+              : isRequestDocs
+              ? "Catatan Permintaan Dokumen (optional)"
+              : "Reason for Decline *"}
           </label>
           <textarea
             value={notes}
@@ -163,6 +176,8 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
             placeholder={
               isApprove
                 ? "e.g. All documents verified, company approved."
+                : isRequestDocs
+                ? "e.g. Mohon lengkapi NIB / NPWP untuk verifikasi akun Full Access."
                 : "e.g. Incomplete documents, NPWP not valid."
             }
             rows={4}
@@ -181,6 +196,28 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
             }}
           />
         </div>
+
+        {isRequestDocs && (
+          <div
+            style={{
+              background: "rgba(129,140,248,0.08)",
+              border: "1px solid rgba(129,140,248,0.22)",
+              borderRadius: 8,
+              padding: "9px 12px",
+              fontSize: 11,
+              color: "#818cf8",
+              lineHeight: 1.5,
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 8,
+            }}
+          >
+            <Send size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>
+              <strong>Notifikasi Otomatis Terkirim:</strong> User ({company.type === "buyer" ? "Buyer" : "Vendor"}) akan langsung menerima notifikasi di dalam aplikasi, WhatsApp, dan Email untuk segera mengunggah dokumen legalitas via tab Legal Docs.
+            </span>
+          </div>
+        )}
 
         {error && (
           <div
@@ -240,6 +277,8 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
               fontWeight: 800,
               background: isApprove
                 ? "linear-gradient(135deg,#10b981,#059669)"
+                : isRequestDocs
+                ? "linear-gradient(135deg,#818cf8,#6366f1)"
                 : "linear-gradient(135deg,#ef4444,#dc2626)",
               border: "none",
               color: "#fff",
@@ -262,10 +301,16 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
               <>
                 {isApprove ? (
                   <CheckCircle2 size={14} />
+                ) : isRequestDocs ? (
+                  <Send size={14} />
                 ) : (
                   <XCircle size={14} />
                 )}
-                {isApprove ? "Approve Company" : "Decline Registration"}
+                {isApprove
+                  ? "Approve Company"
+                  : isRequestDocs
+                  ? "Kirim Permintaan Dokumen"
+                  : "Decline Registration"}
               </>
             )}
           </button>

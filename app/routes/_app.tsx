@@ -26,6 +26,7 @@ import TrialBanner from "../components/TrialBanner";
 import PricingAnnouncement from "../features/account/components/PricingAnnouncement";
 import { SubscriptionOverdueNotice } from "../components/app-shell/SubscriptionOverdueNotice";
 import { SubscriptionOverdueAlert } from "../components/app-shell/SubscriptionOverdueAlert";
+import { VerificationBanner } from "../components/VerificationBanner";
 
 import { SidebarNav } from "../components/app-shell/SidebarNav";
 import { SidebarBottomSection } from "../components/app-shell/SidebarBottomSection";
@@ -338,6 +339,15 @@ export default function AppShell() {
       fetchUnreadCount(user.id);
     }
   }, [lastEvent]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const handleLiveNotification = () => {
+      fetchUnreadCount(user.id);
+    };
+    window.addEventListener("huntr:notification_received", handleLiveNotification);
+    return () => window.removeEventListener("huntr:notification_received", handleLiveNotification);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -981,10 +991,8 @@ export default function AppShell() {
         )}
 
         <div className="huntr-page-content">
-          {activeCompany &&
-          (activeCompany.status === "rejected" ||
-            activeCompany.status === "pending") &&
-          pathname !== "/company" ? (
+          {activeCompany && activeCompany.status === "rejected" && pathname !== "/company" ? (
+            // Blocked: rejected companies cannot access any page
             <StatusGate
               status={activeCompany.status}
               companyName={activeCompany.name}
@@ -994,7 +1002,15 @@ export default function AppShell() {
           ) : isSubscriptionOverdue && (isWmsPage || isNewPrCheckout) ? (
             <SubscriptionOverdueNotice page isWms={isWmsPage} overdueSince={subscriptionAccess?.overdueSince ?? null} companyPrefix={companyPrefix} canManage={canManageSubscription} />
           ) : (
-            <Outlet context={shellContext} />
+            <>
+              {/* Verification nudge banner for starter + pending accounts */}
+              {activeCompany && (activeCompany.status === "starter" || activeCompany.status === "pending") && (
+                <div className="px-4 pt-4">
+                  <VerificationBanner company={activeCompany} />
+                </div>
+              )}
+              <Outlet context={shellContext} />
+            </>
           )}
         </div>
       </div>
