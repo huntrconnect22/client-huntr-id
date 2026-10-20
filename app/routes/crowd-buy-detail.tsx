@@ -40,6 +40,8 @@ export default function CrowdBuyDetailPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isBiddingModalOpen, setIsBiddingModalOpen] = useState(false);
 
+
+
   const reloadCampaign = () => {
     if (!id) return;
     crowdBuyApi

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Plus, Trash2, AlertCircle, Sparkles } from "lucide-react";
 import type { CrowdBuyCampaign, CrowdBuyPriceTier } from "../types";
 import { crowdBuyApi } from "../../../lib/api/crowd-buy";
@@ -126,8 +127,8 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto animate-fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md overflow-y-auto animate-fade-in">
       <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
           <div>
@@ -437,6 +438,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

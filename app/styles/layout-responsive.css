@@ -70,7 +70,7 @@
 .huntr-global-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9990;
+  z-index: var(--huntr-global-backdrop-z, 90);
   background: var(--huntr-global-backdrop-intensity);
   pointer-events: auto;
   animation: huntr-global-backdrop-fade 260ms ease forwards;

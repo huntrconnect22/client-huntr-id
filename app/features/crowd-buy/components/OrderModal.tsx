@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, ShoppingBag, ShieldCheck, Truck, AlertCircle, CheckCircle2, Calendar, Sparkles } from "lucide-react";
 import type { CrowdBuyCampaign, CrowdBuyShippingAddress } from "../types";
 import { crowdBuyApi } from "../../../lib/api/crowd-buy";
@@ -48,8 +49,12 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   if (!isOpen) return null;
 
   if (isInitiator) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+    if (typeof document === "undefined") return null;
+    return createPortal(
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-fade-in"
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      >
         <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 p-6 text-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center">
             <AlertCircle className="w-6 h-6" />
@@ -69,7 +74,8 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             Tutup
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -145,8 +151,13 @@ export const OrderModal: React.FC<OrderModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto animate-fade-in">
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md overflow-y-auto animate-fade-in"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
@@ -424,6 +435,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
