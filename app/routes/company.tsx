@@ -500,7 +500,17 @@ export default function CompanyDetails() {
                         options={["Technology","Manufacturing","Healthcare","Retail","Finance","Construction","Logistics","Agriculture","Education","Other"].map(o=>({v:o,l:o}))}
                         placeholder="Select Industry..."
                       />
-                      <EditField label="Tax ID (NPWP)" value={vm.editForm.tax_id} onChange={v => vm.setEditForm({...vm.editForm, tax_id: v})} />
+                      <NpwpField
+                        value={vm.editForm.tax_id}
+                        country={vm.editForm.country}
+                        verification={vm.npwpVerification}
+                        onChange={v => {
+                          vm.setEditForm({ ...vm.editForm, tax_id: v });
+                          vm.clearNpwpVerification();
+                        }}
+                        onVerify={vm.handleVerifyNpwp}
+                      />
+                      <EditField label="Company Website" type="url" placeholder="https://perusahaan.com" value={vm.editForm.website} onChange={v => vm.setEditForm({...vm.editForm, website: v})} />
                       <EditField label="Email" value={vm.editForm.email} onChange={v => vm.setEditForm({...vm.editForm, email: v})} />
                       <EditField label="Phone / WA" value={vm.editForm.phone} onChange={v => vm.setEditForm({...vm.editForm, phone: v})} />
                     </div>
@@ -514,6 +524,7 @@ export default function CompanyDetails() {
                     <DisplayRow label="Company Name" value={vm.company.name} />
                     <DisplayRow label="Industry Type" value={vm.company.industry_type} />
                     <DisplayRow label="Tax ID (NPWP)" value={vm.company.formatted_tax_id || vm.company.tax_id} />
+                    <WebsiteRow website={vm.company.website} />
                     <DisplayRow label="Email Address" value={vm.company.email} />
                     <DisplayRow label="Phone Number" value={vm.company.phone} />
                     <DisplayRow label="Keywords / Tags" value={Array.isArray(vm.company.keywords) ? vm.company.keywords.join(", ") : vm.company.keywords} />
@@ -918,14 +929,88 @@ function SelectField({ label, value, onChange, options, placeholder }: { label: 
   );
 }
 
-function EditField({ label, value, onChange, textarea, type = "text" }: { label: string; value: string; onChange: (v: string) => void; textarea?: boolean; type?: string }) {
+function EditField({ label, value, onChange, textarea, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; textarea?: boolean; type?: string; placeholder?: string }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs font-semibold text-[var(--ui-text-muted)]">{label}</span>
       {textarea ? (
         <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all resize-none" />
       ) : (
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all" />
+        <input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all" />
+      )}
+    </div>
+  );
+}
+
+
+function WebsiteRow({ website }: { website?: string | null }) {
+  return (
+    <div className="px-4 py-3">
+      <div className="flex flex-col gap-0.5 sm:hidden">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Company Website</span>
+        {website ? (
+          <a href={website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-orange-500 hover:underline break-all">
+            <Globe size={13} /> {website}
+          </a>
+        ) : <span className="text-sm text-[var(--ui-text-primary)]">—</span>}
+      </div>
+      <div className="hidden sm:flex items-center justify-between gap-4">
+        <span className="text-sm font-semibold text-[var(--ui-text-muted)] flex-shrink-0 w-2/5">Company Website</span>
+        {website ? (
+          <a href={website} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 text-right text-sm text-orange-500 hover:underline">
+            <Globe size={13} className="shrink-0" /> <span className="truncate">{website}</span>
+          </a>
+        ) : <span className="text-sm text-[var(--ui-text-primary)]">—</span>}
+      </div>
+    </div>
+  );
+}
+
+function NpwpField({
+  value,
+  country,
+  verification,
+  onChange,
+  onVerify,
+}: {
+  value: string;
+  country: string;
+  verification: { state: "idle" | "loading" | "valid" | "invalid"; message: string | null; taxpayerName: string | null };
+  onChange: (value: string) => void;
+  onVerify: () => void;
+}) {
+  const unavailable = country !== "ID" && country !== "INDONESIA";
+  const resultClass = verification.state === "valid" ? "text-emerald-500" : "text-red-500";
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-[var(--ui-text-muted)]">Tax ID (NPWP)</span>
+        <span className="text-[10px] text-[var(--ui-text-muted)]">Pajak Express VSWP</span>
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={value || ""}
+          inputMode="numeric"
+          onChange={event => onChange(event.target.value)}
+          className="min-w-0 flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all"
+        />
+        <button
+          type="button"
+          onClick={onVerify}
+          disabled={unavailable || verification.state === "loading" || !value?.trim()}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-orange-500 px-3 py-2 text-xs font-semibold text-orange-500 hover:bg-orange-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {verification.state === "loading" ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
+          Validasi
+        </button>
+      </div>
+      {unavailable && <p className="m-0 text-[11px] text-[var(--ui-text-muted)]">Validasi NPWP tersedia untuk perusahaan Indonesia.</p>}
+      {verification.state !== "idle" && verification.state !== "loading" && verification.message && (
+        <p className={`m-0 text-[11px] ${resultClass}`}>
+          {verification.state === "valid" ? "NPWP valid" : "Validasi gagal"}: {verification.message}
+          {verification.taxpayerName ? ` · ${verification.taxpayerName}` : ""}
+        </p>
       )}
     </div>
   );

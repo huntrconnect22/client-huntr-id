@@ -12,8 +12,8 @@ export const registerCompany = (payload: Record<string, any>) =>
 export const updateCompany = (id: string | number, payload: Record<string, any>) =>
   apiPut(`/api/companies/${id}`, payload);
 
-export const verifyNpwp = (npwp: string) =>
-  apiPost("/api/companies/verify-npwp", { npwp });
+export const verifyNpwp = (npwp: string, country = "ID") =>
+  apiPost("/api/companies/verify-npwp", { npwp, country });
 
 export const uploadCompanyDocument = (fd: FormData) =>
   apiPostForm("/api/companies/documents/upload", fd);

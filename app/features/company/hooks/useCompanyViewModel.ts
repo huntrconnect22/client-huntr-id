@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { 
-  getMyCompanies, updateCompany, uploadCompanyLogo, 
+  getMyCompanies, updateCompany, uploadCompanyLogo, verifyNpwp,
   inviteUser, getTeamMembers, getCsrfCookie,
   uploadCompanyDocument, deleteCompanyDocument 
 } from "../../../lib/api";
@@ -60,6 +60,11 @@ export const useCompanyViewModel = () => {
   const [editForm, setEditForm] = useState<any>({});
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [updatingCompany, setUpdatingCompany] = useState(false);
+  const [npwpVerification, setNpwpVerification] = useState<{
+    state: "idle" | "loading" | "valid" | "invalid";
+    message: string | null;
+    taxpayerName: string | null;
+  }>({ state: "idle", message: null, taxpayerName: null });
 
   // Logo state
   const [logoUploading, setLogoUploading] = useState(false);
@@ -89,6 +94,7 @@ export const useCompanyViewModel = () => {
       country: found.country || "ID",
       email: found.email || "",
       phone: found.phone || "",
+      website: found.website || "",
       provincy_country: found.provincy_country || "Indonesia",
       region: found.region || "",
       regency: found.regency || "",
@@ -180,6 +186,54 @@ export const useCompanyViewModel = () => {
       setLogoError(err.message || "Failed to upload logo.");
     } finally {
       setLogoUploading(false);
+    }
+  };
+
+  const clearNpwpVerification = () => {
+    setNpwpVerification({ state: "idle", message: null, taxpayerName: null });
+  };
+
+  const handleVerifyNpwp = async () => {
+    const npwp = String(editForm.tax_id || "").replace(/[^0-9]/g, "");
+    if (npwp.length !== 15 && npwp.length !== 16) {
+      setNpwpVerification({
+        state: "invalid",
+        message: "Nomor NPWP harus terdiri dari 15 atau 16 digit.",
+        taxpayerName: null,
+      });
+      return;
+    }
+
+    setNpwpVerification({ state: "loading", message: null, taxpayerName: null });
+    try {
+      const result: any = await verifyNpwp(npwp, editForm.country || "ID");
+      if (Number(result?.status) !== 1 || !result?.data) {
+        throw new Error(result?.message || "NPWP tidak dapat diverifikasi.");
+      }
+
+      const data = result.data;
+      const taxpayerName = data.company_name || data.nama || null;
+      setNpwpVerification({
+        state: "valid",
+        message: result.message || "NPWP berhasil diverifikasi melalui Pajak Express.",
+        taxpayerName,
+      });
+      setEditForm((current: any) => ({
+        ...current,
+        tax_id: npwp,
+        name: current.name || taxpayerName || "",
+        address: current.address || data.alamat || "",
+        city: current.city || data.city || "",
+        regency: current.regency || data.regency || "",
+        provincy_country: current.provincy_country || data.provincy_country || "",
+        zip_code: current.zip_code || data.zip_code || "",
+      }));
+    } catch (error: any) {
+      setNpwpVerification({
+        state: "invalid",
+        message: error?.message || "NPWP tidak dapat diverifikasi saat ini.",
+        taxpayerName: null,
+      });
     }
   };
 
@@ -331,6 +385,7 @@ export const useCompanyViewModel = () => {
     user, company, loading, refreshing,
     companies, companyCapacity, selectedWorkspace, showCompanyWorkspace, setShowCompanyWorkspace, companyListLoading,
     isEditing, setIsEditing, editForm, setEditForm, updateError, updatingCompany, handleSaveCompany,
+    npwpVerification, handleVerifyNpwp, clearNpwpVerification,
     logoUploading, logoError, logoInputRef, handleLogoUpload,
     docUploading, docDeletingId, docError, docSuccess, handleUploadDocument, handleDeleteDocument,
     teamMembers, teamLoading, isInviting, inviteForm, setInviteForm, handleInviteUser, inviteError, inviteSuccess,
