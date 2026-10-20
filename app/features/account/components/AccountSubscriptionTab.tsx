@@ -35,6 +35,9 @@ export function AccountSubscriptionTab({
     total_tokens: number;
     total_cost_usd: number;
     month: string;
+    limit?: number;
+    remaining?: number;
+    plan_name?: string;
   } | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(false);
   const [subscriptionReady, setSubscriptionReady] = useState(false);
@@ -80,6 +83,9 @@ export function AccountSubscriptionTab({
   const numberLocale = locale === "en" ? "en-US" : "id-ID";
   const formatRupiah = (value: number) =>
     `Rp ${value.toLocaleString(numberLocale)}`;
+  const aiQuotaExhausted = Boolean(
+    usageData?.limit !== undefined && usageData.remaining !== undefined && usageData.remaining <= 0,
+  );
   const quotaPercent = subscription && subscription.gmv_limit > 0
     ? Math.min(
         100,
@@ -226,7 +232,7 @@ export function AccountSubscriptionTab({
               <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
                 {usageData?.total_requests?.toLocaleString(numberLocale) ?? 0}
                 <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">
-                  calls
+                  / {usageData?.limit?.toLocaleString(numberLocale) ?? "–"} request
                 </span>
               </div>
             </div>
@@ -249,12 +255,27 @@ export function AccountSubscriptionTab({
                 <ShieldCheck size={12} className="text-emerald-500" />{" "}
                 {t("settings.subscription.quotaStatus")}
               </span>
-              <div className="text-sm font-bold text-emerald-500 mt-1 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                {subscription?.enterprise_plan ? "Tersedia" : t("settings.subscription.trialUnlimited")}
+              <div className={`text-sm font-bold mt-1 flex items-center gap-1 ${aiQuotaExhausted ? "text-red-500" : "text-emerald-500"}`}>
+                <span className={`w-2 h-2 rounded-full inline-block ${aiQuotaExhausted ? "bg-red-500" : "bg-emerald-500"}`} />
+                {usageData?.limit !== undefined
+                  ? `${(usageData.remaining ?? 0).toLocaleString(numberLocale)} tersisa`
+                  : subscription?.enterprise_plan
+                    ? "Tersedia"
+                    : t("settings.subscription.trialUnlimited")}
               </div>
             </div>
           </div>
+          {usageData?.limit !== undefined && usageData.limit > 0 && (
+            <div className="mt-3">
+              <div className="mb-1 flex justify-between text-[11px] text-[var(--ui-text-muted)]">
+                <span>{usageData.plan_name ?? "Paket Enterprise"}</span>
+                <span>{Math.min(100, Math.round(((usageData.total_requests ?? 0) / usageData.limit) * 100))}% digunakan</span>
+              </div>
+              <div className="h-1.5 overflow-hidden bg-[var(--ui-border)]">
+                <div className="h-full bg-orange-500" style={{ width: `${Math.min(100, ((usageData.total_requests ?? 0) / usageData.limit) * 100)}%` }} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -116,6 +116,11 @@ export function EnterprisePlanOptions({
                     ? "WMS: hubungi kami"
                     : `WMS ${plan.warehouses} warehouse`}
                 </li>
+                <li>
+                  {plan.ai_requests_per_month === null
+                    ? "AI: hubungi kami"
+                    : `${plan.ai_requests_per_month.toLocaleString("id-ID")} request AI/bulan`}
+                </li>
               </ul>
               <button
                 type="button"

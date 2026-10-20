@@ -108,6 +108,7 @@ export function TermsContent({
                         {number(plan.tax_documents_per_year)} e-Faktur / tahun
                       </li>
                       <li>{number(plan.warehouses)} warehouse</li>
+                      <li>{number(plan.ai_requests_per_month)} request AI / bulan</li>
                       <li>Support: {plan.support ?? "—"}</li>
                     </ul>
                   </article>

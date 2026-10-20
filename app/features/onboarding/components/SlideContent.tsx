@@ -485,6 +485,10 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
                               <span className="font-semibold">{numberFormat(plan.warehouses)}</span>
                             </div>
                             <div className="flex items-center justify-between">
+                              <span className="text-[var(--ui-text-muted)]">AI:</span>
+                              <span className="font-semibold">{numberFormat(plan.ai_requests_per_month)} request/bulan</span>
+                            </div>
+                            <div className="flex items-center justify-between">
                               <span className="text-[var(--ui-text-muted)]">Dukungan:</span>
                               <span className="font-semibold truncate max-w-[90px]" title={plan.support}>{plan.support ?? "Standar"}</span>
                             </div>

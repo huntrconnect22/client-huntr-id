@@ -158,7 +158,7 @@ export default function PricingAnnouncement({
                       {plan.users ?? "–"} pengguna ·{" "}
                       {plan.tax_documents_per_year?.toLocaleString("id-ID") ??
                         "–"}{" "}
-                      e-Faktur / tahun · {plan.warehouses ?? "–"} warehouse · {plan.companies ?? "–"} company
+                      e-Faktur / tahun · {plan.warehouses ?? "–"} warehouse · {plan.ai_requests_per_month?.toLocaleString("id-ID") ?? "–"} request AI/bulan · {plan.companies ?? "–"} company
                     </p>
                     <p>Support: {plan.support || "–"}</p>
                   </div>

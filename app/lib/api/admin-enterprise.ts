@@ -10,6 +10,7 @@ export interface EnterprisePlanConfig {
   tax_documents_per_year: number;
   support: string;
   warehouses: number;
+  ai_requests_per_month: number;
 }
 export interface EnterpriseAddonConfig {
   key: string;

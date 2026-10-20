@@ -53,6 +53,16 @@ export interface PrConfig {
   warehouseId?: string;
 }
 
+function priceConfidenceLabel(confidence?: string): string | null {
+  const labels: Record<string, string> = {
+    high: "Keandalan tinggi",
+    medium: "Keandalan sedang",
+    low: "Keandalan rendah",
+    buyer_provided: "Anggaran dari buyer",
+  };
+  return labels[confidence || ""] || null;
+}
+
 function StatusBadgeInner({
   status,
   t,
@@ -68,6 +78,10 @@ function StatusBadgeInner({
     historical_reference: {
       label: t("agentic.prDraft.statusBadge.historical"),
       cls: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+    },
+    market_triangulated: {
+      label: "Harga tervalidasi",
+      cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
     },
     web_market_reference: {
       label: t("agentic.prDraft.statusBadge.webMarket"),
@@ -289,6 +303,13 @@ export default function AgenticPrDraftTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--ui-border)]">
+                  {!prDraft.suggested_items?.length && (
+                    <tr>
+                      <td colSpan={5} className="px-3 py-8 text-center text-[var(--ui-text-muted)]">
+                        Belum ada item dengan referensi harga yang dapat dimasukkan ke draft PR.
+                      </td>
+                    </tr>
+                  )}
                   {prDraft.suggested_items?.map((item: any, idx: number) => {
                     const price = item.estimated_price || 0;
                     const subtotal = (item.qty || 1) * price;
@@ -332,6 +353,11 @@ export default function AgenticPrDraftTab({
                           {item.price_note && (
                             <div className="text-[10px] text-blue-400/80 mt-0.5 italic">
                               {item.price_note}
+                            </div>
+                          )}
+                          {priceConfidenceLabel(item.price_confidence) && (
+                            <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
+                              {priceConfidenceLabel(item.price_confidence)}
                             </div>
                           )}
                           {webSources.length > 0 && (
@@ -510,6 +536,11 @@ export default function AgenticPrDraftTab({
                     {item.price_note && (
                       <p className="text-[10px] text-blue-400/80 italic">
                         {item.price_note}
+                      </p>
+                    )}
+                    {priceConfidenceLabel(item.price_confidence) && (
+                      <p className="text-[10px] text-[var(--ui-text-muted)]">
+                        {priceConfidenceLabel(item.price_confidence)}
                       </p>
                     )}
                     {webSources.length > 0 && (
@@ -795,7 +826,7 @@ export default function AgenticPrDraftTab({
             onClick={() =>
               onCreatePr({ department, tenderDays, attachments, warehouseId })
             }
-            disabled={isCreatingPr}
+            disabled={isCreatingPr || !(prDraft.suggested_items?.length > 0)}
             className="w-full mt-1 py-2.5 rounded-md bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
           >
             {isCreatingPr ? (

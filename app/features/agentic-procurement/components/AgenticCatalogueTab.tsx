@@ -1,4 +1,5 @@
 import React from "react";
+import { Link, useParams } from "react-router";
 import { Tag, Package } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -18,6 +19,9 @@ const formatRupiah = (val: number) =>
 
 export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabProps) {
   const { t } = useLanguage();
+  const { companySlug } = useParams();
+  const productDetailPath = (catalogueId: string) =>
+    `${companySlug ? `/${companySlug}` : ""}/marketplace/${catalogueId}`;
 
   if (!catalogues || catalogues.length === 0) {
     return (
@@ -44,9 +48,11 @@ export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabP
           const badgeClass = getScoreBadgeClass(score);
 
           return (
-            <div
+            <Link
               key={cat.id || idx}
-              className="p-3 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] hover:border-orange-500/30 transition-all flex flex-col justify-between gap-2 shadow-sm text-xs"
+              to={productDetailPath(cat.id)}
+              className="p-3 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] hover:border-orange-500/30 transition-all flex flex-col justify-between gap-2 shadow-sm text-xs no-underline"
+              aria-label={`Buka detail ${cat.name}`}
             >
               {/* Header: rank + score + category */}
               <div className="flex items-center justify-between gap-1">
@@ -108,7 +114,7 @@ export default function AgenticCatalogueTab({ catalogues }: AgenticCatalogueTabP
                   <span className="text-[10px] text-[var(--ui-text-muted)]">/{cat.uom || t("agentic.itemGenericUom")}</span>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

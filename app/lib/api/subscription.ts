@@ -8,6 +8,7 @@ export interface GmvSubscriptionSummary {
   is_trial?: boolean;
   scheduled_change?: { enterprise_plan: string; starts_at: string | null } | null;
   tax_quota?: { limit: number; used: number; ends_at: string } | null;
+  ai_quota?: { total_requests: number; total_tokens: number; total_cost_usd: number; month: string; limit: number; remaining: number; plan_name: string; period: string } | null;
   status: "active" | "renewal_required" | "expired" | string;
   overflow_strategy: "transaction_fee" | "renewal_required";
   upfront_fee: number;
@@ -44,6 +45,7 @@ export interface EnterprisePlan {
   tax_documents_per_year: number | null;
   support: string | null;
   warehouses: number | null;
+  ai_requests_per_month: number | null;
 }
 
 export interface EnterpriseAddon {

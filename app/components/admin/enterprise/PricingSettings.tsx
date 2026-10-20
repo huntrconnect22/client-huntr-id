@@ -62,6 +62,7 @@ export function PricingSettings() {
             tax_documents_per_year,
             support,
             warehouses,
+            ai_requests_per_month,
           }) => ({
             key,
             monthly_price,
@@ -71,6 +72,7 @@ export function PricingSettings() {
             tax_documents_per_year,
             support,
             warehouses,
+            ai_requests_per_month,
           }),
         ),
         addons: pricing.addons.map(({ key, price }) => ({ key, price })),
@@ -106,6 +108,7 @@ export function PricingSettings() {
     { key: "companies", label: "Company", min: 1 },
     { key: "tax_documents_per_year", label: "e-Faktur / tahun", min: 0 },
     { key: "warehouses", label: "Warehouse", min: 0 },
+    { key: "ai_requests_per_month", label: "Request AI / bulan", min: 0 },
   ];
   return (
     <div className="space-y-4">
