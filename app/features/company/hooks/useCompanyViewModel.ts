@@ -6,6 +6,13 @@ import {
   uploadCompanyDocument, deleteCompanyDocument 
 } from "../../../lib/api";
 
+interface CompanyCapacity {
+  used: number;
+  limit: number;
+  remaining: number;
+  plan_name: string;
+}
+
 export const useCompanyViewModel = () => {
   const navigate = useNavigate();
   const getInitialTab = () => {
@@ -43,6 +50,7 @@ export const useCompanyViewModel = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
+  const [companyCapacity, setCompanyCapacity] = useState<CompanyCapacity | null>(null);
   const [selectedWorkspace, setSelectedWorkspace] = useState<any>(null);
   const [showCompanyWorkspace, setShowCompanyWorkspace] = useState(false);
   const [companyListLoading, setCompanyListLoading] = useState(true);
@@ -103,6 +111,7 @@ export const useCompanyViewModel = () => {
       const data = await getMyCompanies();
       const list = data.companies || [];
       setCompanies(list);
+      setCompanyCapacity(data.company_capacity ?? null);
       if (activeId) {
         const current = list.find((c: any) => c.id === activeId);
         if (current) {
@@ -320,7 +329,7 @@ export const useCompanyViewModel = () => {
     navigate,
     activeTab, setActiveTab,
     user, company, loading, refreshing,
-    companies, selectedWorkspace, showCompanyWorkspace, setShowCompanyWorkspace, companyListLoading,
+    companies, companyCapacity, selectedWorkspace, showCompanyWorkspace, setShowCompanyWorkspace, companyListLoading,
     isEditing, setIsEditing, editForm, setEditForm, updateError, updatingCompany, handleSaveCompany,
     logoUploading, logoError, logoInputRef, handleLogoUpload,
     docUploading, docDeletingId, docError, docSuccess, handleUploadDocument, handleDeleteDocument,

@@ -40,6 +40,7 @@ export function AccountSubscriptionTab({
   const [subscriptionReady, setSubscriptionReady] = useState(false);
   const [subscription, setSubscription] =
     useState<GmvSubscriptionSummary | null>(null);
+  const [showUpgradeOptions, setShowUpgradeOptions] = useState(false);
 
   const fetchUsage = async () => {
     if (!activeCompany?.id) return;
@@ -64,6 +65,7 @@ export function AccountSubscriptionTab({
     let current = true;
     setSubscriptionReady(false);
     setSubscription(null);
+    setShowUpgradeOptions(false);
     if (!activeCompany?.id) return () => { current = false; };
 
     getCompanySubscription(activeCompany.id)
@@ -86,6 +88,64 @@ export function AccountSubscriptionTab({
           100,
       )
     : 0;
+
+  const enterpriseTrialActive = Boolean(
+    subscription?.is_trial &&
+      subscription.status === "active" &&
+      new Date(subscription.ends_at).getTime() > Date.now(),
+  );
+  const enterpriseTrialExpired = Boolean(
+    subscription?.is_trial && !enterpriseTrialActive,
+  );
+  const canManageSubscription =
+    user?.role === "manager" ||
+    String(activeCompany?.owner_id) === String(user?.id);
+  const hasActivePaidEnterprise = Boolean(
+    subscription?.enterprise_plan &&
+      !subscription.is_trial &&
+      subscription.status === "active" &&
+      new Date(subscription.ends_at).getTime() > Date.now(),
+  );
+  const hasScheduledUpgrade = Boolean(subscription?.scheduled_change);
+  const canOfferUpgrade =
+    hasActivePaidEnterprise &&
+    subscription?.enterprise_plan !== "enterprise_pro" &&
+    !hasScheduledUpgrade;
+  const canChooseEnterprisePlan =
+    subscriptionReady &&
+    activeCompany?.type === "buyer" &&
+    (!subscription?.enterprise_plan ||
+      (enterpriseTrialExpired && showUpgradeOptions) ||
+      (hasActivePaidEnterprise && showUpgradeOptions) ||
+      (!enterpriseTrialActive && !hasActivePaidEnterprise));
+
+  const openUpgradeOptions = () => {
+    setShowUpgradeOptions(true);
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("enterprise-upgrade-options")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const enterprisePlanSelector = canChooseEnterprisePlan ? (
+    <div id="enterprise-upgrade-options">
+      <EnterprisePlans
+        companyId={activeCompany.id}
+        subscriptionReady={subscriptionReady}
+        activePlan={
+          hasActivePaidEnterprise ? subscription?.enterprise_plan ?? null : null
+        }
+        canManage={canManageSubscription}
+        onPaid={() => {
+          window.dispatchEvent(new Event("huntr:subscription-updated"));
+          getCompanySubscription(activeCompany.id).then((response: any) =>
+            setSubscription(response?.subscription ?? null),
+          );
+        }}
+      />
+    </div>
+  ) : null;
 
   const handleContactSales = () => {
     Swal.fire({
@@ -133,16 +193,6 @@ export function AccountSubscriptionTab({
           {t("settings.subscription.subtitle")}
         </p>
       </div>
-
-      {activeCompany?.type === "buyer" && (
-        <EnterprisePlans
-          companyId={activeCompany.id}
-          subscriptionReady={subscriptionReady}
-          activePlan={subscription?.enterprise_plan && subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now() ? subscription.enterprise_plan : null}
-          canManage={user?.role === "manager" || String(activeCompany.owner_id) === String(user?.id)}
-          onPaid={() => { window.dispatchEvent(new Event("huntr:subscription-updated")); getCompanySubscription(activeCompany.id).then((response: any) => setSubscription(response?.subscription ?? null)); }}
-        />
-      )}
 
       {/* AI Usage Card Section */}
       <div className="space-y-3">
@@ -270,8 +320,39 @@ export function AccountSubscriptionTab({
 
       {subscription?.enterprise_plan ? (
         <div className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 text-sm">
-          <h3 className="m-0 font-bold">{({ enterprise_starter: "Enterprise Starter", enterprise_growth: "Enterprise Growth", enterprise_pro: "Enterprise Pro" } as Record<string, string>)[subscription.enterprise_plan] || subscription.enterprise_plan}</h3>
-          <p className="mb-0 mt-2 text-[var(--ui-text-muted)]">{subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now() ? "Aktif" : "Perlu diperpanjang"} · {subscription.billing_cycle === "annual" ? "Tahunan" : "Bulanan"} · Berlaku hingga {new Date(subscription.ends_at).toLocaleDateString(numberLocale)}</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="m-0 font-bold">
+                {subscription.is_trial
+                  ? "Trial Enterprise Pro"
+                  : ({ enterprise_starter: "Enterprise Starter", enterprise_growth: "Enterprise Growth", enterprise_pro: "Enterprise Pro" } as Record<string, string>)[subscription.enterprise_plan] || subscription.enterprise_plan}
+              </h3>
+              <p className="mb-0 mt-2 text-[var(--ui-text-muted)]">
+                {subscription.is_trial
+                  ? enterpriseTrialActive
+                    ? "Trial aktif"
+                    : "Trial telah berakhir"
+                  : subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now()
+                    ? "Aktif"
+                    : "Perlu diperpanjang"}
+                {" · "}Berlaku hingga {new Date(subscription.ends_at).toLocaleDateString(numberLocale)}
+              </p>
+            </div>
+            {(enterpriseTrialExpired || canOfferUpgrade) && canManageSubscription && (
+              <button
+                type="button"
+                onClick={openUpgradeOptions}
+                className="bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600"
+              >
+                Upgrade paket
+              </button>
+            )}
+          </div>
+          {subscription.scheduled_change && (
+            <p className="mb-0 mt-2 text-xs text-[var(--ui-text-muted)]">
+              Upgrade ke {({ enterprise_starter: "Enterprise Starter", enterprise_growth: "Enterprise Growth", enterprise_pro: "Enterprise Pro" } as Record<string, string>)[subscription.scheduled_change.enterprise_plan] || subscription.scheduled_change.enterprise_plan} berlaku mulai {subscription.scheduled_change.starts_at ? new Date(subscription.scheduled_change.starts_at).toLocaleDateString(numberLocale) : "akhir periode paket ini"}.
+            </p>
+          )}
           {subscription.tax_quota && <p className="mb-0 mt-2 text-[var(--ui-text-muted)]">e-Faktur: {subscription.tax_quota.used.toLocaleString(numberLocale)} / {subscription.tax_quota.limit.toLocaleString(numberLocale)} dokumen digunakan · Tahun paket berakhir {new Date(subscription.tax_quota.ends_at).toLocaleDateString(numberLocale)}</p>}
         </div>
       ) : <div className="space-y-3">
@@ -424,6 +505,8 @@ export function AccountSubscriptionTab({
           </div>
         </div>
       </div>}
+
+      {enterprisePlanSelector}
     </div>
   );
 }

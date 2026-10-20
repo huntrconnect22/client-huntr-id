@@ -52,8 +52,28 @@ export function EnterprisePlanOptions({
         </button>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
-        {catalog.plans.map((plan) => {
+        {catalog.plans.map((plan, index) => {
           const amount = annual ? plan.annual_price : plan.monthly_price;
+          const activeIndex = activePlan
+            ? catalog.plans.findIndex((item) => item.key === activePlan)
+            : -1;
+          const isCurrentPlan = activePlan === plan.key;
+          const canUpgrade = activeIndex >= 0 && index > activeIndex;
+          const unavailable = activeIndex >= 0 && !isCurrentPlan && !canUpgrade;
+          const disabled =
+            !catalog.checkout_enabled ||
+            !canManage ||
+            !subscriptionReady ||
+            amount === null ||
+            unavailable;
+          const buttonLabel = isCurrentPlan
+            ? "Kelola add-on"
+            : canUpgrade
+              ? "Upgrade paket"
+              : unavailable
+                ? "Paket lebih rendah"
+                : "Pilih paket";
+
           return (
             <article
               key={plan.key}
@@ -77,6 +97,11 @@ export function EnterprisePlanOptions({
                     : `${plan.users} pengguna`}
                 </li>
                 <li>
+                  {plan.companies === null
+                    ? "Company: hubungi kami"
+                    : `${plan.companies} company`}
+                </li>
+                <li>
                   {plan.tax_documents_per_year === null
                     ? "e-Faktur: hubungi kami"
                     : `${plan.tax_documents_per_year.toLocaleString("id-ID")} dokumen e-Faktur/tahun`}
@@ -94,17 +119,11 @@ export function EnterprisePlanOptions({
               </ul>
               <button
                 type="button"
-                disabled={
-                  !catalog.checkout_enabled ||
-                  !canManage ||
-                  !subscriptionReady ||
-                  amount === null ||
-                  (!!activePlan && activePlan !== plan.key)
-                }
+                disabled={disabled}
                 onClick={() =>
                   amount !== null &&
                   onSelect({
-                    purchase_type: "plan",
+                    purchase_type: isCurrentPlan ? "addon" : "plan",
                     key: plan.key,
                     name: plan.name,
                     billing_cycle: annual ? "annual" : "monthly",
@@ -113,11 +132,7 @@ export function EnterprisePlanOptions({
                 }
                 className="border border-orange-500 px-3 py-2 text-xs font-semibold text-orange-500 hover:bg-orange-500/5 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {!catalog.checkout_enabled
-                  ? "Checkout belum tersedia"
-                  : activePlan === plan.key
-                    ? "Kelola add-on"
-                    : "Pilih paket"}
+                {!catalog.checkout_enabled ? "Checkout belum tersedia" : buttonLabel}
               </button>
             </article>
           );

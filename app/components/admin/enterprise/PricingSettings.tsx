@@ -58,6 +58,7 @@ export function PricingSettings() {
             monthly_price,
             annual_price,
             users,
+            companies,
             tax_documents_per_year,
             support,
             warehouses,
@@ -66,6 +67,7 @@ export function PricingSettings() {
             monthly_price,
             annual_price,
             users,
+            companies,
             tax_documents_per_year,
             support,
             warehouses,
@@ -101,6 +103,7 @@ export function PricingSettings() {
     { key: "monthly_price", label: "Harga bulanan (Rp)", min: 1 },
     { key: "annual_price", label: "Harga tahunan (Rp)", min: 1 },
     { key: "users", label: "Pengguna", min: 1 },
+    { key: "companies", label: "Company", min: 1 },
     { key: "tax_documents_per_year", label: "e-Faktur / tahun", min: 0 },
     { key: "warehouses", label: "Warehouse", min: 0 },
   ];

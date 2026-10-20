@@ -79,13 +79,22 @@ export default function CompanyDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* Register new — as a ghost card */}
               <button
+                type="button"
+                disabled={vm.companyCapacity?.remaining === 0}
                 onClick={() => vm.navigate("/onboarding")}
-                className="text-left p-4 rounded-xl border border-dashed border-[var(--ui-border)] bg-transparent hover:border-orange-500/40 hover:bg-orange-500/3 transition-all flex flex-col items-center justify-center gap-2 min-h-[120px]"
+                className="text-left p-4 rounded-xl border border-dashed border-[var(--ui-border)] bg-transparent hover:border-orange-500/40 hover:bg-orange-500/3 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:border-[var(--ui-border)] disabled:hover:bg-transparent transition-all flex flex-col items-center justify-center gap-2 min-h-[120px]"
               >
                 <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center">
                   <Plus size={18} className="text-orange-500" />
                 </div>
-                <span className="text-sm font-semibold text-[var(--ui-text-muted)]">Register Company</span>
+                <span className="text-sm font-semibold text-[var(--ui-text-muted)]">
+                  {vm.companyCapacity?.remaining === 0 ? "Batas company paket tercapai" : "Register Company"}
+                </span>
+                {vm.companyCapacity && (
+                  <span className="text-[10px] text-[var(--ui-text-muted)]">
+                    {vm.companyCapacity.used} / {vm.companyCapacity.limit} company · {vm.companyCapacity.plan_name}
+                  </span>
+                )}
               </button>
 
               {vm.companies.map((c: any) => {

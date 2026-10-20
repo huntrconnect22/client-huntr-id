@@ -16,8 +16,8 @@ import ThemeToggle from "../components/ThemeToggle";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useLanguage } from "../context/LanguageContext";
 
-// --- Config: Express Onboarding (3 Ringkas + 1 Sukses) ---
-const TOTAL_SLIDES = 4;
+// --- Config: Express Onboarding ---
+const SUCCESS_SLIDE = 4;
 const STEP_ICONS = [
   { id: 1, icon: Building2,  color: "#f97316", label: "Profil Perusahaan" },
   { id: 2, icon: MapPin,     color: "#3b82f6", label: "Lokasi & Kontak" },
@@ -34,6 +34,8 @@ const STEP_ICONS = [
 export default function Onboarding() {
   const { t } = useLanguage();
   const vm = useOnboardingViewModel();
+  const isVendor = vm.formData.type === "vendor";
+  const completionSlide = isVendor ? 2 : 3;
   const pricing = useOnboardingPricing(vm.slide === 3 && vm.formData.type === "buyer");
   const navigate = useNavigate();
 
@@ -41,7 +43,12 @@ export default function Onboarding() {
     vm.setTermsAccepted(false); 
   }, [vm.slide, vm.formData.type]);
 
-  const stepMeta = STEP_ICONS;
+  const stepMeta = isVendor
+    ? STEP_ICONS.filter((step) => step.id !== 3)
+    : STEP_ICONS;
+  const activeStep = stepMeta.find((step) => step.id === vm.slide) ?? stepMeta.at(-1)!;
+  const activeStepIndex = stepMeta.findIndex((step) => step.id === vm.slide);
+  const progressPercent = ((activeStepIndex + 1) / stepMeta.length) * 100;
 
   /**
    * Local validation before moving to next slide.
@@ -57,7 +64,7 @@ export default function Onboarding() {
         return "Masukkan kota atau alamat operasional perusahaan Anda.";
       }
     }
-    if (vm.slide === 3 && !vm.termsAccepted) {
+    if (vm.slide === 3 && !isVendor && !vm.termsAccepted) {
       return "Anda harus menyetujui syarat & ketentuan layanan untuk mengaktifkan workspace.";
     }
     return null;
@@ -74,7 +81,7 @@ export default function Onboarding() {
     }
     
     vm.setError(null);
-    if (vm.slide === 3) {
+    if (vm.slide === completionSlide) {
       try {
         await vm.handleCompanySubmit();
       } catch (err: any) {
@@ -83,7 +90,7 @@ export default function Onboarding() {
       return;
     }
     
-    if (vm.slide < TOTAL_SLIDES) {
+    if (vm.slide < completionSlide) {
       vm.setSlide((p: number) => p + 1);
     }
   };
@@ -146,8 +153,8 @@ export default function Onboarding() {
           <div 
             className="h-1.5 transition-all duration-500" 
             style={{ 
-              background: `linear-gradient(90deg, ${stepMeta[Math.min(vm.slide - 1, 3)].color}, ${stepMeta[Math.min(vm.slide - 1, 3)].color}80)`,
-              width: `${(vm.slide / TOTAL_SLIDES) * 100}%` 
+              background: `linear-gradient(90deg, ${activeStep.color}, ${activeStep.color}80)`,
+              width: `${progressPercent}%`
             }} 
           />
           
@@ -167,7 +174,7 @@ export default function Onboarding() {
             />
 
             {/* Navigation Buttons (Only shown for steps 1 - 3) */}
-            {vm.slide < 4 && (
+            {vm.slide < SUCCESS_SLIDE && (
               <footer className="mt-8 pt-6 border-t border-[var(--ui-border)] flex items-center justify-between gap-4">
                 {vm.slide > 1 ? (
                   <button 
@@ -189,7 +196,7 @@ export default function Onboarding() {
                     <>
                       <Loader2 className="animate-spin" size={16} /> Menyiapkan Workspace…
                     </>
-                  ) : vm.slide === 3 ? (
+                  ) : vm.slide === completionSlide ? (
                     <>
                       Buat Workspace & Masuk <ChevronRight size={16} />
                     </>

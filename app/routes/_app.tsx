@@ -117,7 +117,13 @@ export default function AppShell() {
   const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
   const [wmsInstalled, setWmsInstalled] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [subscriptionAccess, setSubscriptionAccess] = useState<{ companyId: string; overdue: boolean; overdueSince: string | null } | null>(null);
+  const [subscriptionAccess, setSubscriptionAccess] = useState<{
+    companyId: string;
+    overdue: boolean;
+    overdueSince: string | null;
+    enterprisePlan: string | null;
+    isTrial: boolean;
+  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -131,7 +137,13 @@ export default function AppShell() {
       getSubscriptionAccess(companyId).then((response) => {
         if (!active || currentRequest !== requestId || !response || !("access" in response)) return;
         setHasActiveSubscription(response.access?.active_enterprise === true);
-        setSubscriptionAccess({ companyId, overdue: response.access?.overdue === true, overdueSince: response.access?.overdue_since ?? null });
+        setSubscriptionAccess({
+          companyId,
+          overdue: response.access?.overdue === true,
+          overdueSince: response.access?.overdue_since ?? null,
+          enterprisePlan: response.access?.enterprise_plan ?? null,
+          isTrial: response.access?.is_trial === true,
+        });
       }).catch(() => {});
     };
     const onVisible = () => { if (document.visibilityState === "visible") load(); };
@@ -676,6 +688,8 @@ export default function AppShell() {
         activeCompany={activeCompany}
         isBuyerComp={isBuyerComp}
         isVendorComp={isVendorComp}
+        enterprisePlan={subscriptionAccess?.enterprisePlan ?? null}
+        isTrialPlan={subscriptionAccess?.isTrial === true}
         roleSwitching={roleSwitching}
         switchingWorkspace={switchingWorkspace}
         counterpartBuyer={counterpartBuyer}

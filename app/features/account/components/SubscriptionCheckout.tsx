@@ -109,7 +109,8 @@ export function SubscriptionCheckout({
       const selectedAddons = addons
         .filter((addon) => (quantities[addon.key] || 0) > 0)
         .map((addon) => ({ key: addon.key, quantity: quantities[addon.key] }));
-      const data = activePlan
+      const isAddonPurchase = selected.purchase_type === "addon";
+      const data = isAddonPurchase
         ? {
             purchase_type: "addons",
             addons: selectedAddons,
@@ -277,10 +278,15 @@ export function SubscriptionCheckout({
                       ? "bulanan"
                       : "sekali bayar"}
                 </p>
-                {activePlan && (
+                {activePlan && selected.purchase_type === "addon" && (
                   <p className="text-xs text-[var(--ui-text-muted)]">
                     Paket ini sudah aktif. Pilih add-on yang ingin Anda beli;
                     paket tidak akan ditagih kembali.
+                  </p>
+                )}
+                {activePlan && selected.purchase_type === "plan" && (
+                  <p className="text-xs text-[var(--ui-text-muted)]">
+                    Upgrade berlaku setelah masa paket aktif saat ini berakhir.
                   </p>
                 )}
                 <CheckoutAddonSelector
@@ -294,7 +300,7 @@ export function SubscriptionCheckout({
                   }
                 />
                 <div className="space-y-1 border-t border-[var(--ui-border)] pt-3 text-xs">
-                  {!activePlan && (
+                  {selected.purchase_type === "plan" && (
                     <p className="flex justify-between gap-2">
                       <span>{selected.name}</span>
                       <strong>{formatRupiah(selected.unit_price)}</strong>
@@ -314,7 +320,7 @@ export function SubscriptionCheckout({
                     <span>Total pembayaran saat ini</span>
                     <strong>
                       {formatRupiah(
-                        (activePlan ? 0 : selected.unit_price) + addonTotal,
+                        (selected.purchase_type === "addon" ? 0 : selected.unit_price) + addonTotal,
                       )}
                     </strong>
                   </p>
@@ -339,7 +345,9 @@ export function SubscriptionCheckout({
                   type="button"
                   onClick={submit}
                   disabled={
-                    busy || (!!activePlan && selectedAddons.length === 0)
+                    busy ||
+                    (selected.purchase_type === "addon" &&
+                      selectedAddons.length === 0)
                   }
                   className="rounded bg-orange-600 px-4 py-2 text-xs font-semibold !text-white disabled:opacity-50"
                 >

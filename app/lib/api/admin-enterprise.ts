@@ -6,6 +6,7 @@ export interface EnterprisePlanConfig {
   monthly_price: number;
   annual_price: number;
   users: number;
+  companies: number;
   tax_documents_per_year: number;
   support: string;
   warehouses: number;

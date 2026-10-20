@@ -16,6 +16,7 @@ export default function SelectCompany() {
   const [user, setUser] = useState<any>(null);
   const [companies, setCompanies] = useState<any[]>([]);
   const [selected, setSelected] = useState<any>(null);
+  const [companyCapacity, setCompanyCapacity] = useState<{ used: number; limit: number; remaining: number; plan_name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function SelectCompany() {
         console.log("[SelectCompany] getMyCompanies response:", data);
         const list = Array.isArray(data?.companies) ? data.companies : Array.isArray(data) ? data : [];
         setCompanies(list);
+        setCompanyCapacity(data?.company_capacity ?? null);
         if (list.length > 0) setSelected(list[0]);
       })
       .catch((err) => {
@@ -46,7 +48,10 @@ export default function SelectCompany() {
     navigate(`/${slug}`);
   };
 
-  const handleRegisterNew = () => navigate("/onboarding");
+  const canRegisterNew = !companyCapacity || companyCapacity.remaining > 0;
+  const handleRegisterNew = () => {
+    if (canRegisterNew) navigate("/onboarding");
+  };
 
   const handleSignOut = () => { 
     SessionManager.clearAll();
@@ -230,11 +235,17 @@ export default function SelectCompany() {
                     {t("selectCompany.enterWorkspace")} <ArrowRight size={16} />
                   </button>
 
+                  {companyCapacity && (
+                    <p className="text-center text-[11px] text-[var(--ui-text-muted)]">
+                      {companyCapacity.used} / {companyCapacity.limit} company digunakan · {companyCapacity.plan_name}
+                    </p>
+                  )}
                   <button
                     onClick={handleRegisterNew}
-                    className="w-full py-2 bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] rounded-lg font-medium text-xs transition-all"
+                    disabled={!canRegisterNew}
+                    className="w-full py-2 bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] disabled:cursor-not-allowed disabled:opacity-55 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] rounded-lg font-medium text-xs transition-all"
                   >
-                    {t("selectCompany.registerAnother")}
+                    {canRegisterNew ? t("selectCompany.registerAnother") : "Batas company paket tercapai"}
                   </button>
                 </div>
               </>

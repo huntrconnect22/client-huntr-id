@@ -8,6 +8,8 @@ interface SidebarBottomSectionProps {
   activeCompany: any;
   isBuyerComp: boolean;
   isVendorComp: boolean;
+  enterprisePlan: string | null;
+  isTrialPlan: boolean;
   roleSwitching: boolean;
   switchingWorkspace: boolean;
   counterpartBuyer: any;
@@ -23,6 +25,8 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
   activeCompany,
   isBuyerComp,
   isVendorComp,
+  enterprisePlan,
+  isTrialPlan,
   roleSwitching,
   switchingWorkspace,
   counterpartBuyer,
@@ -36,6 +40,16 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
   const { t } = useLanguage();
 
   if (!activeCompany) return null;
+
+  const planLabel = enterprisePlan
+    ? isTrialPlan
+      ? "TRIAL ENTERPRISE PRO"
+      : ({
+          enterprise_starter: "ENTERPRISE STARTER",
+          enterprise_growth: "ENTERPRISE GROWTH",
+          enterprise_pro: "ENTERPRISE PRO",
+        }[enterprisePlan] ?? enterprisePlan.replace(/_/g, " ").toUpperCase())
+    : null;
 
   return (
     <div
@@ -181,6 +195,25 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
               >
                 {isBuyerComp ? "BUYER" : "VENDOR"}
               </span>
+              {planLabel && (
+                <span
+                  style={{
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    fontWeight: 800,
+                    fontSize: 8,
+                    background: isTrialPlan
+                      ? "rgba(245, 158, 11, 0.14)"
+                      : "rgba(16, 185, 129, 0.14)",
+                    color: isTrialPlan ? "#d97706" : "#059669",
+                    border: isTrialPlan
+                      ? "1px solid rgba(245, 158, 11, 0.28)"
+                      : "1px solid rgba(16, 185, 129, 0.28)",
+                  }}
+                >
+                  {planLabel}
+                </span>
+              )}
               {(activeCompany.formatted_tax_id || activeCompany.tax_id) && (
                 <span
                   style={{

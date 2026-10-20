@@ -5,6 +5,8 @@ export interface GmvSubscriptionSummary {
   plan: string;
   enterprise_plan?: string | null;
   billing_cycle?: string | null;
+  is_trial?: boolean;
+  scheduled_change?: { enterprise_plan: string; starts_at: string | null } | null;
   tax_quota?: { limit: number; used: number; ends_at: string } | null;
   status: "active" | "renewal_required" | "expired" | string;
   overflow_strategy: "transaction_fee" | "renewal_required";
@@ -20,8 +22,17 @@ export interface GmvSubscriptionSummary {
 export const getCompanySubscription = (companyId: string) =>
   apiGet(`/api/companies/${encodeURIComponent(companyId)}/subscription`);
 
+export interface SubscriptionAccess {
+  overdue: boolean;
+  overdue_since: string | null;
+  active_enterprise: boolean;
+  enterprise_plan: string | null;
+  is_trial: boolean;
+  ends_at: string | null;
+}
+
 export const getSubscriptionAccess = (companyId: string) =>
-  apiGet<{ access: { overdue: boolean; overdue_since: string | null; active_enterprise: boolean } }>(`/api/companies/${encodeURIComponent(companyId)}/subscription/access`);
+  apiGet<{ access: SubscriptionAccess }>(`/api/companies/${encodeURIComponent(companyId)}/subscription/access`);
 
 export interface EnterprisePlan {
   key: string;
@@ -29,6 +40,7 @@ export interface EnterprisePlan {
   monthly_price: number | null;
   annual_price: number | null;
   users: number | null;
+  companies: number | null;
   tax_documents_per_year: number | null;
   support: string | null;
   warehouses: number | null;
