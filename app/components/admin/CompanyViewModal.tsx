@@ -52,7 +52,7 @@ export default function CompanyViewModal({
   const TABS = [
     { key: "details" as const, label: "Detail Perusahaan", icon: <Building2 size={13} /> },
     { key: "imports" as const, label: "Data Import", icon: <Table size={13} /> },
-    { key: "subscription" as const, label: "Skema Langganan", icon: <TrendingUp size={13} /> },
+    { key: "subscription" as const, label: "Paket Enterprise", icon: <TrendingUp size={13} /> },
   ];
 
   return (

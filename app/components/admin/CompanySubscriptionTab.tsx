@@ -1,666 +1,204 @@
-import React, { useEffect, useState } from "react";
-import { AlertCircle, Calculator, Check, Loader2, Sparkles, TrendingUp } from "lucide-react";
-import { adminGetCompanySubscription, adminUpdateCompanySubscriptionScheme } from "../../lib/api";
-import { inp, lbl } from "./shared";
+import React, { useEffect, useMemo, useState } from "react";
+import { AlertCircle, Building2, CalendarDays, Check, Clock3, Loader2, ShieldCheck, Sparkles, Users, Warehouse } from "lucide-react";
+import { adminAssignCompanyEnterprisePlan, adminGetCompanySubscription, adminGrantCompanyEnterpriseTrial } from "../../lib/api";
 import type { Company } from "./shared";
 
-/* ─── Subscription Tab Component ──────────────────────────────────── */
-export default function SubscriptionTab({ company }: { company: Company }) {
-  const [subscription, setSubscription] = useState<any>(null);
-  const [planDetails, setPlanDetails] = useState<any>(null);
-  const [globalSettings, setGlobalSettings] = useState<any>(null);
-  const [historicalSummary, setHistoricalSummary] = useState<{ total_amount: number; total_pos: number }>({ total_amount: 0, total_pos: 0 });
+type EnterprisePlan = {
+  key: "enterprise_starter" | "enterprise_growth" | "enterprise_pro";
+  name: string;
+  monthly_price: number;
+  annual_price: number;
+  users: number;
+  companies: number;
+  tax_documents_per_year: number;
+  support: string;
+  warehouses: number;
+  ai_requests_per_month: number;
+};
 
+type Subscription = {
+  enterprise_plan?: string | null;
+  billing_cycle?: "monthly" | "annual" | "trial" | null;
+  is_trial?: boolean;
+  status?: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  tax_quota?: { limit: number; used: number } | null;
+  ai_quota?: { limit: number; total_requests: number; remaining: number } | null;
+};
+
+const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", {
+  style: "currency", currency: "IDR", maximumFractionDigits: 0,
+}).format(value);
+
+const formatDate = (value?: string | null) => value
+  ? new Date(value).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+  : "—";
+
+const planLabel = (key?: string | null) => key?.replace(/^enterprise_/, "Enterprise ").replaceAll("_", " ") ?? "Belum ada paket";
+
+export default function CompanySubscriptionTab({ company }: { company: Company }) {
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [plans, setPlans] = useState<EnterprisePlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<EnterprisePlan["key"]>("enterprise_starter");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  // Active form model: annual_upfront_po | saas_subscription | per_po
-  const [selectedPlan, setSelectedPlan] = useState<"annual_upfront_po" | "saas_subscription" | "per_po">("annual_upfront_po");
-
-  // Dynamic input fields
-  const [gmvLimit, setGmvLimit] = useState("");
-  const [feePercent, setFeePercent] = useState("1.5");
-  const [ppnPercent, setPpnPercent] = useState("11");
-  const [pph23Percent, setPph23Percent] = useState("2");
-  const [saasFee, setSaasFee] = useState("2500000");
-  const [saasCycle, setSaasCycle] = useState<"monthly" | "annual">("monthly");
-  const [strategy, setStrategy] = useState<"transaction_fee" | "renewal_required">("transaction_fee");
-  const [paymentVerified, setPaymentVerified] = useState(false);
-
-  // Simulation input for per PO
-  const [simulatedPo, setSimulatedPo] = useState("100000000");
-
-  const fmt = (val: number) =>
-    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
+  const [trialSaving, setTrialSaving] = useState(false);
+  const [hasEnterpriseHistory, setHasEnterpriseHistory] = useState(false);
+  const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
   const load = async () => {
     setLoading(true);
-    setMessage(null);
     try {
       const response = await adminGetCompanySubscription(company.id);
-      setSubscription(response?.subscription ?? null);
-      if (response?.plan_details) setPlanDetails(response.plan_details);
-      if (response?.global_settings) {
-        setGlobalSettings(response.global_settings);
-        setPpnPercent(String(response.global_settings.ppn_percent ?? 11));
-        setPph23Percent(String(response.global_settings.pph23_percent ?? 2));
-        setFeePercent(String(response.global_settings.fee_percent ?? 1.5));
-        setSaasFee(String(response.global_settings.saas_fee ?? 2500000));
-        setSaasCycle(response.global_settings.saas_cycle ?? "monthly");
-      }
-      if (response?.historical_summary) {
-        setHistoricalSummary(response.historical_summary);
-        if (response.historical_summary.total_amount > 0 && !gmvLimit) {
-          setGmvLimit(String(Math.round(response.historical_summary.total_amount)));
-        }
-      }
-
-      // Detect current plan
-      if (response?.subscription?.plan) {
-        const p = response.subscription.plan;
-        if (p === "saas_subscription") setSelectedPlan("saas_subscription");
-        else if (p === "per_po") setSelectedPlan("per_po");
-        else setSelectedPlan("annual_upfront_po");
+      const nextSubscription = response?.subscription ?? null;
+      const nextPlans = (response?.enterprise_catalog ?? []) as EnterprisePlan[];
+      setSubscription(nextSubscription);
+      setPlans(nextPlans);
+      setHasEnterpriseHistory(Boolean(response?.has_enterprise_history));
+      const currentPlan = nextSubscription?.enterprise_plan as EnterprisePlan["key"] | undefined;
+      if (currentPlan && nextPlans.some((plan) => plan.key === currentPlan)) setSelectedPlan(currentPlan);
+      if (nextSubscription?.billing_cycle === "monthly" || nextSubscription?.billing_cycle === "annual") {
+        setBillingCycle(nextSubscription.billing_cycle);
       }
     } catch (error: any) {
-      setMessage(error.message || "Gagal memuat data subscription.");
+      setMessage({ tone: "error", text: error.message || "Data paket perusahaan tidak dapat dimuat." });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, [company.id]);
+  useEffect(() => { void load(); }, [company.id]);
 
-  if (!loading && subscription?.enterprise_plan) {
-    return <div style={{ padding: 20, fontSize: 13, color: "var(--ui-text-primary)" }}>
-      <strong>{subscription.enterprise_plan.replace("enterprise_", "Enterprise ").replaceAll("_", " ")}</strong>
-      <p>Status: {subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now() ? "Aktif" : "Tidak aktif"}</p>
-      <p>Berlaku sampai: {new Date(subscription.ends_at).toLocaleDateString("id-ID")}</p>
-      <p style={{ color: "var(--ui-text-muted)" }}>Konfigurasi paket Enterprise dan monitoring tagihan tersedia di menu Subscription.</p>
-    </div>;
-  }
+  const selected = useMemo(() => plans.find((plan) => plan.key === selectedPlan), [plans, selectedPlan]);
 
-  if (company.type !== "buyer") {
-    return (
-      <div style={{ padding: 24, textAlign: "center", color: "var(--ui-text-muted)", fontSize: 13 }}>
-        <AlertCircle size={24} style={{ margin: "0 auto 8px", opacity: 0.5 }} />
-        Skema biaya langganan saat ini dikhususkan untuk perusahaan buyer.
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 36 }}>
-        <Loader2 className="animate-spin" size={26} color="var(--ui-primary)" />
-      </div>
-    );
-  }
-
-  // Live calculations based on current inputs
-  const numFeePercent = Number(feePercent) || 0;
-  const numPpnPercent = Number(ppnPercent) || 0;
-  const numPph23Percent = Number(pph23Percent) || 0;
-
-  // 1. Annual Upfront Calculation
-  const numGmvLimit = Number(gmvLimit) || 0;
-  const annualGrossUpfront = Math.round(numGmvLimit * (numFeePercent / 100));
-  const annualPpnAmount = Math.round(annualGrossUpfront * (numPpnPercent / 100));
-  const annualPph23Amount = Math.round(annualGrossUpfront * (numPph23Percent / 100));
-  const annualNetTotal = Math.round(annualGrossUpfront + annualPpnAmount - annualPph23Amount);
-
-  // 2. SaaS Calculation
-  const numSaasFee = Number(saasFee) || 0;
-  const saasPpnAmount = Math.round(numSaasFee * (numPpnPercent / 100));
-  const saasPph23Amount = Math.round(numSaasFee * (numPph23Percent / 100));
-  const saasNetTotal = Math.round(numSaasFee + saasPpnAmount - saasPph23Amount);
-
-  // 3. Per PO Simulation
-  const numSimPo = Number(simulatedPo) || 0;
-  const simGrossFee = Math.round(numSimPo * (numFeePercent / 100));
-  const simPpnAmount = Math.round(simGrossFee * (numPpnPercent / 100));
-  const simPph23Amount = Math.round(simGrossFee * (numPph23Percent / 100));
-  const simAdminBank = 4400;
-  const simTotalServiceFee = Math.round((simGrossFee + simPpnAmount) + simAdminBank - simPph23Amount);
-
-  const handleApplyScheme = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedPlan !== "per_po" && !paymentVerified) {
-      setMessage("Harap centang verifikasi pembayaran sebelum mengaktifkan skema.");
-      return;
-    }
-
+  const applyPlan = async () => {
     setSaving(true);
     setMessage(null);
     try {
-      const payload: any = {
-        plan: selectedPlan,
-        fee_percent: numFeePercent,
-        ppn_percent: numPpnPercent,
-        pph23_percent: numPph23Percent,
-        overflow_strategy: strategy,
-        payment_verified: paymentVerified,
-      };
-
-      if (selectedPlan === "annual_upfront_po") {
-        payload.gmv_limit = numGmvLimit;
-      } else if (selectedPlan === "saas_subscription") {
-        payload.saas_fee = numSaasFee;
-        payload.saas_cycle = saasCycle;
-      }
-
-      const res = await adminUpdateCompanySubscriptionScheme(company.id, payload);
-      setSubscription(res.subscription);
-      if (res.plan_details) setPlanDetails(res.plan_details);
-      setPaymentVerified(false);
-      setMessage("Skema langganan berhasil diterapkan untuk perusahaan ini.");
-    } catch (err: any) {
-      setMessage(err.message || "Gagal menerapkan skema langganan.");
+      const response = await adminAssignCompanyEnterprisePlan(company.id, {
+        enterprise_plan: selectedPlan,
+        billing_cycle: billingCycle,
+      });
+      setSubscription(response.subscription);
+      setMessage({ tone: "success", text: "Paket Enterprise telah diterapkan dan masa aktifnya dimulai hari ini." });
+    } catch (error: any) {
+      setMessage({ tone: "error", text: error.message || "Paket Enterprise gagal diterapkan." });
     } finally {
       setSaving(false);
     }
   };
 
+  const grantTrial = async () => {
+    setTrialSaving(true);
+    setMessage(null);
+    try {
+      const response = await adminGrantCompanyEnterpriseTrial(company.id);
+      setSubscription(response.subscription);
+      setHasEnterpriseHistory(true);
+      setSelectedPlan("enterprise_pro");
+      setMessage({ tone: "success", text: response.message || "Trial Enterprise Pro 14 hari berhasil diberikan." });
+    } catch (error: any) {
+      setMessage({ tone: "error", text: error.message || "Trial Enterprise gagal diberikan." });
+    } finally {
+      setTrialSaving(false);
+    }
+  };
+
+  if (company.type !== "buyer") {
+    return (
+      <div style={{ padding: 28, textAlign: "center", color: "var(--ui-text-muted)", fontSize: 13 }}>
+        <Building2 size={24} style={{ marginBottom: 8, opacity: .55 }} />
+        <div>Vendor tidak memerlukan paket Enterprise.</div>
+      </div>
+    );
+  }
+
+  if (loading) return <div style={{ display: "grid", placeItems: "center", padding: 40 }}><Loader2 className="animate-spin" size={24} color="var(--ui-primary)" /></div>;
+
+  const active = subscription?.status === "active" && (!subscription.ends_at || new Date(subscription.ends_at).getTime() > Date.now());
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Active Subscription Status Banner */}
-      {subscription ? (
-        <div style={{
-          padding: 16, borderRadius: 12,
-          background: subscription.status === "active" ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)",
-          border: `1px solid ${subscription.status === "active" ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)"}`,
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <span style={{
-              fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 6,
-              background: subscription.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
-              color: subscription.status === "active" ? "#10b981" : "#f59e0b",
-              textTransform: "uppercase", letterSpacing: "0.06em",
-            }}>
-              SKEMA AKTIF: {
-                subscription.plan === "saas_subscription" ? "SaaS Subscripting Flat" :
-                subscription.plan === "per_po" ? "Per PO (Transaction Fee)" :
-                "Annual Pembayaran di Muka"
-              }
-            </span>
-            <span style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>
-              Status: <b style={{ textTransform: "capitalize", color: subscription.status === "active" ? "#10b981" : "#f59e0b" }}>{subscription.status}</b>
-            </span>
+      <section style={{ border: "1px solid var(--ui-border)", background: "var(--ui-bg-input)", padding: 16, borderRadius: 10 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: active ? "#059669" : "var(--ui-text-muted)" }}>
+              <ShieldCheck size={14} /> {active ? "Paket aktif" : "Paket belum aktif"}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 5 }}>{planLabel(subscription?.enterprise_plan)}</div>
+            <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 3 }}>
+              {subscription?.is_trial ? "Masa trial" : subscription?.billing_cycle === "annual" ? "Tagihan tahunan" : "Tagihan bulanan"} · berakhir {formatDate(subscription?.ends_at)}
+            </div>
           </div>
-
-          {subscription.plan === "saas_subscription" ? (
-            <div style={{ fontSize: 12, color: "var(--ui-text-primary)", lineHeight: 1.6 }}>
-              <div>Biaya Langganan: <b>{fmt(subscription.upfront_fee)}</b> ({planDetails?.calculation?.saas_cycle === "annual" ? "Tahunan" : "Bulanan"})</div>
-              <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
-                ✓ Transaksi PO dibebaskan dari biaya platform fee.
-              </div>
-            </div>
-          ) : subscription.plan === "per_po" ? (
-            <div style={{ fontSize: 12, color: "var(--ui-text-primary)", lineHeight: 1.6 }}>
-              <div>Skema: <b>Pay-As-You-Go</b> per transaksi PO dibuat.</div>
-              <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
-                ✓ Tidak ada biaya kuota di muka. Biaya dihitung per invoice transaksi.
-              </div>
-            </div>
-          ) : (
-            <div style={{ fontSize: 12, color: "var(--ui-text-primary)", lineHeight: 1.6 }}>
-              <div>Realisasi GMV: <b>{fmt(subscription.current_realized_gmv)}</b> dari {fmt(subscription.gmv_limit)}</div>
-              <div>Sisa Kuota GMV: <b style={{ color: "#10b981" }}>{fmt(subscription.available_gmv)}</b></div>
-              {subscription.upfront_fee > 0 && (
-                <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
-                  Upfront Fee Tercatat: <b>{fmt(subscription.upfront_fee)}</b>
-                </div>
-              )}
-            </div>
-          )}
+          {subscription?.is_trial && <span style={{ color: "#9a6700", background: "#fff4cc", border: "1px solid #f0d481", borderRadius: 5, padding: "4px 7px", fontSize: 11, fontWeight: 750 }}>TRIAL</span>}
         </div>
-      ) : (
-        <div style={{
-          padding: 12, borderRadius: 10, background: "rgba(59,130,246,0.06)",
-          border: "1px solid rgba(59,130,246,0.2)", fontSize: 12, color: "var(--ui-text-secondary)",
-        }}>
-          Perusahaan ini belum memiliki skema langganan aktif. Silakan tentukan skema langganan di bawah ini.
-        </div>
-      )}
-
-      {/* 3 Model Perpindahan Biaya Langganan Selector */}
-      <div>
-        <label style={lbl}>Pilih Skema Biaya Langganan Perusahaan</label>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginTop: 8 }}>
-          {/* Option 1: Annual Upfront PO */}
-          <div
-            onClick={() => {
-              setSelectedPlan("annual_upfront_po");
-              if (globalSettings?.fee_percent) setFeePercent(String(globalSettings.fee_percent));
-            }}
-            style={{
-              padding: "12px 14px", borderRadius: 10, cursor: "pointer", transition: "all 0.15s",
-              border: selectedPlan === "annual_upfront_po" ? "2px solid #f59e0b" : "1px solid var(--ui-border)",
-              background: selectedPlan === "annual_upfront_po" ? "rgba(245,158,11,0.08)" : "var(--ui-bg-input)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 13, color: selectedPlan === "annual_upfront_po" ? "#f59e0b" : "var(--ui-text-primary)" }}>
-              <TrendingUp size={15} />
-              Annual Upfront
-            </div>
-            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4, lineHeight: 1.4 }}>
-              Bayar di muka sesuai total historical PO 1 tahun. Bebas fee platform per transaksi.
-            </div>
+        {active && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8, marginTop: 14 }}>
+            <Metric label="Mulai" value={formatDate(subscription?.starts_at)} icon={<CalendarDays size={13} />} />
+            <Metric label="e-Faktur" value={subscription.tax_quota ? `${subscription.tax_quota.used.toLocaleString("id-ID")} / ${subscription.tax_quota.limit.toLocaleString("id-ID")}` : "—"} icon={<Check size={13} />} />
+            <Metric label="AI bulan ini" value={subscription.ai_quota ? `${subscription.ai_quota.total_requests.toLocaleString("id-ID")} / ${subscription.ai_quota.limit.toLocaleString("id-ID")}` : "—"} icon={<Sparkles size={13} />} />
           </div>
+        )}
+      </section>
 
-          {/* Option 2: SaaS Subscription */}
-          <div
-            onClick={() => {
-              setSelectedPlan("saas_subscription");
-            }}
-            style={{
-              padding: "12px 14px", borderRadius: 10, cursor: "pointer", transition: "all 0.15s",
-              border: selectedPlan === "saas_subscription" ? "2px solid #3b82f6" : "1px solid var(--ui-border)",
-              background: selectedPlan === "saas_subscription" ? "rgba(59,130,246,0.08)" : "var(--ui-bg-input)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 13, color: selectedPlan === "saas_subscription" ? "#3b82f6" : "var(--ui-text-primary)" }}>
-              <Sparkles size={15} />
-              SaaS Flat Subscripting
-            </div>
-            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4, lineHeight: 1.4 }}>
-              Biaya tetap (flat fee) bulanan / tahunan. Transaksi PO tidak dipotong fee.
-            </div>
+      <section>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "end", marginBottom: 10, flexWrap: "wrap" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 14, color: "var(--ui-text-primary)" }}>Tetapkan paket Enterprise</h3>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ui-text-muted)" }}>Penetapan ini langsung mengganti paket atau trial yang sedang berjalan.</p>
           </div>
-
-          {/* Option 3: Per PO */}
-          <div
-            onClick={() => {
-              setSelectedPlan("per_po");
-              if (globalSettings?.per_po_rate) setFeePercent(String(globalSettings.per_po_rate));
-            }}
-            style={{
-              padding: "12px 14px", borderRadius: 10, cursor: "pointer", transition: "all 0.15s",
-              border: selectedPlan === "per_po" ? "2px solid #10b981" : "1px solid var(--ui-border)",
-              background: selectedPlan === "per_po" ? "rgba(16,185,129,0.08)" : "var(--ui-bg-input)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 13, color: selectedPlan === "per_po" ? "#10b981" : "var(--ui-text-primary)" }}>
-              <Calculator size={15} />
-              Per PO (Pay-As-You-Go)
-            </div>
-            <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4, lineHeight: 1.4 }}>
-              Tanpa biaya di muka. Dikenakan potongan biaya platform fee per transaksi PO.
-            </div>
+          <div style={{ display: "flex", border: "1px solid var(--ui-border)", borderRadius: 7, overflow: "hidden" }}>
+            {(["annual", "monthly"] as const).map((cycle) => (
+              <button key={cycle} type="button" onClick={() => setBillingCycle(cycle)} style={{ border: 0, cursor: "pointer", padding: "7px 10px", fontSize: 12, fontWeight: 700, color: billingCycle === cycle ? "#fff" : "var(--ui-text-secondary)", background: billingCycle === cycle ? "var(--ui-primary)" : "var(--ui-bg-card)" }}>
+                {cycle === "annual" ? "Tahunan" : "Bulanan"}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
 
-      <form onSubmit={handleApplyScheme} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {/* Dynamic Parameter Inputs for Model 1: Annual Upfront PO */}
-        {selectedPlan === "annual_upfront_po" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* Historical PO 1 Year Helper */}
-            {historicalSummary.total_amount > 0 && (
-              <div style={{
-                padding: "10px 14px", borderRadius: 8, background: "rgba(16,185,129,0.08)",
-                border: "1px solid rgba(16,185,129,0.25)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8,
-              }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: "#10b981" }}>HISTORICAL PO 1 TAHUN TERDETEKSI</div>
-                  <div style={{ fontSize: 12, color: "var(--ui-text-primary)", fontWeight: 600 }}>
-                    {historicalSummary.total_pos} PO • Total Nominal: <b>{fmt(historicalSummary.total_amount)}</b>
-                  </div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {plans.map((plan) => {
+            const isSelected = plan.key === selectedPlan;
+            const isCurrent = subscription?.enterprise_plan === plan.key && active;
+            const price = billingCycle === "annual" ? plan.annual_price : plan.monthly_price;
+            return (
+              <button key={plan.key} type="button" onClick={() => setSelectedPlan(plan.key)} style={{ textAlign: "left", border: `1px solid ${isSelected ? "var(--ui-primary)" : "var(--ui-border)"}`, borderRadius: 8, padding: 13, cursor: "pointer", background: isSelected ? "var(--ui-primary-muted)" : "var(--ui-bg-card)", color: "var(--ui-text-primary)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 12 }}>
+                  <div><div style={{ fontWeight: 800, fontSize: 14 }}>{plan.name}</div><div style={{ color: "var(--ui-text-muted)", fontSize: 12, marginTop: 3 }}>{formatCurrency(price)} / {billingCycle === "annual" ? "tahun" : "bulan"}</div></div>
+                  {isCurrent && <span style={{ color: "#047857", fontSize: 11, fontWeight: 800 }}>PAKET SAAT INI</span>}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setGmvLimit(String(Math.round(historicalSummary.total_amount)))}
-                  style={{
-                    padding: "6px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-                    background: "#10b981", color: "#fff", border: "none", cursor: "pointer",
-                  }}
-                >
-                  Gunakan Total Historical Ini
-                </button>
-              </div>
-            )}
-
-            <div>
-              <label style={lbl}>Kuota GMV Tahunan Dibayar di Muka (Rp)</label>
-              <input
-                value={gmvLimit}
-                onChange={(e) => setGmvLimit(e.target.value.replace(/[^0-9]/g, ""))}
-                inputMode="numeric"
-                placeholder="Contoh: 1000000000"
-                style={{ ...inp, width: "100%", marginTop: 4 }}
-                required
-              />
-            </div>
-
-            {/* Tax and Fee Percentages */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              <div>
-                <label style={lbl}>Rate Fee (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={feePercent}
-                  onChange={(e) => setFeePercent(e.target.value)}
-                  placeholder="1.5"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={lbl}>PPN (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={ppnPercent}
-                  onChange={(e) => setPpnPercent(e.target.value)}
-                  placeholder="11"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={lbl}>PPh 23 (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={pph23Percent}
-                  onChange={(e) => setPph23Percent(e.target.value)}
-                  placeholder="2"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={lbl}>Jika kuota GMV habis terlewati</label>
-              <select
-                value={strategy}
-                onChange={(e) => setStrategy(e.target.value as typeof strategy)}
-                style={{ ...inp, width: "100%", marginTop: 4 }}
-              >
-                <option value="transaction_fee">Kembali ke fee per transaksi PO</option>
-                <option value="renewal_required">Tahan transaksi, wajib renewal kontrak</option>
-              </select>
-            </div>
-
-            {/* Live Calculation Card */}
-            {numGmvLimit > 0 && (
-              <div style={{
-                padding: 14, borderRadius: 10, background: "var(--ui-bg-input)",
-                border: "1px solid var(--ui-border)", display: "flex", flexDirection: "column", gap: 6, fontSize: 12,
-              }}>
-                <div style={{ fontWeight: 800, color: "var(--ui-text-primary)", marginBottom: 4 }}>
-                  RINCIAN PERHITUNGAN BIAYA DIMUKA:
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginTop: 10, fontSize: 11, color: "var(--ui-text-secondary)" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Users size={12} /> {plan.users} pengguna</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Building2 size={12} /> {plan.companies} perusahaan</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Warehouse size={12} /> {plan.warehouses} warehouse</span>
+                  <span>{plan.tax_documents_per_year.toLocaleString("id-ID")} e-Faktur/tahun</span>
+                  <span>{plan.ai_requests_per_month.toLocaleString("id-ID")} AI/bulan</span>
+                  <span>{plan.support}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--ui-text-muted)" }}>DPP Kuota GMV:</span>
-                  <b>{fmt(numGmvLimit)}</b>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--ui-text-muted)" }}>Upfront Fee ({numFeePercent}%):</span>
-                  <b>{fmt(annualGrossUpfront)}</b>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#3b82f6" }}>
-                  <span>PPN Platform (+{numPpnPercent}%):</span>
-                  <b>+ {fmt(annualPpnAmount)}</b>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#ef4444" }}>
-                  <span>PPh 23 Potongan (-{numPph23Percent}%):</span>
-                  <b>- {fmt(annualPph23Amount)}</b>
-                </div>
-                <div style={{
-                  display: "flex", justifyContent: "space-between", paddingTop: 8, marginTop: 4,
-                  borderTop: "1px solid var(--ui-border)", fontSize: 14, fontWeight: 900, color: "#f59e0b",
-                }}>
-                  <span>Total Tagihan Upfront Bersih:</span>
-                  <span>{fmt(annualNetTotal)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-        {/* Dynamic Parameter Inputs for Model 2: SaaS Subscription */}
-        {selectedPlan === "saas_subscription" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
-              <div>
-                <label style={lbl}>Biaya Langganan Flat (Rp)</label>
-                <input
-                  value={saasFee}
-                  onChange={(e) => setSaasFee(e.target.value.replace(/[^0-9]/g, ""))}
-                  inputMode="numeric"
-                  placeholder="2500000"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
+      {message && <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 11px", fontSize: 12, borderRadius: 7, color: message.tone === "success" ? "#047857" : "#b42318", background: message.tone === "success" ? "#ecfdf3" : "#fef3f2", border: `1px solid ${message.tone === "success" ? "#a7f3d0" : "#fecdca"}` }}>{message.tone === "success" ? <Check size={14} /> : <AlertCircle size={14} />}{message.text}</div>}
 
-              <div>
-                <label style={lbl}>Siklus Tagihan</label>
-                <select
-                  value={saasCycle}
-                  onChange={(e) => setSaasCycle(e.target.value as any)}
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                >
-                  <option value="monthly">Bulanan</option>
-                  <option value="annual">Tahunan</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Taxes */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div>
-                <label style={lbl}>PPN (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={ppnPercent}
-                  onChange={(e) => setPpnPercent(e.target.value)}
-                  placeholder="11"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={lbl}>PPh 23 (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={pph23Percent}
-                  onChange={(e) => setPph23Percent(e.target.value)}
-                  placeholder="2"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Live Calculation Card */}
-            {numSaasFee > 0 && (
-              <div style={{
-                padding: 14, borderRadius: 10, background: "var(--ui-bg-input)",
-                border: "1px solid var(--ui-border)", display: "flex", flexDirection: "column", gap: 6, fontSize: 12,
-              }}>
-                <div style={{ fontWeight: 800, color: "var(--ui-text-primary)", marginBottom: 4 }}>
-                  RINCIAN PERHITUNGAN SAAS SUBSCRIPTION ({saasCycle === "annual" ? "TAHUNAN" : "BULANAN"}):
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--ui-text-muted)" }}>Biaya Pokok SaaS:</span>
-                  <b>{fmt(numSaasFee)}</b>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#3b82f6" }}>
-                  <span>PPN Platform (+{numPpnPercent}%):</span>
-                  <b>+ {fmt(saasPpnAmount)}</b>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#ef4444" }}>
-                  <span>PPh 23 Potongan (-{numPph23Percent}%):</span>
-                  <b>- {fmt(saasPph23Amount)}</b>
-                </div>
-                <div style={{
-                  display: "flex", justifyContent: "space-between", paddingTop: 8, marginTop: 4,
-                  borderTop: "1px solid var(--ui-border)", fontSize: 14, fontWeight: 900, color: "#3b82f6",
-                }}>
-                  <span>Total Tagihan SaaS Bersih:</span>
-                  <span>{fmt(saasNetTotal)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Dynamic Parameter Inputs for Model 3: Per PO */}
-        {selectedPlan === "per_po" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              <div>
-                <label style={lbl}>Platform Fee (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={feePercent}
-                  onChange={(e) => setFeePercent(e.target.value)}
-                  placeholder="2.0"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={lbl}>PPN Platform (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={ppnPercent}
-                  onChange={(e) => setPpnPercent(e.target.value)}
-                  placeholder="11"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={lbl}>PPh 23 (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={pph23Percent}
-                  onChange={(e) => setPph23Percent(e.target.value)}
-                  placeholder="2"
-                  style={{ ...inp, width: "100%", marginTop: 4 }}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Simulation of PO calculation */}
-            <div style={{
-              padding: 14, borderRadius: 10, background: "var(--ui-bg-input)",
-              border: "1px solid var(--ui-border)", display: "flex", flexDirection: "column", gap: 8, fontSize: 12,
-            }}>
-              <div style={{ fontWeight: 800, color: "var(--ui-text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
-                <Calculator size={14} color="#10b981" /> SIMULATOR BIAYA PER TRANSAKSI PO:
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--ui-text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Contoh Nilai PO Transaksi (Rp)</label>
-                <input
-                  value={simulatedPo}
-                  onChange={(e) => setSimulatedPo(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="100000000"
-                  style={{ ...inp, width: "100%", marginTop: 2, padding: "6px 10px", fontSize: 12 }}
-                />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "var(--ui-text-muted)" }}>Platform Fee ({numFeePercent}%):</span>
-                <b>{fmt(simGrossFee)}</b>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#3b82f6" }}>
-                <span>PPN Platform (+{numPpnPercent}%):</span>
-                <b>+ {fmt(simPpnAmount)}</b>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#ef4444" }}>
-                <span>PPh 23 Potongan (-{numPph23Percent}%):</span>
-                <b>- {fmt(simPph23Amount)}</b>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "var(--ui-text-muted)" }}>Admin Bank (Flat):</span>
-                <b>+ {fmt(simAdminBank)}</b>
-              </div>
-              <div style={{
-                display: "flex", justifyContent: "space-between", paddingTop: 6, marginTop: 2,
-                borderTop: "1px solid var(--ui-border)", fontSize: 13, fontWeight: 900, color: "#10b981",
-              }}>
-                <span>Total Biaya Layanan Invoice:</span>
-                <span>{fmt(simTotalServiceFee)}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Verification Checkbox */}
-        {selectedPlan !== "per_po" && (
-          <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12, color: "var(--ui-text-secondary)", cursor: "pointer", marginTop: 4 }}>
-            <input
-              type="checkbox"
-              checked={paymentVerified}
-              onChange={(e) => setPaymentVerified(e.target.checked)}
-              style={{ marginTop: 2 }}
-            />
-            Saya telah memverifikasi pembayaran / kesepakatan kontrak dari perusahaan ini.
-          </label>
-        )}
-
-        {message && (
-          <div style={{
-            fontSize: 12, padding: "10px 14px", borderRadius: 8,
-            background: message.includes("berhasil") ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-            border: message.includes("berhasil") ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(239,68,68,0.3)",
-            color: message.includes("berhasil") ? "#10b981" : "#ef4444",
-          }}>
-            {message}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={saving || (selectedPlan !== "per_po" && !paymentVerified)}
-          style={{
-            padding: "12px 16px", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer",
-            background: selectedPlan === "saas_subscription" ? "linear-gradient(135deg,#3b82f6,#1d4ed8)" :
-                        selectedPlan === "per_po" ? "linear-gradient(135deg,#10b981,#059669)" :
-                        "linear-gradient(135deg,#f59e0b,#ea580c)",
-            color: "#fff",
-            opacity: saving || (selectedPlan !== "per_po" && !paymentVerified) ? 0.55 : 1,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          }}
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-          {saving ? "Menyimpan Skema…" : "Terapkan & Simpan Skema Langganan"}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <button type="button" onClick={grantTrial} disabled={trialSaving || saving} style={{ border: "1px solid var(--ui-border-input)", borderRadius: 7, padding: "10px 12px", cursor: trialSaving ? "wait" : "pointer", background: "var(--ui-bg-card)", color: "var(--ui-text-primary)", fontWeight: 750, fontSize: 12, display: "inline-flex", gap: 7, alignItems: "center", opacity: trialSaving || saving ? .55 : 1 }}>
+          {trialSaving ? <Loader2 className="animate-spin" size={15} /> : <Clock3 size={15} />}
+          {trialSaving ? "Memberikan trial…" : hasEnterpriseHistory ? "Berikan retrial 14 hari" : "Mulai trial 14 hari"}
         </button>
-      </form>
+        <button type="button" onClick={applyPlan} disabled={saving || trialSaving || !selected} style={{ border: 0, borderRadius: 7, padding: "10px 14px", cursor: saving ? "wait" : "pointer", background: "var(--ui-primary)", color: "#fff", fontWeight: 800, fontSize: 12, display: "inline-flex", gap: 7, alignItems: "center", opacity: saving || trialSaving || !selected ? .55 : 1 }}>
+          {saving ? <Loader2 className="animate-spin" size={15} /> : <Check size={15} />}
+          {saving ? "Menerapkan paket…" : `Terapkan ${selected?.name ?? "paket"}`}
+        </button>
+      </div>
     </div>
   );
 }
 
+function Metric({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return <div style={{ padding: "8px 9px", border: "1px solid var(--ui-border)", borderRadius: 7, background: "var(--ui-bg-card)" }}><div style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--ui-text-muted)", fontSize: 10, fontWeight: 750, textTransform: "uppercase", letterSpacing: ".04em" }}>{icon}{label}</div><div style={{ marginTop: 3, color: "var(--ui-text-primary)", fontSize: 12, fontWeight: 750 }}>{value}</div></div>;
+}

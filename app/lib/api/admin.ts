@@ -29,6 +29,14 @@ export const adminAuditCompany = (id: string | number, payload: { action: "appro
 export const adminGetCompanySubscription = (companyId: string) =>
   apiGet(`/api/admin/companies/${companyId}/subscription`);
 
+export const adminAssignCompanyEnterprisePlan = (companyId: string, payload: {
+  enterprise_plan: "enterprise_starter" | "enterprise_growth" | "enterprise_pro";
+  billing_cycle: "monthly" | "annual";
+}) => apiPost(`/api/admin/companies/${companyId}/enterprise-plan`, payload);
+
+export const adminGrantCompanyEnterpriseTrial = (companyId: string) =>
+  apiPost(`/api/admin/companies/${companyId}/enterprise-trial`, {});
+
 export const adminActivateCompanySubscription = (companyId: string, payload: {
   gmv_limit: number;
   overflow_strategy: "transaction_fee" | "renewal_required";
