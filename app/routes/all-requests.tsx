@@ -7,11 +7,11 @@ import { useNavigate, useParams } from "react-router";
 // Check if an RFQ is expired or closed
 const isTenderExpired = (rfq: any): boolean => {
   if (!rfq) return false;
-  if (rfq.status === "closed" || rfq.status === "awarded") return true;
+  if (rfq.status === "closed" || rfq.status === "awarded" || rfq.status === "completed") return true;
   if (rfq.proposals?.some((p: any) => p.winner_status === "awarded" || p.winner_status === "approved")) {
     return true;
   }
-  if (rfq.status !== "active") return true;
+  if (rfq.status !== "active" && rfq.status !== "open") return true;
   
   const startDateStr = rfq.approved_at || rfq.created_at;
   if (!startDateStr) return false;
@@ -91,18 +91,40 @@ export default function AllRequests() {
 
   const fetchGlobalRequests = async () => {
     try {
-      // Fetch published global RFQs
+      // 1. First attempt: Public RFQs endpoint which natively returns all public tenders (active, closed, awarded) in production
+      const res = await apiGet(`/api/rfqs/public?per_page=100`);
+      const items = res?.data ?? (Array.isArray(res) ? res : []);
+      if (Array.isArray(items) && items.length > 0) {
+        const published = items.filter((r: any) =>
+          ["active", "awarded", "closed", "completed", "open"].includes(r.status)
+        );
+        if (published.length > 0) {
+          setRequests(published);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Public RFQs endpoint failed, falling back to authenticated endpoint", e);
+    }
+
+    try {
+      // 2. Fallback to /api/rfqs?status=all_published
       const res = await apiGet(`/api/rfqs?status=all_published`);
       const data = Array.isArray(res) ? res : (res?.data ?? []);
-      setRequests(data);
-    } catch {
-      // Fallback to active query if needed
-      try {
-        const res = await apiGet(`/api/rfqs?status=active`);
-        setRequests(Array.isArray(res) ? res : (res?.data ?? []));
-      } catch (err) {
-        console.error("Failed to fetch global RFQs", err);
+      if (Array.isArray(data) && data.length > 0) {
+        setRequests(data);
+        setLoading(false);
+        return;
       }
+    } catch {}
+
+    try {
+      // 3. Fallback to /api/rfqs?status=active
+      const res = await apiGet(`/api/rfqs?status=active`);
+      setRequests(Array.isArray(res) ? res : (res?.data ?? []));
+    } catch (err) {
+      console.error("Failed to fetch global RFQs", err);
     } finally {
       setLoading(false);
     }
