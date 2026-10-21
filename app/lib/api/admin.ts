@@ -37,6 +37,9 @@ export const adminAssignCompanyEnterprisePlan = (companyId: string, payload: {
 export const adminGrantCompanyEnterpriseTrial = (companyId: string) =>
   apiPost(`/api/admin/companies/${companyId}/enterprise-trial`, {});
 
+export const adminRevokeCompanyEnterpriseEntitlement = (companyId: string) =>
+  apiDelete(`/api/admin/companies/${companyId}/enterprise-entitlement`);
+
 export const adminActivateCompanySubscription = (companyId: string, payload: {
   gmv_limit: number;
   overflow_strategy: "transaction_fee" | "renewal_required";

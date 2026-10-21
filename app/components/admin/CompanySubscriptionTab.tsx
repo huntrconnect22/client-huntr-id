@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertCircle, Building2, CalendarDays, Check, Clock3, Loader2, ShieldCheck, Sparkles, Users, Warehouse } from "lucide-react";
-import { adminAssignCompanyEnterprisePlan, adminGetCompanySubscription, adminGrantCompanyEnterpriseTrial } from "../../lib/api";
+import Swal from "sweetalert2";
+import { AlertCircle, Building2, CalendarDays, Check, Clock3, Loader2, ShieldCheck, Sparkles, Users, Warehouse, XCircle } from "lucide-react";
+import { adminAssignCompanyEnterprisePlan, adminGetCompanySubscription, adminGrantCompanyEnterpriseTrial, adminRevokeCompanyEnterpriseEntitlement } from "../../lib/api";
 import type { Company } from "./shared";
 
 type EnterprisePlan = {
@@ -45,6 +46,7 @@ export default function CompanySubscriptionTab({ company }: { company: Company }
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [trialSaving, setTrialSaving] = useState(false);
+  const [revokeSaving, setRevokeSaving] = useState(false);
   const [hasEnterpriseHistory, setHasEnterpriseHistory] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
@@ -106,6 +108,31 @@ export default function CompanySubscriptionTab({ company }: { company: Company }
     }
   };
 
+  const revokeEntitlement = async () => {
+    const confirmation = await Swal.fire({
+      title: "Cabut hak paket Enterprise?",
+      text: "Akses Enterprise perusahaan ini akan berhenti sekarang. Riwayat subscription tetap tersimpan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Cabut hak paket",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#dc2626",
+    });
+    if (!confirmation.isConfirmed) return;
+
+    setRevokeSaving(true);
+    setMessage(null);
+    try {
+      const response = await adminRevokeCompanyEnterpriseEntitlement(company.id);
+      setSubscription(response.subscription);
+      setMessage({ tone: "success", text: response.message || "Hak paket Enterprise berhasil dicabut." });
+    } catch (error: any) {
+      setMessage({ tone: "error", text: error.message || "Hak paket Enterprise gagal dicabut." });
+    } finally {
+      setRevokeSaving(false);
+    }
+  };
+
   if (company.type !== "buyer") {
     return (
       <div style={{ padding: 28, textAlign: "center", color: "var(--ui-text-muted)", fontSize: 13 }}>
@@ -118,6 +145,7 @@ export default function CompanySubscriptionTab({ company }: { company: Company }
   if (loading) return <div style={{ display: "grid", placeItems: "center", padding: 40 }}><Loader2 className="animate-spin" size={24} color="var(--ui-primary)" /></div>;
 
   const active = subscription?.status === "active" && (!subscription.ends_at || new Date(subscription.ends_at).getTime() > Date.now());
+  const revoked = subscription?.status === "revoked";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -125,11 +153,11 @@ export default function CompanySubscriptionTab({ company }: { company: Company }
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: active ? "#059669" : "var(--ui-text-muted)" }}>
-              <ShieldCheck size={14} /> {active ? "Paket aktif" : "Paket belum aktif"}
+              <ShieldCheck size={14} /> {active ? "Paket aktif" : revoked ? "Hak paket dicabut" : "Paket belum aktif"}
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 5 }}>{planLabel(subscription?.enterprise_plan)}</div>
             <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 3 }}>
-              {subscription?.is_trial ? "Masa trial" : subscription?.billing_cycle === "annual" ? "Tagihan tahunan" : "Tagihan bulanan"} · berakhir {formatDate(subscription?.ends_at)}
+              {revoked ? "Dicabut oleh admin" : subscription?.is_trial ? "Masa trial" : subscription?.billing_cycle === "annual" ? "Tagihan tahunan" : "Tagihan bulanan"} · berakhir {formatDate(subscription?.ends_at)}
             </div>
           </div>
           {subscription?.is_trial && <span style={{ color: "#9a6700", background: "#fff4cc", border: "1px solid #f0d481", borderRadius: 5, padding: "4px 7px", fontSize: 11, fontWeight: 750 }}>TRIAL</span>}
@@ -186,11 +214,17 @@ export default function CompanySubscriptionTab({ company }: { company: Company }
       {message && <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 11px", fontSize: 12, borderRadius: 7, color: message.tone === "success" ? "#047857" : "#b42318", background: message.tone === "success" ? "#ecfdf3" : "#fef3f2", border: `1px solid ${message.tone === "success" ? "#a7f3d0" : "#fecdca"}` }}>{message.tone === "success" ? <Check size={14} /> : <AlertCircle size={14} />}{message.text}</div>}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <button type="button" onClick={grantTrial} disabled={trialSaving || saving} style={{ border: "1px solid var(--ui-border-input)", borderRadius: 7, padding: "10px 12px", cursor: trialSaving ? "wait" : "pointer", background: "var(--ui-bg-card)", color: "var(--ui-text-primary)", fontWeight: 750, fontSize: 12, display: "inline-flex", gap: 7, alignItems: "center", opacity: trialSaving || saving ? .55 : 1 }}>
-          {trialSaving ? <Loader2 className="animate-spin" size={15} /> : <Clock3 size={15} />}
-          {trialSaving ? "Memberikan trial…" : hasEnterpriseHistory ? "Berikan retrial 14 hari" : "Mulai trial 14 hari"}
-        </button>
-        <button type="button" onClick={applyPlan} disabled={saving || trialSaving || !selected} style={{ border: 0, borderRadius: 7, padding: "10px 14px", cursor: saving ? "wait" : "pointer", background: "var(--ui-primary)", color: "#fff", fontWeight: 800, fontSize: 12, display: "inline-flex", gap: 7, alignItems: "center", opacity: saving || trialSaving || !selected ? .55 : 1 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" onClick={grantTrial} disabled={trialSaving || saving || revokeSaving} style={{ border: "1px solid var(--ui-border-input)", borderRadius: 7, padding: "10px 12px", cursor: trialSaving ? "wait" : "pointer", background: "var(--ui-bg-card)", color: "var(--ui-text-primary)", fontWeight: 750, fontSize: 12, display: "inline-flex", gap: 7, alignItems: "center", opacity: trialSaving || saving || revokeSaving ? .55 : 1 }}>
+            {trialSaving ? <Loader2 className="animate-spin" size={15} /> : <Clock3 size={15} />}
+            {trialSaving ? "Memberikan trial…" : hasEnterpriseHistory ? "Berikan retrial 14 hari" : "Mulai trial 14 hari"}
+          </button>
+          {active && <button type="button" onClick={revokeEntitlement} disabled={saving || trialSaving || revokeSaving} style={{ border: "1px solid #fecaca", borderRadius: 7, padding: "10px 12px", cursor: revokeSaving ? "wait" : "pointer", background: "#fff", color: "#b42318", fontWeight: 750, fontSize: 12, display: "inline-flex", gap: 7, alignItems: "center", opacity: saving || trialSaving || revokeSaving ? .55 : 1 }}>
+            {revokeSaving ? <Loader2 className="animate-spin" size={15} /> : <XCircle size={15} />}
+            {revokeSaving ? "Mencabut hak…" : "Cabut hak paket"}
+          </button>}
+        </div>
+        <button type="button" onClick={applyPlan} disabled={saving || trialSaving || revokeSaving || !selected} style={{ border: 0, borderRadius: 7, padding: "10px 14px", cursor: saving ? "wait" : "pointer", background: "var(--ui-primary)", color: "#fff", fontWeight: 800, fontSize: 12, display: "inline-flex", gap: 7, alignItems: "center", opacity: saving || trialSaving || revokeSaving || !selected ? .55 : 1 }}>
           {saving ? <Loader2 className="animate-spin" size={15} /> : <Check size={15} />}
           {saving ? "Menerapkan paket…" : `Terapkan ${selected?.name ?? "paket"}`}
         </button>
