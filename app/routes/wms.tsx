@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import Layout from "../components/Layout";
+import { getAssetUrl } from "../lib/assets";
 import { WmsOverview, WmsWorkflowGuide } from "../components/wms/WmsOverview";
 import { RackManagement } from "../components/wms/RackManagement";
 import type { PickerItem } from "../components/wms/GenericPickerModal";
@@ -143,16 +144,26 @@ function PickerBrowseButton({
                   </div>
                 </>
               ) : (
-                <>
-                  <div className="truncate text-sm font-semibold">
-                    {selected.title}
-                  </div>
-                  {selected.subtitle && (
-                    <div className="mt-0.5 truncate text-xs text-[var(--ui-text-muted)]">
-                      {selected.subtitle}
-                    </div>
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  {selected.imageUrl && (
+                    <img
+                      src={selected.imageUrl}
+                      alt=""
+                      className="h-10 w-10 shrink-0 rounded-md border border-[var(--ui-border)] object-cover bg-[var(--ui-bg-input)]"
+                      onError={(event) => { event.currentTarget.style.display = "none"; }}
+                    />
                   )}
-                </>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">
+                      {selected.title}
+                    </div>
+                    {selected.subtitle && (
+                      <div className="mt-0.5 truncate text-xs text-[var(--ui-text-muted)]">
+                        {selected.subtitle}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
             <ChevronRight
@@ -643,6 +654,7 @@ export default function WmsPage() {
         title: item.name || String(item.item_code),
         subtitle: String(item.item_code),
         searchable: `${item.item_code} ${item.name ?? ""}`,
+        imageUrl: item.image_url || (item.image_path ? getAssetUrl(item.image_path) : null),
         meta: [
           {
             label: "SKU",

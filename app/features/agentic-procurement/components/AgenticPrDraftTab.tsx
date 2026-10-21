@@ -360,6 +360,16 @@ export default function AgenticPrDraftTab({
                               {priceConfidenceLabel(item.price_confidence)}
                             </div>
                           )}
+                          {item.metadata_source && (
+                            <a
+                              href={item.metadata_source}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 block truncate text-[10px] text-blue-400 hover:text-blue-300"
+                            >
+                              Metadata produk: {item.metadata_source_title || "lihat sumber"}
+                            </a>
+                          )}
                           {webSources.length > 0 && (
                             <div className="mt-1 flex flex-col gap-0.5">
                               {webSources.map(
@@ -542,6 +552,16 @@ export default function AgenticPrDraftTab({
                       <p className="text-[10px] text-[var(--ui-text-muted)]">
                         {priceConfidenceLabel(item.price_confidence)}
                       </p>
+                    )}
+                    {item.metadata_source && (
+                      <a
+                        href={item.metadata_source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block truncate text-[10px] text-blue-400 hover:text-blue-300"
+                      >
+                        Metadata produk: {item.metadata_source_title || "lihat sumber"}
+                      </a>
                     )}
                     {webSources.length > 0 && (
                       <div className="flex flex-col gap-0.5">

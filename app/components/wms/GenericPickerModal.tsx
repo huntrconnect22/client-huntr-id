@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Search, X } from "lucide-react";
+import { Check, Package, Search, X } from "lucide-react";
 
 export interface PickerItem {
   id: string;
@@ -8,6 +8,7 @@ export interface PickerItem {
   meta?: Array<{ label: string; value: string; tone?: "default" | "brand" | "success" | "muted" }>;
   tags?: string[];
   searchable?: string;
+  imageUrl?: string | null;
 }
 
 interface Props {
@@ -160,6 +161,18 @@ export function GenericPickerModal({
                       }
                     >
                       <div className="flex items-start justify-between gap-3">
+                        {item.imageUrl !== undefined && (item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-md border border-[var(--ui-border)] object-cover bg-[var(--ui-bg-input)]"
+                            onError={(event) => { event.currentTarget.style.display = "none"; }}
+                          />
+                        ) : (
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]">
+                            <Package size={16} />
+                          </span>
+                        ))}
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <p className="truncate text-sm font-semibold text-[var(--ui-text-primary)]">
