@@ -349,7 +349,7 @@ function IssueModal({ bast, company, onClose, onDone }: {
 }
 
 /* ─── UploadDJPModal ─────────────────────────────────────────────── */
-function UploadDJPModal({ efaktur, onClose, onDone }: { efaktur: EFaktur; onClose(): void; onDone(): void }) {
+function UploadDJPModal({ efaktur, onClose, onDone }: { efaktur: EFaktur; onClose(): void; onDone(simulated: boolean): void }) {
   const [tempat, setTempat] = useState("Jakarta");
   const [npwpNik, setNpwpNik] = useState("");
   const [loading, setLoading] = useState(false);
@@ -360,8 +360,8 @@ function UploadDJPModal({ efaktur, onClose, onDone }: { efaktur: EFaktur; onClos
     if (!npwpNik.trim()) { setError("NPWP/NIK wajib diisi."); return; }
     setLoading(true); setError(null);
     try {
-      await uploadEFaktur(efaktur.id, { tempat_penandatangan: tempat, npwp_nik_penandatangan: npwpNik });
-      onDone();
+      const result = await uploadEFaktur(efaktur.id, { tempat_penandatangan: tempat, npwp_nik_penandatangan: npwpNik });
+      onDone(Boolean(result.simulated));
     } catch (err: any) { setError(err.message || "Gagal upload ke DJP."); }
     finally { setLoading(false); }
   };
@@ -744,14 +744,14 @@ function VatOutTab({ company }: { company: any }) {
         <IssueModal bast={issueBast} company={company} onClose={() => setIssueBast(null)} onDone={() => { setIssueBast(null); setSubTab("list"); fetchData(1); }} />
       )}
       {uploadTarget && (
-        <UploadDJPModal efaktur={uploadTarget} onClose={() => setUploadTarget(null)} onDone={() => { setUploadTarget(null); fetchData(); Swal.fire({ icon: "success", title: "Berhasil!", text: "Faktur berhasil diupload ke DJP.", timer: 2000, showConfirmButton: false }); }} />
+        <UploadDJPModal efaktur={uploadTarget} onClose={() => setUploadTarget(null)} onDone={(simulated) => { setUploadTarget(null); fetchData(); Swal.fire({ icon: "success", title: simulated ? "Approval simulasi berhasil" : "Berhasil!", text: simulated ? "Faktur disetujui pada simulasi lokal. Verify Prepop dan PDF sudah dapat digunakan." : "Faktur berhasil diupload ke DJP.", timer: 2600, showConfirmButton: false }); }} />
       )}
     </div>
   );
 }
 
 /* ─── VatInTab ───────────────────────────────────────────────────── */
-function VatInTab() {
+function VatInTab({ company }: { company: any }) {
   const now = new Date();
   const [subTab, setSubTab] = useState<"list" | "prepop">("list");
   const [periode, setPeriode] = useState(`${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`);
@@ -771,7 +771,7 @@ function VatInTab() {
   const fetchList = useCallback(async (p = 1) => {
     setLoading(true);
     try {
-      const res = await getVatInList({ page: p, limit: 20, periode });
+      const res = await getVatInList({ company_id: company.id, page: p, limit: 20, periode });
       setVatInList(res.data || []);
       setTotal(res.metaPage?.totalRow || 0);
       const lp = Math.ceil((res.metaPage?.totalRow || 0) / 20) || 1;
@@ -779,14 +779,14 @@ function VatInTab() {
       setPage(p);
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
     finally { setLoading(false); }
-  }, [periode]);
+  }, [company.id, periode]);
 
   useEffect(() => { if (subTab === "list") fetchList(1); }, [subTab, fetchList]);
 
   const fetchPrepop = async () => {
     setPrepopLoading(true);
     try {
-      const res = await prepopulatedVatIn({ tahun_pajak: ppTahun, masa_pajak: ppMasa, npwp_penjual: ppNpwp, nomor_faktur: ppNofa });
+      const res = await prepopulatedVatIn({ company_id: company.id, tahun_pajak: ppTahun, masa_pajak: ppMasa, npwp_penjual: ppNpwp, nomor_faktur: ppNofa });
       setPrepopList(res.data?.dataFaktur || []);
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
     finally { setPrepopLoading(false); }
@@ -802,7 +802,7 @@ function VatInTab() {
     });
     if (!ok.isConfirmed) return;
     try {
-      await uploadVatIn({ nomor_faktur: item.TaxInvoiceNumber, masa_pajak: masaPajak, tahun_pajak: item.TaxInvoiceYear, konfirmasi_pengkreditan: 1 });
+      await uploadVatIn({ company_id: company.id, nomor_faktur: item.TaxInvoiceNumber, masa_pajak: masaPajak, tahun_pajak: item.TaxInvoiceYear, konfirmasi_pengkreditan: 1 });
       Swal.fire({ icon: "success", title: "Berhasil dikreditkan!", timer: 1800, showConfirmButton: false });
       fetchPrepop();
     } catch (err: any) { Swal.fire({ icon: "error", title: "Gagal", text: err.message }); }
@@ -984,7 +984,7 @@ export default function EFakturPage() {
           <VatOutTab company={company} />
         ) : isBuyer ? (
           /* ── BUYER: hanya lihat Faktur Masukan ── */
-          <VatInTab />
+          <VatInTab company={company} />
         ) : (
           /* ── Fallback: keduanya (admin / mixed) ── */
           <>
@@ -996,7 +996,7 @@ export default function EFakturPage() {
                 Faktur Masukan <span style={{ fontSize: 11, color: "var(--ui-text-muted)", marginLeft: 4 }}>VAT In</span>
               </Tab>
             </div>
-            {mainTab === "out" ? <VatOutTab company={company} /> : <VatInTab />}
+            {mainTab === "out" ? <VatOutTab company={company} /> : <VatInTab company={company} />}
           </>
         )}
       </div>

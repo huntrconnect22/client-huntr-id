@@ -134,7 +134,7 @@ export const getEFaktur = (id: string) =>
 export const uploadEFaktur = (id: string, payload: {
   tempat_penandatangan: string;
   npwp_nik_penandatangan: string;
-}) => apiPost<{ message: string; efaktur: EFaktur }>(`/api/efaktur/${id}/upload`, payload);
+}) => apiPost<{ message: string; efaktur: EFaktur; simulated?: boolean }>(`/api/efaktur/${id}/upload`, payload);
 
 /** Cancel faktur yang sudah APPROVED */
 export const cancelEFaktur = (id: string) =>
@@ -166,11 +166,13 @@ export const getVatOutList = (page = 1, limit = 20) =>
 
 /** List faktur masukan dari PajakExpress */
 export const getVatInList = (params: {
+  company_id?: string;
   page?: number;
   limit?: number;
   periode?: string;  // format: MM/YYYY
 }) => {
   const q = new URLSearchParams();
+  if (params.company_id) q.set("company_id", params.company_id);
   if (params.page)    q.set("page",    String(params.page));
   if (params.limit)   q.set("limit",   String(params.limit));
   if (params.periode) q.set("periode", params.periode);
@@ -179,6 +181,7 @@ export const getVatInList = (params: {
 
 /** Inquiry prepopulated faktur masukan dari DJP */
 export const prepopulatedVatIn = (payload: {
+  company_id?: string;
   tahun_pajak: string;
   masa_pajak: string;
   npwp_penjual?: string;
@@ -187,6 +190,7 @@ export const prepopulatedVatIn = (payload: {
 
 /** Konfirmasi pengkreditan faktur masukan */
 export const uploadVatIn = (payload: {
+  company_id?: string;
   nomor_faktur: string;
   masa_pajak: string;
   tahun_pajak: string;
