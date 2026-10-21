@@ -205,19 +205,25 @@ export default function RfqDetail() {
   const isTenderExpired = (): boolean => {
     if (!rfq) return false;
     if (rfq.status === "closed" || rfq.status === "awarded") return true;
-    if (rfq.status !== "active" || !rfq.approved_at) return false;
-    const duration = rfq.duration_days ?? 7;
-    const endsAt = new Date(rfq.approved_at);
+    if (rankings.some((r) => r.is_winner || r.proposal?.winner_status === "awarded" || r.proposal?.winner_status === "approved")) {
+      return true;
+    }
+    if (rfq.status !== "active") return true;
+    const startDateStr = rfq.approved_at || rfq.created_at;
+    if (!startDateStr) return false;
+    const duration = Number(rfq.duration_days) > 0 ? Number(rfq.duration_days) : 7;
+    const endsAt = new Date(startDateStr);
     endsAt.setDate(endsAt.getDate() + duration);
     return Date.now() > endsAt.getTime();
   };
 
   const getTenderSummary = (): string => {
-    const duration = rfq?.duration_days ?? 7;
-    if (rfq?.status === "awarded") return "Awarded";
-    if (rfq?.status === "closed") return "Closed";
-    if (rfq?.status === "active" && rfq.approved_at) {
-      const endsAt = new Date(rfq.approved_at);
+    const duration = Number(rfq?.duration_days) > 0 ? Number(rfq.duration_days) : 7;
+    if (rfq?.status === "awarded" || rankings.some((r) => r.is_winner || r.proposal?.winner_status === "awarded")) return "Awarded";
+    if (rfq?.status === "closed" || isTenderExpired()) return "Closed";
+    const startDateStr = rfq?.approved_at || rfq?.created_at;
+    if (rfq?.status === "active" && startDateStr) {
+      const endsAt = new Date(startDateStr);
       endsAt.setDate(endsAt.getDate() + duration);
       const diffMs = endsAt.getTime() - Date.now();
       if (diffMs <= 0) return "Closed";
@@ -236,7 +242,7 @@ export default function RfqDetail() {
   );
 
   const canSubmitProposal = (): boolean =>
-    Boolean(rfq && isVendor && rfq.status === "active" && rfq.approved_at && !isTenderExpired() && !hasAlreadySubmitted);
+    Boolean(rfq && isVendor && rfq.status === "active" && !isTenderExpired() && !hasAlreadySubmitted);
 
   const totalItems = rfq?.items?.reduce((sum: number, item: any) => sum + (item.qty || 0), 0) ?? 0;
   const lineItems = rfq?.items?.length ?? 0;

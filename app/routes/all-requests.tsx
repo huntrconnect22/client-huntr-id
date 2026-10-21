@@ -8,17 +8,26 @@ import { useNavigate, useParams } from "react-router";
 const isTenderExpired = (rfq: any): boolean => {
   if (!rfq) return false;
   if (rfq.status === "closed" || rfq.status === "awarded") return true;
-  if (rfq.status !== "active") return false;
-  if (!rfq.approved_at) return false;
-  const duration = rfq.duration_days ?? 7;
-  const endsAt = new Date(rfq.approved_at);
+  if (rfq.proposals?.some((p: any) => p.winner_status === "awarded" || p.winner_status === "approved")) {
+    return true;
+  }
+  if (rfq.status !== "active") return true;
+  
+  const startDateStr = rfq.approved_at || rfq.created_at;
+  if (!startDateStr) return false;
+  const duration = Number(rfq.duration_days) > 0 ? Number(rfq.duration_days) : 7;
+  const endsAt = new Date(startDateStr);
   endsAt.setDate(endsAt.getDate() + duration);
   return Date.now() > endsAt.getTime();
 };
 
 const getStatusInfo = (rfq: any) => {
   const expired = isTenderExpired(rfq);
-  if (rfq.status === "awarded") {
+  const isAwarded =
+    rfq.status === "awarded" ||
+    rfq.proposals?.some((p: any) => p.winner_status === "awarded" || p.winner_status === "approved");
+
+  if (isAwarded) {
     return {
       label: "Awarded",
       badgeBg: "rgba(168, 85, 247, 0.12)",
@@ -40,9 +49,10 @@ const getStatusInfo = (rfq: any) => {
   }
 
   let timeRemaining = "Tender Aktif";
-  if (rfq.approved_at) {
-    const duration = rfq.duration_days ?? 7;
-    const endsAt = new Date(rfq.approved_at);
+  const startDateStr = rfq.approved_at || rfq.created_at;
+  if (startDateStr) {
+    const duration = Number(rfq.duration_days) > 0 ? Number(rfq.duration_days) : 7;
+    const endsAt = new Date(startDateStr);
     endsAt.setDate(endsAt.getDate() + duration);
     const diffMs = endsAt.getTime() - Date.now();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
