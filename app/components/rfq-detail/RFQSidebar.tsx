@@ -78,10 +78,10 @@ export function RFQSidebar({
           </div>
         )}
 
-        {isVendor && expired && (
+        {isVendor && (expired || rfq?.status === "closed" || rfq?.status === "awarded") && (
           <div className="mt-3 flex items-center gap-2 px-2.5 py-2 rounded-lg border border-red-500/25 bg-red-500/10 text-red-400 text-xs font-semibold">
             <AlertTriangle size={13} />
-            {t("rfqDetail.sidebar.tenderEnded")}
+            {rfq?.status === "awarded" ? "Tender Selesai (Pemenang Ditetapkan)" : t("rfqDetail.sidebar.tenderEnded")}
           </div>
         )}
 

@@ -1,14 +1,76 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { apiGet } from "../lib/api";
-import { Trophy, Globe, Search, Filter, Calendar, Building2, Package, ChevronRight, Loader2, Lightbulb, Info } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Globe, Search, Filter, Calendar, Package, ChevronRight, Loader2, Lightbulb, Clock } from "lucide-react";
+import { useNavigate, useParams } from "react-router";
+
+// Check if an RFQ is expired or closed
+const isTenderExpired = (rfq: any): boolean => {
+  if (!rfq) return false;
+  if (rfq.status === "closed" || rfq.status === "awarded") return true;
+  if (rfq.status !== "active") return false;
+  if (!rfq.approved_at) return false;
+  const duration = rfq.duration_days ?? 7;
+  const endsAt = new Date(rfq.approved_at);
+  endsAt.setDate(endsAt.getDate() + duration);
+  return Date.now() > endsAt.getTime();
+};
+
+const getStatusInfo = (rfq: any) => {
+  const expired = isTenderExpired(rfq);
+  if (rfq.status === "awarded") {
+    return {
+      label: "Awarded",
+      badgeBg: "rgba(168, 85, 247, 0.12)",
+      badgeColor: "#a855f7",
+      dotBg: "#a855f7",
+      isClosed: true,
+      timeRemaining: "Pemenang Ditetapkan",
+    };
+  }
+  if (rfq.status === "closed" || expired) {
+    return {
+      label: "Closed",
+      badgeBg: "rgba(239, 68, 68, 0.12)",
+      badgeColor: "#ef4444",
+      dotBg: "#ef4444",
+      isClosed: true,
+      timeRemaining: "Tender Berakhir",
+    };
+  }
+
+  let timeRemaining = "Tender Aktif";
+  if (rfq.approved_at) {
+    const duration = rfq.duration_days ?? 7;
+    const endsAt = new Date(rfq.approved_at);
+    endsAt.setDate(endsAt.getDate() + duration);
+    const diffMs = endsAt.getTime() - Date.now();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours > 0 && diffHours < 24) {
+      timeRemaining = `Sisa ${diffHours} Jam`;
+    } else {
+      const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      timeRemaining = `Sisa ${daysLeft} Hari`;
+    }
+  }
+
+  return {
+    label: "Active RFQ",
+    badgeBg: "rgba(34, 197, 94, 0.12)",
+    badgeColor: "#22c55e",
+    dotBg: "#22c55e",
+    isClosed: false,
+    timeRemaining,
+  };
+};
 
 export default function AllRequests() {
   const navigate = useNavigate();
+  const { companySlug } = useParams<{ companySlug?: string }>();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">("all");
   const [activeCompany, setActiveCompany] = useState<any>(null);
 
   useEffect(() => {
@@ -19,20 +81,38 @@ export default function AllRequests() {
 
   const fetchGlobalRequests = async () => {
     try {
-      // Fetch all requests that are 'active' (published global RFQs)
-      const res = await apiGet(`/api/rfqs?status=active`);
-      setRequests(Array.isArray(res) ? res : (res?.data ?? []));
-    } catch (err) {
-      console.error("Failed to fetch global RFQs", err);
+      // Fetch published global RFQs
+      const res = await apiGet(`/api/rfqs?status=all_published`);
+      const data = Array.isArray(res) ? res : (res?.data ?? []);
+      setRequests(data);
+    } catch {
+      // Fallback to active query if needed
+      try {
+        const res = await apiGet(`/api/rfqs?status=active`);
+        setRequests(Array.isArray(res) ? res : (res?.data ?? []));
+      } catch (err) {
+        console.error("Failed to fetch global RFQs", err);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredRequests = requests.filter(r => 
-    r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.company?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const activeCount = requests.filter(r => !isTenderExpired(r)).length;
+  const closedCount = requests.filter(r => isTenderExpired(r)).length;
+
+  const filteredRequests = requests.filter(r => {
+    const matchesSearch =
+      r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.company?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    const expired = isTenderExpired(r);
+    if (statusFilter === "active") return !expired;
+    if (statusFilter === "closed") return expired;
+    return true;
+  });
 
   return (
     <Layout title="All Requests" subtitle="Browse active global RFQs and tenders published by organizations.">
@@ -57,7 +137,7 @@ export default function AllRequests() {
               </p>
             </div>
             <button 
-              onClick={() => navigate("/marketplace")}
+              onClick={() => navigate(companySlug ? `/${companySlug}/marketplace` : "/marketplace")}
               style={{
                 padding: "8px 16px", borderRadius: 8, background: "#f59e0b", border: "none", color: "#fff",
                 fontWeight: 700, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.3s ease"
@@ -68,29 +148,87 @@ export default function AllRequests() {
           </div>
         )}
 
-        {/* Search & Filter */}
-        <div className="huntr-toolbar">
-          <div className="huntr-toolbar-search">
-            <Globe style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ui-text-muted)", transition: "color 0.3s ease" }} size={18} />
-            <input 
-              type="text" 
-              placeholder="Search active tenders by title, item, or company..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              style={{
-                width: "100%", padding: "10px 12px 10px 38px", borderRadius: 8,
-                background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)",
-                color: "var(--ui-text-primary)", outline: "none", fontSize: 14, transition: "all 0.3s ease",
-              }}
-            />
+        {/* Search & Status Filter Tabs */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+          <div className="huntr-toolbar" style={{ marginBottom: 0 }}>
+            <div className="huntr-toolbar-search">
+              <Globe style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ui-text-muted)", transition: "color 0.3s ease" }} size={18} />
+              <input 
+                type="text" 
+                placeholder="Search active tenders by title, item, or company..." 
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{
+                  width: "100%", padding: "10px 12px 10px 38px", borderRadius: 8,
+                  background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)",
+                  color: "var(--ui-text-primary)", outline: "none", fontSize: 14, transition: "all 0.3s ease",
+                }}
+              />
+            </div>
           </div>
-          <button style={{
-            padding: "0 18px", borderRadius: 8, background: "var(--ui-bg-input)",
-            border: "1px solid var(--ui-border-input)", color: "var(--ui-text-secondary)", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: 8, fontSize: 14, transition: "all 0.3s ease",
-          }}>
-            <Filter size={16} /> Filters
-          </button>
+
+          {/* Status Tabs */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                border: statusFilter === "all" ? "1px solid #f97316" : "1px solid var(--ui-border)",
+                background: statusFilter === "all" ? "#f97316" : "var(--ui-bg-input)",
+                color: statusFilter === "all" ? "#fff" : "var(--ui-text-secondary)",
+              }}
+            >
+              Semua ({requests.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("active")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                border: statusFilter === "active" ? "1px solid #22c55e" : "1px solid var(--ui-border)",
+                background: statusFilter === "active" ? "#22c55e" : "var(--ui-bg-input)",
+                color: statusFilter === "active" ? "#fff" : "var(--ui-text-secondary)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusFilter === "active" ? "#fff" : "#22c55e" }} />
+              Active RFQ ({activeCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("closed")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                border: statusFilter === "closed" ? "1px solid #ef4444" : "1px solid var(--ui-border)",
+                background: statusFilter === "closed" ? "#ef4444" : "var(--ui-bg-input)",
+                color: statusFilter === "closed" ? "#fff" : "var(--ui-text-secondary)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusFilter === "closed" ? "#fff" : "#ef4444" }} />
+              Closed / Berakhir ({closedCount})
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -100,7 +238,9 @@ export default function AllRequests() {
         ) : filteredRequests.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", color: "var(--ui-text-muted)", transition: "color 0.3s ease" }}>
             <Search size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
-            <h3 style={{ margin: 0, fontSize: 14, color: "var(--ui-text-primary)", transition: "color 0.3s ease" }}>No active requests found</h3>
+            <h3 style={{ margin: 0, fontSize: 14, color: "var(--ui-text-primary)", transition: "color 0.3s ease" }}>
+              {statusFilter === "active" ? "Tidak ada RFQ aktif" : statusFilter === "closed" ? "Tidak ada RFQ yang ditutup" : "No requests found"}
+            </h3>
             <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ui-text-secondary)", transition: "color 0.3s ease" }}>Try adjusting your filters or check back later.</p>
           </div>
         ) : (
@@ -112,6 +252,8 @@ export default function AllRequests() {
                 month: "long",
                 year: "numeric"
               });
+              const statusInfo = getStatusInfo(req);
+              const targetUrl = companySlug ? `/${companySlug}/rfq/${req.id}` : `/rfq/${req.id}`;
               
               return (
                 <div key={req.id} style={{
@@ -153,13 +295,13 @@ export default function AllRequests() {
                         </div>
                       </div>
                     </div>
-                    {/* RFQ Code */}
+                    {/* RFQ Code & Dynamic Status */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                       <span style={{ 
-                        padding: "2px 6px", 
+                        padding: "2px 8px", 
                         borderRadius: 4, 
-                        background: "rgba(34,197,94,0.12)", 
-                        color: "#22c55e", 
+                        background: statusInfo.badgeBg, 
+                        color: statusInfo.badgeColor, 
                         fontSize: 10, 
                         fontWeight: 600, 
                         textTransform: "uppercase", 
@@ -168,7 +310,7 @@ export default function AllRequests() {
                         alignItems: "center",
                         gap: 4
                       }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} /> Active RFQ
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusInfo.dotBg }} /> {statusInfo.label}
                       </span>
                       <span style={{ fontSize: 11, color: "var(--ui-text-muted)", fontFamily: "monospace" }}>
                         #{String(req.id).substring(0, 8).toUpperCase()}
@@ -182,7 +324,9 @@ export default function AllRequests() {
                       {req.title}
                     </h3>
                     <p style={{ margin: 0, fontSize: 13, color: "var(--ui-text-secondary)", lineHeight: 1.6 }}>
-                      Requesting bids for product catalog items in this RFQ. Review details below to place a proposal offer.
+                      {statusInfo.isClosed
+                        ? "Tender untuk RFQ ini telah berakhir / ditutup. Anda dapat melihat rincian spesifikasi dan penawaran pemenang."
+                        : "Requesting bids for product catalog items in this RFQ. Review details below to place a proposal offer."}
                     </p>
                   </div>
 
@@ -206,18 +350,27 @@ export default function AllRequests() {
                         </div>
                       </div>
                     </div>
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+                      <Clock size={16} color={statusInfo.isClosed ? "#ef4444" : "#22c55e"} />
+                      <div>
+                        <div style={{ fontSize: 10, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Status / Sisa Waktu</div>
+                        <div style={{ fontSize: 13, color: statusInfo.isClosed ? "#ef4444" : "var(--ui-text-primary)", fontWeight: 700, marginTop: 1 }}>
+                          {statusInfo.timeRemaining}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Feed Footer Actions */}
                   <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--ui-border-subtle)", paddingTop: 16 }}>
                     <button 
-                      onClick={() => navigate(`/rfq/${req.id}`)}
+                      onClick={() => navigate(targetUrl)}
                       style={{
                         padding: "8px 16px", 
                         borderRadius: 8, 
-                        background: "linear-gradient(135deg,#f97316,#f59e0b)",
-                        border: "none", 
-                        color: "#fff", 
+                        background: statusInfo.isClosed ? "var(--ui-bg-input)" : "linear-gradient(135deg,#f97316,#f59e0b)",
+                        border: statusInfo.isClosed ? "1px solid var(--ui-border)" : "none", 
+                        color: statusInfo.isClosed ? "var(--ui-text-secondary)" : "#fff", 
                         fontWeight: 700, 
                         fontSize: 13,
                         cursor: "pointer", 
@@ -225,11 +378,11 @@ export default function AllRequests() {
                         alignItems: "center", 
                         justifyContent: "center", 
                         gap: 8, 
-                        boxShadow: "0 6px 14px rgba(249,115,22,0.2)",
+                        boxShadow: statusInfo.isClosed ? "none" : "0 6px 14px rgba(249,115,22,0.2)",
                         transition: "all 0.3s ease"
                       }}
                     >
-                      View Details & Bid <ChevronRight size={16} />
+                      {statusInfo.isClosed ? "View Details" : "View Details & Bid"} <ChevronRight size={16} />
                     </button>
                   </div>
                 </div>

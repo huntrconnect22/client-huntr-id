@@ -203,7 +203,9 @@ export default function RfqDetail() {
   });
 
   const isTenderExpired = (): boolean => {
-    if (!rfq || rfq.status !== "active" || !rfq.approved_at) return false;
+    if (!rfq) return false;
+    if (rfq.status === "closed" || rfq.status === "awarded") return true;
+    if (rfq.status !== "active" || !rfq.approved_at) return false;
     const duration = rfq.duration_days ?? 7;
     const endsAt = new Date(rfq.approved_at);
     endsAt.setDate(endsAt.getDate() + duration);
@@ -212,6 +214,8 @@ export default function RfqDetail() {
 
   const getTenderSummary = (): string => {
     const duration = rfq?.duration_days ?? 7;
+    if (rfq?.status === "awarded") return "Awarded";
+    if (rfq?.status === "closed") return "Closed";
     if (rfq?.status === "active" && rfq.approved_at) {
       const endsAt = new Date(rfq.approved_at);
       endsAt.setDate(endsAt.getDate() + duration);

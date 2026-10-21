@@ -46,16 +46,23 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
           <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
             #{prShort}
           </span>
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${
-              expired
-                ? "bg-red-500/10 text-red-400"
-                : "bg-emerald-500/10 text-emerald-500"
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${expired ? "bg-red-400" : "bg-emerald-500"}`} />
-            {expired ? t("rfqDetail.header.expired") : t("rfqDetail.header.active")}
-          </span>
+          {rfq?.status === "awarded" ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              Awarded
+            </span>
+          ) : (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${
+                expired || rfq?.status === "closed"
+                  ? "bg-red-500/10 text-red-400"
+                  : "bg-emerald-500/10 text-emerald-500"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${expired || rfq?.status === "closed" ? "bg-red-400" : "bg-emerald-500"}`} />
+              {expired || rfq?.status === "closed" ? t("rfqDetail.header.expired") : t("rfqDetail.header.active")}
+            </span>
+          )}
 
           {/* Share Button */}
           <div className="relative">
