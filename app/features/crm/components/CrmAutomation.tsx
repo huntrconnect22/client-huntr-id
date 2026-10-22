@@ -3,6 +3,7 @@ import {
   BookOpen,
   CheckCircle2,
   Mail,
+  LoaderCircle,
   MessageSquare,
   Phone,
   Plus,
@@ -184,6 +185,16 @@ export function CrmAutomation({
                   className="h-44 w-44"
                 />
               </div>
+            </div>
+          )}
+
+          {whatsApp?.status === "initializing" && (
+            <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 text-xs text-sky-400 flex items-start gap-2">
+              <LoaderCircle size={15} className="mt-0.5 shrink-0 animate-spin" />
+              <span>
+                {whatsAppSettings.message ||
+                  "WhatsApp sedang memulihkan sesi aman. Tunggu sampai status menjadi Terhubung; QR tidak perlu dipindai ulang."}
+              </span>
             </div>
           )}
 

@@ -45,6 +45,7 @@ export function StatusBadge({
       "negotiation",
       "draft",
       "awaiting_scan",
+      "initializing",
       "medium",
     ].includes(val)
   ) {

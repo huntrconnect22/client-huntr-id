@@ -520,7 +520,10 @@ export function CrmWorkspace({
           onDisconnectWhatsApp={disconnectWhatsApp}
           onSyncEmailInbox={syncEmailInbox}
           onRefreshInbox={refreshInbox}
-          onOpenAutomation={() => setTab("automation")}
+          onOpenAutomation={() => {
+            setTab("automation");
+            void refresh();
+          }}
         />
       )}
 

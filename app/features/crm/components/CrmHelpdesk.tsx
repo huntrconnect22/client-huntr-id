@@ -8,10 +8,18 @@ import {
   dateTime,
   getInitials,
   input,
+  jsonValue,
 } from "../crm-utils";
 import { getCrmConversationMessages, sendCrmWhatsAppMessage } from "~/lib/api/crm";
+import { getFullApiUrl } from "~/lib/client";
 import { Empty } from "./CrmShared";
 import { CrmRecords } from "./CrmRecords";
+
+function mediaPreviewUrl(value: unknown): string | null {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  return /^https?:\/\//i.test(raw) ? raw : getFullApiUrl(raw);
+}
 
 export function CrmHelpdesk({
   companyId,
@@ -95,11 +103,19 @@ export function CrmHelpdesk({
       setReply("");
       await loadMessages(selected.id);
     } catch (error: any) {
-      Swal.fire({
+      const needsRecovery = [
+        "whatsapp_session_unavailable",
+        "crm_whatsapp_service_unavailable",
+      ].includes(error?.code);
+      const result = await Swal.fire({
         icon: "error",
         title: "Pesan tidak terkirim",
         text: error.message,
+        showCancelButton: needsRecovery,
+        confirmButtonText: needsRecovery ? "Buka Automation" : "Tutup",
+        cancelButtonText: "Tetap di sini",
       });
+      if (needsRecovery && result.isConfirmed) onOpenAutomation();
     } finally {
       setSending(false);
     }
@@ -243,6 +259,10 @@ export function CrmHelpdesk({
                   {messages.length ? (
                     messages.map((message) => {
                       const isOutbound = message.direction === "outbound";
+                      const metadata = jsonValue(message.metadata);
+                      const media = jsonValue(metadata.media);
+                      const imageUrl = media.type === "image" ? mediaPreviewUrl(media.url) : null;
+                      const isPhotoPlaceholder = message.body === "[Foto]";
                       return (
                         <div
                           key={message.id}
@@ -255,9 +275,27 @@ export function CrmHelpdesk({
                                 : "bg-[var(--ui-bg-card)] text-[var(--ui-text-primary)] border border-[var(--ui-border)] rounded-bl-xs"
                             }`}
                           >
-                            <p className="whitespace-pre-wrap leading-relaxed">
-                              {message.body}
-                            </p>
+                            {imageUrl && (
+                              <a
+                                href={imageUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mb-2 block overflow-hidden rounded-md bg-black/5"
+                                title="Buka foto ukuran penuh"
+                              >
+                                <img
+                                  src={imageUrl}
+                                  alt={media.filename || "Foto WhatsApp"}
+                                  className="max-h-72 w-auto max-w-full object-contain"
+                                  loading="lazy"
+                                />
+                              </a>
+                            )}
+                            {!isPhotoPlaceholder && (
+                              <p className="whitespace-pre-wrap leading-relaxed">
+                                {message.body}
+                              </p>
+                            )}
                             <span
                               className={`mt-1 block text-[10px] ${isOutbound ? "text-white/70 text-right" : "text-[var(--ui-text-muted)]"}`}
                             >

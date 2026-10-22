@@ -74,7 +74,12 @@ async function handleResponse<T>(res: Response): Promise<T> {
     }
 
     const msg = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Server error");
-    throw new Error(msg as string);
+    const apiError = Object.assign(new Error(msg as string), {
+      status: res.status,
+      code: data?.code,
+      action: data?.action,
+    });
+    throw apiError;
   }
   
   return data as T;
