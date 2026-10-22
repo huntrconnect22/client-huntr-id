@@ -6,9 +6,21 @@ export interface GmvSubscriptionSummary {
   enterprise_plan?: string | null;
   billing_cycle?: string | null;
   is_trial?: boolean;
-  scheduled_change?: { enterprise_plan: string; starts_at: string | null } | null;
+  scheduled_change?: {
+    enterprise_plan: string;
+    starts_at: string | null;
+  } | null;
   tax_quota?: { limit: number; used: number; ends_at: string } | null;
-  ai_quota?: { total_requests: number; total_tokens: number; total_cost_usd: number; month: string; limit: number; remaining: number; plan_name: string; period: string } | null;
+  ai_quota?: {
+    total_requests: number;
+    total_tokens: number;
+    total_cost_usd: number;
+    month: string;
+    limit: number;
+    remaining: number;
+    plan_name: string;
+    period: string;
+  } | null;
   status: "active" | "renewal_required" | "expired" | string;
   overflow_strategy: "transaction_fee" | "renewal_required";
   upfront_fee: number;
@@ -33,7 +45,9 @@ export interface SubscriptionAccess {
 }
 
 export const getSubscriptionAccess = (companyId: string) =>
-  apiGet<{ access: SubscriptionAccess }>(`/api/companies/${encodeURIComponent(companyId)}/subscription/access`);
+  apiGet<{ access: SubscriptionAccess }>(
+    `/api/companies/${encodeURIComponent(companyId)}/subscription/access`,
+  );
 
 export interface EnterprisePlan {
   key: string;
@@ -46,6 +60,7 @@ export interface EnterprisePlan {
   support: string | null;
   warehouses: number | null;
   ai_requests_per_month: number | null;
+  crm?: boolean;
 }
 
 export interface EnterpriseAddon {
@@ -78,18 +93,44 @@ export interface SubscriptionCheckout {
   payment_method: string;
   purchase_type: "plan" | "addon" | "addons";
   addon_key: string | null;
-  addons_snapshot?: { key: string; name: string; quantity: number; price: number; billing_cycle: string }[] | null;
+  addons_snapshot?:
+    | {
+        key: string;
+        name: string;
+        quantity: number;
+        price: number;
+        billing_cycle: string;
+      }[]
+    | null;
   quantity: number;
   status: string;
-  payment_info: { va_number?: string; bill_key?: string; biller_code?: string; expiry_time?: string } | null;
+  payment_info: {
+    va_number?: string;
+    bill_key?: string;
+    biller_code?: string;
+    expiry_time?: string;
+  } | null;
 }
 
-export const createSubscriptionCheckout = (companyId: string, data: Record<string, unknown>) =>
-  apiPost<{checkout: SubscriptionCheckout}>(`/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts`, data);
+export const createSubscriptionCheckout = (
+  companyId: string,
+  data: Record<string, unknown>,
+) =>
+  apiPost<{ checkout: SubscriptionCheckout }>(
+    `/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts`,
+    data,
+  );
 export const getCurrentSubscriptionCheckout = (companyId: string) =>
-  apiGet<{checkout: SubscriptionCheckout | null}>(`/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts/current`);
-export const refreshSubscriptionCheckout = (companyId: string, checkoutId: string) =>
-  apiGet<{checkout: SubscriptionCheckout}>(`/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts/${encodeURIComponent(checkoutId)}`);
+  apiGet<{ checkout: SubscriptionCheckout | null }>(
+    `/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts/current`,
+  );
+export const refreshSubscriptionCheckout = (
+  companyId: string,
+  checkoutId: string,
+) =>
+  apiGet<{ checkout: SubscriptionCheckout }>(
+    `/api/companies/${encodeURIComponent(companyId)}/subscription/checkouts/${encodeURIComponent(checkoutId)}`,
+  );
 
 export interface PricingAnnouncement {
   id: string;
@@ -102,7 +143,10 @@ export const getPricingAnnouncement = (companyId: string) =>
     `/api/companies/${encodeURIComponent(companyId)}/subscription/pricing-announcement`,
   );
 
-export const acknowledgePricingAnnouncement = (companyId: string, announcementId: string) =>
+export const acknowledgePricingAnnouncement = (
+  companyId: string,
+  announcementId: string,
+) =>
   apiPost<{ acknowledged: boolean }>(
     `/api/companies/${encodeURIComponent(companyId)}/subscription/pricing-announcement/${encodeURIComponent(announcementId)}/acknowledge`,
     {},

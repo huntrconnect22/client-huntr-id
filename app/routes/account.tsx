@@ -44,6 +44,13 @@ export default function AccountSettings() {
     }
   }, [search]);
 
+  useEffect(() => {
+    if (activeCompany?.type === "vendor" && (activeTab === "features" || mobileSelectedTab === "features")) {
+      setActiveTab("security");
+      setMobileSelectedTab(null);
+    }
+  }, [activeCompany?.type, activeTab, mobileSelectedTab]);
+
   const handleUserUpdate = (updatedUser: any) => {
     setUser(updatedUser);
   };
@@ -106,6 +113,7 @@ export default function AccountSettings() {
             <div className="w-full md:w-64 flex-shrink-0">
               <AccountSidebarNav
                 activeTab={activeTab || "security"}
+                companyType={activeCompany?.type}
                 onSelectTab={(tab) => {
                   setError(null);
                   setSuccess(null);
@@ -148,7 +156,7 @@ export default function AccountSettings() {
 
               {currentTab === "appearance" && <AccountAppearanceTab />}
 
-              {currentTab === "features" && (
+              {currentTab === "features" && activeCompany?.type !== "vendor" && (
                 <AccountFeaturesTab onSuccess={setSuccess} />
               )}
 

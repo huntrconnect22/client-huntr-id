@@ -39,6 +39,7 @@ import { isAgenticProcurementEnabled } from "../lib/features";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { getWmsApps } from "../lib/api/wms";
+import { getCrmApps } from "../lib/api/crm";
 import { getSubscriptionAccess } from "../lib/api/subscription";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
@@ -116,6 +117,7 @@ export default function AppShell() {
   const [allUserCompanies, setAllUserCompanies] = useState<any[]>([]);
   const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
   const [wmsInstalled, setWmsInstalled] = useState(false);
+  const [crmInstalled, setCrmInstalled] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [subscriptionAccess, setSubscriptionAccess] = useState<{
     companyId: string;
@@ -134,25 +136,41 @@ export default function AppShell() {
     const load = () => {
       if (!companyId || activeCompany?.type !== "buyer") return;
       const currentRequest = ++requestId;
-      getSubscriptionAccess(companyId).then((response) => {
-        if (!active || currentRequest !== requestId || !response || !("access" in response)) return;
-        setHasActiveSubscription(response.access?.active_enterprise === true);
-        setSubscriptionAccess({
-          companyId,
-          overdue: response.access?.overdue === true,
-          overdueSince: response.access?.overdue_since ?? null,
-          enterprisePlan: response.access?.enterprise_plan ?? null,
-          isTrial: response.access?.is_trial === true,
-        });
-      }).catch(() => {});
+      getSubscriptionAccess(companyId)
+        .then((response) => {
+          if (
+            !active ||
+            currentRequest !== requestId ||
+            !response ||
+            !("access" in response)
+          )
+            return;
+          setHasActiveSubscription(response.access?.active_enterprise === true);
+          setSubscriptionAccess({
+            companyId,
+            overdue: response.access?.overdue === true,
+            overdueSince: response.access?.overdue_since ?? null,
+            enterprisePlan: response.access?.enterprise_plan ?? null,
+            isTrial: response.access?.is_trial === true,
+          });
+        })
+        .catch(() => {});
     };
-    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
     load();
     window.addEventListener("huntr:subscription-updated", load);
     window.addEventListener("focus", load);
     document.addEventListener("visibilitychange", onVisible);
     const timer = window.setInterval(load, 60_000);
-    return () => { active = false; window.clearInterval(timer); window.removeEventListener("huntr:subscription-updated", load); window.removeEventListener("focus", load); document.removeEventListener("visibilitychange", onVisible); };
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("huntr:subscription-updated", load);
+      window.removeEventListener("focus", load);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [activeCompany?.id, activeCompany?.type]);
 
   const loadWmsInstallation = useCallback(async () => {
@@ -185,6 +203,36 @@ export default function AppShell() {
         loadWmsInstallation,
       );
   }, [loadWmsInstallation]);
+
+  const loadCrmInstallation = useCallback(async () => {
+    if (!activeCompany?.id) {
+      setCrmInstalled(false);
+      return;
+    }
+    try {
+      const response = await getCrmApps(activeCompany.id);
+      setCrmInstalled(
+        Boolean(
+          response?.apps?.find((app: any) => app.key === "crm")?.installed,
+        ),
+      );
+    } catch {
+      setCrmInstalled(false);
+    }
+  }, [activeCompany?.id]);
+
+  useEffect(() => {
+    loadCrmInstallation();
+    window.addEventListener(
+      "huntr-app-installations-updated",
+      loadCrmInstallation,
+    );
+    return () =>
+      window.removeEventListener(
+        "huntr-app-installations-updated",
+        loadCrmInstallation,
+      );
+  }, [loadCrmInstallation]);
 
   // Load all user companies to power the workspace switcher
   const loadUserCompanies = useCallback(async () => {
@@ -357,8 +405,15 @@ export default function AppShell() {
     const handleLiveNotification = () => {
       fetchUnreadCount(user.id);
     };
-    window.addEventListener("huntr:notification_received", handleLiveNotification);
-    return () => window.removeEventListener("huntr:notification_received", handleLiveNotification);
+    window.addEventListener(
+      "huntr:notification_received",
+      handleLiveNotification,
+    );
+    return () =>
+      window.removeEventListener(
+        "huntr:notification_received",
+        handleLiveNotification,
+      );
   }, [user?.id]);
 
   useEffect(() => {
@@ -418,8 +473,7 @@ export default function AppShell() {
   const isFinance = user?.role === "finance";
   const isBuyerRole = user?.role === "buyer";
   const isAdminRole = user?.role === "admin";
-  const canAccessWms =
-    user?.role === "warehouse_admin" || isManager;
+  const canAccessWms = user?.role === "warehouse_admin" || isManager;
   const isBuyerComp = activeCompany?.type === "buyer";
   const isVendorComp = activeCompany?.type === "vendor";
 
@@ -477,10 +531,16 @@ export default function AppShell() {
           .replace(/(^-|-$)/g, "")
       : "");
   const companyPrefix = companySlug ? `/${companySlug}` : "";
-  const isSubscriptionOverdue = Boolean(activeCompany?.id && subscriptionAccess?.companyId === activeCompany.id && subscriptionAccess?.overdue);
+  const isSubscriptionOverdue = Boolean(
+    activeCompany?.id &&
+    subscriptionAccess?.companyId === activeCompany.id &&
+    subscriptionAccess?.overdue,
+  );
   const canManageSubscription = isOwner || user?.role === "manager";
   const isWmsPage = /(?:^|\/)wms\/?$/.test(pathname);
-  const isNewPrCheckout = /(?:^|\/)checkout\/?$/.test(pathname) && !new URLSearchParams(search).has("revise");
+  const isNewPrCheckout =
+    /(?:^|\/)checkout\/?$/.test(pathname) &&
+    !new URLSearchParams(search).has("revise");
 
   const NAV = buildNavItems({
     isPendingCompany,
@@ -493,6 +553,7 @@ export default function AppShell() {
     isAdminRole,
     isVendorComp,
     wmsInstalled,
+    crmInstalled,
     canAccessWms,
   });
 
@@ -769,68 +830,71 @@ export default function AppShell() {
           </div>
 
           <div className="huntr-header-actions">
-            {trialInfo.hasTrial && isBuyerComp && !hasActiveSubscription && !isMobile && (
-              <button
-                type="button"
-                onClick={() => navigate(`${companyPrefix}/account`)}
-                title={t("header.trialEndsOn", {
-                  date: trialInfo.formattedEndDate,
-                })}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "5px 10px",
-                  borderRadius: 6,
-                  background: trialInfo.isExpired
-                    ? "rgba(239, 68, 68, 0.12)"
-                    : trialInfo.isUrgent
-                      ? "rgba(249, 115, 22, 0.15)"
-                      : "var(--ui-bg-input)",
-                  border: trialInfo.isExpired
-                    ? "1px solid rgba(239, 68, 68, 0.3)"
-                    : trialInfo.isUrgent
-                      ? "1px solid rgba(249, 115, 22, 0.35)"
-                      : "1px solid var(--ui-border)",
-                  color: trialInfo.isExpired
-                    ? "#ef4444"
-                    : trialInfo.isUrgent
-                      ? "#f97316"
-                      : "var(--ui-text-secondary)",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                }}
-                className="hover:border-orange-500/50"
-              >
-                <span
+            {trialInfo.hasTrial &&
+              isBuyerComp &&
+              !hasActiveSubscription &&
+              !isMobile && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`${companyPrefix}/account`)}
+                  title={t("header.trialEndsOn", {
+                    date: trialInfo.formattedEndDate,
+                  })}
                   style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "5px 10px",
+                    borderRadius: 6,
                     background: trialInfo.isExpired
+                      ? "rgba(239, 68, 68, 0.12)"
+                      : trialInfo.isUrgent
+                        ? "rgba(249, 115, 22, 0.15)"
+                        : "var(--ui-bg-input)",
+                    border: trialInfo.isExpired
+                      ? "1px solid rgba(239, 68, 68, 0.3)"
+                      : trialInfo.isUrgent
+                        ? "1px solid rgba(249, 115, 22, 0.35)"
+                        : "1px solid var(--ui-border)",
+                    color: trialInfo.isExpired
                       ? "#ef4444"
                       : trialInfo.isUrgent
                         ? "#f97316"
-                        : "#10b981",
-                    display: "inline-block",
+                        : "var(--ui-text-secondary)",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
                   }}
-                  className={trialInfo.isUrgent ? "animate-pulse" : ""}
-                />
-                <span>
-                  {trialInfo.isExpired
-                    ? t("header.trialExpired")
-                    : trialInfo.isExpiringSoon
-                      ? t("header.trialExpiringSoon", {
-                          days: trialInfo.daysRemaining,
-                        })
-                      : t("header.trialDays", {
-                          days: trialInfo.daysRemaining,
-                        })}
-                </span>
-              </button>
-            )}
+                  className="hover:border-orange-500/50"
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: trialInfo.isExpired
+                        ? "#ef4444"
+                        : trialInfo.isUrgent
+                          ? "#f97316"
+                          : "#10b981",
+                      display: "inline-block",
+                    }}
+                    className={trialInfo.isUrgent ? "animate-pulse" : ""}
+                  />
+                  <span>
+                    {trialInfo.isExpired
+                      ? t("header.trialExpired")
+                      : trialInfo.isExpiringSoon
+                        ? t("header.trialExpiringSoon", {
+                            days: trialInfo.daysRemaining,
+                          })
+                        : t("header.trialDays", {
+                            days: trialInfo.daysRemaining,
+                          })}
+                  </span>
+                </button>
+              )}
 
             <LanguageSwitcher />
 
@@ -988,11 +1052,23 @@ export default function AppShell() {
           </div>
         </header>
 
-        {isBuyerComp && !hasActiveSubscription && !isSubscriptionOverdue && <TrialBanner trial={trialInfo} />}
+        {isBuyerComp && !hasActiveSubscription && !isSubscriptionOverdue && (
+          <TrialBanner trial={trialInfo} />
+        )}
         {isSubscriptionOverdue && user?.id && (
           <>
-            <SubscriptionOverdueAlert userId={String(user.id)} companyId={String(activeCompany.id)} companyPrefix={companyPrefix} overdueSince={subscriptionAccess?.overdueSince ?? null} canManage={canManageSubscription} />
-            <SubscriptionOverdueNotice overdueSince={subscriptionAccess?.overdueSince ?? null} companyPrefix={companyPrefix} canManage={canManageSubscription} />
+            <SubscriptionOverdueAlert
+              userId={String(user.id)}
+              companyId={String(activeCompany.id)}
+              companyPrefix={companyPrefix}
+              overdueSince={subscriptionAccess?.overdueSince ?? null}
+              canManage={canManageSubscription}
+            />
+            <SubscriptionOverdueNotice
+              overdueSince={subscriptionAccess?.overdueSince ?? null}
+              companyPrefix={companyPrefix}
+              canManage={canManageSubscription}
+            />
           </>
         )}
         {user?.id && activeCompany?.id && (isBuyerComp || isVendorComp) && (
@@ -1005,7 +1081,9 @@ export default function AppShell() {
         )}
 
         <div className="huntr-page-content">
-          {activeCompany && activeCompany.status === "rejected" && pathname !== "/company" ? (
+          {activeCompany &&
+          activeCompany.status === "rejected" &&
+          pathname !== "/company" ? (
             // Blocked: rejected companies cannot access any page
             <StatusGate
               status={activeCompany.status}
@@ -1014,15 +1092,23 @@ export default function AppShell() {
               onSwitchCompany={handleSwitchCompany}
             />
           ) : isSubscriptionOverdue && (isWmsPage || isNewPrCheckout) ? (
-            <SubscriptionOverdueNotice page isWms={isWmsPage} overdueSince={subscriptionAccess?.overdueSince ?? null} companyPrefix={companyPrefix} canManage={canManageSubscription} />
+            <SubscriptionOverdueNotice
+              page
+              isWms={isWmsPage}
+              overdueSince={subscriptionAccess?.overdueSince ?? null}
+              companyPrefix={companyPrefix}
+              canManage={canManageSubscription}
+            />
           ) : (
             <>
               {/* Verification nudge banner for starter + pending accounts */}
-              {activeCompany && (activeCompany.status === "starter" || activeCompany.status === "pending") && (
-                <div className="px-4 pt-4">
-                  <VerificationBanner company={activeCompany} />
-                </div>
-              )}
+              {activeCompany &&
+                (activeCompany.status === "starter" ||
+                  activeCompany.status === "pending") && (
+                  <div className="px-4 pt-4">
+                    <VerificationBanner company={activeCompany} />
+                  </div>
+                )}
               <Outlet context={shellContext} />
             </>
           )}

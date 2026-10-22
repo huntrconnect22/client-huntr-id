@@ -121,6 +121,11 @@ export function EnterprisePlanOptions({
                     ? "AI: hubungi kami"
                     : `${plan.ai_requests_per_month.toLocaleString("id-ID")} request AI/bulan`}
                 </li>
+                <li>
+                  {plan.crm
+                    ? "CRM Enterprise termasuk"
+                    : "CRM Enterprise tersedia di Pro"}
+                </li>
               </ul>
               <button
                 type="button"
@@ -137,7 +142,9 @@ export function EnterprisePlanOptions({
                 }
                 className="border border-orange-500 px-3 py-2 text-xs font-semibold text-orange-500 hover:bg-orange-500/5 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {!catalog.checkout_enabled ? "Checkout belum tersedia" : buttonLabel}
+                {!catalog.checkout_enabled
+                  ? "Checkout belum tersedia"
+                  : buttonLabel}
               </button>
             </article>
           );

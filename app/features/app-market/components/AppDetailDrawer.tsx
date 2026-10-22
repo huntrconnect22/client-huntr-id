@@ -5,6 +5,7 @@ import type { MarketApp } from "../hooks/useAppMarket";
 interface AppDetailDrawerProps {
   app: MarketApp | null;
   installed: boolean;
+  eligible: boolean;
   busy: boolean;
   error: string;
   onClose: () => void;
@@ -71,6 +72,7 @@ function ModalBackdrop({
 export default function AppDetailDrawer({
   app,
   installed,
+  eligible,
   busy,
   error,
   onClose,
@@ -149,7 +151,9 @@ export default function AppDetailDrawer({
                   <Icon
                     size={26}
                     strokeWidth={1.9}
-                    color={app.iconColor === "#ffffff" ? "#ffffff" : app.iconColor}
+                    color={
+                      app.iconColor === "#ffffff" ? "#ffffff" : app.iconColor
+                    }
                   />
                 )}
               </div>
@@ -231,9 +235,7 @@ export default function AppDetailDrawer({
               }}
             >
               <div className="flex items-center justify-between text-[13px]">
-                <span style={{ color: "var(--ui-text-secondary)" }}>
-                  Harga
-                </span>
+                <span style={{ color: "var(--ui-text-secondary)" }}>Harga</span>
                 <span
                   className="font-bold"
                   style={{ color: "var(--ui-text-primary)" }}
@@ -252,7 +254,11 @@ export default function AppDetailDrawer({
                   className="font-semibold"
                   style={{ color: "var(--ui-text-brand)" }}
                 >
-                  {installed ? "Terpasang" : "Belum terpasang"}
+                  {installed
+                    ? "Terpasang"
+                    : eligible
+                      ? "Belum terpasang"
+                      : "Membutuhkan Enterprise Pro"}
                 </span>
               </div>
             </div>
@@ -292,7 +298,7 @@ export default function AppDetailDrawer({
             ) : (
               <button
                 type="button"
-                disabled={busy || app.badge === "Coming soon"}
+                disabled={busy || app.badge === "Coming soon" || !eligible}
                 onClick={onInstall}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[image:var(--huntr-gradient)] px-4 py-2.5 text-[13px] font-bold text-white shadow-md shadow-orange-500/20 transition hover:brightness-110 disabled:opacity-60"
               >
@@ -301,7 +307,9 @@ export default function AppDetailDrawer({
                   ? "Memasang…"
                   : app.badge === "Coming soon"
                     ? "Segera hadir"
-                    : "Install sekarang"}
+                    : !eligible
+                      ? "Butuh Enterprise Pro"
+                      : "Install sekarang"}
               </button>
             )}
           </div>

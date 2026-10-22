@@ -20,22 +20,30 @@ export type AccountTabType =
 interface AccountSidebarNavProps {
   activeTab: AccountTabType;
   onSelectTab: (tab: AccountTabType) => void;
+  companyType?: string;
 }
 
-const TABS: { id: AccountTabType; icon: React.FC<any>; labelKey: TranslationKey }[] = [
+const TABS: { id: AccountTabType; icon: React.FC<any>; labelKey: TranslationKey; forBuyerOnly?: boolean }[] = [
   { id: "security", icon: Shield, labelKey: "settings.tabs.security" },
   { id: "profile", icon: Smartphone, labelKey: "settings.tabs.profile" },
   { id: "subscription", icon: Zap, labelKey: "settings.tabs.subscription" },
   { id: "appearance", icon: Palette, labelKey: "settings.tabs.appearance" },
-  { id: "features", icon: Sparkles, labelKey: "settings.tabs.features" },
+  { id: "features", icon: Sparkles, labelKey: "settings.tabs.features", forBuyerOnly: true },
   { id: "sessions", icon: Monitor, labelKey: "settings.tabs.sessions" },
 ];
 
-export function AccountSidebarNav({ activeTab, onSelectTab }: AccountSidebarNavProps) {
+export function AccountSidebarNav({ activeTab, onSelectTab, companyType }: AccountSidebarNavProps) {
   const { t } = useLanguage();
+  const visibleTabs = TABS.filter((tab) => {
+    if (tab.forBuyerOnly && companyType === "vendor") {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className="w-full md:w-64 space-y-1 flex-shrink-0 md:sticky md:top-6">
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const active = activeTab === tab.id;
         const Icon = tab.icon;
         return (

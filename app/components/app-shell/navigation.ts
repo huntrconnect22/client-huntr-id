@@ -17,6 +17,7 @@ import {
   FileText,
   Sparkles,
   Users,
+  ContactRound,
 } from "lucide-react";
 import { isNavItemDisabledInDemo } from "../../lib/demo-mode";
 import type { TranslationKey } from "../../context/LanguageContext";
@@ -43,6 +44,7 @@ interface BuildNavItemsParams {
   isAdminRole: boolean;
   isVendorComp: boolean;
   wmsInstalled: boolean;
+  crmInstalled: boolean;
   canAccessWms: boolean;
 }
 
@@ -57,6 +59,7 @@ export function buildNavItems({
   isAdminRole,
   isVendorComp,
   wmsInstalled,
+  crmInstalled,
   canAccessWms,
 }: BuildNavItemsParams): NavItemConfig[] {
   const items: NavItemConfig[] = [
@@ -218,6 +221,16 @@ export function buildNavItems({
                   to: `${companyPrefix}/wms`,
                   label: "WMS & Inventory",
                   Icon: Package,
+                  section: "main",
+                },
+              ]
+            : []),
+          ...(crmInstalled
+            ? [
+                {
+                  to: `${companyPrefix}/crm`,
+                  label: "CRM Enterprise",
+                  Icon: ContactRound,
                   section: "main",
                 },
               ]

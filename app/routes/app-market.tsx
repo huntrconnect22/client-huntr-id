@@ -27,6 +27,7 @@ export default function AppMarket() {
     visibleApps,
     isInstalled,
     isBusy,
+    isEligible,
     install,
     uninstall,
   } = useAppMarket();
@@ -108,7 +109,10 @@ export default function AppMarket() {
               ))}
             </select>
             <label className="flex items-center gap-2 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-sm">
-              <SlidersHorizontal size={16} className="text-[var(--ui-text-muted)]" />
+              <SlidersHorizontal
+                size={16}
+                className="text-[var(--ui-text-muted)]"
+              />
               <select
                 value={filter}
                 onChange={(e) =>
@@ -155,6 +159,7 @@ export default function AppMarket() {
       <AppDetailDrawer
         app={selected}
         installed={selected ? isInstalled(selected) : false}
+        eligible={selected ? isEligible(selected) : true}
         busy={selected ? isBusy(selected.key) : false}
         error={error}
         onClose={handleClose}

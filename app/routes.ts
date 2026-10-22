@@ -24,7 +24,9 @@ export default [
   route("verify", "routes/verify.tsx"),
   route("tender/:id", "routes/tender-public.tsx"),
   route("t/:id", "routes/tender-public.tsx", { id: "tender-short" }),
-  route("crowd-buy/p/:id", "routes/crowd-buy-public.tsx", { id: "crowd-buy-public" }),
+  route("crowd-buy/p/:id", "routes/crowd-buy-public.tsx", {
+    id: "crowd-buy-public",
+  }),
   route("cb/:id", "routes/crowd-buy-public.tsx", { id: "crowd-buy-short" }),
 
   // ── Authenticated routes (inside persistent AppShell) ─────────────────────
@@ -36,16 +38,12 @@ export default [
     route(":companySlug/dashboard", "routes/home.tsx", {
       id: "company-dashboard",
     }),
-    route(
-      ":companySlug/crowd-buy",
-      "routes/crowd-buy.tsx",
-      { id: "company-crowd-buy" },
-    ),
-    route(
-      ":companySlug/crowd-buy/:id",
-      "routes/crowd-buy-detail.tsx",
-      { id: "company-crowd-buy-detail" },
-    ),
+    route(":companySlug/crowd-buy", "routes/crowd-buy.tsx", {
+      id: "company-crowd-buy",
+    }),
+    route(":companySlug/crowd-buy/:id", "routes/crowd-buy-detail.tsx", {
+      id: "company-crowd-buy-detail",
+    }),
     route(
       ":companySlug/agentic-procurement",
       "routes/agentic-procurement.tsx",
@@ -58,6 +56,7 @@ export default [
       id: "company-app-market",
     }),
     route(":companySlug/wms", "routes/wms.tsx", { id: "company-wms" }),
+    route(":companySlug/crm", "routes/crm.tsx", { id: "company-crm" }),
     route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", {
       id: "company-marketplace-detail",
     }),
