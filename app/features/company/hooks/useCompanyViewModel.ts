@@ -20,7 +20,7 @@ export const useCompanyViewModel = () => {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab") || params.get("section");
       if (tabParam === "documents" || tabParam === "legal") return "documents";
-      if (tabParam && ["profile", "location", "banking", "documents", "performance", "team"].includes(tabParam)) {
+      if (tabParam && ["profile", "location", "banking", "documents", "performance", "team", "access"].includes(tabParam)) {
         return tabParam;
       }
     }
@@ -35,7 +35,7 @@ export const useCompanyViewModel = () => {
         const params = new URLSearchParams(window.location.search);
         const tabParam = params.get("tab") || params.get("section");
         if (tabParam === "documents" || tabParam === "legal") setActiveTab("documents");
-        else if (tabParam && ["profile", "location", "banking", "documents", "performance", "team"].includes(tabParam)) {
+        else if (tabParam && ["profile", "location", "banking", "documents", "performance", "team", "access"].includes(tabParam)) {
           setActiveTab(tabParam);
         }
       };

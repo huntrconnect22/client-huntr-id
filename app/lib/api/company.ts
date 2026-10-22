@@ -46,6 +46,33 @@ export const diagnoseRoleInconsistencies = (companyId: string | number) =>
 export const updateUserRole = (companyId: string | number, userId: string, role: string) =>
   apiPut(`/api/companies/${companyId}/users/role`, { user_id: userId, role });
 
+export const getCompanyAccess = (companyId: string | number) =>
+  apiGet(`/api/companies/${companyId}/access`);
+
+export const createCompanyRole = (companyId: string | number, payload: Record<string, any>) =>
+  apiPost(`/api/companies/${companyId}/access/roles`, payload);
+
+export const updateCompanyRole = (companyId: string | number, roleId: string, payload: Record<string, any>) =>
+  apiPut(`/api/companies/${companyId}/access/roles/${roleId}`, payload);
+
+export const deleteCompanyRole = (companyId: string | number, roleId: string) =>
+  apiDelete(`/api/companies/${companyId}/access/roles/${roleId}`);
+
+export const createCompanyPermission = (companyId: string | number, payload: Record<string, any>) =>
+  apiPost(`/api/companies/${companyId}/access/permissions`, payload);
+
+export const assignCompanyRole = (companyId: string | number, payload: { user_id: string; company_role_id: string }) =>
+  apiPost(`/api/companies/${companyId}/access/assignments`, payload);
+
+export const createApprovalFlow = (companyId: string | number, payload: Record<string, any>) =>
+  apiPost(`/api/companies/${companyId}/approval-flows`, payload);
+
+export const updateApprovalFlow = (companyId: string | number, flowId: string, payload: Record<string, any>) =>
+  apiPut(`/api/companies/${companyId}/approval-flows/${flowId}`, payload);
+
+export const deleteApprovalFlow = (companyId: string | number, flowId: string) =>
+  apiDelete(`/api/companies/${companyId}/approval-flows/${flowId}`);
+
 export const getInvitationInfo = (token: string) =>
   apiGet(`/api/invitations/info?token=${token}`);
 

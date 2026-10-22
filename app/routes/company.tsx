@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useCompanyViewModel } from "../features/company/hooks/useCompanyViewModel";
 import { TeamManagement } from "../features/company/components/TeamManagement";
+import { AccessApprovalManagement } from "../features/company/components/AccessApprovalManagement";
 import { getAssetUrl } from "../lib/assets";
 
 export default function CompanyDetails() {
@@ -30,6 +31,7 @@ export default function CompanyDetails() {
     { id: "documents",   label: "Legal Docs",  icon: ShieldCheck},
     { id: "performance", label: "Performance", icon: Activity   },
     { id: "team",        label: "Team",        icon: Users      },
+    { id: "access",      label: "Access & approvals", icon: ShieldCheck },
   ];
 
   const missingFields = React.useMemo(() => {
@@ -871,6 +873,10 @@ export default function CompanyDetails() {
                 inviteSuccess={vm.inviteSuccess}
                 onRoleChanged={() => vm.fetchTeamMembers && vm.fetchTeamMembers(vm.company?.id)}
               />
+            )}
+
+            {vm.activeTab === "access" && (
+              <AccessApprovalManagement company={vm.company} />
             )}
           </div>
         </div>

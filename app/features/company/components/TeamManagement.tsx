@@ -9,7 +9,7 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { getWmsApps } from "../../../lib/api/wms";
+import { getCompanyAccess } from "../../../lib/api/company";
 
 interface TeamMember {
   id: string;
@@ -17,6 +17,7 @@ interface TeamMember {
   email: string;
   whatsapp: string;
   role: string;
+  role_id?: string;
 }
 
 interface TeamManagementProps {
@@ -47,38 +48,29 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [newRole, setNewRole] = useState<string>("");
   const [updatingRole, setUpdatingRole] = useState(false);
-  const [wmsInstalled, setWmsInstalled] = useState(false);
+  const [companyRoles, setCompanyRoles] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
-    if (!company?.id || company.type !== "buyer") {
-      setWmsInstalled(false);
-      return;
-    }
-
     let isCurrent = true;
-    getWmsApps(company.id)
+    if (!company?.id) return;
+    getCompanyAccess(company.id)
       .then((response) => {
         if (isCurrent) {
-          setWmsInstalled(
-            Boolean(
-              response?.apps?.find((app: any) => app.key === "wms-inventory")
-                ?.installed,
-            ),
-          );
+          setCompanyRoles(response?.roles || []);
         }
       })
       .catch(() => {
-        if (isCurrent) setWmsInstalled(false);
+        if (isCurrent) setCompanyRoles([]);
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [company?.id, company?.type]);
+  }, [company?.id]);
 
-  const handleRoleEdit = (userId: string, currentRole: string) => {
+  const handleRoleEdit = (userId: string, currentRole: string, currentRoleId?: string) => {
     setEditingUserId(userId);
-    setNewRole(currentRole);
+    setNewRole(currentRoleId || currentRole);
   };
 
   const handleRoleCancel = () => {
@@ -89,7 +81,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
   const handleRoleSave = async (userId: string) => {
     if (
       !newRole ||
-      newRole === teamMembers.find((m) => m.id === userId)?.role
+      newRole === (teamMembers.find((m) => m.id === userId)?.role_id || teamMembers.find((m) => m.id === userId)?.role)
     ) {
       handleRoleCancel();
       return;
@@ -119,7 +111,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
           newRole,
         );
 
-        const updatedUser = { ...currentUser, role: newRole };
+        const updatedUser = { ...currentUser, role: companyRoles.find((role) => role.id === newRole)?.name || newRole };
         localStorage.setItem("user_session", JSON.stringify(updatedUser));
 
         // Trigger session manager update if available
@@ -153,39 +145,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     }
   };
 
-  const getValidRoles = () => {
-    if (company?.type === "buyer") {
-      return [
-        { value: "buyer", label: "Buyer" },
-        { value: "manager", label: "Manager (Full Access)" },
-        { value: "finance", label: "Finance" },
-        ...(wmsInstalled
-          ? [{ value: "warehouse_admin", label: "Warehouse Admin (WMS)" }]
-          : []),
-      ];
-    } else if (company?.type === "vendor") {
-      return [
-        { value: "admin", label: "Admin" },
-        { value: "manager", label: "Manager (Full Access)" },
-        { value: "finance", label: "Finance" },
-        { value: "buyer", label: "Buyer (Procurement)" },
-      ];
-    }
-    return [];
-  };
+  const getValidRoles = () => companyRoles.map((role) => ({ value: role.id, label: role.name }));
   return (
     <div className="flex flex-col gap-6 w-full animate-in fade-in duration-500">
-      {/* Debug Info - Remove in production */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 text-xs">
-          <strong>Debug Info:</strong> Company Type:{" "}
-          {company?.type || "Unknown"} | Valid Roles:{" "}
-          {company?.type === "buyer"
-            ? `buyer, manager, finance${wmsInstalled ? ", warehouse admin" : ""}`
-            : "admin, manager, finance, buyer"}
-        </div>
-      )}
-
       {/* Invite Section */}
       <div className="bg-orange-500/5 border border-orange-500/10 rounded-xl p-4 md:p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -241,31 +203,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               className="w-full px-3 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all appearance-none cursor-pointer"
             >
               <option value="">Select Role...</option>
-              <option value="manager">Manager (Full Access)</option>
-              {company?.type === "buyer" ? (
-                <>
-                  <option value="buyer">Buyer</option>
-                  <option value="finance">Finance</option>
-                  {wmsInstalled && (
-                    <option value="warehouse_admin">
-                      Warehouse Admin (WMS)
-                    </option>
-                  )}
-                </>
-              ) : company?.type === "vendor" ? (
-                <>
-                  <option value="admin">Admin</option>
-                  <option value="buyer">Buyer (Procurement)</option>
-                  <option value="finance">Finance</option>
-                </>
-              ) : (
-                // Fallback for unknown company types
-                <>
-                  <option value="admin">Admin</option>
-                  <option value="buyer">Buyer</option>
-                  <option value="finance">Finance</option>
-                </>
-              )}
+              {getValidRoles().map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
             </select>
           </div>
 
@@ -414,22 +352,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                     <>
                       <div
                         className={`px-2 py-1 rounded-md text-[10px] font-semibold uppercase ${
-                          // Highlight invalid role combinations in development
-                          process.env.NODE_ENV === "development" &&
-                          ((company?.type === "buyer" &&
-                            ![
-                              "buyer",
-                              "manager",
-                              "finance",
-                              ...(wmsInstalled ? ["warehouse_admin"] : []),
-                            ].includes(member.role)) ||
-                            (company?.type === "vendor" &&
-                              ![
-                                "admin",
-                                "manager",
-                                "finance",
-                                "buyer",
-                              ].includes(member.role)))
+                          !member.role_id
                             ? "bg-red-500/20 text-red-600 border border-red-500/30"
                             : "bg-orange-500/10 text-orange-500"
                         }`}
@@ -440,7 +363,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                       {/* Only show edit button for managers (or company owners in the future) */}
                       {/* Assuming current user role check will be added later */}
                       <button
-                        onClick={() => handleRoleEdit(member.id, member.role)}
+                        onClick={() => handleRoleEdit(member.id, member.role, member.role_id)}
                         className="opacity-0 group-hover:opacity-100 p-1 rounded text-[var(--ui-text-muted)] hover:text-orange-500 hover:bg-orange-500/10 transition-all"
                         title="Edit role"
                       >

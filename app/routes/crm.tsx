@@ -22,8 +22,8 @@ export default function CrmPage() {
       {company?.id ? (
         <CrmWorkspace company={company} />
       ) : (
-        <div className="p-8 text-sm text-[var(--ui-text-muted)]">
-          Pilih perusahaan untuk membuka CRM.
+        <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-12 text-center text-sm text-[var(--ui-text-muted)]">
+          Pilih perusahaan aktif terlebih dahulu untuk membuka CRM Enterprise.
         </div>
       )}
     </Layout>
