@@ -118,6 +118,23 @@ const date = (value?: string | null) =>
         month: "short",
       })
     : "—";
+const dateTime = (value?: string | null) =>
+  value
+    ? new Date(value).toLocaleString("id-ID", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
+const contactNumber = (value?: string | null) =>
+  String(value || "")
+    .replace(/@(c\.us|g\.us|lid)$/i, "")
+    .trim();
+const conversationIdentity = (conversation: Record<string, any>) =>
+  contactNumber(conversation.customer_phone || conversation.external_id) ||
+  conversation.customer_name ||
+  "Kontak belum dikenal";
 const jsonValue = (value: unknown): Record<string, any> => {
   if (value && typeof value === "object") return value as Record<string, any>;
   try {
@@ -957,15 +974,14 @@ function Helpdesk({
               >
                 <div className="flex justify-between gap-2">
                   <b className="text-[var(--ui-text-primary)]">
-                    {item.channel}
+                    {conversationIdentity(item)}
                   </b>
                   <span className="text-xs text-[var(--ui-text-muted)]">
-                    {item.status}
+                    {dateTime(item.last_message_at)}
                   </span>
                 </div>
                 <span className="mt-1 block truncate text-xs text-[var(--ui-text-muted)]">
-                  {item.external_id || "Customer CRM"} ·{" "}
-                  {date(item.last_message_at)}
+                  {item.last_message_body || `${item.channel} · ${item.status}`}
                 </span>
               </button>
             ))
@@ -978,12 +994,10 @@ function Helpdesk({
             <>
               <div className="border-b border-[var(--ui-border)] p-4">
                 <b className="text-[var(--ui-text-primary)]">
-                  {selected.channel === "whatsapp"
-                    ? "WhatsApp"
-                    : selected.channel}
+                  {conversationIdentity(selected)}
                 </b>
                 <span className="ml-2 text-xs text-[var(--ui-text-muted)]">
-                  {selected.external_id}
+                  {selected.channel === "whatsapp" ? "WhatsApp" : selected.channel}
                 </span>
               </div>
               <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -995,7 +1009,7 @@ function Helpdesk({
                     >
                       <p>{message.body}</p>
                       <span className="mt-1 block text-[10px] opacity-70">
-                        {date(message.created_at)}
+                        {dateTime(message.created_at)}
                       </span>
                     </div>
                   ))

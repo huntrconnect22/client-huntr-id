@@ -220,7 +220,7 @@ export function EventBusProvider({ children }: { children: React.ReactNode }) {
       // Join new user channel
       if (userId) {
         safeChannelOperation(() => {
-          const channelName = `App.Models.User.${userId}`;
+          const channelName = `App.Domain.Auth.Models.User.${userId}`;
           console.log(`Joining user channel: ${channelName}`);
           
           const privateChannel = echo.private(channelName);
