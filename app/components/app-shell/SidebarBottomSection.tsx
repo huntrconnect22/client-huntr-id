@@ -59,6 +59,109 @@ export const SidebarBottomSection: React.FC<SidebarBottomSectionProps> = ({
         paddingTop: 10,
       }}
     >
+      {/* ⚡ Octane + Swoole indicator — DEV only */}
+      {import.meta.env.DEV && (
+        <>
+          <style>{`
+            @keyframes _octane_pulse {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.4; transform: scale(0.75); }
+            }
+            @keyframes _octane_shimmer {
+              0% { background-position: -200% center; }
+              100% { background-position: 200% center; }
+            }
+          `}</style>
+          <div
+            title="Laravel Octane + Swoole is active — requests are served by a persistent in-memory worker"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 9px",
+              marginBottom: 8,
+              borderRadius: 7,
+              background: "linear-gradient(90deg, rgba(16,185,129,0.08) 0%, rgba(6,182,212,0.08) 100%)",
+              border: "1px solid rgba(16,185,129,0.22)",
+              cursor: "default",
+              overflow: "hidden",
+              position: "relative",
+            }}
+          >
+            {/* animated shimmer strip */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.10) 50%, transparent 100%)",
+                backgroundSize: "200% 100%",
+                animation: "_octane_shimmer 3s linear infinite",
+                pointerEvents: "none",
+              }}
+            />
+            {/* pulsing green dot */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <div
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  animation: "_octane_pulse 1.8s ease-in-out infinite",
+                  boxShadow: "0 0 6px rgba(16,185,129,0.7)",
+                }}
+              />
+            </div>
+            {/* label */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 9,
+                  fontWeight: 800,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  background: "linear-gradient(90deg, #10b981, #06b6d4)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  lineHeight: 1.2,
+                }}
+              >
+                ⚡ Octane · Swoole
+              </div>
+              <div
+                style={{
+                  fontSize: 8,
+                  color: "rgba(16,185,129,0.6)",
+                  fontWeight: 500,
+                  marginTop: 1,
+                  letterSpacing: "0.03em",
+                }}
+              >
+                persistent worker · port 8000
+              </div>
+            </div>
+            {/* right badge */}
+            <div
+              style={{
+                padding: "1px 5px",
+                borderRadius: 4,
+                background: "rgba(16,185,129,0.15)",
+                border: "1px solid rgba(16,185,129,0.3)",
+                fontSize: 7,
+                fontWeight: 800,
+                color: "#10b981",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                flexShrink: 0,
+              }}
+            >
+              LIVE
+            </div>
+          </div>
+        </>
+      )}
       {/* Dev: role switcher */}
       {import.meta.env.DEV && user && (
         <div

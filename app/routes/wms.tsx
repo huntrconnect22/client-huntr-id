@@ -33,6 +33,7 @@ import Layout from "../components/Layout";
 import { getAssetUrl } from "../lib/assets";
 import { WmsOverview, WmsWorkflowGuide } from "../components/wms/WmsOverview";
 import { RackManagement } from "../components/wms/RackManagement";
+import { WarehouseMap } from "../components/wms/WarehouseMap";
 import { UniversalWarehouseImportModal } from "../components/wms/UniversalWarehouseImportModal";
 import type { PickerItem } from "../components/wms/GenericPickerModal";
 import { GenericPickerModal } from "../components/wms/GenericPickerModal";
@@ -118,11 +119,13 @@ function PickerBrowseButton({
   placeholder,
   selected,
   onClick,
+  helperText,
 }: {
   label: string;
   placeholder: string;
   selected: PickerItem | StockPickerItem | null;
   onClick: () => void;
+  helperText?: string;
 }) {
   return (
     <div className="space-y-1">
@@ -220,6 +223,9 @@ function PickerBrowseButton({
           )}
         </div>
       )}
+      {helperText && (
+        <p className="text-[11px] text-[var(--ui-text-muted)]">{helperText}</p>
+      )}
     </div>
   );
 }
@@ -281,8 +287,11 @@ type PickerKind =
   | "allocate_sku"
   | "transfer_from_wh"
   | "transfer_to_wh"
+  | "transfer_from_bin"
+  | "transfer_to_bin"
   | "transfer_sku"
   | "adjust_warehouse"
+  | "adjust_bin"
   | "adjust_sku";
 
 export default function WmsPage() {
@@ -924,6 +933,106 @@ export default function WmsPage() {
     };
   }, [warehouses, putawayForm.warehouse_id]);
 
+  const transferBinItems = useMemo(() => {
+    const makeItems = (warehouseId: string, source: boolean): PickerItem[] => {
+      const bins =
+        warehouses.find((warehouse: any) => String(warehouse.id) === String(warehouseId))
+          ?.bins || [];
+      const stockInWarehouse = stock.filter(
+        (row: any) =>
+          String(row.warehouse_id) === String(warehouseId) &&
+          (!transferForm.sku || row.sku === transferForm.sku),
+      );
+      const availableAt = (bin: any) =>
+        stockInWarehouse
+          .filter(
+            (row: any) =>
+              String(row.bin_id || "") === String(bin.id) ||
+              row.bin_location === bin.code,
+          )
+          .reduce(
+            (total: number, row: any) =>
+              total + Math.max(0, toNumeric(row.on_hand) - toNumeric(row.allocated)),
+            0,
+          );
+
+      return bins
+        .filter((bin: any) => {
+          if (bin.status !== "active") return false;
+          if (!source)
+            return ["receiving", "storage", "picking", "packing", "staging"].includes(
+              bin.type,
+            );
+          return !transferForm.sku || availableAt(bin) > 0;
+        })
+        .map((bin: any) => {
+          const available = availableAt(bin);
+          const capacity = toNumeric(bin.capacity_units);
+          const binTypeLabel = `${String(bin.type || "storage").charAt(0).toUpperCase()}${String(bin.type || "storage").slice(1)}`;
+          return {
+            id: String(bin.id),
+            title: bin.code,
+            subtitle: `${bin.name || "Tanpa nama"} · ${binTypeLabel}`,
+            tags: [binTypeLabel],
+            meta: source
+              ? [
+                  { label: "Tersedia", value: formatQuantity(available), tone: available > 0 ? ("success" as const) : ("muted" as const) },
+                  { label: "SKU", value: transferForm.sku || "Semua", tone: "muted" as const },
+                ]
+              : [
+                  { label: "Isi", value: capacity > 0 ? `${formatQuantity(toNumeric(bin.total_units))}/${formatQuantity(capacity)}` : formatQuantity(toNumeric(bin.total_units)), tone: "brand" as const },
+                  { label: "Kapasitas", value: capacity > 0 ? formatQuantity(capacity) : "Tidak dibatasi", tone: "muted" as const },
+                ],
+          };
+        });
+    };
+
+    return {
+      source: makeItems(transferForm.from_warehouse_id, true),
+      destination: makeItems(transferForm.to_warehouse_id, false),
+    };
+  }, [stock, transferForm.from_warehouse_id, transferForm.sku, transferForm.to_warehouse_id, warehouses]);
+
+  const adjustBinItems = useMemo<PickerItem[]>(() => {
+    const bins =
+      warehouses.find(
+        (warehouse: any) => String(warehouse.id) === String(adjustForm.warehouse_id),
+      )?.bins || [];
+    const stockAtBin = (bin: any) =>
+      stock.filter(
+        (row: any) =>
+          String(row.warehouse_id) === String(adjustForm.warehouse_id) &&
+          row.sku === adjustForm.sku &&
+          (String(row.bin_id || "") === String(bin.id) || row.bin_location === bin.code),
+      );
+
+    return bins
+      .filter((bin: any) => bin.status === "active")
+      .filter((bin: any) => !adjustForm.sku || stockAtBin(bin).length > 0)
+      .map((bin: any) => {
+        const binStock = stockAtBin(bin);
+        const onHand = binStock.reduce(
+          (total: number, row: any) => total + toNumeric(row.on_hand),
+          0,
+        );
+        const allocated = binStock.reduce(
+          (total: number, row: any) => total + toNumeric(row.allocated),
+          0,
+        );
+        const binTypeLabel = `${String(bin.type || "storage").charAt(0).toUpperCase()}${String(bin.type || "storage").slice(1)}`;
+        return {
+          id: String(bin.id),
+          title: bin.code,
+          subtitle: `${bin.name || "Tanpa nama"} · ${binTypeLabel}`,
+          tags: [binTypeLabel],
+          meta: [
+            { label: "Stok sistem", value: formatQuantity(onHand), tone: "brand" as const },
+            { label: "Dialokasikan", value: formatQuantity(allocated), tone: "muted" as const },
+          ],
+        };
+      });
+  }, [adjustForm.sku, adjustForm.warehouse_id, stock, warehouses]);
+
   const stockPickerAll: StockPickerItem[] = useMemo(
     () =>
       stock.map((x: any) => ({
@@ -1084,6 +1193,7 @@ export default function WmsPage() {
   const tabs = [
     { key: "Overview", label: "Overview", Icon: BarChart3 },
     { key: "Stock", label: "Stok & Katalog", Icon: Boxes },
+    { key: "Warehouse Map", label: "Peta Gudang", Icon: MapPin },
     { key: "Rak & Lokasi", label: "Rak & Lokasi", Icon: Layers },
     {
       key: "Receiving & Put Away",
@@ -2886,6 +2996,23 @@ export default function WmsPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                const missing = [
+                  [transferForm.from_warehouse_id, "gudang asal"],
+                  [transferForm.sku, "item inventori"],
+                  [transferForm.from_bin, "bin / rak asal"],
+                  [transferForm.to_warehouse_id, "gudang tujuan"],
+                  [transferForm.to_bin, "bin / rak tujuan"],
+                  [transferForm.quantity, "jumlah unit"],
+                ].find(([value]) => !value);
+                if (missing) {
+                  void Swal.fire({
+                    icon: "warning",
+                    title: "Lengkapi transfer",
+                    text: `Pilih ${missing[1]} sebelum mengeksekusi transfer.`,
+                    confirmButtonColor: "#f97316",
+                  });
+                  return;
+                }
                 run(async () => {
                   await transferStock(company.id, transferForm);
                   setTransferForm({
@@ -2898,6 +3025,8 @@ export default function WmsPage() {
                   setSelections((prev) => ({
                     ...prev,
                     transfer_sku: null,
+                    transfer_from_bin: null,
+                    transfer_to_bin: null,
                   }));
                   await Swal.fire({
                     icon: "success",
@@ -2927,28 +3056,18 @@ export default function WmsPage() {
                     selected={selections["transfer_from_wh"] || null}
                     onClick={() => openPicker("transfer_from_wh")}
                   />
-                  <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Bin / Rak Asal
-                    </div>
-                    <input
-                      required
-                      className={input}
-                      placeholder="Contoh: STORAGE atau RAK-A1"
-                      value={transferForm.from_bin}
-                      onChange={(e) =>
-                        setTransferForm({
-                          ...transferForm,
-                          from_bin: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
                   <PickerBrowseButton
                     label="Item Inventori / SKU"
                     placeholder="Pilih item yang akan dipindah"
                     selected={selections["transfer_sku"] || null}
                     onClick={() => openPicker("transfer_sku")}
+                  />
+                  <PickerBrowseButton
+                    label="Bin / Rak Asal"
+                    placeholder={transferForm.from_warehouse_id ? "Pilih bin yang menyimpan barang" : "Pilih gudang asal terlebih dahulu"}
+                    selected={selections["transfer_from_bin"] || null}
+                    onClick={() => openPicker("transfer_from_bin")}
+                    helperText={transferForm.sku ? "Hanya bin dengan stok SKU terpilih yang ditampilkan." : "Pilih item terlebih dahulu agar stok tersedia dapat dicek."}
                   />
                   <div className="space-y-1">
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
@@ -2988,23 +3107,13 @@ export default function WmsPage() {
                     selected={selections["transfer_to_wh"] || null}
                     onClick={() => openPicker("transfer_to_wh")}
                   />
-                  <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Bin / Rak Tujuan
-                    </div>
-                    <input
-                      required
-                      className={input}
-                      placeholder="Contoh: RECEIVING atau STORAGE"
-                      value={transferForm.to_bin}
-                      onChange={(e) =>
-                        setTransferForm({
-                          ...transferForm,
-                          to_bin: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
+                  <PickerBrowseButton
+                    label="Bin / Rak Tujuan"
+                    placeholder={transferForm.to_warehouse_id ? "Pilih bin penerima" : "Pilih gudang tujuan terlebih dahulu"}
+                    selected={selections["transfer_to_bin"] || null}
+                    onClick={() => openPicker("transfer_to_bin")}
+                    helperText="Lihat tipe bin serta kapasitas sebelum memilih lokasi tujuan."
+                  />
 
                   {/* Transfer Summary Preview */}
                   <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 p-3.5 space-y-2 mt-4">
@@ -3096,6 +3205,22 @@ export default function WmsPage() {
                 className="space-y-3.5"
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const missing = [
+                    [adjustForm.warehouse_id, "gudang"],
+                    [adjustForm.sku, "item inventori"],
+                    [adjustForm.bin_location, "bin / lokasi rak"],
+                    [adjustForm.quantity, "jumlah selisih"],
+                    [adjustForm.reason, "alasan penyesuaian"],
+                  ].find(([value]) => !value);
+                  if (missing) {
+                    void Swal.fire({
+                      icon: "warning",
+                      title: "Lengkapi penyesuaian",
+                      text: `Pilih atau isi ${missing[1]} sebelum menyimpan.`,
+                      confirmButtonColor: "#f97316",
+                    });
+                    return;
+                  }
                   run(async () => {
                     const rawQty = Math.abs(Number(adjustForm.quantity || 0));
                     const finalQty = adjustMode === "decrease" ? -rawQty : rawQty;
@@ -3113,6 +3238,7 @@ export default function WmsPage() {
                     setSelections((prev) => ({
                       ...prev,
                       adjust_sku: null,
+                      adjust_bin: null,
                     }));
                     await Swal.fire({
                       icon: "success",
@@ -3137,23 +3263,13 @@ export default function WmsPage() {
                     selected={selections["adjust_sku"] || null}
                     onClick={() => openPicker("adjust_sku")}
                   />
-                  <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Bin / Lokasi Rak
-                    </div>
-                    <input
-                      required
-                      className={input}
-                      placeholder="Contoh: STORAGE"
-                      value={adjustForm.bin_location}
-                      onChange={(e) =>
-                        setAdjustForm({
-                          ...adjustForm,
-                          bin_location: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
+                  <PickerBrowseButton
+                    label="Bin / Lokasi Rak"
+                    placeholder={adjustForm.warehouse_id ? "Pilih bin lokasi stok" : "Pilih gudang terlebih dahulu"}
+                    selected={selections["adjust_bin"] || null}
+                    onClick={() => openPicker("adjust_bin")}
+                    helperText={adjustForm.sku ? "Hanya bin aktif yang menyimpan SKU terpilih ditampilkan." : "Pilih item terlebih dahulu untuk memeriksa saldo per bin."}
+                  />
                   <div className="space-y-1">
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Jumlah Selisih ({adjustMode === "increase" ? "+" : "-"})
@@ -3544,6 +3660,89 @@ export default function WmsPage() {
             </div>
           </div>
         )}
+        {tab === "Warehouse Map" && (
+          <WarehouseMap
+            companyId={company.id}
+            warehouses={warehouses}
+            stock={stock}
+            onOpenOperation={(action, { warehouse, bin, item }) => {
+              const warehouseSelection: PickerItem = {
+                id: String(warehouse.id),
+                title: warehouse.name,
+                subtitle: `${warehouse.code} · ${warehouse.address || "—"}`,
+                meta: [{ label: "Bins", value: String(warehouse.bins?.length || 0), tone: "muted" }],
+              };
+              const binSelection: PickerItem = {
+                id: String(bin.id),
+                title: bin.code,
+                subtitle: `${bin.name || "Tanpa nama"} · ${bin.type}`,
+                meta: [{ label: "Status", value: bin.status || "active", tone: "success" }],
+              };
+              const stockSelection = item
+                ? ({
+                    id: String(item.id || item.sku),
+                    sku: item.sku,
+                    item_name: item.item_name || item.sku,
+                    uom: item.uom || "unit",
+                    bin_location: bin.code,
+                    bin_id: String(bin.id),
+                    warehouse_id: String(warehouse.id),
+                    warehouse_name: warehouse.name,
+                    warehouse_code: warehouse.code,
+                    on_hand: item.on_hand || 0,
+                    allocated: item.allocated || 0,
+                  } as StockPickerItem)
+                : null;
+
+              if (action === "putaway") {
+                setPutawayForm((current) => ({
+                  ...current,
+                  warehouse_id: String(warehouse.id),
+                  to_bin_id: String(bin.id),
+                }));
+                setSelections((current) => ({
+                  ...current,
+                  putaway_warehouse: warehouseSelection,
+                  putaway_to_bin: binSelection,
+                }));
+                setTab("Receiving & Put Away");
+                return;
+              }
+
+              if (action === "transfer") {
+                setTransferForm((current) => ({
+                  ...current,
+                  from_warehouse_id: String(warehouse.id),
+                  from_bin: bin.code,
+                  sku: item?.sku || "",
+                  quantity: "",
+                }));
+                setSelections((current) => ({
+                  ...current,
+                  transfer_from_wh: warehouseSelection,
+                  transfer_from_bin: binSelection,
+                  transfer_sku: stockSelection,
+                }));
+                setTab("Transfers");
+                return;
+              }
+
+              setAdjustForm((current) => ({
+                ...current,
+                warehouse_id: String(warehouse.id),
+                sku: item?.sku || "",
+                bin_location: bin.code,
+              }));
+              setSelections((current) => ({
+                ...current,
+                adjust_warehouse: warehouseSelection,
+                adjust_bin: binSelection,
+                adjust_sku: stockSelection,
+              }));
+              setTab("Adjustments");
+            }}
+          />
+        )}
         {tab === "Rak & Lokasi" && (
           <div className="space-y-4">
             {warehouses.length === 0 ? (
@@ -3623,12 +3822,20 @@ export default function WmsPage() {
               setSelections((prev) => ({ ...prev, allocate_sku: item }));
               break;
             case "transfer_sku":
-              setTransferForm({ ...transferForm, sku: item.sku });
-              setSelections((prev) => ({ ...prev, transfer_sku: item }));
+              setTransferForm({ ...transferForm, sku: item.sku, from_bin: "" });
+              setSelections((prev) => ({
+                ...prev,
+                transfer_sku: item,
+                transfer_from_bin: null,
+              }));
               break;
             case "adjust_sku":
-              setAdjustForm({ ...adjustForm, sku: item.sku });
-              setSelections((prev) => ({ ...prev, adjust_sku: item }));
+              setAdjustForm({ ...adjustForm, sku: item.sku, bin_location: "" });
+              setSelections((prev) => ({
+                ...prev,
+                adjust_sku: item,
+                adjust_bin: null,
+              }));
               break;
           }
           closePicker();
@@ -3720,7 +3927,10 @@ export default function WmsPage() {
             picker.kind === "allocate_warehouse" ||
             picker.kind === "transfer_from_wh" ||
             picker.kind === "transfer_to_wh" ||
-            picker.kind === "adjust_warehouse")
+            picker.kind === "transfer_from_bin" ||
+            picker.kind === "transfer_to_bin" ||
+            picker.kind === "adjust_warehouse" ||
+            picker.kind === "adjust_bin")
         }
         onClose={closePicker}
         onSelect={(item: PickerItem) => {
@@ -3816,24 +4026,52 @@ export default function WmsPage() {
               }));
               break;
             case "transfer_from_wh":
-              setTransferForm({ ...transferForm, from_warehouse_id: item.id });
+              setTransferForm({
+                ...transferForm,
+                from_warehouse_id: item.id,
+                sku: "",
+                from_bin: "",
+              });
               setSelections((prev) => ({
                 ...prev,
                 transfer_from_wh: item,
                 transfer_sku: null,
+                transfer_from_bin: null,
               }));
               break;
             case "transfer_to_wh":
-              setTransferForm({ ...transferForm, to_warehouse_id: item.id });
-              setSelections((prev) => ({ ...prev, transfer_to_wh: item }));
+              setTransferForm({ ...transferForm, to_warehouse_id: item.id, to_bin: "" });
+              setSelections((prev) => ({
+                ...prev,
+                transfer_to_wh: item,
+                transfer_to_bin: null,
+              }));
+              break;
+            case "transfer_from_bin":
+              setTransferForm({ ...transferForm, from_bin: item.title });
+              setSelections((prev) => ({ ...prev, transfer_from_bin: item }));
+              break;
+            case "transfer_to_bin":
+              setTransferForm({ ...transferForm, to_bin: item.title });
+              setSelections((prev) => ({ ...prev, transfer_to_bin: item }));
               break;
             case "adjust_warehouse":
-              setAdjustForm({ ...adjustForm, warehouse_id: item.id });
+              setAdjustForm({
+                ...adjustForm,
+                warehouse_id: item.id,
+                sku: "",
+                bin_location: "",
+              });
               setSelections((prev) => ({
                 ...prev,
                 adjust_warehouse: item,
                 adjust_sku: null,
+                adjust_bin: null,
               }));
+              break;
+            case "adjust_bin":
+              setAdjustForm({ ...adjustForm, bin_location: item.title });
+              setSelections((prev) => ({ ...prev, adjust_bin: item }));
               break;
           }
           closePicker();
@@ -3859,6 +4097,12 @@ export default function WmsPage() {
               return putawayBinItems.all;
             case "putaway_to_bin":
               return putawayBinItems.storage;
+            case "transfer_from_bin":
+              return transferBinItems.source;
+            case "transfer_to_bin":
+              return transferBinItems.destination;
+            case "adjust_bin":
+              return adjustBinItems;
             default:
               return [];
           }
@@ -3886,6 +4130,12 @@ export default function WmsPage() {
               return "Select source bin";
             case "putaway_to_bin":
               return "Select destination bin";
+            case "transfer_from_bin":
+              return "Pilih bin / rak asal";
+            case "transfer_to_bin":
+              return "Pilih bin / rak tujuan";
+            case "adjust_bin":
+              return "Pilih bin / lokasi rak";
             default:
               return "Select";
           }
@@ -3900,6 +4150,16 @@ export default function WmsPage() {
               return "Pick from Huntr Catalogue, or close and type a new SKU in the field.";
             case "putaway_to_bin":
               return "Only active storage, picking and packing bins are valid put away destinations.";
+            case "transfer_from_bin":
+              return transferForm.sku
+                ? "Hanya bin aktif dengan stok tersedia untuk SKU ini yang dapat dipilih."
+                : "Pilih SKU terlebih dahulu untuk menampilkan stok tersedia tiap bin.";
+            case "transfer_to_bin":
+              return "Pilih bin aktif penerima. Kapasitas ditampilkan untuk membantu penempatan stok.";
+            case "adjust_bin":
+              return adjustForm.sku
+                ? "Pilih lokasi aktif yang menyimpan SKU ini. Saldo sistem ditampilkan untuk membantu opname."
+                : "Pilih SKU terlebih dahulu untuk menampilkan bin yang menyimpan barang.";
             default:
               return undefined;
           }
@@ -3924,6 +4184,9 @@ export default function WmsPage() {
               return "Search by SKU code or product name…";
             case "putaway_from_bin":
             case "putaway_to_bin":
+            case "transfer_from_bin":
+            case "transfer_to_bin":
+            case "adjust_bin":
               return "Search bin code or name…";
             default:
               return "Search…";
@@ -3939,6 +4202,9 @@ export default function WmsPage() {
               return "No catalogue products synced yet. Type a SKU manually in the field.";
             case "putaway_from_bin":
             case "putaway_to_bin":
+            case "transfer_from_bin":
+            case "transfer_to_bin":
+            case "adjust_bin":
               return "No bins configured for this warehouse yet.";
             default:
               return "No items available.";
@@ -3968,6 +4234,12 @@ export default function WmsPage() {
               return transferForm.from_warehouse_id || null;
             case "transfer_to_wh":
               return transferForm.to_warehouse_id || null;
+            case "transfer_from_bin":
+              return (selections["transfer_from_bin"] as PickerItem | null)?.id || null;
+            case "transfer_to_bin":
+              return (selections["transfer_to_bin"] as PickerItem | null)?.id || null;
+            case "adjust_bin":
+              return (selections["adjust_bin"] as PickerItem | null)?.id || null;
             case "adjust_warehouse":
               return adjustForm.warehouse_id || null;
             default:
