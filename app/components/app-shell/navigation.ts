@@ -243,6 +243,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/budgeting`,
                   label: "Budgeting & Procurement Plan",
+                  labelKey: "nav.items.budgeting",
                   Icon: WalletCards,
                   section: "main",
                 },
