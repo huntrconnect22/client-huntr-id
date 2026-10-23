@@ -240,7 +240,7 @@ export function CrmWorkspace({
     }
   };
 
-  const moveDeal = async (row: RecordRow, stage: string) => {
+  const moveDeal = async (row: RecordRow, stage: string): Promise<boolean> => {
     try {
       await updateCrmDeal(company.id, row.id, {
         stage,
@@ -252,8 +252,10 @@ export function CrmWorkspace({
               : row.probability,
       });
       await refresh();
+      return true;
     } catch (e: any) {
-      Swal.fire({ icon: "error", title: "Gagal", text: e.message });
+      Swal.fire({ icon: "error", title: "Gagal memindahkan deal", text: e.message });
+      return false;
     }
   };
 
@@ -567,7 +569,7 @@ function CrmTabContent({
   companyId: string;
   onCreate: () => void;
   onConvertLead: (row: RecordRow) => void;
-  onMoveDeal: (row: RecordRow, stage: string) => void;
+  onMoveDeal: (row: RecordRow, stage: string) => Promise<boolean>;
   onCompleteTask: (row: RecordRow) => void;
   onCompose: (kind: ComposerKind) => void;
   onRequestQuoteApproval: (row: RecordRow) => void;

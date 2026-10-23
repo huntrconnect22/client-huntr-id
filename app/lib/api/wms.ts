@@ -167,3 +167,6 @@ export const getWmsOrders = (companyId: string) =>
   apiGet<any>(`/api/wms/orders?${companyQuery(companyId)}`);
 export const getWmsReport = (companyId: string) =>
   apiGet<any>(`/api/wms/reports?${companyQuery(companyId)}`);
+
+export const importUniversalWarehouseStock = (companyId: string, data: any) =>
+  apiPost<any>(`/api/wms/stock/import`, { ...data, company_id: companyId });

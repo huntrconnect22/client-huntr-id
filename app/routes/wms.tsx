@@ -4,22 +4,28 @@ import {
   Activity,
   AlertTriangle,
   ArrowDownToLine,
+  ArrowRight,
   BarChart3,
   Boxes,
   Building2,
   Check,
+  CheckCircle2,
   ChevronRight,
   Clock,
   Layers,
   Loader2,
+  MapPin,
   Package,
   PackageCheck,
   Plus,
   Printer,
   RefreshCw,
   Search,
+  ShieldCheck,
   ShoppingCart,
+  SlidersHorizontal,
   Truck,
+  Upload,
   Warehouse as WarehouseIcon,
   X,
 } from "lucide-react";
@@ -27,6 +33,7 @@ import Layout from "../components/Layout";
 import { getAssetUrl } from "../lib/assets";
 import { WmsOverview, WmsWorkflowGuide } from "../components/wms/WmsOverview";
 import { RackManagement } from "../components/wms/RackManagement";
+import { UniversalWarehouseImportModal } from "../components/wms/UniversalWarehouseImportModal";
 import type { PickerItem } from "../components/wms/GenericPickerModal";
 import { GenericPickerModal } from "../components/wms/GenericPickerModal";
 import type { StockPickerItem } from "../components/wms/StockPickerModal";
@@ -59,9 +66,9 @@ import {
   updateWarehouse,
 } from "../lib/api/wms";
 
-const card = "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4";
+const card = "rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4";
 const input =
-  "w-full rounded-md border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm text-[var(--ui-text-primary)] outline-none";
+  "w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm text-[var(--ui-text-primary)] outline-none focus:border-[var(--ui-text-brand)] transition-colors";
 
 const toNumeric = (value: unknown): number => {
   if (typeof value === "number") return value;
@@ -104,7 +111,7 @@ const formatQuantity = (value: unknown, maximumFractionDigits = 3): string => {
 };
 
 const browseBtn =
-  "w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] hover:border-[var(--ui-text-brand)]/40 hover:bg-[var(--ui-bg-card-hover)] px-3 py-2 text-left text-sm text-[var(--ui-text-primary)] outline-none transition-colors";
+  "w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] hover:border-[var(--ui-text-brand)]/60 hover:bg-[var(--ui-bg-input)] px-3 py-2 text-left text-sm text-[var(--ui-text-primary)] outline-none transition-all";
 
 function PickerBrowseButton({
   label,
@@ -296,6 +303,7 @@ export default function WmsPage() {
   const [stockSearch, setStockSearch] = useState("");
   const [stockWarehouseId, setStockWarehouseId] = useState("");
   const [stockCategory, setStockCategory] = useState("");
+  const [stockImportOpen, setStockImportOpen] = useState(false);
 
   const [picker, setPicker] = useState<{
     kind: PickerKind | null;
@@ -379,6 +387,62 @@ export default function WmsPage() {
     notes: "",
   });
   const [submittingReorder, setSubmittingReorder] = useState(false);
+  const [stockFilterLowOnly, setStockFilterLowOnly] = useState(false);
+  const [reorderConfigItem, setReorderConfigItem] = useState<any | null>(null);
+  const [configMinStock, setConfigMinStock] = useState("");
+  const [configLeadTime, setConfigLeadTime] = useState("");
+  const [savingReorderConfig, setSavingReorderConfig] = useState(false);
+  const [fulfillmentFilter, setFulfillmentFilter] = useState("all");
+  const [adjustMode, setAdjustMode] = useState<"increase" | "decrease">("increase");
+
+  const handleOpenReorderConfig = (item: any) => {
+    setReorderConfigItem(item);
+    setConfigMinStock(
+      reorderLevels[item.id] !== undefined
+        ? reorderLevels[item.id]
+        : String(toNumeric(item.reorder_level || 0))
+    );
+    setConfigLeadTime(
+      leadTimes[item.id] !== undefined
+        ? leadTimes[item.id]
+        : String(toNumeric(item.lead_time_days || 0))
+    );
+  };
+
+  const handleSaveReorderConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reorderConfigItem || !company?.id) return;
+    setSavingReorderConfig(true);
+    try {
+      const minStockNum = toNumeric(configMinStock);
+      const leadTimeNum = toNumeric(configLeadTime);
+      await setWmsReorderLevel(
+        company.id,
+        reorderConfigItem.id,
+        minStockNum,
+        leadTimeNum,
+      );
+      setReorderLevels((prev) => ({ ...prev, [reorderConfigItem.id]: configMinStock }));
+      setLeadTimes((prev) => ({ ...prev, [reorderConfigItem.id]: configLeadTime }));
+      setReorderConfigItem(null);
+      await Swal.fire({
+        icon: "success",
+        title: "Pengaturan Disimpan",
+        text: `Ambang batas untuk ${reorderConfigItem.sku} berhasil diperbarui.`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      await refresh();
+    } catch (err: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menyimpan",
+        text: err.message || "Terjadi kesalahan.",
+      });
+    } finally {
+      setSavingReorderConfig(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -606,19 +670,94 @@ export default function WmsPage() {
       stock.map((item: any) => item.catalogue_category).filter(Boolean),
     ),
   ].sort();
-  const filteredStock = stock.filter((item: any) => {
-    const query = stockSearch.trim().toLowerCase();
-    return (
-      (!stockWarehouseId || String(item.warehouse_id) === stockWarehouseId) &&
-      (!stockCategory || item.catalogue_category === stockCategory) &&
-      (!query ||
+  const stockSummary = useMemo(() => {
+    let totalOnHand = 0;
+    let totalAllocated = 0;
+    let totalAvailable = 0;
+    let lowStockCount = 0;
+    const uniqueSkus = new Set<string>();
+
+    for (const item of stock) {
+      if (item.sku) uniqueSkus.add(item.sku);
+      const onHand = toNumeric(item.on_hand);
+      const alloc = toNumeric(item.allocated);
+      const avail = onHand - alloc;
+      const reorder = toNumeric(item.reorder_level);
+
+      totalOnHand += onHand;
+      totalAllocated += alloc;
+      totalAvailable += avail;
+
+      if (reorder > 0 && avail <= reorder) {
+        lowStockCount++;
+      }
+    }
+
+    return {
+      totalSkus: uniqueSkus.size,
+      totalOnHand,
+      totalAllocated,
+      totalAvailable,
+      lowStockCount,
+    };
+  }, [stock]);
+
+  const filteredStock = useMemo(() => {
+    return stock.filter((item: any) => {
+      const query = stockSearch.trim().toLowerCase();
+      const matchesQuery =
+        !query ||
         `${item.sku} ${item.item_name} ${item.bin_location || ""}`
           .toLowerCase()
-          .includes(query))
-    );
-  });
+          .includes(query);
+      const matchesWarehouse =
+        !stockWarehouseId || String(item.warehouse_id) === stockWarehouseId;
+      const matchesCategory =
+        !stockCategory || item.catalogue_category === stockCategory;
+
+      let matchesLow = true;
+      if (stockFilterLowOnly) {
+        const avail = toNumeric(item.on_hand) - toNumeric(item.allocated);
+        const reorder = toNumeric(item.reorder_level);
+        matchesLow = reorder > 0 && avail <= reorder;
+      }
+
+      return matchesQuery && matchesWarehouse && matchesCategory && matchesLow;
+    });
+  }, [stock, stockSearch, stockWarehouseId, stockCategory, stockFilterLowOnly]);
+
+  const receivingBinItems = useMemo(() => {
+    return stock.filter((item: any) => {
+      const binType = (item.bin_type || "").toLowerCase();
+      const binLoc = (item.bin_location || "").toLowerCase();
+      return (
+        (binType === "receiving" || binLoc.includes("receiv")) &&
+        toNumeric(item.on_hand) > 0
+      );
+    });
+  }, [stock]);
+
+  const fulfillmentCounts = useMemo(() => {
+    let allocated = 0;
+    let picking = 0;
+    let packed = 0;
+    let shipped = 0;
+    for (const o of orders) {
+      if (o.status === "allocated") allocated++;
+      else if (o.status === "picking") picking++;
+      else if (o.status === "packed") packed++;
+      else if (o.status === "shipped") shipped++;
+    }
+    return { allocated, picking, packed, shipped, total: orders.length };
+  }, [orders]);
+
+  const filteredOrders = useMemo(() => {
+    if (fulfillmentFilter === "all") return orders;
+    return orders.filter((o: any) => o.status === fulfillmentFilter);
+  }, [orders, fulfillmentFilter]);
+
   const hasStockFilters = Boolean(
-    stockSearch || stockWarehouseId || stockCategory,
+    stockSearch || stockWarehouseId || stockCategory || stockFilterLowOnly,
   );
 
   // Bin type order & labels for display grouping
@@ -883,107 +1022,191 @@ export default function WmsPage() {
         title="WMS & Inventory"
         subtitle="Pilih company workspace untuk melanjutkan."
       >
-        <div className={card}>Pilih perusahaan aktif terlebih dahulu.</div>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]">
+              <WarehouseIcon size={32} />
+            </span>
+            <p className="font-bold text-[var(--ui-text-primary)]">Pilih perusahaan aktif</p>
+            <p className="text-sm text-[var(--ui-text-muted)]">Pilih company workspace untuk melanjutkan ke WMS.</p>
+          </div>
+        </div>
       </Layout>
     );
   if (installed === false)
     return (
       <Layout
         title="WMS & Inventory"
-        subtitle="Modul gudang belum diaktifkan untuk workspace ini."
+        subtitle="Warehouse operations · connected to Huntr Catalogue"
       >
-        <div className={`${card} max-w-2xl`}>
-          <PackageCheck size={30} className="text-[var(--ui-text-brand)]" />
-          <h2 className="mt-3 text-lg font-bold">Install dari App Market</h2>
-          <p className="my-2 text-sm text-[var(--ui-text-secondary)]">
-            Aktifkan WMS &amp; Inventory untuk perusahaan ini. Instalasi siap
-            digunakan langsung.
-          </p>
-          <button
-            disabled={busy}
-            onClick={() =>
-              run(async () => {
-                await installWms(company.id);
-                setInstalled(true);
-              })
-            }
-            className="mt-3 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white"
-          >
-            Install module
-          </button>
+        <div className="flex min-h-[70vh] items-center justify-center p-6">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] shadow-xl">
+            <div className="bg-gradient-to-br from-[var(--ui-text-brand)]/10 to-amber-500/5 p-8 text-center">
+              <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--ui-text-brand)]/15">
+                <PackageCheck size={32} className="text-[var(--ui-text-brand)]" />
+              </span>
+              <h2 className="mt-4 text-xl font-black text-[var(--ui-text-primary)]">Warehouse Management</h2>
+              <p className="mt-1.5 text-sm text-[var(--ui-text-muted)]">
+                Modul WMS &amp; Inventory belum diaktifkan.
+                Aktifkan sekarang untuk mulai mengelola gudang, stok, dan pengiriman.
+              </p>
+            </div>
+            <div className="space-y-3 p-6">
+              {[
+                "Manajemen gudang & bin lokasi",
+                "Penerimaan & inspeksi barang (GRN)",
+                "Alokasi & pemenuhan order",
+                "Laporan stok & replenishment alert",
+              ].map((f) => (
+                <div key={f} className="flex items-center gap-2.5 text-sm text-[var(--ui-text-secondary)]">
+                  <Check size={15} className="shrink-0 text-emerald-500" />
+                  {f}
+                </div>
+              ))}
+              <button
+                disabled={busy}
+                onClick={() =>
+                  run(async () => {
+                    await installWms(company.id);
+                    setInstalled(true);
+                  })
+                }
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] px-4 py-3 text-sm font-bold !text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                Aktifkan WMS & Inventory
+              </button>
+            </div>
+          </div>
         </div>
       </Layout>
     );
   const tabs = [
-    ["Overview", BarChart3],
-    ["Stock", Boxes],
-    ["Rak & Lokasi", Layers],
-    ["Receiving & Put Away", ArrowDownToLine],
-    ["Allocation & Packing", PackageCheck],
-    ["Transfers", Truck],
-    ["Adjustments", Activity],
-    ["Warehouses", Building2],
-    ["Reports", BarChart3],
-  ] as const;
+    { key: "Overview", label: "Overview", Icon: BarChart3 },
+    { key: "Stock", label: "Stok & Katalog", Icon: Boxes },
+    { key: "Rak & Lokasi", label: "Rak & Lokasi", Icon: Layers },
+    {
+      key: "Receiving & Put Away",
+      label: "Penerimaan & QC",
+      Icon: ArrowDownToLine,
+      badge: receivingBinItems.length > 0 ? receivingBinItems.length : undefined,
+      badgeColor: "bg-blue-500 text-white",
+    },
+    {
+      key: "Allocation & Packing",
+      label: "Fulfillment",
+      Icon: PackageCheck,
+      badge: fulfillmentCounts.allocated > 0 ? fulfillmentCounts.allocated : undefined,
+      badgeColor: "bg-violet-500 text-white",
+    },
+    { key: "Transfers", label: "Transfer", Icon: Truck },
+    { key: "Adjustments", label: "Penyesuaian", Icon: Activity },
+    { key: "Warehouses", label: "Gudang", Icon: Building2 },
+    {
+      key: "Reports",
+      label: "Laporan",
+      Icon: BarChart3,
+      badge: report?.low_stock_items?.length > 0 ? report.low_stock_items.length : undefined,
+      badgeColor: "bg-amber-500 text-white",
+    },
+  ];
   return (
     <Layout
       title="WMS & Inventory"
       subtitle="Warehouse operations · connected to Huntr Catalogue"
     >
-      <div className="w-full space-y-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
-            {tabs.map(([name, Icon]) => (
+      <div className="w-full space-y-4">
+        {/* Tab navigation */}
+        <div className="flex items-center gap-2">
+          <div
+            className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none]"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {tabs.map(({ key, label, Icon, badge, badgeColor }) => (
               <button
-                key={name}
-                onClick={() => setTab(name)}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-2 text-xs font-semibold whitespace-nowrap ${tab === name ? "border-[var(--ui-text-brand)] bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)]" : "border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)]"}`}
+                key={key}
+                onClick={() => setTab(key)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
+                  tab === key
+                    ? "border-[var(--ui-text-brand)] bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)] shadow-sm"
+                    : "border-transparent bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-[var(--ui-border)] hover:bg-[var(--ui-bg-card)] hover:text-[var(--ui-text-primary)]"
+                }`}
               >
-                <Icon size={14} />
-                {name}
+                <Icon size={13} />
+                <span>{label}</span>
+                {badge !== undefined && badge > 0 && (
+                  <span
+                    className={`ml-0.5 rounded-full px-1.5 py-0.2 text-[10px] font-bold leading-none ${
+                      badgeColor || "bg-[var(--ui-text-brand)] text-white"
+                    }`}
+                  >
+                    {badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>
           <button
-            onClick={refresh}
-            className="shrink-0 rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-2 text-[var(--ui-text-secondary)]"
-            title="Refresh"
+            type="button"
+            onClick={() => setStockImportOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
           >
-            <RefreshCw size={15} />
+            <Upload size={13} /> Import stok
+          </button>
+          <button
+            onClick={refresh}
+            className="shrink-0 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-1.5 text-[var(--ui-text-secondary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
+            title="Refresh data"
+          >
+            <RefreshCw size={14} />
           </button>
         </div>
         {error && (
-          <div className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 text-sm text-[var(--ui-text-brand)]">
+          <div className="flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            <AlertTriangle size={15} className="shrink-0" />
             {error}
           </div>
         )}
         {busy && (
-          <div className="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
-            <Loader2 size={14} className="animate-spin" />
-            Saving transaction…
+          <div className="flex items-center gap-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-2 text-xs text-[var(--ui-text-muted)]">
+            <Loader2 size={13} className="animate-spin text-[var(--ui-text-brand)]" />
+            Menyimpan transaksi…
           </div>
         )}
         {report?.low_stock_items && report.low_stock_items.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm">
-            <div className="flex items-start gap-2.5 text-amber-600 dark:text-amber-400">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-amber-400/5 p-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <AlertTriangle size={17} />
+              </span>
               <div>
-                <p className="font-semibold">
-                  {report.low_stock_items.length} Barang Perlu Pemesanan Ulang (Low Stock Alert)
+                <p className="font-bold text-amber-700 dark:text-amber-400">
+                  {report.low_stock_items.length} SKU di bawah Reorder Point
                 </p>
                 <p className="text-xs text-[var(--ui-text-muted)]">
-                  Stok barang telah mencapai atau di bawah Reorder Point. Periksa lead time dan segera terbitkan PO.
+                  Stok menipis · Periksa lead time dan segera terbitkan PO
                 </p>
               </div>
             </div>
             <button
               onClick={() => setTab("Reports")}
-              className="inline-flex items-center gap-1.5 rounded bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors"
             >
               <ShoppingCart size={13} />
               Review & Buat PO
             </button>
           </div>
+        )}
+        {stockImportOpen && (
+          <UniversalWarehouseImportModal
+            companyId={company.id}
+            warehouses={warehouses}
+            onClose={() => setStockImportOpen(false)}
+            onDone={async () => {
+              await refresh();
+              await Swal.fire({ icon: "success", title: "Stok berhasil diimport", text: "Stok dan transaksi import sudah tercatat di gudang tujuan.", timer: 2200, showConfirmButton: false });
+            }}
+          />
         )}
         {tab === "Overview" && (
           <WmsOverview
@@ -1000,128 +1223,246 @@ export default function WmsPage() {
           <div className="space-y-4">
             <WmsWorkflowGuide
               title="Start with the physical warehouse"
-              description="A warehouse automatically receives Receiving, Storage, and Quarantine bins. Use the code consistently on labels and documents."
-              steps={[
-                "Create warehouse",
-                "Review default bins",
-                "Receive first goods",
-              ]}
+              description="A warehouse auto-creates Receiving, Storage, and Quarantine bins. Use the code consistently on labels and documents."
+              steps={["Create warehouse", "Review default bins", "Receive first goods"]}
             />
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <div className={card}>
-                <h3 className="mb-4 font-bold">Warehouse network</h3>
-                <div className="space-y-2">
+
+            {/* Warehouse KPI Summary Cards */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="flex items-center gap-3.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 shadow-sm">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)]">
+                  <Building2 size={20} />
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">{warehouses.length}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ui-text-muted)]">Total Gudang</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 shadow-sm">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                  <CheckCircle2 size={20} />
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">
+                    {warehouses.filter((w) => w.status === "active").length}
+                  </p>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ui-text-muted)]">Gudang Aktif</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 shadow-sm">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                  <Boxes size={20} />
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">
+                    {formatQuantity(
+                      warehouses.reduce((acc, w) => acc + (toNumeric(w.capacity_units) || 0), 0)
+                    )}
+                  </p>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ui-text-muted)]">Total Kapasitas</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 shadow-sm">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500">
+                  <MapPin size={20} />
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">
+                    {warehouses.filter((w) => w.address).length}
+                  </p>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--ui-text-muted)]">Lokasi Terdaftar</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+              {/* Warehouse list */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <h3 className="font-bold text-sm text-[var(--ui-text-primary)]">Jaringan Gudang Operasional</h3>
+                    <p className="text-xs text-[var(--ui-text-muted)]">Kelola fasilitas penyimpanan, status operasional, dan struktur rak & bin</p>
+                  </div>
+                  <span className="rounded-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-0.5 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    {warehouses.length} Fasilitas
+                  </span>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-1">
                   {warehouses.map((w) => (
                     <div
                       key={w.id}
-                      className="flex justify-between gap-3 border border-[var(--ui-border)] p-3"
+                      className="group relative flex flex-col justify-between gap-4 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4.5 transition-all hover:border-[var(--ui-border)]/90 hover:shadow-md"
                     >
-                      <div>
-                        <p className="font-semibold">{w.name}</p>
-                        <p className="text-xs text-[var(--ui-text-muted)]">
-                          {w.code} · {w.address || "Address not set"}
-                          {w.capacity_units
-                            ? ` · capacity ${formatQuantity(w.capacity_units)} units`
-                            : ""}
-                        </p>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex items-start gap-3.5">
+                          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/60 text-[var(--ui-text-brand)]">
+                            <WarehouseIcon size={20} />
+                          </span>
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="font-bold text-base text-[var(--ui-text-primary)]">{w.name}</h4>
+                              <span className="font-mono rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-0.5 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                                {w.code}
+                              </span>
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                  w.status === "active"
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]"
+                                }`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full ${w.status === "active" ? "bg-emerald-500" : "bg-zinc-400"}`} />
+                                {w.status === "active" ? "Aktif" : "Nonaktif"}
+                              </span>
+                            </div>
+                            <p className="flex items-center gap-1.5 text-xs text-[var(--ui-text-muted)]">
+                              <MapPin size={13} className="shrink-0 text-[var(--ui-text-muted)]" />
+                              <span>{w.address || "Alamat fisik belum dicatat"}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-[var(--ui-text-secondary)] self-start sm:self-auto rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 px-3 py-1.5">
+                          <Boxes size={14} className="text-[var(--ui-text-brand)]" />
+                          <span>Kapasitas:</span>
+                          <strong className="text-[var(--ui-text-primary)]">
+                            {w.capacity_units ? `${formatQuantity(w.capacity_units)} unit` : "Tak terbatas"}
+                          </strong>
+                        </div>
                       </div>
-                      <div className="flex shrink-0 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStockWarehouseId(String(w.id));
-                            setTab("Stock");
-                          }}
-                          className="rounded-md border border-[var(--ui-border)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-brand)]"
-                        >
-                          View stock
-                        </button>
+
+                      {/* Card Action Toolbar */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--ui-border)] pt-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setStockWarehouseId(String(w.id));
+                              setTab("Stock");
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] shadow-sm hover:border-[var(--ui-text-brand)] hover:bg-[var(--ui-text-brand)]/5 transition-colors"
+                          >
+                            <Boxes size={13} className="text-[var(--ui-text-brand)]" />
+                            <span>Lihat Stok</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTab("Rak & Lokasi");
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] shadow-sm hover:border-[var(--ui-border)]/90 hover:bg-[var(--ui-bg-input)] transition-colors"
+                          >
+                            <Layers size={13} />
+                            <span>Atur Rak & Bin</span>
+                          </button>
+                        </div>
+
                         <button
                           type="button"
                           onClick={() =>
                             run(() =>
                               updateWarehouse(company.id, w.id, {
-                                status:
-                                  w.status === "active" ? "inactive" : "active",
+                                status: w.status === "active" ? "inactive" : "active",
                               }),
                             )
                           }
-                          className="rounded-md border border-[var(--ui-border)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-secondary)]"
+                          className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                            w.status === "active"
+                              ? "text-zinc-500 hover:bg-zinc-500/10"
+                              : "text-emerald-500 hover:bg-emerald-500/10"
+                          }`}
                         >
-                          {w.status === "active" ? "Deactivate" : "Activate"}
+                          {w.status === "active" ? "Nonaktifkan" : "Aktifkan"}
                         </button>
                       </div>
                     </div>
                   ))}
                   {!warehouses.length && (
-                    <p className="text-sm text-[var(--ui-text-muted)]">
-                      Create a warehouse to begin.
-                    </p>
+                    <div className="flex flex-col items-center gap-2 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] py-12 text-center">
+                      <Building2 size={32} className="text-[var(--ui-text-muted)] opacity-30" />
+                      <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">Belum ada gudang terdaftar</p>
+                      <p className="text-xs text-[var(--ui-text-muted)]">Gunakan form di sebelah kanan untuk menambahkan fasilitas pertama.</p>
+                    </div>
                   )}
                 </div>
               </div>
+
+              {/* Add warehouse form */}
               <form
-                className={card + " space-y-3"}
+                className="h-fit space-y-4 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 shadow-sm"
                 onSubmit={(e) => {
                   e.preventDefault();
                   run(async () => {
                     await createWarehouse(company.id, warehouseForm);
-                    setWarehouseForm({
-                      code: "",
-                      name: "",
-                      address: "",
-                      capacity_units: "",
-                    });
+                    setWarehouseForm({ code: "", name: "", address: "", capacity_units: "" });
                   });
                 }}
               >
-                <h3 className="font-bold">Add warehouse</h3>
-                <input
-                  className={input}
-                  placeholder="Warehouse code"
-                  required
-                  value={warehouseForm.code}
-                  onChange={(e) =>
-                    setWarehouseForm({ ...warehouseForm, code: e.target.value })
-                  }
-                />
-                <input
-                  className={input}
-                  placeholder="Warehouse name"
-                  required
-                  value={warehouseForm.name}
-                  onChange={(e) =>
-                    setWarehouseForm({ ...warehouseForm, name: e.target.value })
-                  }
-                />
-                <input
-                  className={input}
-                  placeholder="Address"
-                  value={warehouseForm.address}
-                  onChange={(e) =>
-                    setWarehouseForm({
-                      ...warehouseForm,
-                      address: e.target.value,
-                    })
-                  }
-                />
-                <input
-                  className={input}
-                  placeholder="Warehouse capacity (units)"
-                  type="number"
-                  min="0.001"
-                  step="0.001"
-                  value={warehouseForm.capacity_units}
-                  onChange={(e) =>
-                    setWarehouseForm({
-                      ...warehouseForm,
-                      capacity_units: e.target.value,
-                    })
-                  }
-                />
-                <button className="inline-flex items-center gap-2 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
+                <div className="flex items-center gap-2.5 border-b border-[var(--ui-border)] pb-3.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)]">
+                    <Plus size={16} />
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-sm text-[var(--ui-text-primary)]">Tambah Fasilitas Gudang</h3>
+                    <p className="text-[11px] text-[var(--ui-text-muted)]">Otomatis membuat bin RECEIVING, STORAGE, & QUARANTINE</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Kode Gudang *</label>
+                    <input
+                      className={input}
+                      placeholder="Misal: WH-JKT-01"
+                      required
+                      value={warehouseForm.code}
+                      onChange={(e) => setWarehouseForm({ ...warehouseForm, code: e.target.value })}
+                    />
+                    <p className="text-[10px] text-[var(--ui-text-muted)]">Harus unik, digunakan di barcode & label pengiriman</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Nama Fasilitas *</label>
+                    <input
+                      className={input}
+                      placeholder="Contoh: Gudang Distribusi Cakung"
+                      required
+                      value={warehouseForm.name}
+                      onChange={(e) => setWarehouseForm({ ...warehouseForm, name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Alamat Lengkap</label>
+                    <input
+                      className={input}
+                      placeholder="Jalan, Kawasan Industri, Kota..."
+                      value={warehouseForm.address}
+                      onChange={(e) => setWarehouseForm({ ...warehouseForm, address: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Target Kapasitas (unit)</label>
+                    <input
+                      className={input}
+                      placeholder="0 (opsional)"
+                      type="number"
+                      min="0.001"
+                      step="0.001"
+                      value={warehouseForm.capacity_units}
+                      onChange={(e) => setWarehouseForm({ ...warehouseForm, capacity_units: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] py-2.5 text-xs font-bold !text-white shadow transition-all hover:opacity-90 active:scale-[0.99]"
+                >
                   <Plus size={15} />
-                  Create warehouse
+                  Simpan Fasilitas Baru
                 </button>
               </form>
             </div>
@@ -1138,52 +1479,123 @@ export default function WmsPage() {
                 "Set reorder level",
               ]}
             />
-            <div className={card + " overflow-hidden p-0"}>
-              <div className="border-b border-[var(--ui-border)] px-4 py-3.5">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-bold">Stock</h3>
-                    <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
-                      Live inventory across all warehouses.
-                    </p>
-                  </div>
-                  <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs font-medium text-[var(--ui-text-secondary)]">
-                    {filteredStock.length} location
-                    {filteredStock.length === 1 ? "" : "s"}
-                  </span>
+
+            {/* Quick KPI Stat Strip */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className={card + " flex items-center gap-3 p-3.5"}>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+                  <Boxes size={18} />
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">
+                    {stockSummary.totalSkus}
+                  </p>
+                  <p className="text-[11px] text-[var(--ui-text-muted)]">Tracked SKUs</p>
                 </div>
-                <div className="mt-3 flex flex-wrap items-end gap-2 rounded-md bg-[var(--ui-bg-input)] p-2">
-                  <span className="px-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
-                    Filter
+              </div>
+              <div className={card + " flex items-center gap-3 p-3.5"}>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                  <WarehouseIcon size={18} />
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">
+                    {formatQuantity(stockSummary.totalOnHand)}
+                  </p>
+                  <p className="text-[11px] text-[var(--ui-text-muted)]">Fisik On-Hand</p>
+                </div>
+              </div>
+              <div className={card + " flex items-center gap-3 p-3.5"}>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                  <CheckCircle2 size={18} />
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">
+                    {formatQuantity(stockSummary.totalAvailable)}
+                  </p>
+                  <p className="text-[11px] text-[var(--ui-text-muted)]">Siap Dipakai (Available)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStockFilterLowOnly(!stockFilterLowOnly)}
+                className={`${card} flex items-center justify-between gap-3 p-3.5 text-left transition-all ${
+                  stockFilterLowOnly
+                    ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/40"
+                    : "hover:border-[var(--ui-border)]/80"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                      stockSummary.lowStockCount > 0
+                        ? "bg-amber-500/15 text-amber-500"
+                        : "bg-emerald-500/10 text-emerald-500"
+                    }`}
+                  >
+                    <AlertTriangle size={18} />
                   </span>
-                  <input
-                    className={input + " w-48 bg-[var(--ui-bg-card)]"}
-                    placeholder="Search SKU, item, bin"
-                    value={stockSearch}
-                    onChange={(e) => setStockSearch(e.target.value)}
-                  />
+                  <div>
+                    <p className="text-xl font-bold tabular-nums text-[var(--ui-text-primary)]">
+                      {stockSummary.lowStockCount}
+                    </p>
+                    <p className="text-[11px] text-[var(--ui-text-muted)]">Stok Menipis</p>
+                  </div>
+                </div>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    stockFilterLowOnly
+                      ? "bg-amber-500 text-white"
+                      : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]"
+                  }`}
+                >
+                  {stockFilterLowOnly ? "Aktif" : "Filter"}
+                </span>
+              </button>
+            </div>
+
+            <div className={card + " overflow-hidden p-0"}>
+              <div className="border-b border-[var(--ui-border)] px-4 py-3">
+                {/* Toolbar: title + filters all in one row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0 mr-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10">
+                      <Boxes size={14} className="text-violet-500" />
+                    </span>
+                    <span className="font-bold text-sm text-[var(--ui-text-primary)]">Live Inventory</span>
+                    <span className="rounded-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--ui-text-secondary)]">
+                      {filteredStock.length} lokasi
+                    </span>
+                  </div>
+                  {/* Search */}
+                  <div className="relative min-w-[160px] flex-1 max-w-xs">
+                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+                    <input
+                      className={input + " pl-8 py-1.5 text-xs"}
+                      placeholder="Cari SKU, item, atau bin…"
+                      value={stockSearch}
+                      onChange={(e) => setStockSearch(e.target.value)}
+                    />
+                  </div>
                   <select
-                    className={input + " w-44 bg-[var(--ui-bg-card)]"}
+                    style={{ width: "10rem" }}
+                    className="shrink-0 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-1.5 text-xs text-[var(--ui-text-primary)] outline-none focus:border-[var(--ui-text-brand)] transition-colors"
                     value={stockWarehouseId}
                     onChange={(e) => setStockWarehouseId(e.target.value)}
                   >
-                    <option value="">All warehouses</option>
+                    <option value="">Semua gudang</option>
                     {warehouses.map((warehouse: any) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name}
-                      </option>
+                      <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
                     ))}
                   </select>
                   <select
-                    className={input + " w-40 bg-[var(--ui-bg-card)]"}
+                    style={{ width: "9rem" }}
+                    className="shrink-0 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-1.5 text-xs text-[var(--ui-text-primary)] outline-none focus:border-[var(--ui-text-brand)] transition-colors"
                     value={stockCategory}
                     onChange={(e) => setStockCategory(e.target.value)}
                   >
-                    <option value="">All categories</option>
+                    <option value="">Semua kategori</option>
                     {stockCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
+                      <option key={category} value={category}>{category}</option>
                     ))}
                   </select>
                   {hasStockFilters && (
@@ -1193,10 +1605,11 @@ export default function WmsPage() {
                         setStockSearch("");
                         setStockWarehouseId("");
                         setStockCategory("");
+                        setStockFilterLowOnly(false);
                       }}
-                      className="px-2 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--ui-border)] px-2 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)] transition-colors"
                     >
-                      Clear
+                      <X size={11} /> Reset
                     </button>
                   )}
                 </div>
@@ -1228,7 +1641,7 @@ export default function WmsPage() {
                                 <th className="py-3 text-right font-semibold">On hand</th>
                                 <th className="py-3 text-right font-semibold">Reserved</th>
                                 <th className="py-3 text-right font-semibold">Available</th>
-                                <th className="px-4 py-3 font-semibold">Reorder point & Lead time</th>
+                                <th className="px-4 py-3 font-semibold">Ambang Batas & Lead Time</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1246,14 +1659,14 @@ export default function WmsPage() {
                                 return (
                                   <tr
                                     key={x.id}
-                                    className="border-t border-[var(--ui-border)] hover:bg-[var(--ui-bg-input)]/60"
+                                    className="border-t border-[var(--ui-border)] hover:bg-[var(--ui-bg-input)]/60 transition-colors"
                                   >
                                     <td className="px-4 py-3 align-middle">
                                       <p className="font-semibold text-[var(--ui-text-primary)]">
                                         {x.item_name}
                                       </p>
                                       <div className="mt-1 flex items-center gap-2 text-xs">
-                                        <span className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--ui-text-secondary)]">
+                                        <span className="rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--ui-text-secondary)]">
                                           {x.sku}
                                         </span>
                                         <span className="text-[var(--ui-text-muted)]">
@@ -1267,15 +1680,17 @@ export default function WmsPage() {
                                       </div>
                                     </td>
                                     <td className="py-3 align-middle">
-                                      <p className="font-medium">{x.warehouse_name}</p>
+                                      <p className="font-medium text-[var(--ui-text-primary)]">{x.warehouse_name}</p>
                                       <p className="mt-0.5 font-mono text-xs text-[var(--ui-text-muted)]">
                                         {x.bin_location || "No bin assigned"}
                                       </p>
                                     </td>
                                     <td className="py-3 text-right align-middle tabular-nums">
-                                      {formatQuantity(x.on_hand)}{" "}
+                                      <span className="font-semibold text-[var(--ui-text-primary)]">
+                                        {formatQuantity(x.on_hand)}
+                                      </span>{" "}
                                       <span className="text-xs text-[var(--ui-text-muted)]">
-                                        {x.uom}
+                                        {x.uom || "unit"}
                                       </span>
                                     </td>
                                     <td className="py-3 text-right align-middle tabular-nums text-[var(--ui-text-secondary)]">
@@ -1285,116 +1700,51 @@ export default function WmsPage() {
                                       <span
                                         className={
                                           belowReorder
-                                            ? "font-semibold text-amber-600"
-                                            : "font-semibold text-emerald-600"
+                                            ? "font-bold text-amber-500"
+                                            : "font-bold text-emerald-500"
                                         }
                                       >
                                         {formatQuantity(available)}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 align-middle">
-                                      <div className="flex flex-col gap-2">
-                                        <div className="flex items-center gap-2">
-                                          <div className="flex flex-col">
-                                            <span className="text-[10px] text-[var(--ui-text-muted)]">Min. Stok</span>
-                                            <input
-                                              aria-label={`Reorder level ${x.sku}`}
-                                              type="number"
-                                              min="0"
-                                              step="0.001"
-                                              className={input + " w-20 px-2 py-1 text-xs"}
-                                              value={
-                                                reorderLevels[x.id] !== undefined
-                                                  ? reorderLevels[x.id]
-                                                  : String(toNumeric(x.reorder_level))
-                                              }
-                                              onChange={(e) =>
-                                                setReorderLevels({
-                                                  ...reorderLevels,
-                                                  [x.id]: e.target.value,
-                                                })
-                                              }
-                                            />
+                                      <div className="flex items-center justify-between gap-3">
+                                        <div className="space-y-0.5">
+                                          <div className="flex items-center gap-1.5 text-xs">
+                                            <span className="text-[var(--ui-text-muted)]">Min:</span>
+                                            <span className="font-semibold text-[var(--ui-text-primary)]">
+                                              {toNumeric(x.reorder_level) > 0
+                                                ? `${formatQuantity(x.reorder_level)} ${x.uom || "unit"}`
+                                                : "Belum diatur"}
+                                            </span>
                                           </div>
-                                          <div className="flex flex-col">
-                                            <span className="text-[10px] text-[var(--ui-text-muted)]">Lead Time (hr)</span>
-                                            <input
-                                              aria-label={`Lead time ${x.sku}`}
-                                              type="number"
-                                              min="0"
-                                              step="1"
-                                              placeholder="0"
-                                              className={input + " w-16 px-2 py-1 text-xs"}
-                                              value={
-                                                leadTimes[x.id] !== undefined
-                                                  ? leadTimes[x.id]
-                                                  : String(toNumeric(x.lead_time_days || 0))
-                                              }
-                                              onChange={(e) =>
-                                                setLeadTimes({
-                                                  ...leadTimes,
-                                                  [x.id]: e.target.value,
-                                                })
-                                              }
-                                            />
+                                          <div className="flex items-center gap-1.5 text-[11px] text-[var(--ui-text-muted)]">
+                                            <Clock size={11} />
+                                            <span>
+                                              {currentLeadDays > 0
+                                                ? `Lead: ${currentLeadDays} hari`
+                                                : "Lead: —"}
+                                            </span>
                                           </div>
-                                          <button
-                                            onClick={async () => {
-                                              try {
-                                                await setWmsReorderLevel(
-                                                  company.id,
-                                                  x.id,
-                                                  toNumeric(
-                                                    reorderLevels[x.id] ??
-                                                      x.reorder_level ??
-                                                      0,
-                                                  ),
-                                                  toNumeric(
-                                                    leadTimes[x.id] ??
-                                                      x.lead_time_days ??
-                                                      0,
-                                                  ),
-                                                );
-                                                await Swal.fire({
-                                                  icon: "success",
-                                                  title: "Pengaturan Disimpan",
-                                                  text: `Reorder point dan lead time untuk ${x.sku} berhasil diperbarui.`,
-                                                  timer: 1400,
-                                                  showConfirmButton: false,
-                                                });
-                                                await refresh();
-                                              } catch (error: any) {
-                                                await Swal.fire({
-                                                  icon: "error",
-                                                  title: "Unable to save",
-                                                  text:
-                                                    error.message || "Please try again.",
-                                                });
-                                              }
-                                            }}
-                                            className="self-end rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-card)]"
-                                          >
-                                            Save
-                                          </button>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                          {currentLeadDays > 0 ? (
-                                            <span className="text-[var(--ui-text-muted)]">
-                                              ⏱️ Est. tiba: {currentLeadDays} hari
-                                            </span>
-                                          ) : (
-                                            <span className="text-[var(--ui-text-muted)]">
-                                              Lead time: -
-                                            </span>
-                                          )}
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenReorderConfig(x)}
+                                            className="inline-flex items-center gap-1 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)] transition-colors"
+                                            title="Atur Ambang Batas Stok"
+                                          >
+                                            <SlidersHorizontal size={12} />
+                                            Atur
+                                          </button>
                                           {belowReorder && (
                                             <button
                                               type="button"
                                               onClick={() => handleOpenReorderModal(x)}
-                                              className="inline-flex items-center gap-1 rounded bg-amber-600 px-2 py-0.5 font-semibold text-white hover:bg-amber-700"
+                                              className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm hover:bg-amber-700 transition-colors"
                                             >
-                                              <ShoppingCart size={11} />
-                                              Pesan Sekarang
+                                              <ShoppingCart size={12} />
+                                              PO
                                             </button>
                                           )}
                                         </div>
@@ -1411,22 +1761,22 @@ export default function WmsPage() {
                   })}
                 </div>
               ) : (
-                <div className="py-8 text-center">
-                  <Boxes
-                    size={24}
-                    className="mx-auto text-[var(--ui-text-brand)]"
-                  />
-                  <p className="mt-2 text-sm font-semibold">No inventory yet</p>
-                  <p className="mt-1 text-xs text-[var(--ui-text-muted)]">
-                    Receive incoming goods first. Approved quantities will
-                    appear here.
-                  </p>
+                <div className="flex flex-col items-center gap-3 py-16 text-center">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10">
+                    <Boxes size={26} className="text-violet-400" />
+                  </span>
+                  <div>
+                    <p className="font-bold text-[var(--ui-text-primary)]">Belum ada inventory</p>
+                    <p className="mt-1 text-xs text-[var(--ui-text-muted)]">
+                      Terima barang masuk terlebih dahulu. Kuantitas yang diterima akan muncul di sini.
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setTab("Receiving & Put Away")}
-                    className="mt-3 text-xs font-semibold text-[var(--ui-text-brand)]"
+                    className="mt-1 rounded-lg border border-[var(--ui-border)] px-3 py-1.5 text-xs font-semibold text-[var(--ui-text-brand)] hover:bg-[var(--ui-bg-input)] transition-colors"
                   >
-                    Go to receiving
+                    Ke halaman Receiving
                   </button>
                 </div>
               )}
@@ -1445,6 +1795,94 @@ export default function WmsPage() {
                 "Put away accepted stock",
               ]}
             />
+            {/* Staging / Receiving Bin Queue Status */}
+            <div className={card + " border-blue-500/30 bg-blue-500/5 p-4"}>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-500/20 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-500">
+                    <ArrowDownToLine size={16} />
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-sm text-[var(--ui-text-primary)]">
+                      Area Penerimaan (Staging Menunggu Put Away)
+                    </h4>
+                    <p className="text-xs text-[var(--ui-text-muted)]">
+                      Barang yang baru diterima ditampung di area Receiving sebelum dipindahkan ke rak penyimpanan tetap
+                    </p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-blue-500/15 px-2.5 py-0.5 text-xs font-bold text-blue-500">
+                  {receivingBinItems.length} SKU di Receiving
+                </span>
+              </div>
+              {receivingBinItems.length > 0 ? (
+                <div className="mt-3 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                  {receivingBinItems.map((item: any) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 shadow-sm"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-xs text-[var(--ui-text-primary)] truncate">
+                          {item.item_name}
+                        </p>
+                        <p className="font-mono text-[10px] text-[var(--ui-text-brand)]">
+                          {item.sku}
+                        </p>
+                        <p className="mt-1 text-[11px] text-[var(--ui-text-muted)]">
+                          Gudang: <strong>{item.warehouse_name}</strong> · Jumlah:{" "}
+                          <strong className="text-blue-500">
+                            {formatQuantity(item.on_hand)} {item.uom || "unit"}
+                          </strong>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPutawayForm((prev: any) => ({
+                            ...prev,
+                            warehouse_id: String(item.warehouse_id),
+                            sku: item.sku,
+                            quantity: String(
+                              toNumeric(item.on_hand) - toNumeric(item.allocated),
+                            ),
+                            from_bin_id: String(item.bin_id || ""),
+                          }));
+                          setSelections((prev) => ({
+                            ...prev,
+                            putaway_warehouse: warehouses.find(
+                              (w: any) => String(w.id) === String(item.warehouse_id),
+                            )
+                              ? {
+                                  id: String(item.warehouse_id),
+                                  title: item.warehouse_name,
+                                  subtitle: "",
+                                }
+                              : null,
+                            putaway_sku: {
+                              id: String(item.id),
+                              sku: item.sku,
+                              item_name: item.item_name,
+                              warehouse_name: item.warehouse_name,
+                              bin_location: item.bin_location,
+                            } as any,
+                          }));
+                        }}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[var(--ui-text-brand)] px-2.5 py-1.5 text-xs font-bold !text-white hover:opacity-90 transition-opacity"
+                      >
+                        Put Away <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
+                  <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+                  <span>Area Receiving bersih · Semua barang masuk sudah dipindahkan ke rak penyimpanan.</span>
+                </div>
+              )}
+            </div>
+
             <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
               <form
                 className={card + " space-y-3 p-3.5"}
@@ -1488,14 +1926,18 @@ export default function WmsPage() {
                 }}
               >
                 <div className="flex items-start justify-between gap-3 border-b border-[var(--ui-border)] pb-3">
-                  <div>
-                    <h3 className="font-bold">Receive incoming goods</h3>
-                    <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
-                      Confirm the item being entered directly, or add lines
-                      first when one delivery contains multiple items.
-                    </p>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                      <ArrowDownToLine size={15} className="text-emerald-500" />
+                    </span>
+                    <div>
+                      <h3 className="font-bold text-[var(--ui-text-primary)]">Penerimaan Barang Masuk</h3>
+                      <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+                        Konfirmasi langsung atau tambah baris jika satu pengiriman memuat beberapa item.
+                      </p>
+                    </div>
                   </div>
-                  <span className="shrink-0 border border-[var(--ui-border)] px-2 py-1 text-[10px] font-semibold text-[var(--ui-text-muted)]">
+                  <span className="shrink-0 rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-[10px] font-bold tracking-wider text-[var(--ui-text-muted)] uppercase">
                     DRAFT
                   </span>
                 </div>
@@ -1938,8 +2380,16 @@ export default function WmsPage() {
               </form>
             </div>
             <div className={card + " overflow-x-auto"}>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-bold">Receiving receipts</h3>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <PackageCheck size={15} className="text-emerald-500" />
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-[var(--ui-text-primary)]">Receiving Receipts (GRN)</h3>
+                    <p className="text-xs text-[var(--ui-text-muted)]">Riwayat penerimaan barang masuk</p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() =>
@@ -1951,7 +2401,7 @@ export default function WmsPage() {
                     )
                   }
                   disabled={!receiveForm.warehouse_id && !warehouses[0]?.id}
-                  className="rounded-md border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                  className="rounded-lg border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] disabled:opacity-50 hover:bg-[var(--ui-bg-input)] transition-colors"
                 >
                   Import existing Goods Receipts
                 </button>
@@ -2036,7 +2486,7 @@ export default function WmsPage() {
             />
             <div className="grid gap-4 xl:grid-cols-[1fr_1.3fr]">
               <form
-                className={card + " space-y-3"}
+                className={card + " space-y-3.5"}
                 onSubmit={(e) => {
                   e.preventDefault();
                   run(async () => {
@@ -2078,11 +2528,15 @@ export default function WmsPage() {
                   });
                 }}
               >
-                <h3 className="font-bold">Allocate for order</h3>
-                <p className="text-xs text-[var(--ui-text-muted)]">
-                  The system reserves available stock and selects pick bins
-                  automatically.
-                </p>
+                <div className="flex items-center gap-2.5 border-b border-[var(--ui-border)] pb-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+                    <PackageCheck size={15} className="text-violet-500" />
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-[var(--ui-text-primary)]">Alokasi Order</h3>
+                    <p className="text-xs text-[var(--ui-text-muted)]">Sistem memilih bin picking secara otomatis.</p>
+                  </div>
+                </div>
                 <PickerBrowseButton
                   label="Warehouse"
                   placeholder="Select warehouse"
@@ -2132,135 +2586,262 @@ export default function WmsPage() {
                   )}
                 <button
                   disabled={!allocationSufficient}
-                  className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] px-4 py-2.5 text-sm font-bold !text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Allocate stock
+                  <PackageCheck size={14} /> Alokasi Stok
                 </button>
               </form>
               <div className={card + " space-y-3"}>
-                <h3 className="font-bold">
-                  Picking, packing &amp; dispatch queue
-                </h3>
-                {orders.map((o: any) => {
-                  const lines =
-                    typeof o.lines === "string"
-                      ? JSON.parse(o.lines)
-                      : o.lines || [];
-                  const meta = shipping[String(o.id)] || {
-                    carrier: "",
-                    tracking_number: "",
-                  };
-                  return (
-                    <div
-                      key={o.id}
-                      className="border border-[var(--ui-border)] p-3"
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                      <Truck size={15} className="text-amber-500" />
+                    </span>
+                    <div>
+                      <h3 className="font-bold text-[var(--ui-text-primary)]">Antrian Fulfillment</h3>
+                      <p className="text-xs text-[var(--ui-text-muted)]">Picking · Packing · Dispatch</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-0.5 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    {filteredOrders.length} Pesanan
+                  </span>
+                </div>
+
+                {/* Status Filter Tabs */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[
+                    { id: "all", label: "Semua", count: fulfillmentCounts.total },
+                    { id: "allocated", label: "Siap Pick", count: fulfillmentCounts.allocated },
+                    { id: "picking", label: "Sedang Pick", count: fulfillmentCounts.picking },
+                    { id: "packed", label: "Siap Kirim", count: fulfillmentCounts.packed },
+                    { id: "shipped", label: "Terkirim", count: fulfillmentCounts.shipped },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setFulfillmentFilter(f.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                        fulfillmentFilter === f.id
+                          ? "bg-[var(--ui-text-brand)] text-white shadow-sm"
+                          : "bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-card)]"
+                      }`}
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <p className="font-semibold">{o.order_number}</p>
-                          <p className="text-xs capitalize text-[var(--ui-text-muted)]">
-                            {o.warehouse_name} · {o.status}
-                          </p>
-                        </div>
-                        {o.status === "allocated" && (
-                          <div className="flex gap-2">
+                      <span>{f.label}</span>
+                      <span
+                        className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                          fulfillmentFilter === f.id
+                            ? "bg-white/20 text-white"
+                            : "bg-[var(--ui-bg-card)] text-[var(--ui-text-muted)]"
+                        }`}
+                      >
+                        {f.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  {filteredOrders.map((o: any) => {
+                    const lines =
+                      typeof o.lines === "string"
+                        ? JSON.parse(o.lines)
+                        : o.lines || [];
+                    const meta = shipping[String(o.id)] || {
+                      carrier: "",
+                      tracking_number: "",
+                    };
+
+                    const steps = [
+                      { id: "allocated", label: "Alokasi" },
+                      { id: "picking", label: "Picking" },
+                      { id: "packed", label: "Packing" },
+                      { id: "shipped", label: "Dikirim" },
+                    ];
+                    const currentIdx = steps.findIndex((s) => s.id === o.status);
+
+                    return (
+                      <div
+                        key={o.id}
+                        className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/30 p-3.5 transition-all hover:border-[var(--ui-border)]/80"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[var(--ui-border)] pb-2.5">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-[var(--ui-text-primary)]">{o.order_number}</p>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                                  o.status === "allocated"
+                                    ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                                    : o.status === "picking"
+                                    ? "bg-violet-500/15 text-violet-600 dark:text-violet-400"
+                                    : o.status === "packed"
+                                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                    : o.status === "shipped"
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]"
+                                }`}
+                              >
+                                {o.status}
+                              </span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">{o.warehouse_name}</p>
+                          </div>
+
+                          {/* Quick Actions */}
+                          {o.status === "allocated" && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => run(() => startWmsPicking(company.id, o.id))}
+                                className="inline-flex items-center gap-1 rounded-lg bg-[var(--ui-text-brand)] px-3 py-1.5 text-xs font-bold !text-white hover:opacity-90 shadow-sm"
+                              >
+                                <Package size={12} /> Mulai Picking
+                              </button>
+                              <button
+                                onClick={() => run(() => releaseWmsOrder(company.id, o.id))}
+                                className="rounded-lg border border-[var(--ui-border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] hover:text-red-500"
+                                title="Lepas Alokasi Stok"
+                              >
+                                Release
+                              </button>
+                            </div>
+                          )}
+                          {o.status === "picking" && (
                             <button
                               onClick={() =>
-                                run(() => startWmsPicking(company.id, o.id))
+                                run(() =>
+                                  packWmsOrder(company.id, o.id, "Packed and checked"),
+                                )
                               }
-                              className="rounded-md bg-[var(--ui-bg-input)] px-3 py-2 text-xs font-semibold"
+                              className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 shadow-sm"
                             >
-                              Start picking
+                              <PackageCheck size={12} /> Selesai Packing
                             </button>
-                            <button
-                              onClick={() =>
-                                run(() => releaseWmsOrder(company.id, o.id))
-                              }
-                              className="rounded-md bg-[var(--ui-bg-input)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-muted)]"
+                          )}
+                        </div>
+
+                        {/* Visual 4-Step Stepper */}
+                        <div className="my-2.5 flex items-center justify-between text-[10px]">
+                          {steps.map((st, i) => {
+                            const isDone = currentIdx >= i;
+                            const isCurrent = currentIdx === i;
+                            return (
+                              <div key={st.id} className="flex min-w-0 flex-1 items-center">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${
+                                      isDone
+                                        ? "bg-emerald-500 text-white"
+                                        : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]"
+                                    }`}
+                                  >
+                                    {isDone ? "✓" : i + 1}
+                                  </span>
+                                  <span
+                                    className={`font-semibold ${
+                                      isCurrent
+                                        ? "text-[var(--ui-text-brand)]"
+                                        : isDone
+                                        ? "text-[var(--ui-text-primary)]"
+                                        : "text-[var(--ui-text-muted)]"
+                                    }`}
+                                  >
+                                    {st.label}
+                                  </span>
+                                </div>
+                                {i < steps.length - 1 && (
+                                  <div
+                                    className={`mx-2 h-0.5 flex-1 ${
+                                      currentIdx > i ? "bg-emerald-500" : "bg-[var(--ui-border)]"
+                                    }`}
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Line items to pick / pack */}
+                        <div className="mt-2.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-2.5 space-y-1 text-xs text-[var(--ui-text-secondary)]">
+                          {lines.map((line: any, i: number) => (
+                            <div
+                              key={`${line.stock_id}-${i}`}
+                              className="flex items-center justify-between gap-2"
                             >
-                              Release
+                              <span className="font-mono text-xs text-[var(--ui-text-primary)]">
+                                {line.quantity} × {line.sku}
+                              </span>
+                              <span className="rounded bg-[var(--ui-bg-input)] px-2 py-0.5 text-[11px] text-[var(--ui-text-muted)]">
+                                Bin: <strong className="text-[var(--ui-text-brand)]">{line.bin_location || "STORAGE"}</strong>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {o.status === "packed" && (
+                          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                            <input
+                              className={input}
+                              placeholder="Kurir / Carrier (misal: JNE, GrabExpress)"
+                              value={meta.carrier}
+                              onChange={(e) =>
+                                setShipping({
+                                  ...shipping,
+                                  [String(o.id)]: {
+                                    ...meta,
+                                    carrier: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                            <input
+                              className={input}
+                              placeholder="No. Resi / Tracking number"
+                              value={meta.tracking_number}
+                              onChange={(e) =>
+                                setShipping({
+                                  ...shipping,
+                                  [String(o.id)]: {
+                                    ...meta,
+                                    tracking_number: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                            <button
+                              onClick={() => run(() => shipWmsOrder(company.id, o.id, meta))}
+                              className="inline-flex items-center gap-1 rounded-lg bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-bold !text-white hover:opacity-90 shadow-sm"
+                            >
+                              <Truck size={13} /> Kirim Sekarang
                             </button>
                           </div>
                         )}
-                        {o.status === "picking" && (
-                          <button
-                            onClick={() =>
-                              run(() =>
-                                packWmsOrder(
-                                  company.id,
-                                  o.id,
-                                  "Packed and checked",
-                                ),
-                              )
-                            }
-                            className="rounded-md bg-[var(--ui-bg-input)] px-3 py-2 text-xs font-semibold"
-                          >
-                            Confirm packed
-                          </button>
+
+                        {o.status === "shipped" && (
+                          <div className="mt-2.5 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                            <Truck size={13} className="shrink-0" />
+                            <span>
+                              Kurir: <strong>{o.carrier || "Kurir Tercatat"}</strong> · No. Resi:{" "}
+                              <strong className="font-mono">{o.tracking_number || "Tanpa Resi"}</strong>
+                            </span>
+                          </div>
                         )}
                       </div>
-                      <div className="mt-3 space-y-1 text-xs text-[var(--ui-text-secondary)]">
-                        {lines.map((line: any, i: number) => (
-                          <p key={`${line.stock_id}-${i}`}>
-                            Pick {line.quantity} × {line.sku} from bin{" "}
-                            <strong>{line.bin_location || "—"}</strong>
-                          </p>
-                        ))}
-                      </div>
-                      {o.status === "packed" && (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                          <input
-                            className={input}
-                            placeholder="Carrier"
-                            value={meta.carrier}
-                            onChange={(e) =>
-                              setShipping({
-                                ...shipping,
-                                [String(o.id)]: {
-                                  ...meta,
-                                  carrier: e.target.value,
-                                },
-                              })
-                            }
-                          />
-                          <input
-                            className={input}
-                            placeholder="Tracking number"
-                            value={meta.tracking_number}
-                            onChange={(e) =>
-                              setShipping({
-                                ...shipping,
-                                [String(o.id)]: {
-                                  ...meta,
-                                  tracking_number: e.target.value,
-                                },
-                              })
-                            }
-                          />
-                          <button
-                            onClick={() =>
-                              run(() => shipWmsOrder(company.id, o.id, meta))
-                            }
-                            className="rounded-md bg-[var(--ui-bg-input)] px-3 py-2 text-xs font-semibold"
-                          >
-                            Dispatch
-                          </button>
-                        </div>
-                      )}
-                      {o.status === "shipped" && (
-                        <p className="mt-2 text-xs text-[var(--ui-text-muted)]">
-                          {o.carrier || "Carrier pending"} ·{" "}
-                          {o.tracking_number || "No tracking number"}
-                        </p>
-                      )}
+                    );
+                  })}
+                  {!filteredOrders.length && (
+                    <div className="flex flex-col items-center gap-2 py-10 text-center">
+                      <Truck size={28} className="text-[var(--ui-text-muted)] opacity-30" />
+                      <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">
+                        {fulfillmentFilter === "all"
+                          ? "Antrian fulfillment kosong"
+                          : `Tidak ada pesanan dengan status ${fulfillmentFilter}`}
+                      </p>
+                      <p className="text-xs text-[var(--ui-text-muted)]">
+                        Alokasi order baru untuk memulai alur picking & packing.
+                      </p>
                     </div>
-                  );
-                })}
-                {!orders.length && (
-                  <p className="text-sm text-[var(--ui-text-muted)]">
-                    No orders in the fulfilment queue.
-                  </p>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -2277,75 +2858,83 @@ export default function WmsPage() {
                 "Confirm transfer",
               ]}
             />
-            <div className={card + " space-y-4"}>
-              <h3 className="font-bold">Inter-warehouse stock transfer</h3>
-              <p className="text-xs text-[var(--ui-text-muted)]">
-                Moves stock between warehouses and records both inventory
-                movements.
-              </p>
-              <form
-                className="space-y-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  run(async () => {
-                    await transferStock(company.id, transferForm);
-                    setTransferForm({
-                      ...transferForm,
-                      sku: "",
-                      from_bin: "",
-                      to_bin: "",
-                      quantity: "",
-                    });
+
+            {/* Visual Route Indicator */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 via-blue-500/5 to-cyan-500/10 p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-500">
+                  <Truck size={20} />
+                </span>
+                <div>
+                  <h3 className="font-bold text-sm text-[var(--ui-text-primary)]">
+                    Transfer Stok Antar-Gudang
+                  </h3>
+                  <p className="text-xs text-[var(--ui-text-muted)]">
+                    Pindahkan stok fisik dan sinkronkan pergerakan inventory kedua lokasi secara akurat.
+                  </p>
+                </div>
+              </div>
+              <div className="hidden items-center gap-2 text-xs font-semibold text-cyan-600 dark:text-cyan-400 sm:flex">
+                <span>Gudang Asal</span>
+                <ArrowRight size={14} className="text-cyan-500" />
+                <span className="rounded bg-cyan-500/20 px-2 py-0.5">🚚 Dalam Transit</span>
+                <ArrowRight size={14} className="text-cyan-500" />
+                <span>Gudang Tujuan</span>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                run(async () => {
+                  await transferStock(company.id, transferForm);
+                  setTransferForm({
+                    ...transferForm,
+                    sku: "",
+                    from_bin: "",
+                    to_bin: "",
+                    quantity: "",
                   });
-                }}
-              >
-                <div className="grid gap-3 sm:grid-cols-2">
+                  setSelections((prev) => ({
+                    ...prev,
+                    transfer_sku: null,
+                  }));
+                  await Swal.fire({
+                    icon: "success",
+                    title: "Transfer Berhasil",
+                    text: "Stok telah berhasil dipindahkan antar gudang.",
+                    timer: 1600,
+                    showConfirmButton: false,
+                  });
+                });
+              }}
+              className="space-y-4"
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Source Column */}
+                <div className={card + " space-y-3"}>
+                  <div className="flex items-center gap-2 border-b border-[var(--ui-border)] pb-2.5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/15 text-[11px] font-bold text-blue-500">
+                      1
+                    </span>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-[var(--ui-text-primary)]">
+                      Lokasi Asal (Sumber Barang)
+                    </h4>
+                  </div>
                   <PickerBrowseButton
-                    label="From warehouse"
-                    placeholder="Select source warehouse"
+                    label="Gudang Asal"
+                    placeholder="Pilih gudang asal"
                     selected={selections["transfer_from_wh"] || null}
                     onClick={() => openPicker("transfer_from_wh")}
                   />
-                  <PickerBrowseButton
-                    label="To warehouse"
-                    placeholder="Select destination warehouse"
-                    selected={selections["transfer_to_wh"] || null}
-                    onClick={() => openPicker("transfer_to_wh")}
-                  />
-                  <PickerBrowseButton
-                    label="Inventory item"
-                    placeholder="Select inventory item"
-                    selected={selections["transfer_sku"] || null}
-                    onClick={() => openPicker("transfer_sku")}
-                  />
                   <div className="space-y-1">
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Units to transfer
-                    </div>
-                    <input
-                      required
-                      type="number"
-                      min="0.001"
-                      step="0.001"
-                      className={input}
-                      placeholder="Units to transfer"
-                      value={transferForm.quantity}
-                      onChange={(e) =>
-                        setTransferForm({
-                          ...transferForm,
-                          quantity: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Source bin
+                      Bin / Rak Asal
                     </div>
                     <input
                       required
                       className={input}
-                      placeholder="Source bin"
+                      placeholder="Contoh: STORAGE atau RAK-A1"
                       value={transferForm.from_bin}
                       onChange={(e) =>
                         setTransferForm({
@@ -2355,14 +2944,58 @@ export default function WmsPage() {
                       }
                     />
                   </div>
+                  <PickerBrowseButton
+                    label="Item Inventori / SKU"
+                    placeholder="Pilih item yang akan dipindah"
+                    selected={selections["transfer_sku"] || null}
+                    onClick={() => openPicker("transfer_sku")}
+                  />
                   <div className="space-y-1">
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Destination bin
+                      Jumlah Unit yang Dipindahkan
+                    </div>
+                    <input
+                      required
+                      type="number"
+                      min="0.001"
+                      step="0.001"
+                      className={input}
+                      placeholder="0"
+                      value={transferForm.quantity}
+                      onChange={(e) =>
+                        setTransferForm({
+                          ...transferForm,
+                          quantity: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Destination Column */}
+                <div className={card + " space-y-3"}>
+                  <div className="flex items-center gap-2 border-b border-[var(--ui-border)] pb-2.5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/15 text-[11px] font-bold text-emerald-500">
+                      2
+                    </span>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-[var(--ui-text-primary)]">
+                      Lokasi Tujuan (Penerima)
+                    </h4>
+                  </div>
+                  <PickerBrowseButton
+                    label="Gudang Tujuan"
+                    placeholder="Pilih gudang penerima"
+                    selected={selections["transfer_to_wh"] || null}
+                    onClick={() => openPicker("transfer_to_wh")}
+                  />
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Bin / Rak Tujuan
                     </div>
                     <input
                       required
                       className={input}
-                      placeholder="Destination bin"
+                      placeholder="Contoh: RECEIVING atau STORAGE"
                       value={transferForm.to_bin}
                       onChange={(e) =>
                         setTransferForm({
@@ -2372,12 +3005,36 @@ export default function WmsPage() {
                       }
                     />
                   </div>
+
+                  {/* Transfer Summary Preview */}
+                  <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 p-3.5 space-y-2 mt-4">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                      Ringkasan Transfer
+                    </p>
+                    <div className="text-xs text-[var(--ui-text-secondary)] space-y-1">
+                      <p>
+                        Item: <strong className="text-[var(--ui-text-primary)]">{transferForm.sku || "Belum dipilih"}</strong>
+                      </p>
+                      <p>
+                        Jumlah: <strong className="text-[var(--ui-text-brand)]">{transferForm.quantity ? `${transferForm.quantity} unit` : "0 unit"}</strong>
+                      </p>
+                      <p className="text-[11px] text-[var(--ui-text-muted)]">
+                        Dari bin <strong>{transferForm.from_bin || "—"}</strong> ➔ ke bin <strong>{transferForm.to_bin || "—"}</strong>
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <button className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
-                  Confirm transfer
-                </button>
-              </form>
-            </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] px-4 py-3 text-sm font-bold !text-white transition-opacity hover:opacity-90 shadow-md disabled:opacity-50"
+              >
+                {busy ? <Loader2 size={16} className="animate-spin" /> : <Truck size={16} />}
+                Eksekusi Transfer Stok
+              </button>
+            </form>
           </div>
         )}
         {tab === "Adjustments" && (
@@ -2393,19 +3050,58 @@ export default function WmsPage() {
               ]}
             />
             <div className={card + " space-y-4"}>
-              <h3 className="font-bold">Cycle count / stock adjustment</h3>
-              <p className="text-xs text-[var(--ui-text-muted)]">
-                Add or subtract stock after a count. Allocated stock cannot be
-                adjusted away.
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                    <Activity size={15} className="text-amber-500" />
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-[var(--ui-text-primary)]">
+                      Stock Opname & Penyesuaian Saldo
+                    </h3>
+                    <p className="text-xs text-[var(--ui-text-muted)]">
+                      Koreksi perbedaan stok fisik hasil opname dengan catatan sistem.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Mode Selector Toggle */}
+                <div className="flex rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setAdjustMode("increase")}
+                    className={`rounded-md px-3 py-1 transition-all ${
+                      adjustMode === "increase"
+                        ? "bg-emerald-500 text-white shadow-sm"
+                        : "text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+                    }`}
+                  >
+                    + Penambahan (Surplus)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdjustMode("decrease")}
+                    className={`rounded-md px-3 py-1 transition-all ${
+                      adjustMode === "decrease"
+                        ? "bg-rose-500 text-white shadow-sm"
+                        : "text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+                    }`}
+                  >
+                    - Pengurangan (Defisit/Rusak)
+                  </button>
+                </div>
+              </div>
+
               <form
-                className="space-y-3"
+                className="space-y-3.5"
                 onSubmit={(e) => {
                   e.preventDefault();
                   run(async () => {
+                    const rawQty = Math.abs(Number(adjustForm.quantity || 0));
+                    const finalQty = adjustMode === "decrease" ? -rawQty : rawQty;
                     await adjustStock(company.id, {
                       ...adjustForm,
-                      quantity: Number(adjustForm.quantity),
+                      quantity: finalQty,
                     });
                     setAdjustForm({
                       ...adjustForm,
@@ -2414,30 +3110,41 @@ export default function WmsPage() {
                       quantity: "",
                       reason: "",
                     });
+                    setSelections((prev) => ({
+                      ...prev,
+                      adjust_sku: null,
+                    }));
+                    await Swal.fire({
+                      icon: "success",
+                      title: "Penyesuaian Berhasil",
+                      text: "Saldo stok inventori telah berhasil disesuaikan.",
+                      timer: 1600,
+                      showConfirmButton: false,
+                    });
                   });
                 }}
               >
                 <div className="grid gap-3 sm:grid-cols-2">
                   <PickerBrowseButton
-                    label="Warehouse"
-                    placeholder="Select warehouse"
+                    label="Gudang"
+                    placeholder="Pilih gudang"
                     selected={selections["adjust_warehouse"] || null}
                     onClick={() => openPicker("adjust_warehouse")}
                   />
                   <PickerBrowseButton
-                    label="Inventory item"
-                    placeholder="Select inventory item"
+                    label="Item Inventori / SKU"
+                    placeholder="Pilih item inventori"
                     selected={selections["adjust_sku"] || null}
                     onClick={() => openPicker("adjust_sku")}
                   />
                   <div className="space-y-1">
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Bin location
+                      Bin / Lokasi Rak
                     </div>
                     <input
                       required
                       className={input}
-                      placeholder="Bin location"
+                      placeholder="Contoh: STORAGE"
                       value={adjustForm.bin_location}
                       onChange={(e) =>
                         setAdjustForm({
@@ -2449,14 +3156,15 @@ export default function WmsPage() {
                   </div>
                   <div className="space-y-1">
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      Adjustment quantity (+ / -)
+                      Jumlah Selisih ({adjustMode === "increase" ? "+" : "-"})
                     </div>
                     <input
                       required
                       type="number"
+                      min="0.001"
                       step="0.001"
                       className={input}
-                      placeholder="Adjustment quantity (+ / -)"
+                      placeholder="0"
                       value={adjustForm.quantity}
                       onChange={(e) =>
                         setAdjustForm({
@@ -2467,17 +3175,57 @@ export default function WmsPage() {
                     />
                   </div>
                 </div>
-                <input
-                  required
-                  className={input}
-                  placeholder="Reason / cycle count reference"
-                  value={adjustForm.reason}
-                  onChange={(e) =>
-                    setAdjustForm({ ...adjustForm, reason: e.target.value })
-                  }
-                />
-                <button className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white">
-                  Record adjustment
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                      Alasan Penyesuaian / Referensi Opname *
+                    </label>
+                    <span className="text-[11px] text-[var(--ui-text-muted)]">
+                      Pilih alasan cepat di bawah atau ketik manual
+                    </span>
+                  </div>
+                  <input
+                    required
+                    className={input}
+                    placeholder="Contoh: Temuan Stock Opname Q4 atau Barang Rusak saat handling"
+                    value={adjustForm.reason}
+                    onChange={(e) =>
+                      setAdjustForm({ ...adjustForm, reason: e.target.value })
+                    }
+                  />
+
+                  {/* Quick Reason Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    {[
+                      "Stock Opname Berkala",
+                      "Barang Rusak / Kadaluarsa",
+                      "Koreksi Selisih Input Sistem",
+                      "Sample / Demo Produk",
+                      "Selisih Penerimaan Fisik",
+                    ].map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => setAdjustForm({ ...adjustForm, reason: chip })}
+                        className="rounded-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-1 text-[11px] text-[var(--ui-text-secondary)] hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)] transition-colors"
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold !text-white transition-opacity hover:opacity-90 shadow-md ${
+                    adjustMode === "decrease" ? "bg-rose-600 hover:bg-rose-700" : "bg-[var(--ui-text-brand)]"
+                  }`}
+                >
+                  <Check size={15} />
+                  Simpan Penyesuaian Stok ({adjustMode === "increase" ? "+" : "-"}
+                  {adjustForm.quantity || 0})
                 </button>
               </form>
             </div>
@@ -2486,118 +3234,237 @@ export default function WmsPage() {
         {tab === "Reports" && (
           <div className="space-y-4">
             <WmsWorkflowGuide
-              title="Warehouse performance"
-              description="Review availability, movement, and items that need replenishment."
+              title="Warehouse performance & inventory analytics"
+              description="Review availability, physical inventory movement, and SKUs requiring procurement replenishment."
               steps={[
                 "Review availability",
                 "Inspect movement",
                 "Resolve alerts",
               ]}
             />
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className={card}>
-                <p className="text-xs text-[var(--ui-text-muted)]">
-                  Active warehouses
-                </p>
-                <p className="mt-2 text-2xl font-bold">
-                  {report?.stock_by_warehouse?.length || 0}
-                </p>
-              </div>
-              <div className={card}>
-                <p className="text-xs text-[var(--ui-text-muted)]">
-                  Catalogue linked SKUs
-                </p>
-                <p className="mt-2 text-2xl font-bold">
-                  {formatQuantity(report?.catalogue_linked_skus || 0)}
-                </p>
-              </div>
-              <div className={card}>
-                <p className="text-xs text-[var(--ui-text-muted)]">
-                  Replenishment alerts
-                </p>
-                <p className="mt-2 text-2xl font-bold text-amber-500">
-                  {formatQuantity(report?.low_stock_items?.length || 0)}
-                </p>
-              </div>
+
+            {/* KPI Metric Highlights */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                {
+                  label: "Gudang Aktif Terhubung",
+                  value: String(report?.stock_by_warehouse?.length || 0),
+                  subtext: `${warehouses.length} fasilitas terdaftar`,
+                  color: "text-blue-500",
+                  bg: "bg-blue-500/10",
+                  Icon: Building2,
+                },
+                {
+                  label: "SKU Terdaftar di Katalog",
+                  value: formatQuantity(report?.catalogue_linked_skus || 0),
+                  subtext: "Terhubung otomatis dengan POS/RFQ",
+                  color: "text-violet-500",
+                  bg: "bg-violet-500/10",
+                  Icon: Boxes,
+                },
+                {
+                  label: "Peringatan Restock (Low Stock)",
+                  value: formatQuantity(report?.low_stock_items?.length || 0),
+                  subtext: (report?.low_stock_items?.length || 0) > 0 ? "Perlu pengajuan Purchase Order" : "Semua stok dalam batas aman",
+                  color: (report?.low_stock_items?.length || 0) > 0 ? "text-amber-500" : "text-emerald-500",
+                  bg: (report?.low_stock_items?.length || 0) > 0 ? "bg-amber-500/10" : "bg-emerald-500/10",
+                  Icon: (report?.low_stock_items?.length || 0) > 0 ? AlertTriangle : ShieldCheck,
+                },
+              ].map(({ label, value, subtext, color, bg, Icon }) => (
+                <div key={label} className="flex items-center gap-4 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4.5 shadow-sm">
+                  <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${bg} ${color}`}>
+                    <Icon size={22} />
+                  </span>
+                  <div>
+                    <p className={`text-2xl font-black tabular-nums ${color}`}>{value}</p>
+                    <p className="mt-0.5 text-xs font-semibold text-[var(--ui-text-primary)]">{label}</p>
+                    <p className="text-[11px] text-[var(--ui-text-muted)]">{subtext}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="grid gap-3 xl:grid-cols-2">
-              <div className={card + " overflow-x-auto"}>
-                <h3 className="font-bold">Stock position by warehouse</h3>
-                <table className="mt-3 w-full min-w-[500px] text-left text-sm">
-                  <thead className="text-xs text-[var(--ui-text-muted)]">
-                    <tr>
-                      <th className="py-2">Warehouse</th>
-                      <th>SKU count</th>
-                      <th>On hand</th>
-                      <th>Allocated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(report?.stock_by_warehouse || []).map((x: any) => (
-                      <tr
-                        className="border-t border-[var(--ui-border)]"
-                        key={x.id}
-                      >
-                        <td className="py-3">
-                          {x.name}{" "}
-                          <span className="text-xs text-[var(--ui-text-muted)]">
-                            {x.code}
-                          </span>
-                        </td>
-                        <td>{x.sku_count}</td>
-                        <td>{formatQuantity(x.on_hand)}</td>
-                        <td>{formatQuantity(x.allocated)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className={card}>
-                <h3 className="font-bold">Movement in the last 30 days</h3>
-                <div className="mt-3 divide-y divide-[var(--ui-border)]">
-                  {(report?.movement_summary || []).map((x: any) => (
-                    <div
-                      key={x.type}
-                      className="flex items-center justify-between gap-3 py-3 text-sm"
-                    >
-                      <p className="capitalize font-semibold">{x.type}</p>
-                      <p className="text-right text-xs text-[var(--ui-text-muted)]">
-                        {formatQuantity(x.transactions)} movements ·{" "}
-                        {formatQuantity(x.quantity)} units
-                      </p>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              {/* Posisi Stok per Gudang */}
+              <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between border-b border-[var(--ui-border)] pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)]">
+                      <Building2 size={16} />
+                    </span>
+                    <div>
+                      <h3 className="font-bold text-sm text-[var(--ui-text-primary)]">Posisi Stok per Gudang</h3>
+                      <p className="text-[11px] text-[var(--ui-text-muted)]">Perbandingan fisik on-hand dengan kuantitas yang teralokasi order</p>
                     </div>
-                  ))}
+                  </div>
+                  <span className="text-xs text-[var(--ui-text-muted)]">
+                    {report?.stock_by_warehouse?.length || 0} Gudang
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--ui-border)] text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                        <th className="py-2.5">Fasilitas Gudang</th>
+                        <th className="text-right">Varian SKU</th>
+                        <th className="text-right">Fisik (On-Hand)</th>
+                        <th className="text-right">Teralokasi</th>
+                        <th className="text-right">Ketersediaan</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--ui-border)]">
+                      {(report?.stock_by_warehouse || []).map((x: any) => {
+                        const onHand = toNumeric(x.on_hand) || 0;
+                        const allocated = toNumeric(x.allocated) || 0;
+                        const available = Math.max(0, onHand - allocated);
+                        const freePct = onHand > 0 ? Math.round((available / onHand) * 100) : 100;
+                        return (
+                          <tr key={x.id} className="group hover:bg-[var(--ui-bg-input)]/40 transition-colors">
+                            <td className="py-3">
+                              <p className="font-semibold text-xs text-[var(--ui-text-primary)]">{x.name}</p>
+                              <span className="font-mono text-[11px] text-[var(--ui-text-muted)]">{x.code}</span>
+                            </td>
+                            <td className="text-right font-medium text-xs tabular-nums text-[var(--ui-text-secondary)]">
+                              {x.sku_count}
+                            </td>
+                            <td className="text-right font-bold text-xs tabular-nums text-[var(--ui-text-primary)]">
+                              {formatQuantity(onHand)}
+                            </td>
+                            <td className="text-right font-medium text-xs tabular-nums text-amber-500">
+                              {formatQuantity(allocated)}
+                            </td>
+                            <td className="text-right">
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="font-bold text-xs tabular-nums text-emerald-500">
+                                  {formatQuantity(available)}
+                                </span>
+                                <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[var(--ui-bg-input)]">
+                                  <div
+                                    className="h-full rounded-full bg-emerald-500 transition-all"
+                                    style={{ width: `${Math.min(100, freePct)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {!report?.stock_by_warehouse?.length && (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-xs text-[var(--ui-text-muted)]">
+                            Belum ada data stok per gudang tercatat.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Pergerakan 30 Hari Terakhir */}
+              <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between border-b border-[var(--ui-border)] pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)]">
+                      <Activity size={16} />
+                    </span>
+                    <div>
+                      <h3 className="font-bold text-sm text-[var(--ui-text-primary)]">Aktivitas Gudang 30 Hari Terakhir</h3>
+                      <p className="text-[11px] text-[var(--ui-text-muted)]">Ringkasan volume arus barang berdasarkan jenis transaksi</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {(report?.movement_summary || []).map((x: any) => {
+                    const typeConfig: Record<string, { label: string; bg: string; text: string; Icon: any }> = {
+                      receive: { label: "Penerimaan Barang (Inbound)", bg: "bg-emerald-500/10", text: "text-emerald-500", Icon: ArrowDownToLine },
+                      putaway: { label: "Put Away ke Rak Tetap", bg: "bg-blue-500/10", text: "text-blue-500", Icon: Layers },
+                      allocate: { label: "Alokasi Pesanan", bg: "bg-violet-500/10", text: "text-violet-500", Icon: PackageCheck },
+                      transfer: { label: "Transfer Antar-Gudang", bg: "bg-cyan-500/10", text: "text-cyan-500", Icon: Truck },
+                      adjust: { label: "Penyesuaian Opname", bg: "bg-amber-500/10", text: "text-amber-500", Icon: Activity },
+                      ship: { label: "Pengiriman / Dispatch", bg: "bg-rose-500/10", text: "text-rose-500", Icon: ArrowRight },
+                      shipment: { label: "Pengiriman / Dispatch", bg: "bg-rose-500/10", text: "text-rose-500", Icon: ArrowRight },
+                    };
+                    const cfg = typeConfig[x.type?.toLowerCase()] || {
+                      label: x.type,
+                      bg: "bg-[var(--ui-bg-input)]",
+                      text: "text-[var(--ui-text-secondary)]",
+                      Icon: Activity,
+                    };
+                    const OpIcon = cfg.Icon;
+                    return (
+                      <div
+                        key={x.type}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/25 p-3 hover:bg-[var(--ui-bg-input)]/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${cfg.bg} ${cfg.text}`}>
+                            <OpIcon size={16} />
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold text-[var(--ui-text-primary)]">{cfg.label}</p>
+                            <p className="text-[11px] text-[var(--ui-text-muted)]">{formatQuantity(x.transactions)} transaksi tercatat</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-sm font-bold tabular-nums text-[var(--ui-text-primary)]">
+                            {formatQuantity(x.quantity)} <span className="text-[11px] font-normal text-[var(--ui-text-muted)]">unit</span>
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!report?.movement_summary?.length && (
+                    <div className="py-8 text-center text-xs text-[var(--ui-text-muted)]">
+                      Belum ada pergerakan stok dalam 30 hari terakhir.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-            <div className={card}>
+
+            {/* Replenishment Alerts */}
+            <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 shadow-sm">
               <div className="flex items-center justify-between border-b border-[var(--ui-border)] pb-3">
-                <div>
-                  <h3 className="flex items-center gap-2 font-bold text-base">
-                    <AlertTriangle className="text-amber-500" size={18} />
-                    Replenishment alerts (Barang di Bawah Reorder Point)
-                  </h3>
-                  <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
-                    Daftar stok yang telah mencapai atau di bawah batas minimum pemesanan ulang
-                  </p>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                    <AlertTriangle size={16} />
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-sm text-[var(--ui-text-primary)]">
+                      Peringatan Ambang Batas Minimum (Reorder Point Alerts)
+                    </h3>
+                    <p className="text-[11px] text-[var(--ui-text-muted)]">
+                      Daftar stok yang telah menyentuh atau di bawah batas minimum pemesanan ulang untuk segera di-restock
+                    </p>
+                  </div>
                 </div>
-                <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
-                  {report?.low_stock_items?.length || 0} SKU Perlu PO
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                    (report?.low_stock_items?.length || 0) > 0
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                  }`}
+                >
+                  {report?.low_stock_items?.length || 0} SKU Perlu Perhatian
                 </span>
               </div>
 
-              <div className="mt-3 divide-y divide-[var(--ui-border)]">
+              <div className="mt-4">
                 {(report?.low_stock_items || []).map((x: any) => {
                   const leadDays = toNumeric(x.lead_time_days || 0);
                   const deficit = Math.max(0, toNumeric(x.reorder_level) - toNumeric(x.available));
                   return (
                     <div
                       key={`${x.sku}-${x.warehouse_name}-${x.bin_location}`}
-                      className="flex flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-3 border-b border-[var(--ui-border)] py-3.5 last:border-0 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[var(--ui-text-primary)]">
+                          <span className="font-bold text-sm text-[var(--ui-text-primary)]">
                             {x.item_name}
                           </span>
                           <span className="rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--ui-text-secondary)]">
@@ -2611,7 +3478,7 @@ export default function WmsPage() {
                           <span>·</span>
                           <span>
                             Tersedia:{" "}
-                            <strong className="text-amber-500">
+                            <strong className="text-amber-500 font-bold">
                               {formatQuantity(x.available)} {x.uom || "unit"}
                             </strong>
                           </span>
@@ -2622,7 +3489,7 @@ export default function WmsPage() {
                           {deficit > 0 && (
                             <>
                               <span>·</span>
-                              <span className="font-medium text-rose-500">
+                              <span className="font-semibold text-rose-500">
                                 Defisit: {formatQuantity(deficit)} {x.uom || "unit"}
                               </span>
                             </>
@@ -2651,8 +3518,9 @@ export default function WmsPage() {
 
                       <div className="flex shrink-0 items-center gap-2">
                         <button
+                          type="button"
                           onClick={() => handleOpenReorderModal(x)}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ui-text-brand)] px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--ui-text-brand)] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:opacity-95 transition-opacity"
                         >
                           <ShoppingCart size={14} />
                           Buat Purchase Order (PO)
@@ -2662,9 +3530,14 @@ export default function WmsPage() {
                   );
                 })}
                 {!report?.low_stock_items?.length && (
-                  <div className="py-6 text-center text-sm text-[var(--ui-text-muted)]">
-                    <PackageCheck size={28} className="mx-auto mb-1 text-emerald-500 opacity-80" />
-                    Semua stok aman. Tidak ada barang di bawah reorder point.
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-[var(--ui-border)] py-10 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                      <ShieldCheck size={26} />
+                    </div>
+                    <p className="font-bold text-sm text-[var(--ui-text-primary)]">Kondisi Stok Optimal · Seluruh SKU di Batas Aman</p>
+                    <p className="max-w-md text-xs text-[var(--ui-text-muted)]">
+                      Tidak ada SKU yang berada di bawah ambang batas minimum pemesanan ulang (Reorder Point). Sistem otomatis memperingatkan saat stok menipis.
+                    </p>
                   </div>
                 )}
               </div>
@@ -3103,10 +3976,13 @@ export default function WmsPage() {
         })()}
       />
       {reorderModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg space-y-5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-6 shadow-2xl">
-            <div className="flex items-start justify-between border-b border-[var(--ui-border)] pb-3">
-              <div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg space-y-5 rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-6 shadow-2xl">
+            <div className="flex items-start justify-between border-b border-[var(--ui-border)] pb-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10">
+                  <ShoppingCart size={17} className="text-amber-600" />
+                </span>
                 <h3 className="text-lg font-bold text-[var(--ui-text-primary)]">
                   Buat Purchase Order (Reorder Point)
                 </h3>
@@ -3116,13 +3992,13 @@ export default function WmsPage() {
               </div>
               <button
                 onClick={() => setReorderModalItem(null)}
-                className="rounded p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)]"
+                className="ml-auto rounded-lg p-1.5 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] transition-colors"
               >
-                <X size={18} />
+                <X size={17} />
               </button>
             </div>
 
-            <div className="space-y-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/40 p-3.5 text-xs">
+            <div className="space-y-2 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/50 p-4 text-xs">
               <div className="flex justify-between">
                 <span className="text-[var(--ui-text-muted)]">Barang:</span>
                 <span className="font-semibold text-[var(--ui-text-primary)]">
@@ -3258,6 +4134,85 @@ export default function WmsPage() {
           </div>
         </div>
       )}
-    </Layout>
+      {reorderConfigItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--ui-border)] pb-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+                  <SlidersHorizontal size={16} />
+                </span>
+                <div>
+                  <h3 className="font-bold text-sm text-[var(--ui-text-primary)]">Atur Ambang Batas Stok</h3>
+                  <p className="text-xs text-[var(--ui-text-muted)] font-mono">{reorderConfigItem.sku} · {reorderConfigItem.item_name}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReorderConfigItem(null)}
+                className="rounded-lg p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveReorderConfig} className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  Batas Minimum Stok (Reorder Point)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  required
+                  className={input}
+                  placeholder="0"
+                  value={configMinStock}
+                  onChange={(e) => setConfigMinStock(e.target.value)}
+                />
+                <p className="text-[11px] text-[var(--ui-text-muted)]">
+                  Sistem akan memberi alert peringatan jika stok tersedia berada di bawah angka ini.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
+                  Estimasi Lead Time Pemasok (Hari)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  className={input}
+                  placeholder="0"
+                  value={configLeadTime}
+                  onChange={(e) => setConfigLeadTime(e.target.value)}
+                />
+                <p className="text-[11px] text-[var(--ui-text-muted)]">
+                  Waktu tunggu rata-rata (dalam hari) sejak pemesanan hingga barang tiba di gudang.
+                </p>
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-[var(--ui-border)] pt-3">
+                <button
+                  type="button"
+                  onClick={() => setReorderConfigItem(null)}
+                  className="rounded-lg border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)]"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingReorderConfig}
+                  className="flex items-center gap-1.5 rounded-lg bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-bold !text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {savingReorderConfig ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  Simpan Pengaturan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      </Layout>
   );
 }
