@@ -18,6 +18,7 @@ import {
   Sparkles,
   Users,
   ContactRound,
+  WalletCards,
 } from "lucide-react";
 import { isNavItemDisabledInDemo } from "../../lib/demo-mode";
 import type { TranslationKey } from "../../context/LanguageContext";
@@ -45,6 +46,7 @@ interface BuildNavItemsParams {
   isVendorComp: boolean;
   wmsInstalled: boolean;
   crmInstalled: boolean;
+  budgetInstalled: boolean;
   canAccessWms: boolean;
 }
 
@@ -60,6 +62,7 @@ export function buildNavItems({
   isVendorComp,
   wmsInstalled,
   crmInstalled,
+  budgetInstalled,
   canAccessWms,
 }: BuildNavItemsParams): NavItemConfig[] {
   const items: NavItemConfig[] = [
@@ -231,6 +234,16 @@ export function buildNavItems({
                   to: `${companyPrefix}/crm`,
                   label: "CRM Enterprise",
                   Icon: ContactRound,
+                  section: "main",
+                },
+              ]
+            : []),
+          ...(budgetInstalled
+            ? [
+                {
+                  to: `${companyPrefix}/budgeting`,
+                  label: "Budgeting & Procurement Plan",
+                  Icon: WalletCards,
                   section: "main",
                 },
               ]

@@ -13,7 +13,15 @@ export default defineConfig(({ mode }) => {
       dedupe: ["react", "react-dom", "react-router"],
     },
     optimizeDeps: {
-      include: ["react", "react-dom", "react-router"],
+      include: [
+        "react",
+        "react-dom",
+        "react-router",
+        "lucide-react",
+        "sweetalert2",
+        "recharts",
+        "xlsx",
+      ],
     },
     server: {
       proxy: {

@@ -57,6 +57,7 @@ export default [
     }),
     route(":companySlug/wms", "routes/wms.tsx", { id: "company-wms" }),
     route(":companySlug/crm", "routes/crm.tsx", { id: "company-crm" }),
+    route(":companySlug/budgeting", "routes/budgeting.tsx", { id: "company-budgeting" }),
     route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", {
       id: "company-marketplace-detail",
     }),
@@ -136,6 +137,7 @@ export default [
     route("marketplace", "routes/marketplace.tsx"),
     route("apps", "routes/app-market.tsx"),
     route("wms", "routes/wms.tsx"),
+    route("budgeting", "routes/budgeting.tsx"),
     route("marketplace/:id", "routes/marketplace-detail.tsx"),
     route("cart", "routes/cart.tsx"), // kept for deep-link /cart?add= backwards compat
     route("my-pr", "routes/my-pr.tsx"),

@@ -6,13 +6,16 @@ import {
   Truck,
   Headphones,
   ContactRound,
+  WalletCards,
 } from "lucide-react";
 import { getWmsApps, installWms, uninstallWms } from "~/lib/api/wms";
 import { getCrmApps, installCrm, uninstallCrm } from "~/lib/api/crm";
+import { getBudgetApps, installBudgetApp, uninstallBudgetApp } from "~/lib/api/budgeting";
 
 export type AppIconKey =
   | "wms-inventory"
   | "crm"
+  | "budget-procurement-plan"
   | "analytics"
   | "logistics"
   | "support";
@@ -27,7 +30,7 @@ export interface MarketApp {
   badge: string;
   tags: string[];
   free: boolean;
-  installedKey?: "wms-inventory" | "crm";
+  installedKey?: "wms-inventory" | "crm" | "budget-procurement-plan";
   requiredPlan?: "enterprise_pro";
   icon: LucideIcon;
   iconBgGradient: string;
@@ -88,6 +91,23 @@ export const MARKET_APPS: MarketApp[] = [
       "linear-gradient(135deg,#0f766e 0%,#0ea5e9 55%,#6366f1 100%)",
     iconColor: "#ffffff",
     route: "/crm",
+  },
+  {
+    key: "budget-procurement-plan",
+    name: "Budgeting & Procurement Plan",
+    category: "Operations",
+    shortName: "Budget",
+    description: "Budget cycle, allocation, procurement plan, approval, dan kontrol komitmen PR/PO.",
+    longDescription: "Rencanakan belanja dari awal tahun sampai realisasi. Buat periode anggaran, pecah alokasi per departemen atau kategori, ajukan procurement plan, lalu kaitkan ke PR dan PO agar komitmen serta selisih anggaran selalu terlihat.",
+    badge: "Enterprise Pro",
+    tags: ["Budget cycle", "Allocation", "Procurement plan", "PR/PO commitment", "Variance"],
+    free: true,
+    installedKey: "budget-procurement-plan",
+    requiredPlan: "enterprise_pro",
+    icon: WalletCards,
+    iconBgGradient: "linear-gradient(135deg,#334155 0%,#0f766e 100%)",
+    iconColor: "#ffffff",
+    route: "/budgeting",
   },
   {
     key: "analytics",
@@ -180,11 +200,11 @@ export function useAppMarket() {
 
   useEffect(() => {
     if (!company?.id) return;
-    Promise.all([getWmsApps(company.id), getCrmApps(company.id)])
-      .then(([wms, crm]: any[]) => {
+    Promise.all([getWmsApps(company.id), getCrmApps(company.id), getBudgetApps(company.id)])
+      .then(([wms, crm, budgeting]: any[]) => {
         const map: Record<string, boolean> = {};
         const eligible: Record<string, boolean> = {};
-        for (const app of [...(wms?.apps ?? []), ...(crm?.apps ?? [])]) {
+        for (const app of [...(wms?.apps ?? []), ...(crm?.apps ?? []), ...(budgeting?.apps ?? [])]) {
           map[app.key] = Boolean(app.installed);
           if (typeof app.eligible === "boolean")
             eligible[app.key] = app.eligible;
@@ -215,7 +235,7 @@ export function useAppMarket() {
     }
     if (!isEligible(app)) {
       setError(
-        "CRM hanya dapat diinstall pada paket Enterprise Pro yang aktif.",
+        `${app.name} hanya dapat diinstall pada paket Enterprise Pro yang aktif.`,
       );
       return;
     }
@@ -224,6 +244,7 @@ export function useAppMarket() {
     try {
       if (app.installedKey === "wms-inventory") await installWms(company.id);
       if (app.installedKey === "crm") await installCrm(company.id);
+      if (app.installedKey === "budget-procurement-plan") await installBudgetApp(company.id);
       setInstallStates((s) => ({ ...s, [app.installedKey as string]: true }));
       window.dispatchEvent(new Event("huntr-app-installations-updated"));
     } catch (e: any) {
@@ -241,6 +262,7 @@ export function useAppMarket() {
     try {
       if (app.installedKey === "wms-inventory") await uninstallWms(company.id);
       if (app.installedKey === "crm") await uninstallCrm(company.id);
+      if (app.installedKey === "budget-procurement-plan") await uninstallBudgetApp(company.id);
       setInstallStates((s) => ({ ...s, [app.installedKey as string]: false }));
       window.dispatchEvent(new Event("huntr-app-installations-updated"));
     } catch (e: any) {

@@ -40,6 +40,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { getWmsApps } from "../lib/api/wms";
 import { getCrmApps } from "../lib/api/crm";
+import { getBudgetApps } from "../lib/api/budgeting";
 import { getSubscriptionAccess } from "../lib/api/subscription";
 
 // Context that child Layout wrappers use to push their title/subtitle up here
@@ -118,6 +119,7 @@ export default function AppShell() {
   const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
   const [wmsInstalled, setWmsInstalled] = useState(false);
   const [crmInstalled, setCrmInstalled] = useState(false);
+  const [budgetInstalled, setBudgetInstalled] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [subscriptionAccess, setSubscriptionAccess] = useState<{
     companyId: string;
@@ -233,6 +235,20 @@ export default function AppShell() {
         loadCrmInstallation,
       );
   }, [loadCrmInstallation]);
+
+  const loadBudgetInstallation = useCallback(async () => {
+    if (!activeCompany?.id) { setBudgetInstalled(false); return; }
+    try {
+      const response = await getBudgetApps(activeCompany.id);
+      setBudgetInstalled(Boolean(response?.apps?.find((app: any) => app.key === "budget-procurement-plan" && app.accessible !== false)?.installed));
+    } catch { setBudgetInstalled(false); }
+  }, [activeCompany?.id]);
+
+  useEffect(() => {
+    loadBudgetInstallation();
+    window.addEventListener("huntr-app-installations-updated", loadBudgetInstallation);
+    return () => window.removeEventListener("huntr-app-installations-updated", loadBudgetInstallation);
+  }, [loadBudgetInstallation]);
 
   // Load all user companies to power the workspace switcher
   const loadUserCompanies = useCallback(async () => {
@@ -554,6 +570,7 @@ export default function AppShell() {
     isVendorComp,
     wmsInstalled,
     crmInstalled,
+    budgetInstalled,
     canAccessWms,
   });
 
