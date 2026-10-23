@@ -66,6 +66,7 @@ export const PoExpandedDetails = ({
   >(null);
 
   const isDirectPurchase = po.procurement_mode === "direct";
+  const includesServices = ["services", "mixed"].includes(po.procurement_type);
   const steps = isDirectPurchase
     ? [
         { key: "issued", label: "PO Issued", icon: FileText },
@@ -182,6 +183,16 @@ export const PoExpandedDetails = ({
           })}
         </div>
       </div>
+
+      {includesServices && (
+        <section className="border-l-2 border-orange-500 bg-orange-500/5 px-3 py-3 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div><p className="font-bold text-[var(--ui-text-primary)]">Service delivery & acceptance</p><p className="mt-0.5 text-[var(--ui-text-muted)]">Layanan diterima melalui BAST setelah deliverable memenuhi kriteria, bukan melalui Goods Receipt.</p></div>
+            <span className="border border-orange-500/30 px-2 py-1 font-semibold text-orange-600">{po.procurement_type === "mixed" ? "Goods + services" : "Services"}</span>
+          </div>
+          <dl className="mt-3 grid gap-2 sm:grid-cols-3"><div><dt className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Period</dt><dd className="mt-0.5 text-[var(--ui-text-primary)]">{po.service_start_date || "—"} — {po.service_end_date || "—"}</dd></div><div><dt className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Location</dt><dd className="mt-0.5 text-[var(--ui-text-primary)]">{po.service_location || po.delivery_point || "—"}</dd></div><div><dt className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Acceptance criteria</dt><dd className="mt-0.5 text-[var(--ui-text-primary)]">{po.acceptance_criteria || "Refer to PR scope and BAST."}</dd></div></dl>
+        </section>
+      )}
 
       {/* ── Quick Action Badges / Modals Trigger Bar ── */}
       <div className="flex items-center gap-2 flex-wrap">

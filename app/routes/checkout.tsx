@@ -47,6 +47,11 @@ export default function Checkout() {
         ? "direct"
         : "tender",
   );
+  const [procurementType, setProcurementType] = useState<"goods" | "services" | "mixed">("goods");
+  const [serviceStartDate, setServiceStartDate] = useState("");
+  const [serviceEndDate, setServiceEndDate] = useState("");
+  const [serviceLocation, setServiceLocation] = useState("");
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState("");
   const [revisionRfqId] = useState(() =>
     new URLSearchParams(window.location.search).get("revise"),
   );
@@ -140,6 +145,7 @@ export default function Checkout() {
         const items = JSON.parse(savedCart).map((i: any) => ({
           ...i,
           estimated_price: i.estimated_price || 0,
+          line_type: i.line_type || "goods",
         }));
         setCart(items);
       }
@@ -169,6 +175,11 @@ export default function Checkout() {
         setProcurementMode(
           rfq.procurement_mode === "direct" ? "direct" : "tender",
         );
+        setProcurementType(rfq.procurement_type || "goods");
+        setServiceStartDate(rfq.service_start_date || "");
+        setServiceEndDate(rfq.service_end_date || "");
+        setServiceLocation(rfq.service_location || rfq.delivery_point || "");
+        setAcceptanceCriteria(rfq.acceptance_criteria || "");
         setCart(
           (rfq.items || []).map((item: any) => ({
             id: item.catalogue_id || `manual-${item.id}`,
@@ -180,6 +191,11 @@ export default function Checkout() {
             qty: Number(item.qty || 1),
             estimated_price: Number(item.estimated_price || 0),
             expected_date: item.expected_date,
+            line_type: item.line_type || (item.catalogue_id ? "goods" : "service"),
+            service_scope: item.service_scope || "",
+            acceptance_criteria: item.acceptance_criteria || "",
+            service_start_date: item.service_start_date || "",
+            service_end_date: item.service_end_date || "",
           })),
         );
       })
@@ -265,6 +281,25 @@ export default function Checkout() {
     ]);
   };
 
+  const addServiceLine = () => {
+    setCart((items) => [
+      ...items,
+      {
+        id: `service-${crypto.randomUUID()}`,
+        manual: true,
+        line_type: "service",
+        name: "",
+        uom: "lot",
+        qty: 1,
+        estimated_price: 0,
+        service_scope: "",
+        acceptance_criteria: "",
+        service_start_date: serviceStartDate,
+        service_end_date: serviceEndDate,
+      },
+    ]);
+  };
+
   const updateManualItem = (id: string, field: string, value: string) => {
     setCart((items) =>
       items.map((item) =>
@@ -294,8 +329,13 @@ export default function Checkout() {
       }
       formData.append("status", "pending_approval");
       formData.append("procurement_mode", procurementMode);
+      formData.append("procurement_type", procurementType);
+      if (serviceStartDate) formData.append("service_start_date", serviceStartDate);
+      if (serviceEndDate) formData.append("service_end_date", serviceEndDate);
+      if (serviceLocation || procurementType === "services") formData.append("service_location", serviceLocation || deliveryPoint);
+      if (acceptanceCriteria) formData.append("acceptance_criteria", acceptanceCriteria);
       formData.append("delivery_point", deliveryPoint);
-      if (wmsInstalled && warehouseId)
+      if (procurementType !== "services" && wmsInstalled && warehouseId)
         formData.append("warehouse_id", warehouseId);
       formData.append("department", prDepartment);
 
@@ -326,9 +366,14 @@ export default function Checkout() {
       }
 
       cart.forEach((item, index) => {
+        formData.append(`items[${index}][line_type]`, item.line_type || "goods");
         if (item.manual) {
           formData.append(`items[${index}][item_name]`, item.name);
-          formData.append(`items[${index}][uom]`, item.uom || "unit");
+          formData.append(`items[${index}][uom]`, item.uom || (item.line_type === "service" ? "lot" : "unit"));
+          if (item.service_scope) formData.append(`items[${index}][service_scope]`, item.service_scope);
+          if (item.acceptance_criteria) formData.append(`items[${index}][acceptance_criteria]`, item.acceptance_criteria);
+          if (item.service_start_date) formData.append(`items[${index}][service_start_date]`, item.service_start_date);
+          if (item.service_end_date) formData.append(`items[${index}][service_end_date]`, item.service_end_date);
         } else {
           formData.append(`items[${index}][catalogue_id]`, item.id);
         }
@@ -465,15 +510,14 @@ export default function Checkout() {
                     </span>
                   </div>
                 )}
-                {procurementMode === "direct" && (
-                  <button
-                    type="button"
-                    onClick={addManualItem}
-                    className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50"
-                  >
-                    + Add manual item
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {procurementMode === "direct" && procurementType !== "services" && (
+                    <button type="button" onClick={addManualItem} className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50">+ Add manual item</button>
+                  )}
+                  {procurementType !== "goods" && (
+                    <button type="button" onClick={addServiceLine} className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50">+ Add service</button>
+                  )}
+                </div>
               </div>
 
               <div className="divide-y divide-[var(--ui-border)]">
@@ -502,7 +546,7 @@ export default function Checkout() {
                         <div>
                           <input
                             required
-                            placeholder="Item name"
+                            placeholder={item.line_type === "service" ? "Service name" : "Item name"}
                             value={item.name}
                             onChange={(event) =>
                               updateManualItem(
@@ -523,6 +567,15 @@ export default function Checkout() {
                             {item.item_code || "—"}
                           </p>
                         </>
+                      )}
+                      {item.manual && item.line_type === "service" && (
+                        <textarea
+                          value={item.service_scope || ""}
+                          onChange={(event) => updateManualItem(item.id, "service_scope", event.target.value)}
+                          placeholder="Service scope / deliverables"
+                          rows={2}
+                          className="mt-2 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1.5 text-xs text-[var(--ui-text-primary)]"
+                        />
                       )}
                     </div>
 
@@ -593,6 +646,13 @@ export default function Checkout() {
               </h3>
 
               <div className="space-y-3 text-xs">
+                <fieldset className="space-y-2">
+                  <legend className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)]">Procurement object</legend>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {[['goods','Goods','Physical items that can be received into warehouse.'],['services','Services','Professional work, subscription, consulting, or maintenance.'],['mixed','Mixed','A single PR contains goods and services.']].map(([value,label,help]) => <button key={value} type="button" onClick={() => { const next = value === "services" && cart.some((item) => item.line_type !== "service") ? "mixed" : value; setProcurementType(next as any); if (next === "services") setWarehouseId(""); }} className={`border p-3 text-left ${procurementType === value ? "border-orange-500 bg-orange-500/5" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)]"}`}><span className="block font-semibold text-[var(--ui-text-primary)]">{label}</span><span className="mt-0.5 block text-[10px] text-[var(--ui-text-muted)]">{help}</span></button>)}
+                  </div>
+                </fieldset>
+
                 <fieldset className="space-y-2">
                   <legend className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)]">
                     Procurement route
@@ -690,7 +750,15 @@ export default function Checkout() {
                     className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all resize-none"
                   />
                 </div>
-                {wmsInstalled && (
+                {procurementType !== "goods" && (
+                  <div className="space-y-3 border-l-2 border-orange-500/60 bg-orange-500/5 p-3">
+                    <div><p className="text-xs font-bold text-[var(--ui-text-primary)]">Service delivery & acceptance</p><p className="mt-0.5 text-[10px] text-[var(--ui-text-muted)]">These details travel with the PR and PO. Services are accepted through BAST, not warehouse receiving.</p></div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Start date<input type="date" value={serviceStartDate} onChange={(e) => setServiceStartDate(e.target.value)} className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]"/></label><label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Target completion<input type="date" min={serviceStartDate || undefined} value={serviceEndDate} onChange={(e) => setServiceEndDate(e.target.value)} className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]"/></label></div>
+                    <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Acceptance criteria<textarea value={acceptanceCriteria} onChange={(e) => setAcceptanceCriteria(e.target.value)} placeholder="Deliverables, SLA, output quality, or completion evidence." rows={2} className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]"/></label>
+                  </div>
+                )}
+
+                {wmsInstalled && procurementType !== "services" && (
                   <div className="space-y-1">
                     <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
                       <Building size={12} /> Receiving Warehouse
@@ -740,12 +808,12 @@ export default function Checkout() {
 
                 <div className="space-y-1">
                   <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
-                    <MapPin size={12} /> Delivery Point *
+                    <MapPin size={12} /> {procurementType === "services" ? "Service Location *" : "Delivery Point *"}
                   </label>
                   {companyAddresses.length > 0 ? (
                     <select
                       value={deliveryPoint}
-                      onChange={(e) => setDeliveryPoint(e.target.value)}
+                      onChange={(e) => { setDeliveryPoint(e.target.value); if (procurementType === "services") setServiceLocation(e.target.value); }}
                       disabled={Boolean(warehouseId)}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -765,7 +833,7 @@ export default function Checkout() {
                     <textarea
                       placeholder="e.g. Jl. Sudirman No. 123, Jakarta"
                       value={deliveryPoint}
-                      onChange={(e) => setDeliveryPoint(e.target.value)}
+                      onChange={(e) => { setDeliveryPoint(e.target.value); if (procurementType === "services") setServiceLocation(e.target.value); }}
                       disabled={Boolean(warehouseId)}
                       rows={2}
                       className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all resize-none disabled:cursor-not-allowed disabled:opacity-60"
