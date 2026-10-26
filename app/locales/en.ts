@@ -168,8 +168,8 @@ const en = {
     tabs: {
       security: "Security & Password",
       securityDesc: "Manage authentication and password security",
-      profile: "WhatsApp Profile",
-      profileDesc: "Manage WhatsApp number and notification settings",
+      profile: "Profile",
+      profileDesc: "Manage personal info, identity, and contact details",
       subscription: "Subscription & Trial",
       subscriptionDesc: "Manage active subscription plan and limits",
       appearance: "Appearance",
@@ -217,8 +217,8 @@ const en = {
       twoFactorDisabledMsg: "2FA disabled.",
     },
     profile: {
-      title: "WhatsApp Profile",
-      subtitle: "Manage contact phone number used for notifications and verification.",
+      title: "User Profile",
+      subtitle: "Manage your personal information, identity, address, and account contact.",
       contactInfo: "Contact Information",
       whatsappNumber: "WhatsApp Number",
       whatsappNumberDesc: "Used for login OTP & notifications",

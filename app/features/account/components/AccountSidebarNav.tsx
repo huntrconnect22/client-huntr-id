@@ -1,7 +1,7 @@
 import React from "react";
 import {
   Shield,
-  Smartphone,
+  User,
   Zap,
   Palette,
   Sparkles,
@@ -25,7 +25,7 @@ interface AccountSidebarNavProps {
 
 const TABS: { id: AccountTabType; icon: React.FC<any>; labelKey: TranslationKey; forBuyerOnly?: boolean }[] = [
   { id: "security", icon: Shield, labelKey: "settings.tabs.security" },
-  { id: "profile", icon: Smartphone, labelKey: "settings.tabs.profile" },
+  { id: "profile", icon: User, labelKey: "settings.tabs.profile" },
   { id: "subscription", icon: Zap, labelKey: "settings.tabs.subscription" },
   { id: "appearance", icon: Palette, labelKey: "settings.tabs.appearance" },
   { id: "features", icon: Sparkles, labelKey: "settings.tabs.features", forBuyerOnly: true },

@@ -170,8 +170,8 @@ const id: Translations = {
     tabs: {
       security: "Keamanan & Kata Sandi",
       securityDesc: "Kelola autentikasi dan keamanan kata sandi",
-      profile: "Profil WhatsApp",
-      profileDesc: "Kelola nomor WhatsApp dan pengaturan notifikasi",
+      profile: "Profil",
+      profileDesc: "Kelola informasi data diri, identitas, dan kontak akun Anda",
       subscription: "Langganan & Trial",
       subscriptionDesc: "Kelola paket langganan aktif dan kuota",
       appearance: "Tampilan",
@@ -219,8 +219,8 @@ const id: Translations = {
       twoFactorDisabledMsg: "2FA dinonaktifkan.",
     },
     profile: {
-      title: "Profil WhatsApp",
-      subtitle: "Kelola nomor telepon kontak yang digunakan untuk notifikasi dan verifikasi.",
+      title: "Profil Pengguna",
+      subtitle: "Kelola informasi data diri, identitas, domisili, dan kontak akun Anda.",
       contactInfo: "Informasi Kontak",
       whatsappNumber: "Nomor WhatsApp",
       whatsappNumberDesc: "Digunakan untuk OTP masuk & notifikasi",
