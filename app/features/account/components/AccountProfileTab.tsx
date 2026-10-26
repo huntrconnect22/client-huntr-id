@@ -7,7 +7,6 @@ import {
   CreditCard,
   Phone,
   CalendarDays,
-  Briefcase,
   Globe,
   MapPin,
   Home,
@@ -93,7 +92,6 @@ export function AccountProfileTab({
     phone: "",
     birth_place: "",
     birth_date: "",
-    job_title: "",
     country: "Indonesia",
     province: "",
     city: "",
@@ -121,7 +119,6 @@ export function AccountProfileTab({
           phone: u.phone || "",
           birth_place: u.birth_place || "",
           birth_date: u.birth_date || "",
-          job_title: u.job_title || "",
           country: u.country || "Indonesia",
           province: u.province || "",
           city: u.city || "",
@@ -380,17 +377,6 @@ export function AccountProfileTab({
               value={form.name}
               onChange={(e) => setF("name", e.target.value)}
               placeholder="contoh: Budi Santoso"
-              className={FIELD_CLASS}
-            />
-          </FieldRow>
-
-          {/* Job Title */}
-          <FieldRow label="Jabatan / Posisi" icon={Briefcase}>
-            <input
-              type="text"
-              value={form.job_title}
-              onChange={(e) => setF("job_title", e.target.value)}
-              placeholder="contoh: Procurement Manager"
               className={FIELD_CLASS}
             />
           </FieldRow>
