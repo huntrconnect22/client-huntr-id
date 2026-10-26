@@ -52,12 +52,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
       const t = localStorage.getItem('huntr_theme');
       if (t) {
         document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.classList.toggle('dark', t === 'dark');
       } else {
         const sys = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', sys);
+        document.documentElement.classList.toggle('dark', sys === 'dark');
       }
     } catch (e) {
       document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.classList.add('dark');
     }
   }, []);
 

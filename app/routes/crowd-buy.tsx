@@ -33,6 +33,7 @@ import { InviteShareModal } from "../features/crowd-buy/components/InviteShareMo
 import { SupplierBiddingModal } from "../features/crowd-buy/components/SupplierBiddingModal";
 import { isVendorBuyerMode } from "../lib/viewMode";
 import { SessionManager } from "../lib/session";
+import Layout from "../components/Layout";
 import Swal from "sweetalert2";
 
 export default function CrowdBuyPage() {
@@ -223,7 +224,11 @@ export default function CrowdBuyPage() {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in p-2 md:p-6 max-w-7xl mx-auto">
+    <Layout
+      title="Crowd Buying"
+      subtitle="Beli grosir bareng pelaku bisnis lain untuk mengunci diskon volume pabrik."
+    >
+      <div className="space-y-5 animate-fade-in p-2 md:p-6 max-w-7xl mx-auto">
       {/* Flat Hero Banner */}
       <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -956,6 +961,7 @@ export default function CrowdBuyPage() {
           onSuccess={loadSupplierData}
         />
       )}
-    </div>
+      </div>
+    </Layout>
   );
 }

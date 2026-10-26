@@ -52,6 +52,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Apply to <html> and persist
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
     if (manual) {
       localStorage.setItem("huntr_theme", manual);
     } else {

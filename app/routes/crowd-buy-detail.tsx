@@ -27,6 +27,7 @@ import { InviteShareModal } from "../features/crowd-buy/components/InviteShareMo
 import { SupplierBiddingModal } from "../features/crowd-buy/components/SupplierBiddingModal";
 import { isVendorBuyerMode } from "../lib/viewMode";
 import { SessionManager } from "../lib/session";
+import Layout from "../components/Layout";
 import Swal from "sweetalert2";
 
 export default function CrowdBuyDetailPage() {
@@ -135,7 +136,11 @@ export default function CrowdBuyDetailPage() {
     !!campaign.is_auto_demand;
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto p-2 md:p-6 animate-fade-in">
+    <Layout
+      title={campaign.title || "Detail Crowd Buy"}
+      subtitle={`Kode: ${campaign.code} • Kategori: ${campaign.category}`}
+    >
+      <div className="space-y-4 max-w-6xl mx-auto p-2 md:p-6 animate-fade-in">
       {/* Back button */}
       <div>
         <Link
@@ -565,6 +570,7 @@ export default function CrowdBuyDetailPage() {
           }}
         />
       )}
-    </div>
+      </div>
+    </Layout>
   );
 }

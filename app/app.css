@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
 @import "./styles/theme.css";
 @import "./styles/auth.css";
 @import "./styles/layout-responsive.css";
@@ -47,7 +48,7 @@ body {
   color: var(--ui-text-primary);
 }
 
-/* Colored buttons always keep white text in light mode */
+/* Colored & dark backgrounds always keep white text in light mode */
 [data-theme="light"] .huntr-page-content [class*="bg-orange-"].text-white,
 [data-theme="light"] .huntr-page-content [class*="bg-orange-"] .text-white,
 [data-theme="light"] .huntr-page-content [class*="bg-emerald-"].text-white,
@@ -59,7 +60,15 @@ body {
 [data-theme="light"] .huntr-page-content [class*="bg-blue-"].text-white,
 [data-theme="light"] .huntr-page-content [class*="bg-blue-"] .text-white,
 [data-theme="light"] .huntr-page-content [class*="bg-indigo-"].text-white,
-[data-theme="light"] .huntr-page-content [class*="bg-indigo-"] .text-white {
+[data-theme="light"] .huntr-page-content [class*="bg-indigo-"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-slate-9"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-slate-9"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-slate-8"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-slate-8"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-gray-9"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-gray-9"] .text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-black"].text-white,
+[data-theme="light"] .huntr-page-content [class*="bg-black"] .text-white {
   color: #ffffff !important;
 }
 
