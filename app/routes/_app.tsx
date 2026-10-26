@@ -1036,8 +1036,16 @@ export default function AppShell() {
                   aria-label={t("header.userMenu", { name: user.name || "" })}
                   className={`huntr-user-menu-btn${showUserMenu ? " huntr-user-menu-btn--open" : ""}`}
                 >
-                  <div className="huntr-user-avatar">
-                    {user.name?.[0]?.toUpperCase() || "U"}
+                  <div className="huntr-user-avatar overflow-hidden">
+                    {user?.profile_photo_url ? (
+                      <img
+                        src={user.profile_photo_url}
+                        alt={user.name || "User"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      user.name?.[0]?.toUpperCase() || "U"
+                    )}
                   </div>
                   {!isMobile && (
                     <div className="huntr-user-menu-label">

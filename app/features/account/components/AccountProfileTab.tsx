@@ -25,6 +25,7 @@ import {
   updateUserProfile,
 } from "../../../lib/api";
 import { useLanguage } from "../../../context/LanguageContext";
+import { SessionManager } from "../../../lib/session";
 
 interface AccountProfileTabProps {
   user: any;
@@ -171,6 +172,7 @@ export function AccountProfileTab({
       const res = await updateUserProfile(fd);
       const updatedUser = { ...user, ...res.user };
       localStorage.setItem("user_session", JSON.stringify(updatedUser));
+      SessionManager.setUser(updatedUser);
       onUserUpdate(updatedUser);
       if (res.user?.profile_photo_url) setPhotoPreview(res.user.profile_photo_url);
       if (res.user?.role) setUserRole(res.user.role);

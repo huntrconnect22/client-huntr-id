@@ -18,6 +18,7 @@ interface TeamMember {
   whatsapp: string;
   role: string;
   role_id?: string;
+  profile_photo_url?: string;
 }
 
 interface TeamManagementProps {
@@ -297,8 +298,16 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                 key={member.id}
                 className="group p-4 rounded-xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] hover:border-orange-500/30 hover:shadow-md hover:shadow-orange-500/5 transition-all flex items-center gap-3"
               >
-                <div className="w-10 h-10 rounded-lg bg-[var(--ui-bg-input)] flex items-center justify-center text-orange-500 font-bold text-lg group-hover:bg-orange-500 group-hover:text-white transition-all">
-                  {member.name?.charAt(0).toUpperCase() || "?"}
+                <div className="w-10 h-10 rounded-lg bg-[var(--ui-bg-input)] flex items-center justify-center text-orange-500 font-bold text-lg group-hover:bg-orange-500 group-hover:text-white transition-all overflow-hidden shrink-0 border border-[var(--ui-border)]">
+                  {member.profile_photo_url ? (
+                    <img
+                      src={member.profile_photo_url}
+                      alt={member.name || "Member"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    member.name?.charAt(0).toUpperCase() || "?"
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold text-[var(--ui-text-primary)] truncate">

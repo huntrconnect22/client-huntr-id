@@ -53,30 +53,64 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
     >
       <div
         style={{
-          padding: "8px 10px 6px",
+          padding: "8px 10px 8px",
           borderBottom: "1px solid var(--ui-border)",
           marginBottom: 4,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
         }}
       >
         <div
           style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: "var(--ui-text-primary)",
-          }}
-        >
-          {user.name}
-        </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: "var(--ui-text-muted)",
+            width: 34,
+            height: 34,
+            borderRadius: 8,
             overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            flexShrink: 0,
+            background: "#ea580c",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 13,
           }}
         >
-          {user.email}
+          {user.profile_photo_url ? (
+            <img
+              src={user.profile_photo_url}
+              alt={user.name || "User"}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            user.name?.[0]?.toUpperCase() || "U"
+          )}
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: "var(--ui-text-primary)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {user.name}
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--ui-text-muted)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {user.email}
+          </div>
         </div>
       </div>
 
