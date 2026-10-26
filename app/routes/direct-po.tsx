@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, FileText, Loader2, Package, Printer } from "lucide-react";
 import Layout from "../components/Layout";
-import { apiGet, createDirectPurchaseOrder, getFullApiUrl } from "../lib/api";
+import { apiGet, createDirectPurchaseOrder } from "../lib/api";
+import { openAuthenticatedDocument } from "../lib/open-auth-document";
 
 export default function DirectPurchaseOrder() {
   const navigate = useNavigate();
@@ -108,14 +109,13 @@ export default function DirectPurchaseOrder() {
             again from it.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <a
-              href={getFullApiUrl(`/api/orders/${createdPo.id}/print`)}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => void openAuthenticatedDocument(`/api/orders/${createdPo.id}/print`)}
               className="inline-flex items-center gap-2 bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
             >
               <Printer size={15} /> Print PO
-            </a>
+            </button>
             <button
               type="button"
               onClick={() => navigate("/orders")}

@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Building2, FileText, CheckCircle2 } from "lucide-react";
+import { User, Building2, FileText, CheckCircle2, Briefcase, Clock, MapPin } from "lucide-react";
 import { getAssetUrl } from "../../lib/assets";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -34,19 +34,27 @@ function MetaCell({
 export function RFQDescription({ rfq, successMessage }: RFQDescriptionProps) {
   const { t } = useLanguage();
   const documentUrl = rfq?.document_url || (rfq?.document_path ? getAssetUrl(rfq.document_path) : null);
+  const isService = rfq?.procurement_type === "services" || Boolean(rfq?.project_type);
 
   return (
     <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 space-y-3">
       <div>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
-          {t("rfqDetail.description.purchaseRequisition")}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
+            {t("rfqDetail.description.purchaseRequisition")}
+          </span>
+          {rfq?.project_type && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+              Proyek: {rfq.project_type}
+            </span>
+          )}
+        </div>
         <h2 className="text-base sm:text-lg font-bold text-[var(--ui-text-primary)] mt-2 leading-snug">
           {rfq.title}
         </h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <MetaCell
           icon={User}
           label={t("rfqDetail.description.requestedBy")}
@@ -58,7 +66,40 @@ export function RFQDescription({ rfq, successMessage }: RFQDescriptionProps) {
           label={t("rfqDetail.description.company")}
           value={rfq.company?.name || t("rfqDetail.description.unknown")}
         />
+        {rfq?.project_type && (
+          <MetaCell
+            icon={Briefcase}
+            label="Jenis Proyek"
+            value={rfq.project_type}
+          />
+        )}
+        {(rfq?.service_start_date || rfq?.service_end_date) && (
+          <MetaCell
+            icon={Clock}
+            label="Waktu Pengerjaan"
+            value={`${rfq.service_start_date || "—"} s/d ${rfq.service_end_date || "—"}`}
+          />
+        )}
       </div>
+
+      {rfq?.service_location && (
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs">
+          <MapPin size={13} className="text-orange-500 shrink-0" />
+          <span className="text-[var(--ui-text-muted)] font-bold text-[10px] uppercase">Lokasi Pengerjaan:</span>
+          <span className="text-[var(--ui-text-primary)] font-medium truncate">{rfq.service_location}</span>
+        </div>
+      )}
+
+      {rfq?.acceptance_criteria && (
+        <div className="p-2.5 rounded-lg bg-orange-500/5 border border-orange-500/20 text-xs space-y-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-orange-400">
+            Kriteria Penerimaan & Deliverables (Syarat BAST)
+          </div>
+          <p className="text-[var(--ui-text-secondary)] whitespace-pre-line leading-relaxed">
+            {rfq.acceptance_criteria}
+          </p>
+        </div>
+      )}
 
       {rfq.description && (
         <div>

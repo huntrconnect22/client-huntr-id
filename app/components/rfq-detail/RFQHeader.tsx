@@ -46,6 +46,16 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
           <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
             #{prShort}
           </span>
+          {rfq?.procurement_type === "services" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              Jasa / Layanan
+            </span>
+          )}
+          {rfq?.project_type && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              🏷️ {rfq.project_type}
+            </span>
+          )}
           {rfq?.status === "awarded" ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-400">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />

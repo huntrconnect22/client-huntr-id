@@ -29,6 +29,10 @@ export default function Rfq() {
     description: "",
     duration_days: "7",
     department: "General Procurement",
+    procurement_type: "goods",
+    project_type: "Teknologi Informasi (IT)",
+    service_start_date: "",
+    service_end_date: "",
   });
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -220,7 +224,13 @@ export default function Rfq() {
       formData.append("duration_days", (form.duration_days || "7").toString());
       formData.append("delivery_point", selectedDeliveryPoint);
       formData.append("department", form.department || "General Procurement");
-      if (wmsInstalled && warehouseId)
+      formData.append("procurement_type", form.procurement_type || "goods");
+      if (form.procurement_type !== "goods") {
+        if (form.project_type) formData.append("project_type", form.project_type);
+        if (form.service_start_date) formData.append("service_start_date", form.service_start_date);
+        if (form.service_end_date) formData.append("service_end_date", form.service_end_date);
+      }
+      if (wmsInstalled && warehouseId && form.procurement_type !== "services")
         formData.append("warehouse_id", warehouseId);
 
       cartItems.forEach((item, index) => {
@@ -328,12 +338,32 @@ export default function Rfq() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
+                  justifyContent: "space-between",
                   marginBottom: 4,
+                  flexWrap: "wrap",
+                  gap: 8,
                 }}
               >
-                <ClipboardList size={20} color="#f59e0b" />
-                <Section>Create New Purchase Request</Section>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <ClipboardList size={20} color="#f59e0b" />
+                  <Section>Create New Purchase Request</Section>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => (window.location.href = "/checkout")}
+                  style={{
+                    background: "rgba(249,115,22,0.12)",
+                    border: "1px solid rgba(249,115,22,0.3)",
+                    color: "#fb923c",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    borderRadius: 8,
+                    padding: "6px 12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Buka Form Checkout RFQ Terpadu →
+                </button>
               </div>
 
               <Field
@@ -343,6 +373,108 @@ export default function Rfq() {
                 placeholder="e.g. Pengadaan Laptop Divisi IT Q3"
                 required
               />
+
+              {/* Objek Pengadaan: Barang vs Jasa */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={lbl}>Objek Pengadaan</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setF("procurement_type", "goods")}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: form.procurement_type === "goods" ? "1px solid #f97316" : "1px solid rgba(255,255,255,0.1)",
+                      background: form.procurement_type === "goods" ? "rgba(249,115,22,0.15)" : "rgba(0,0,0,0.3)",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    📦 Pengadaan Barang
+                    <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginTop: 2 }}>Fisik / Material / Asset</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setF("procurement_type", "services")}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: form.procurement_type === "services" ? "1px solid #f97316" : "1px solid rgba(255,255,255,0.1)",
+                      background: form.procurement_type === "services" ? "rgba(249,115,22,0.15)" : "rgba(0,0,0,0.3)",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    💼 Pengadaan Jasa
+                    <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginTop: 2 }}>Proyek / Layanan / Kontrak</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Jasa Details */}
+              {form.procurement_type === "services" && (
+                <div
+                  style={{
+                    background: "rgba(249,115,22,0.06)",
+                    border: "1px solid rgba(249,115,22,0.2)",
+                    borderRadius: 12,
+                    padding: 14,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#f97316", textTransform: "uppercase" }}>
+                    Detail Spesifikasi Proyek Jasa
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label style={lbl}>Jenis Proyek / Kategori Layanan *</label>
+                    <select
+                      value={form.project_type}
+                      onChange={(e) => setF("project_type", e.target.value)}
+                      style={inputStyle}
+                    >
+                      <option value="Konstruksi & Sipil">🏗️ Konstruksi & Sipil</option>
+                      <option value="Teknologi Informasi (IT)">💻 Teknologi Informasi (IT)</option>
+                      <option value="Sewa & Operasional Alat Berat">🚜 Sewa & Operasional Alat Berat</option>
+                      <option value="Event Organizer & MICE">🎪 Event Organizer & MICE</option>
+                      <option value="Maintenance & Fasilitas">🔧 Maintenance & Fasilitas</option>
+                      <option value="Logistik & Transportasi">🚚 Logistik & Transportasi</option>
+                      <option value="Konsultasi & Jasa Profesional">⚖️ Konsultasi & Jasa Profesional</option>
+                      <option value="Lainnya">🏷️ Lainnya (Custom)</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <label style={{ ...lbl, fontSize: 10 }}>Tanggal Mulai Pengerjaan</label>
+                      <input
+                        type="date"
+                        value={form.service_start_date}
+                        onChange={(e) => setF("service_start_date", e.target.value)}
+                        style={{ ...inputStyle, padding: "8px 10px", fontSize: 12 }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <label style={{ ...lbl, fontSize: 10 }}>Target Selesai (Deadline)</label>
+                      <input
+                        type="date"
+                        min={form.service_start_date || undefined}
+                        value={form.service_end_date}
+                        onChange={(e) => setF("service_end_date", e.target.value)}
+                        style={{ ...inputStyle, padding: "8px 10px", fontSize: 12 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={lbl}>Department</label>

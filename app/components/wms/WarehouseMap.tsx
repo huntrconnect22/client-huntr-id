@@ -92,6 +92,36 @@ function BinTile({
   );
 }
 
+function rackIdentity(bin: any, index: number) {
+  const code = String(bin.code || "")
+    .trim()
+    .toUpperCase();
+  const rackWithAisle = code.match(
+    /^(?:RAK|RACK)[-_\s]*([A-Z0-9]+)[-_\s]+([A-Z0-9]+)/,
+  );
+  if (rackWithAisle) {
+    return {
+      id: `aisle-${rackWithAisle[1]}-rack-${rackWithAisle[2]}`,
+      label: `Lorong ${rackWithAisle[1]} · Rak ${rackWithAisle[2]}`,
+    };
+  }
+  const rackOnly = code.match(/^(?:RAK|RACK)[-_\s]*([A-Z0-9]+)/);
+  if (rackOnly)
+    return { id: `rack-${rackOnly[1]}`, label: `Rak ${rackOnly[1]}` };
+  const leadingRow = code.match(/^([A-Z]+)[-_\s]?(\d+)/);
+  if (leadingRow) {
+    return {
+      id: `rack-${leadingRow[1]}-${leadingRow[2]}`,
+      label: `Rak ${leadingRow[1]}-${leadingRow[2]}`,
+    };
+  }
+  const generatedRack = Math.floor(index / 4) + 1;
+  return {
+    id: `general-${generatedRack}`,
+    label: `Rak umum ${String(generatedRack).padStart(2, "0")}`,
+  };
+}
+
 function FloorZone({
   title,
   subtitle,
@@ -180,6 +210,25 @@ export function WarehouseMap({
       )
     : "";
   const storageBins = bins.filter((bin: any) => bin.type === "storage");
+  const storageRacks = useMemo(() => {
+    const groups = new Map<string, { label: string; bins: any[] }>();
+    storageBins
+      .filter(
+        (bin: any) =>
+          !search ||
+          `${bin.code} ${bin.name || ""}`
+            .toLowerCase()
+            .includes(search.toLowerCase()),
+      )
+      .forEach((bin: any, index: number) => {
+        const rack = rackIdentity(bin, index);
+        const group = groups.get(rack.id) || { label: rack.label, bins: [] };
+        group.bins.push(bin);
+        groups.set(rack.id, group);
+      });
+
+    return [...groups.entries()].map(([id, rack]) => ({ id, ...rack }));
+  }, [search, storageBins]);
   const route = useMemo(() => {
     const receiving = bins.find((bin: any) => bin.type === "receiving");
     const storage =
@@ -306,8 +355,8 @@ export function WarehouseMap({
                   {warehouse.name}
                 </h3>
                 <p className="text-xs text-[var(--ui-text-muted)]">
-                  Setiap blok adalah bin fisik. Angka besar adalah unit stok
-                  saat ini.
+                  Setiap slot berada di dalam rak fisik. Angka besar adalah unit
+                  stok pada bin tersebut.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 text-[10px] font-semibold text-[var(--ui-text-muted)]">
@@ -439,30 +488,50 @@ export function WarehouseMap({
                       />
                     ))}
                   </FloorZone>
-                  <div className="relative col-start-2 row-span-2 row-start-1 overflow-hidden border border-emerald-700/35 bg-emerald-900/[0.035] p-3 dark:bg-emerald-400/[0.035]">
-                    <div className="absolute inset-y-0 left-[33.333%] border-l border-dashed border-slate-400/70" />
-                    <div className="absolute inset-y-0 left-[66.666%] border-l border-dashed border-slate-400/70" />
-                    <div className="relative flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-800 dark:text-emerald-300">
-                      <span>Storage racks</span>
-                      <span>{storageBins.length} bin</span>
+                  <div className="relative col-start-2 row-span-2 row-start-1 overflow-y-auto border border-emerald-700/35 bg-emerald-900/[0.035] p-3 pb-7 dark:bg-emerald-400/[0.035]">
+                    <div className="relative flex items-center justify-between border-b border-emerald-700/20 pb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-800 dark:text-emerald-300">
+                      <span>Area rak penyimpanan</span>
+                      <span>
+                        {storageBins.length} slot bin · {storageRacks.length}{" "}
+                        rak
+                      </span>
                     </div>
-                    <div className="relative mt-3 grid grid-cols-3 gap-x-5 gap-y-4 px-2">
-                      {matchingBins(storageBins).map((bin: any) => (
-                        <BinTile
-                          key={bin.id}
-                          bin={bin}
-                          active={String(bin.id) === selectedBinId}
-                          highlighted={String(bin.id) === highlightedBinId}
-                          compact
-                          onClick={() => inspect(bin)}
-                        />
+                    <p className="mt-1 text-[9px] text-[var(--ui-text-muted)]">
+                      Rak dikelompokkan dari kode bin, misalnya RAK-A-01-01-01
+                      berada di Lorong A · Rak 01.
+                    </p>
+                    <div className="relative mt-3 grid grid-cols-2 gap-3">
+                      {storageRacks.map((rack) => (
+                        <section
+                          key={rack.id}
+                          className="border-2 border-emerald-700/35 bg-white/70 p-1.5 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.08)] dark:bg-slate-950/65"
+                        >
+                          <div className="mb-1.5 flex items-center justify-between border-b border-emerald-700/20 px-1 pb-1 text-[9px] font-bold uppercase tracking-[0.12em] text-emerald-800 dark:text-emerald-300">
+                            <span>{rack.label}</span>
+                            <span>{rack.bins.length} slot</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {rack.bins.map((bin: any) => (
+                              <BinTile
+                                key={bin.id}
+                                bin={bin}
+                                active={String(bin.id) === selectedBinId}
+                                highlighted={
+                                  String(bin.id) === highlightedBinId
+                                }
+                                compact
+                                onClick={() => inspect(bin)}
+                              />
+                            ))}
+                          </div>
+                        </section>
                       ))}
                     </div>
-                    <div className="absolute inset-x-3 bottom-2 flex justify-between text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                      <span>Aisle A</span>
-                      <span>Aisle B</span>
-                      <span>Aisle C</span>
-                    </div>
+                    {storageBins.length > 0 && (
+                      <div className="absolute inset-x-3 bottom-2 border-t border-dashed border-slate-400/70 pt-1 text-center text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                        Jalur forklift antar rak
+                      </div>
+                    )}
                   </div>
                 </div>
                 {bins.length === 0 && (

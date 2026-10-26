@@ -32,15 +32,17 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
             <thead>
               <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
                 <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-8">#</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{t("rfqDetail.items.product")}</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">{t("rfqDetail.items.qty")}</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">{t("rfqDetail.items.required")}</th>
+                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{rfq.procurement_type === "services" ? "Pekerjaan / Layanan Jasa" : t("rfqDetail.items.product")}</th>
+                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">{rfq.procurement_type === "services" ? "Volume" : t("rfqDetail.items.qty")}</th>
+                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">{rfq.procurement_type === "services" ? "Target Selesai" : t("rfqDetail.items.required")}</th>
+                <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">{rfq.procurement_type === "services" ? "Pagu Budget" : "Est. Price"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--ui-border)]">
               {items.map((item: any, index: number) => {
                 const cat = item.catalogue;
                 const catalogueId = item.catalogue_id || cat?.id;
+                const isServiceItem = item.line_type === "service" || (!catalogueId && rfq.procurement_type === "services");
                 const hasImage = Boolean(cat?.image_url || cat?.image_path);
                 const name = cat?.name || item.item_name || item.name || t("rfqDetail.items.unknownItem");
 
@@ -50,7 +52,9 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-8 h-8 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center shrink-0 overflow-hidden">
-                          {hasImage ? (
+                          {isServiceItem ? (
+                            <span className="text-orange-500 text-xs font-bold">💼</span>
+                          ) : hasImage ? (
                             <img
                               src={getAssetUrl(cat.image_url || cat.image_path)}
                               alt=""
@@ -73,7 +77,11 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
                             <span className="text-xs font-semibold text-[var(--ui-text-primary)] truncate block">{name}</span>
                           )}
                           <div className="text-[10px] text-[var(--ui-text-muted)] truncate">
-                            {cat?.item_code || item.item_code || "—"}
+                            {item.service_scope ? (
+                              <span className="text-orange-400/90 font-medium">{item.service_scope}</span>
+                            ) : (
+                              cat?.item_code || item.item_code || "—"
+                            )}
                             {(item.specifications || cat?.specifications) && (
                               <span className="ml-1 opacity-80">· {String(item.specifications || cat?.specifications).slice(0, 40)}</span>
                             )}
@@ -82,10 +90,13 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
                       </div>
                     </td>
                     <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
-                      {item.qty} {cat?.uom || "pcs"}
+                      {item.qty} {item.uom || cat?.uom || (isServiceItem ? "paket" : "pcs")}
                     </td>
                     <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
                       {item.expected_date || "—"}
+                    </td>
+                    <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] text-right tabular-nums whitespace-nowrap">
+                      {item.estimated_price ? `IDR ${Number(item.estimated_price).toLocaleString()}` : "—"}
                     </td>
                   </tr>
                 );

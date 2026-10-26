@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Layout from "../components/Layout";
 import { createRfq, getRfq, resubmitRfq } from "../lib/api";
 import {
@@ -13,14 +13,71 @@ import {
   Paperclip,
   MapPin,
   Building,
+  Briefcase,
+  Clock,
+  Coins,
+  Sparkles,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { getAssetUrl } from "../lib/assets";
 import { clearCart } from "../lib/cart";
 import { getWarehouses, getWmsApps } from "../lib/api/wms";
 
+export const SERVICE_PROJECT_TYPES = [
+  {
+    id: "Konstruksi & Sipil",
+    label: "Konstruksi & Sipil",
+    desc: "Renovasi, sipil, arsitektur, MEP gedung, perbaikan fisik",
+    icon: "🏗️",
+  },
+  {
+    id: "Teknologi Informasi (IT)",
+    label: "Teknologi Informasi (IT)",
+    desc: "Software development, maintenance server, network, cyber security",
+    icon: "💻",
+  },
+  {
+    id: "Sewa & Operasional Alat Berat",
+    label: "Alat Berat & Mesin",
+    desc: "Rental excavator, crane, forklift, bulldozer & operator",
+    icon: "🚜",
+  },
+  {
+    id: "Event Organizer & MICE",
+    label: "Event & Production",
+    desc: "Pameran, corporate event, panggung, audio visual, booth",
+    icon: "🎪",
+  },
+  {
+    id: "Maintenance & Fasilitas",
+    label: "Maintenance & GA",
+    desc: "Cleaning service, HVAC/AC, security, pest control, landscape",
+    icon: "🔧",
+  },
+  {
+    id: "Logistik & Transportasi",
+    label: "Logistik & Transport",
+    desc: "Pengiriman muatan proyek, ekspedisi kargo, sewa armada",
+    icon: "🚚",
+  },
+  {
+    id: "Konsultasi & Jasa Profesional",
+    label: "Konsultasi & Audit",
+    desc: "Legal, advisory, accounting, ISO, konsultan teknik",
+    icon: "⚖️",
+  },
+  {
+    id: "Lainnya",
+    label: "Lainnya (Custom)",
+    desc: "Tentukan jenis proyek atau layanan spesifik lainnya",
+    icon: "🏷️",
+  },
+];
+
 export default function Checkout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [activeCompany, setActiveCompany] = useState<any>(null);
@@ -42,22 +99,35 @@ export default function Checkout() {
   const [deliveryPointBeforeWarehouse, setDeliveryPointBeforeWarehouse] =
     useState("");
   const [procurementMode, setProcurementMode] = useState<"tender" | "direct">(
-    () =>
-      new URLSearchParams(window.location.search).get("mode") === "direct"
-        ? "direct"
-        : "tender",
+    () => (searchParams.get("mode") === "direct" ? "direct" : "tender"),
   );
   const [procurementType, setProcurementType] = useState<"goods" | "services" | "mixed">("goods");
+  const [projectType, setProjectType] = useState<string>("Teknologi Informasi (IT)");
+  const [customProjectType, setCustomProjectType] = useState<string>("");
   const [serviceStartDate, setServiceStartDate] = useState("");
   const [serviceEndDate, setServiceEndDate] = useState("");
+  const [serviceWorkingSchedule, setServiceWorkingSchedule] = useState("");
   const [serviceLocation, setServiceLocation] = useState("");
   const [acceptanceCriteria, setAcceptanceCriteria] = useState("");
-  const [revisionRfqId] = useState(() =>
-    new URLSearchParams(window.location.search).get("revise"),
-  );
+  const [revisionRfqId] = useState(() => searchParams.get("revise"));
   const [revisionLoading, setRevisionLoading] = useState(
-    Boolean(revisionRfqId),
+    Boolean(searchParams.get("revise")),
   );
+
+  const durationCalculation = useMemo(() => {
+    if (!serviceStartDate || !serviceEndDate) return null;
+    const start = new Date(serviceStartDate);
+    const end = new Date(serviceEndDate);
+    const diffTime = end.getTime() - start.getTime();
+    if (diffTime < 0) return { error: "Tanggal selesai harus setelah tanggal mulai" };
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
+    const months = (diffDays / 30).toFixed(1).replace(".0", "");
+    return {
+      days: diffDays,
+      months,
+      text: diffDays === 1 ? "1 Hari Kalender" : diffDays < 30 ? `${diffDays} Hari Kalender` : `${diffDays} Hari Kalender (~${months} Bulan)`,
+    };
+  }, [serviceStartDate, serviceEndDate]);
 
   const getCompanyPrefix = (comp?: any) => {
     const c = comp ?? activeCompany;
@@ -108,7 +178,6 @@ export default function Checkout() {
       }
     }
 
-    const searchParams = new URLSearchParams(window.location.search);
     const fromAi = searchParams.get("from") === "ai";
     const aiDraftStr = localStorage.getItem("ai_pr_draft");
 
@@ -176,6 +245,9 @@ export default function Checkout() {
           rfq.procurement_mode === "direct" ? "direct" : "tender",
         );
         setProcurementType(rfq.procurement_type || "goods");
+        if (rfq.project_type) {
+          setProjectType(rfq.project_type);
+        }
         setServiceStartDate(rfq.service_start_date || "");
         setServiceEndDate(rfq.service_end_date || "");
         setServiceLocation(rfq.service_location || rfq.delivery_point || "");
@@ -233,10 +305,10 @@ export default function Checkout() {
   useEffect(() => {
     if (!activeCompany) return;
     const slug = getCompanyPrefix(activeCompany);
-    if (slug && !window.location.pathname.startsWith(slug)) {
-      navigate(`${slug}/checkout${window.location.search}`, { replace: true });
+    if (slug && !location.pathname.startsWith(slug)) {
+      navigate(`${slug}/checkout${location.search}`, { replace: true });
     }
-  }, [activeCompany]);
+  }, [activeCompany, location.pathname, location.search, navigate]);
 
   const cartTotal = cart.reduce(
     (sum, item) => sum + Number(item.estimated_price || 0) * item.qty,
@@ -330,10 +402,18 @@ export default function Checkout() {
       formData.append("status", "pending_approval");
       formData.append("procurement_mode", procurementMode);
       formData.append("procurement_type", procurementType);
+      const finalProjectType = projectType === "Lainnya" ? (customProjectType.trim() || "Lainnya") : projectType;
+      if (procurementType !== "goods" && finalProjectType) {
+        formData.append("project_type", finalProjectType);
+      }
       if (serviceStartDate) formData.append("service_start_date", serviceStartDate);
       if (serviceEndDate) formData.append("service_end_date", serviceEndDate);
       if (serviceLocation || procurementType === "services") formData.append("service_location", serviceLocation || deliveryPoint);
-      if (acceptanceCriteria) formData.append("acceptance_criteria", acceptanceCriteria);
+      const finalCriteria = [
+        acceptanceCriteria.trim(),
+        serviceWorkingSchedule ? `Pola/Waktu Kerja: ${serviceWorkingSchedule.trim()}` : "",
+      ].filter(Boolean).join("\n\n");
+      if (finalCriteria) formData.append("acceptance_criteria", finalCriteria);
       formData.append("delivery_point", deliveryPoint);
       if (procurementType !== "services" && wmsInstalled && warehouseId)
         formData.append("warehouse_id", warehouseId);
@@ -488,22 +568,21 @@ export default function Checkout() {
               <div className="p-3.5 px-4 border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center">
-                    <Package size={16} />
+                    {procurementType === "services" ? <Briefcase size={16} /> : <Package size={16} />}
                   </div>
                   <div>
                     <h3 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)]">
-                      Item Summary
+                      {procurementType === "services" ? "Daftar Lingkup Jasa & Budget" : procurementType === "mixed" ? "Item Barang & Jasa" : "Item Summary"}
                     </h3>
                     <p className="text-[10px] text-[var(--ui-text-muted)]">
-                      {cart.length} item{cart.length !== 1 ? "s" : ""} in this
-                      request
+                      {cart.length} {procurementType === "services" ? "layanan / scope pekerjaan" : "item(s)"} dalam request ini
                     </p>
                   </div>
                 </div>
                 {cartTotal > 0 && (
                   <div className="text-right">
                     <span className="text-[10px] uppercase font-bold text-[var(--ui-text-muted)] block">
-                      Est. Total
+                      {procurementType === "services" ? "Total Pagu Budget" : "Est. Total"}
                     </span>
                     <span className="text-xs sm:text-sm font-bold text-orange-500">
                       IDR {cartTotal.toLocaleString()}
@@ -515,124 +594,152 @@ export default function Checkout() {
                     <button type="button" onClick={addManualItem} className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50">+ Add manual item</button>
                   )}
                   {procurementType !== "goods" && (
-                    <button type="button" onClick={addServiceLine} className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50">+ Add service</button>
+                    <button type="button" onClick={addServiceLine} className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50 flex items-center gap-1.5">
+                      <Briefcase size={12} className="text-orange-500" />
+                      + Tambah Jasa / Scope
+                    </button>
                   )}
                 </div>
               </div>
 
               <div className="divide-y divide-[var(--ui-border)]">
-                {cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3.5 px-4 flex items-center gap-3 text-xs"
-                  >
-                    <div className="w-11 h-11 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] overflow-hidden shrink-0 flex items-center justify-center">
-                      {item.image_url || item.image_path ? (
-                        <img
-                          src={getAssetUrl(item.image_url || item.image_path)}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Package
-                          size={18}
-                          className="text-[var(--ui-text-muted)] opacity-40"
-                        />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      {item.manual ? (
-                        <div>
-                          <input
-                            required
-                            placeholder={item.line_type === "service" ? "Service name" : "Item name"}
-                            value={item.name}
-                            onChange={(event) =>
-                              updateManualItem(
-                                item.id,
-                                "name",
-                                event.target.value,
-                              )
-                            }
-                            className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs text-[var(--ui-text-primary)]"
+                {cart.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-[var(--ui-text-muted)]">
+                    {procurementType === "services" ? (
+                      <div>
+                        <Briefcase size={28} className="mx-auto text-orange-500/50 mb-2" />
+                        <p className="font-semibold text-[var(--ui-text-primary)]">Belum ada item jasa</p>
+                        <p className="text-[11px] mt-1">Tambahkan lingkup pekerjaan dan pagu budget yang dialokasikan.</p>
+                        <button type="button" onClick={addServiceLine} className="mt-3 px-3 py-1.5 rounded-lg bg-orange-500 text-white font-semibold text-xs inline-flex items-center gap-1">
+                          + Tambah Jasa / Scope Pertama
+                        </button>
+                      </div>
+                    ) : (
+                      "Belum ada item terpilih."
+                    )}
+                  </div>
+                ) :
+                  cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3.5 px-4 flex items-center gap-3 text-xs"
+                    >
+                      <div className="w-11 h-11 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] overflow-hidden shrink-0 flex items-center justify-center">
+                        {item.line_type === "service" ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-orange-500/10 text-orange-500">
+                            <Briefcase size={16} />
+                            <span className="text-[8px] font-bold uppercase mt-0.5">JASA</span>
+                          </div>
+                        ) : item.image_url || item.image_path ? (
+                          <img
+                            src={getAssetUrl(item.image_url || item.image_path)}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
                           />
-                        </div>
-                      ) : (
-                        <>
-                          <p className="font-semibold text-[var(--ui-text-primary)] truncate">
-                            {item.name}
-                          </p>
-                          <p className="text-[10px] text-[var(--ui-text-muted)] font-mono">
-                            {item.item_code || "—"}
-                          </p>
-                        </>
-                      )}
-                      {item.manual && item.line_type === "service" && (
-                        <textarea
-                          value={item.service_scope || ""}
-                          onChange={(event) => updateManualItem(item.id, "service_scope", event.target.value)}
-                          placeholder="Service scope / deliverables"
-                          rows={2}
-                          className="mt-2 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1.5 text-xs text-[var(--ui-text-primary)]"
-                        />
-                      )}
-                    </div>
+                        ) : (
+                          <Package
+                            size={18}
+                            className="text-[var(--ui-text-muted)] opacity-40"
+                          />
+                        )}
+                      </div>
 
-                    <label className="w-20 shrink-0">
-                      <span className="mb-0.5 block text-[9px] font-bold uppercase text-[var(--ui-text-muted)]">
-                        Qty
-                      </span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.qty}
-                        onChange={(e) =>
-                          updateQuantity(item.id, Number(e.target.value))
-                        }
-                        className="w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
-                      />
-                    </label>
+                      <div className="flex-1 min-w-0">
+                        {item.manual ? (
+                          <div>
+                            <input
+                              required
+                              placeholder={item.line_type === "service" ? "Nama Jasa / Pekerjaan (misal: Jasa Desain Arsitektur, Maintenance Server)" : "Item name"}
+                              value={item.name}
+                              onChange={(event) =>
+                                updateManualItem(
+                                  item.id,
+                                  "name",
+                                  event.target.value,
+                                )
+                              }
+                              className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs text-[var(--ui-text-primary)] w-full rounded"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="font-semibold text-[var(--ui-text-primary)] truncate">
+                              {item.name}
+                            </p>
+                            <p className="text-[10px] text-[var(--ui-text-muted)] font-mono">
+                              {item.item_code || "—"}
+                            </p>
+                          </>
+                        )}
+                        {item.manual && item.line_type === "service" && (
+                          <textarea
+                            value={item.service_scope || ""}
+                            onChange={(event) => updateManualItem(item.id, "service_scope", event.target.value)}
+                            placeholder="Rincian Ruang Lingkup Pekerjaan (Scope of Work / Deliverables)..."
+                            rows={2}
+                            className="mt-2 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1.5 text-xs text-[var(--ui-text-primary)] rounded"
+                          />
+                        )}
+                      </div>
 
-                    <div className="w-28 shrink-0">
-                      <span className="text-[9px] font-bold uppercase text-[var(--ui-text-muted)] block mb-0.5">
-                        Est. Price
-                      </span>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-[var(--ui-text-muted)] pointer-events-none">
-                          IDR
+                      <label className="w-20 shrink-0">
+                        <span className="mb-0.5 block text-[9px] font-bold uppercase text-[var(--ui-text-muted)]">
+                          {item.line_type === "service" ? "Volume" : "Qty"}
                         </span>
                         <input
                           type="number"
-                          value={
-                            item.estimated_price === 0
-                              ? ""
-                              : item.estimated_price
-                          }
-                          placeholder="0"
+                          min="1"
+                          value={item.qty}
                           onChange={(e) =>
-                            updateEstimatedPrice(
-                              item.id,
-                              Number(e.target.value),
-                            )
+                            updateQuantity(item.id, Number(e.target.value))
                           }
-                          className="w-full pl-7 pr-2 py-1 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs outline-none focus:border-orange-400/60"
+                          className="w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1 text-xs text-[var(--ui-text-primary)] rounded outline-none focus:border-orange-400/60"
                         />
-                      </div>
-                    </div>
+                      </label>
 
-                    <div className="text-right min-w-[70px] shrink-0">
-                      {item.estimated_price > 0 ? (
-                        <span className="font-bold text-[var(--ui-text-primary)] tabular-nums">
-                          IDR{" "}
-                          {(
-                            Number(item.estimated_price) * item.qty
-                          ).toLocaleString()}
+                      <div className="w-32 shrink-0">
+                        <span className="text-[9px] font-bold uppercase text-[var(--ui-text-muted)] block mb-0.5 flex items-center justify-between">
+                          <span>{item.line_type === "service" ? "Pagu Budget" : "Est. Price"}</span>
+                          {item.line_type === "service" && <Coins size={10} className="text-orange-500" />}
                         </span>
-                      ) : (
-                        <span className="text-[var(--ui-text-muted)]">—</span>
-                      )}
-                    </div>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-[var(--ui-text-muted)] pointer-events-none">
+                            IDR
+                          </span>
+                          <input
+                            type="number"
+                            value={
+                              item.estimated_price === 0
+                                ? ""
+                                : item.estimated_price
+                            }
+                            placeholder="0"
+                            onChange={(e) =>
+                              updateEstimatedPrice(
+                                item.id,
+                                Number(e.target.value),
+                              )
+                            }
+                            className="w-full pl-7 pr-2 py-1 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs outline-none focus:border-orange-400/60"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-right min-w-[80px] shrink-0">
+                        <span className="text-[9px] block text-[var(--ui-text-muted)] uppercase font-semibold">
+                          {item.line_type === "service" ? "Subtotal" : "Subtotal"}
+                        </span>
+                        {item.estimated_price > 0 ? (
+                          <span className="font-bold text-[var(--ui-text-primary)] tabular-nums">
+                            IDR{" "}
+                            {(
+                              Number(item.estimated_price) * item.qty
+                            ).toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-[var(--ui-text-muted)]">—</span>
+                        )}
+                      </div>
                   </div>
                 ))}
               </div>
@@ -751,10 +858,130 @@ export default function Checkout() {
                   />
                 </div>
                 {procurementType !== "goods" && (
-                  <div className="space-y-3 border-l-2 border-orange-500/60 bg-orange-500/5 p-3">
-                    <div><p className="text-xs font-bold text-[var(--ui-text-primary)]">Service delivery & acceptance</p><p className="mt-0.5 text-[10px] text-[var(--ui-text-muted)]">These details travel with the PR and PO. Services are accepted through BAST, not warehouse receiving.</p></div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Start date<input type="date" value={serviceStartDate} onChange={(e) => setServiceStartDate(e.target.value)} className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]"/></label><label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Target completion<input type="date" min={serviceStartDate || undefined} value={serviceEndDate} onChange={(e) => setServiceEndDate(e.target.value)} className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]"/></label></div>
-                    <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">Acceptance criteria<textarea value={acceptanceCriteria} onChange={(e) => setAcceptanceCriteria(e.target.value)} placeholder="Deliverables, SLA, output quality, or completion evidence." rows={2} className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]"/></label>
+                  <div className="space-y-4 border-l-2 border-orange-500 bg-orange-500/5 p-4 rounded-r-xl">
+                    <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-orange-500/20">
+                      <div>
+                        <p className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5">
+                          <Briefcase size={14} className="text-orange-500" />
+                          Detail Pengadaan Jasa & Spesifikasi Proyek
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-[var(--ui-text-muted)]">
+                          Pengadaan jasa dinilai dari pagu budget, waktu pengerjaan, dan deliverables BAST.
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-500/20 text-orange-400">
+                        Penerimaan via BAST
+                      </span>
+                    </div>
+
+                    {/* 1. Jenis Proyek */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1">
+                        <Sparkles size={11} className="text-orange-400" />
+                        Jenis Proyek / Kategori Jasa *
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {SERVICE_PROJECT_TYPES.map((type) => {
+                          const isSelected = projectType === type.id;
+                          return (
+                            <button
+                              key={type.id}
+                              type="button"
+                              onClick={() => setProjectType(type.id)}
+                              className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between ${
+                                isSelected
+                                  ? "border-orange-500 bg-orange-500/10 shadow-sm"
+                                  : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] hover:border-orange-400/40"
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-base">{type.icon}</span>
+                                <span className={`text-xs font-bold leading-tight ${isSelected ? "text-orange-500" : "text-[var(--ui-text-primary)]"}`}>
+                                  {type.label}
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-[var(--ui-text-muted)] mt-1 line-clamp-2">
+                                {type.desc}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {projectType === "Lainnya" && (
+                        <div className="mt-2">
+                          <input
+                            type="text"
+                            placeholder="Tuliskan jenis proyek spesifik (misal: Jasa Survei Topografi, Sertifikasi ISO)..."
+                            value={customProjectType}
+                            onChange={(e) => setCustomProjectType(e.target.value)}
+                            className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-orange-500/50 text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. Waktu Pengerjaan */}
+                    <div className="space-y-2 pt-2 border-t border-[var(--ui-border)]/60">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1">
+                          <Clock size={11} className="text-orange-400" />
+                          Waktu & Jadwal Pengerjaan *
+                        </label>
+                        {durationCalculation && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${durationCalculation.error ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"}`}>
+                            {durationCalculation.error || `⏱️ Durasi: ${durationCalculation.text}`}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
+                          Tanggal Mulai Pengerjaan *
+                          <input
+                            type="date"
+                            value={serviceStartDate}
+                            onChange={(e) => setServiceStartDate(e.target.value)}
+                            className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+                          />
+                        </label>
+                        <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
+                          Target Selesai Pengerjaan (Deadline) *
+                          <input
+                            type="date"
+                            min={serviceStartDate || undefined}
+                            value={serviceEndDate}
+                            onChange={(e) => setServiceEndDate(e.target.value)}
+                            className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+                          />
+                        </label>
+                      </div>
+
+                      <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
+                        Pola Waktu Kerja / Jam Kerja (Opsional)
+                        <input
+                          type="text"
+                          value={serviceWorkingSchedule}
+                          onChange={(e) => setServiceWorkingSchedule(e.target.value)}
+                          placeholder="misal: Hari Kerja Senin - Jumat (08:00 - 17:00 WIB), atau Shift 24 Jam Non-stop"
+                          className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+                        />
+                      </label>
+                    </div>
+
+                    {/* 3. Acceptance Criteria & SLA */}
+                    <div className="pt-2 border-t border-[var(--ui-border)]/60">
+                      <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
+                        Kriteria Penerimaan & Deliverables (Syarat BAST) *
+                        <textarea
+                          value={acceptanceCriteria}
+                          onChange={(e) => setAcceptanceCriteria(e.target.value)}
+                          placeholder="Contoh: 1. Laporan progres mingguan, 2. Dokumentasi serah terima / BAST ditandatangani PM, 3. Garansi pengerjaan minimal 30 hari kalender, 4. Uji fungsi (UAT) lolos 100%."
+                          rows={3}
+                          className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+                        />
+                      </label>
+                    </div>
                   </div>
                 )}
 
@@ -905,13 +1132,20 @@ export default function Checkout() {
           {/* Right Summary Sidebar */}
           <div className="space-y-3">
             <div className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] p-4 space-y-3 sticky top-4">
-              <h4 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)] pb-2 border-b border-[var(--ui-border)]">
-                Order Summary
+              <h4 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)] pb-2 border-b border-[var(--ui-border)] flex items-center justify-between">
+                <span>{procurementType === "services" ? "Ringkasan Budget Jasa" : "Order Summary"}</span>
+                {procurementType === "services" && (
+                  <span className="text-[10px] font-semibold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded">
+                    Layanan Proyek
+                  </span>
+                )}
               </h4>
 
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[var(--ui-text-muted)]">Subtotal</span>
+                  <span className="text-[var(--ui-text-muted)]">
+                    {procurementType === "services" ? "Pagu Alokasi Budget" : "Subtotal"}
+                  </span>
                   <span className="font-semibold text-[var(--ui-text-primary)] tabular-nums">
                     IDR {cartTotal.toLocaleString()}
                   </span>
@@ -922,9 +1156,14 @@ export default function Checkout() {
                     IDR 0
                   </span>
                 </div>
+                {procurementType === "services" && (
+                  <div className="text-[10px] text-[var(--ui-text-muted)] bg-orange-500/5 border border-orange-500/20 p-2 rounded-lg">
+                    💡 <b>Pagu Budget:</b> Menjadi batas atas (Owner Estimate / HPS) bagi vendor dalam mengajukan penawaran tender.
+                  </div>
+                )}
                 <div className="pt-2 border-t border-[var(--ui-border)] flex items-center justify-between">
                   <span className="font-bold text-[var(--ui-text-primary)] uppercase">
-                    Total
+                    {procurementType === "services" ? "Total Pagu Anggaran" : "Total"}
                   </span>
                   <span className="text-sm font-bold text-orange-500 tabular-nums">
                     IDR {cartTotal.toLocaleString()}

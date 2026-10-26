@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import DemoDisabledBanner from "../components/DemoDisabledBanner";
-import { getOrders, approveInvoice, getFullApiUrl } from "../lib/api";
+import { getOrders, approveInvoice } from "../lib/api";
+import { openAuthenticatedDocument } from "../lib/open-auth-document";
 import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { Briefcase, Loader2, CheckCircle2, ChevronRight, AlertCircle, FileText, Clock, Calendar, Lock } from "lucide-react";
 import Swal from "sweetalert2";
@@ -240,17 +241,16 @@ export default function Finance() {
                     </div>
 
                     <div style={{ padding: 20, background: "var(--ui-bg-input)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <a 
-                        href={getFullApiUrl(`/api/invoices/${inv.id}/print`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => void openAuthenticatedDocument(`/api/invoices/${inv.id}/print`)}
                         style={{ 
                           fontSize: 13, color: "#f97316", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, textDecoration: "none",
                           padding: "8px 16px", borderRadius: 10, background: "rgba(249,115,22,0.1)", transition: "background 0.2s"
                         }}
                       >
                         <FileText size={16} /> View Invoice Document
-                      </a>
+                      </button>
                       
                       <button
                         onClick={() => handleApprove(inv.id)}

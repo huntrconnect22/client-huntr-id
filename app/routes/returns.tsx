@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import DemoDisabledBanner from "../components/DemoDisabledBanner";
 import { getFullApiUrl } from "../lib/client";
+import { openAuthenticatedDocument } from "../lib/open-auth-document";
 import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import {
   Loader2,
@@ -88,9 +89,12 @@ export default function ReturnsPage() {
     }
   };
 
-  const handleDownloadPdf = (returnId: string) => {
-    const printUrl = getFullApiUrl(`/api/returns/${returnId}/pdf`);
-    window.open(printUrl, "_blank");
+  const handleDownloadPdf = async (returnId: string) => {
+    try {
+      await openAuthenticatedDocument(`/api/returns/${returnId}/pdf`);
+    } catch (err: any) {
+      setError(err.message || "Dokumen retur tidak dapat dibuka.");
+    }
   };
 
 

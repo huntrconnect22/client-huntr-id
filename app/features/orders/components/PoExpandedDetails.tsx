@@ -16,7 +16,7 @@ import {
   QrCode,
   FileCheck,
 } from "lucide-react";
-import { getFullApiUrl } from "../../../lib/api";
+import { openAuthenticatedDocument } from "../../../lib/open-auth-document";
 import { getInvoicePaymentBreakdown } from "../lib/paymentBreakdown";
 
 const fmt = (n: number) => n.toLocaleString("id-ID");
@@ -224,14 +224,13 @@ export const PoExpandedDetails = ({
         </button>
 
         {/* Print PO */}
-        <a
-          href={getFullApiUrl(`/api/orders/${po.id}/print`)}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => void openAuthenticatedDocument(`/api/orders/${po.id}/print`)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-orange-500 hover:bg-orange-500/5 transition-all ml-auto"
         >
           <FileText size={13} /> Print PO
-        </a>
+        </button>
       </div>
 
       {/* ── Grid: Classification & Invoice Summary ── */}
@@ -321,16 +320,13 @@ export const PoExpandedDetails = ({
                 </span>
               </div>
               <div className="flex items-center gap-2 pt-1 border-t border-[var(--ui-border)]">
-                <a
-                  href={getFullApiUrl(
-                    `/api/invoices/${displayedInvoice.id}/print`,
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => void openAuthenticatedDocument(`/api/invoices/${displayedInvoice.id}/print`)}
                   className="text-xs font-semibold text-orange-500 hover:underline flex items-center gap-1"
                 >
                   <FileText size={12} /> Print Invoice
-                </a>
+                </button>
                 {displayedInvoice.status === "unpaid" &&
                   company?.type === "buyer" && (
                     <button
@@ -459,14 +455,13 @@ export const PoExpandedDetails = ({
                       <span className="font-bold text-blue-500">
                         {doItem.do_number}
                       </span>
-                      <a
-                        href={getFullApiUrl(`/api/do/${doItem.id}/print`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => void openAuthenticatedDocument(`/api/do/${doItem.id}/print`)}
                         className="text-[10px] font-semibold text-orange-500 hover:underline"
                       >
                         Print DO
-                      </a>
+                      </button>
                     </div>
                     {doItem.tracking_number && (
                       <p className="text-[var(--ui-text-muted)] text-[11px]">
@@ -603,14 +598,13 @@ export const PoExpandedDetails = ({
                       <span className="font-bold text-orange-500">
                         {bast.bast_number}
                       </span>
-                      <a
-                        href={getFullApiUrl(`/api/basts/${bast.id}/pdf`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => void openAuthenticatedDocument(`/api/basts/${bast.id}/pdf`)}
                         className="text-[10px] font-semibold text-orange-500 hover:underline"
                       >
                         View BAST PDF
-                      </a>
+                      </button>
                     </div>
                     <p className="text-[var(--ui-text-muted)] text-[11px]">
                       Date: {bast.bast_date} • Issued by:{" "}

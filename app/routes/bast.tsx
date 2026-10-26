@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import DemoDisabledBanner from "../components/DemoDisabledBanner";
 import { getFullApiUrl } from "../lib/client";
+import { openAuthenticatedDocument } from "../lib/open-auth-document";
 import { isModuleDisabledInDemo } from "../lib/demo-mode";
 import { Loader2, AlertCircle, FileText, Signature, Clock } from "lucide-react";
 
@@ -106,9 +107,12 @@ export default function BastPage() {
     }
   };
 
-  const handleViewDetails = (bastId: string) => {
-    const url = getFullApiUrl(`/api/basts/${bastId}/pdf`);
-    window.open(url, "_blank");
+  const handleViewDetails = async (bastId: string) => {
+    try {
+      await openAuthenticatedDocument(`/api/basts/${bastId}/pdf`);
+    } catch (err: any) {
+      setError(err.message || "Dokumen BAST tidak dapat dibuka.");
+    }
   };
 
   if (isModuleDisabledInDemo("bast")) {

@@ -224,6 +224,16 @@ export default function MyPurchaseRequisitionDetail() {
               Revise &amp; resubmit
             </button>
           )}
+          {request.project_type && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+              🏷️ Proyek: {request.project_type}
+            </span>
+          )}
+          {request.procurement_type === "services" && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/25">
+              💼 Pengadaan Jasa
+            </span>
+          )}
           {request.status === "approved" &&
             request.procurement_mode === "direct" && (
               <button
@@ -248,9 +258,9 @@ export default function MyPurchaseRequisitionDetail() {
         {/* KPI strip */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <StatCell label="Line Items" value={String(lineItems)} />
-          <StatCell label="Total Qty" value={`${totalQty} units`} />
+          <StatCell label={request.procurement_type === "services" ? "Volume" : "Total Qty"} value={`${totalQty} ${request.procurement_type === "services" ? "paket" : "units"}`} />
           <StatCell
-            label="Est. Total"
+            label={request.procurement_type === "services" ? "Pagu Budget" : "Est. Total"}
             value={`Rp ${estimatedTotal.toLocaleString("id-ID")}`}
             accent
           />
@@ -268,6 +278,41 @@ export default function MyPurchaseRequisitionDetail() {
           />
           <StatCell label="Requester" value={request.user?.name || "Unknown"} />
         </div>
+
+        {/* Service execution info */}
+        {(request.project_type || request.service_start_date || request.acceptance_criteria) && (
+          <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 p-3 space-y-2 text-xs">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-orange-400">
+              Spesifikasi Pengerjaan Jasa
+            </div>
+            <div className="grid sm:grid-cols-3 gap-2 text-xs">
+              {request.project_type && (
+                <div>
+                  <span className="text-[10px] text-[var(--ui-text-muted)] block uppercase font-bold">Jenis Proyek</span>
+                  <span className="font-semibold text-[var(--ui-text-primary)]">{request.project_type}</span>
+                </div>
+              )}
+              {(request.service_start_date || request.service_end_date) && (
+                <div>
+                  <span className="text-[10px] text-[var(--ui-text-muted)] block uppercase font-bold">Waktu Pengerjaan</span>
+                  <span className="font-semibold text-[var(--ui-text-primary)]">{request.service_start_date || "—"} s/d {request.service_end_date || "—"}</span>
+                </div>
+              )}
+              {request.service_location && (
+                <div>
+                  <span className="text-[10px] text-[var(--ui-text-muted)] block uppercase font-bold">Lokasi Pengerjaan</span>
+                  <span className="font-semibold text-[var(--ui-text-primary)]">{request.service_location}</span>
+                </div>
+              )}
+            </div>
+            {request.acceptance_criteria && (
+              <div className="pt-2 border-t border-orange-500/20">
+                <span className="text-[10px] text-[var(--ui-text-muted)] block uppercase font-bold">Kriteria Penerimaan & Deliverables (BAST)</span>
+                <p className="text-[var(--ui-text-secondary)] whitespace-pre-line mt-0.5">{request.acceptance_criteria}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Description */}
         {request.description && (
