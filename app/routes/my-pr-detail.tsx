@@ -12,6 +12,8 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Tag,
+  Briefcase,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useAppShell } from "../routes/_app";
@@ -225,13 +227,13 @@ export default function MyPurchaseRequisitionDetail() {
             </button>
           )}
           {request.project_type && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
-              🏷️ Proyek: {request.project_type}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+              <Tag size={12} /> Proyek: {request.project_type}
             </span>
           )}
           {request.procurement_type === "services" && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/25">
-              💼 Pengadaan Jasa
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/25">
+              <Briefcase size={12} /> Pengadaan Jasa
             </span>
           )}
           {request.status === "approved" &&

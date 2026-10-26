@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, Share2, Copy, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Share2, Copy, Check, ExternalLink, Tag } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -53,7 +53,7 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
           )}
           {rfq?.project_type && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              🏷️ {rfq.project_type}
+              <Tag size={11} /> {rfq.project_type}
             </span>
           )}
           {rfq?.status === "awarded" ? (

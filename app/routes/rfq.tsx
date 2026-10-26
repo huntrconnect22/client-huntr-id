@@ -441,14 +441,14 @@ export default function Rfq() {
                       onChange={(e) => setF("project_type", e.target.value)}
                       style={inputStyle}
                     >
-                      <option value="Konstruksi & Sipil">🏗️ Konstruksi & Sipil</option>
-                      <option value="Teknologi Informasi (IT)">💻 Teknologi Informasi (IT)</option>
-                      <option value="Sewa & Operasional Alat Berat">🚜 Sewa & Operasional Alat Berat</option>
-                      <option value="Event Organizer & MICE">🎪 Event Organizer & MICE</option>
-                      <option value="Maintenance & Fasilitas">🔧 Maintenance & Fasilitas</option>
-                      <option value="Logistik & Transportasi">🚚 Logistik & Transportasi</option>
-                      <option value="Konsultasi & Jasa Profesional">⚖️ Konsultasi & Jasa Profesional</option>
-                      <option value="Lainnya">🏷️ Lainnya (Custom)</option>
+                      <option value="Konstruksi & Sipil">Konstruksi & Sipil</option>
+                      <option value="Teknologi Informasi (IT)">Teknologi Informasi (IT)</option>
+                      <option value="Sewa & Operasional Alat Berat">Sewa & Operasional Alat Berat</option>
+                      <option value="Event Organizer & MICE">Event Organizer & MICE</option>
+                      <option value="Maintenance & Fasilitas">Maintenance & Fasilitas</option>
+                      <option value="Logistik & Transportasi">Logistik & Transportasi</option>
+                      <option value="Konsultasi & Jasa Profesional">Konsultasi & Jasa Profesional</option>
+                      <option value="Lainnya">Lainnya (Custom)</option>
                     </select>
                   </div>
 
