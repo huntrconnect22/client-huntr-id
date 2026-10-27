@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type DragEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Loader2,
@@ -7,7 +7,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { getWarehouseBinStock } from "../../lib/api/wms";
+import { getWarehouseBinStock, transferStock } from "../../lib/api/wms";
 
 type Operation = "putaway" | "picking" | "dispatch";
 type WarehouseAction = "putaway" | "transfer" | "adjust";
@@ -41,12 +41,18 @@ function BinTile({
   highlighted,
   compact = false,
   onClick,
+  items = [],
+  onDragItem,
+  onDropItem,
 }: {
   bin: any;
   active: boolean;
   highlighted: boolean;
   compact?: boolean;
   onClick: () => void;
+  items?: any[];
+  onDragItem?: (item: any) => void;
+  onDropItem?: (event: DragEvent<HTMLDivElement>) => void;
 }) {
   const units = number(bin.total_units);
   const capacity = number(bin.capacity_units);
@@ -57,9 +63,24 @@ function BinTile({
         ? 100
         : 0;
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      onDragOver={(event) => {
+        if (onDropItem) event.preventDefault();
+      }}
+      onDrop={(event) => {
+        if (!onDropItem) return;
+        event.preventDefault();
+        onDropItem(event);
+      }}
       className={`relative border p-2 text-left transition-all ${compact ? "min-h-[54px]" : "min-h-[88px]"} ${tone[bin.type] || tone.storage} ${active ? "ring-2 ring-[var(--ui-text-brand)] ring-offset-2 ring-offset-[var(--ui-bg-card)]" : "hover:-translate-y-0.5 hover:shadow-sm"} ${highlighted ? "outline outline-2 outline-orange-500" : ""}`}
     >
       <div className="flex items-start justify-between gap-1">
@@ -88,7 +109,29 @@ function BinTile({
           style={{ width: `${occupied}%` }}
         />
       </div>
-    </button>
+      {items.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap gap-1" onClick={(event) => event.stopPropagation()}>
+          {items.slice(0, compact ? 2 : 3).map((item) => (
+            <span
+              key={item.id}
+              draggable={Boolean(onDragItem)}
+              onDragStart={(event) => {
+                event.stopPropagation();
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("application/x-huntr-wms-stock", String(item.id));
+                event.dataTransfer.setData("text/plain", JSON.stringify({ id: item.id, sku: item.sku, bin_location: item.bin_location }));
+                onDragItem?.(item);
+              }}
+              title={`${item.item_name} · ${number(item.on_hand)} ${item.uom || "unit"}`}
+              className={`max-w-full truncate border border-current/25 bg-white/50 px-1 py-0.5 text-[8px] font-semibold dark:bg-slate-950/25 ${onDragItem ? "cursor-grab active:cursor-grabbing" : ""}`}
+            >
+              {item.item_name}
+            </span>
+          ))}
+          {items.length > (compact ? 2 : 3) && <span className="text-[8px] font-semibold">+{items.length - (compact ? 2 : 3)}</span>}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -153,6 +196,7 @@ export function WarehouseMap({
   warehouses,
   stock,
   onOpenOperation,
+  onTransferComplete,
 }: {
   companyId: string;
   warehouses: any[];
@@ -161,6 +205,7 @@ export function WarehouseMap({
     action: WarehouseAction,
     context: WarehouseActionContext,
   ) => void;
+  onTransferComplete?: () => Promise<void> | void;
 }) {
   const [warehouseId, setWarehouseId] = useState("");
   const [operation, setOperation] = useState<Operation>("putaway");
@@ -169,6 +214,11 @@ export function WarehouseMap({
   const [search, setSearch] = useState("");
   const [binItems, setBinItems] = useState<any[]>([]);
   const [inspecting, setInspecting] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<any>(null);
+  const [transferTarget, setTransferTarget] = useState<any>(null);
+  const [moveQuantity, setMoveQuantity] = useState("1");
+  const [moving, setMoving] = useState(false);
+  const [moveError, setMoveError] = useState("");
 
   useEffect(() => {
     if (!warehouseId && warehouses[0]?.id)
@@ -210,6 +260,31 @@ export function WarehouseMap({
       )
     : "";
   const storageBins = bins.filter((bin: any) => bin.type === "storage");
+  const itemsForBin = (bin: any) => warehouseStock.filter((row) =>
+    String(row.bin_id || row.resolved_bin_id || "") === String(bin.id)
+    || String(row.bin_location || "") === String(bin.code),
+  );
+  const openTransfer = (targetBin: any, sourceItem = draggedItem) => {
+    if (!sourceItem || String(sourceItem.bin_id || "") === String(targetBin.id) || String(sourceItem.bin_location || "") === String(targetBin.code)) return;
+    setDraggedItem(sourceItem);
+    setTransferTarget(targetBin);
+    setMoveQuantity("1");
+    setMoveError("");
+  };
+  const handleDrop = (targetBin: any, event: DragEvent<HTMLDivElement>) => {
+    const raw = event.dataTransfer.getData("text/plain");
+    let dragged: { id?: string; sku?: string; bin_location?: string } = {};
+    try {
+      dragged = JSON.parse(raw);
+    } catch {
+      dragged.id = event.dataTransfer.getData("application/x-huntr-wms-stock");
+    }
+    const sourceItem = warehouseStock.find((row) =>
+      (dragged.id && String(row.id) === String(dragged.id))
+      || (dragged.sku === row.sku && dragged.bin_location === row.bin_location),
+    ) || draggedItem;
+    openTransfer(targetBin, sourceItem);
+  };
   const storageRacks = useMemo(() => {
     const groups = new Map<string, { label: string; bins: any[] }>();
     storageBins
@@ -264,6 +339,36 @@ export function WarehouseMap({
       setInspecting(false);
     }
   };
+  const moveStock = async () => {
+    if (!warehouse?.id || !draggedItem || !transferTarget) return;
+    const quantity = Number(moveQuantity);
+    const available = Math.max(0, number(draggedItem.on_hand) - number(draggedItem.allocated));
+    if (!Number.isFinite(quantity) || quantity <= 0 || quantity > available) {
+      setMoveError(`Masukkan jumlah antara 1 dan ${available}.`);
+      return;
+    }
+    setMoving(true);
+    setMoveError("");
+    try {
+      await transferStock(companyId, {
+        from_warehouse_id: String(warehouse.id),
+        to_warehouse_id: String(warehouse.id),
+        from_bin: draggedItem.bin_location,
+        to_bin: transferTarget.code,
+        sku: draggedItem.sku,
+        quantity,
+        reference: `MAP-${Date.now()}`,
+      });
+      await onTransferComplete?.();
+      setTransferTarget(null);
+      setDraggedItem(null);
+      await inspect(transferTarget);
+    } catch (error: any) {
+      setMoveError(error?.message || "Stok tidak dapat dipindahkan.");
+    } finally {
+      setMoving(false);
+    }
+  };
   const matchingBins = (rows: any[]) =>
     rows.filter(
       (bin) =>
@@ -288,9 +393,8 @@ export function WarehouseMap({
               Peta gudang interaktif
             </h2>
             <p className="mt-1 text-sm text-[var(--ui-text-muted)]">
-              Klik lokasi untuk melihat isi bin. Dari item pada bin, mulai
-              transfer atau penyesuaian; pilih bin tujuan untuk memulai put
-              away.
+              Nama barang tampil langsung pada slot rak. Seret label barang ke
+              bin tujuan, lalu tentukan jumlah stok yang ingin dipindahkan.
             </p>
           </div>
           <select
@@ -428,6 +532,9 @@ export function WarehouseMap({
                         active={String(bin.id) === selectedBinId}
                         highlighted={String(bin.id) === highlightedBinId}
                         compact
+                        items={itemsForBin(bin)}
+                        onDragItem={setDraggedItem}
+                        onDropItem={(event) => handleDrop(bin, event)}
                         onClick={() => inspect(bin)}
                       />
                     ))}
@@ -448,6 +555,9 @@ export function WarehouseMap({
                         active={String(bin.id) === selectedBinId}
                         highlighted={String(bin.id) === highlightedBinId}
                         compact
+                        items={itemsForBin(bin)}
+                        onDragItem={setDraggedItem}
+                        onDropItem={(event) => handleDrop(bin, event)}
                         onClick={() => inspect(bin)}
                       />
                     ))}
@@ -466,6 +576,9 @@ export function WarehouseMap({
                         active={String(bin.id) === selectedBinId}
                         highlighted={String(bin.id) === highlightedBinId}
                         compact
+                        items={itemsForBin(bin)}
+                        onDragItem={setDraggedItem}
+                        onDropItem={(event) => handleDrop(bin, event)}
                         onClick={() => inspect(bin)}
                       />
                     ))}
@@ -484,6 +597,9 @@ export function WarehouseMap({
                         active={String(bin.id) === selectedBinId}
                         highlighted={String(bin.id) === highlightedBinId}
                         compact
+                        items={itemsForBin(bin)}
+                        onDragItem={setDraggedItem}
+                        onDropItem={(event) => handleDrop(bin, event)}
                         onClick={() => inspect(bin)}
                       />
                     ))}
@@ -520,6 +636,9 @@ export function WarehouseMap({
                                   String(bin.id) === highlightedBinId
                                 }
                                 compact
+                                items={itemsForBin(bin)}
+                                onDragItem={setDraggedItem}
+                                onDropItem={(event) => handleDrop(bin, event)}
                                 onClick={() => inspect(bin)}
                               />
                             ))}
@@ -772,6 +891,26 @@ export function WarehouseMap({
               )}
             </div>
           </aside>
+        </div>
+      )}
+      {transferTarget && draggedItem && (
+        <div className="fixed inset-0 z-[80] flex items-end bg-slate-950/50 p-4 backdrop-blur-sm sm:items-center sm:justify-center">
+          <section className="w-full max-w-md border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--ui-text-brand)]">Pindahkan stok dari denah</p>
+                <h3 className="mt-1 text-base font-bold text-[var(--ui-text-primary)]">{draggedItem.item_name}</h3>
+                <p className="mt-1 text-xs text-[var(--ui-text-muted)]">{draggedItem.sku} · {draggedItem.bin_location} <ArrowRight size={12} className="mx-1 inline" /> {transferTarget.code}</p>
+              </div>
+              <button type="button" disabled={moving} onClick={() => { setTransferTarget(null); setDraggedItem(null); setMoveError(""); }} className="text-[var(--ui-text-muted)]"><X size={18} /></button>
+            </div>
+            <label className="mt-5 block text-xs font-semibold text-[var(--ui-text-secondary)]">Jumlah yang dipindahkan
+              <input autoFocus min="0.001" max={Math.max(0, number(draggedItem.on_hand) - number(draggedItem.allocated))} step="0.001" type="number" value={moveQuantity} onChange={(event) => setMoveQuantity(event.target.value)} className="mt-1.5 w-full border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)]" />
+            </label>
+            <p className="mt-2 text-xs text-[var(--ui-text-muted)]">Tersedia untuk dipindahkan: {Math.max(0, number(draggedItem.on_hand) - number(draggedItem.allocated))} {draggedItem.uom || "unit"}.</p>
+            {moveError && <p className="mt-3 border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs text-red-600 dark:text-red-300">{moveError}</p>}
+            <div className="mt-5 flex justify-end gap-2"><button type="button" disabled={moving} onClick={() => { setTransferTarget(null); setDraggedItem(null); }} className="border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)]">Batal</button><button type="button" disabled={moving} onClick={() => void moveStock()} className="inline-flex items-center gap-2 bg-[var(--ui-text-brand)] px-3 py-2 text-xs font-semibold !text-white disabled:opacity-50">{moving && <Loader2 size={14} className="animate-spin" />}{moving ? "Memindahkan…" : "Pindahkan stok"}</button></div>
+          </section>
         </div>
       )}
     </section>

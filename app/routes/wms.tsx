@@ -3665,6 +3665,7 @@ export default function WmsPage() {
             companyId={company.id}
             warehouses={warehouses}
             stock={stock}
+            onTransferComplete={refresh}
             onOpenOperation={(action, { warehouse, bin, item }) => {
               const warehouseSelection: PickerItem = {
                 id: String(warehouse.id),

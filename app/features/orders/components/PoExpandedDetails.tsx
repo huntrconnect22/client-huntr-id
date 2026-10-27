@@ -11,12 +11,14 @@ import {
   ReceiptText,
   User,
   Calendar,
+  Download,
   MapPin,
   X,
   QrCode,
   FileCheck,
 } from "lucide-react";
 import { openAuthenticatedDocument } from "../../../lib/open-auth-document";
+import { downloadEFakturPdf } from "../../../lib/api/efaktur";
 import { getInvoicePaymentBreakdown } from "../lib/paymentBreakdown";
 
 const fmt = (n: number) => n.toLocaleString("id-ID");
@@ -64,6 +66,8 @@ export const PoExpandedDetails = ({
   const [activeModal, setActiveModal] = useState<
     "do" | "bast" | "efaktur" | null
   >(null);
+  const [downloadingEfakturId, setDownloadingEfakturId] = useState<string | null>(null);
+  const [efakturDownloadError, setEfakturDownloadError] = useState("");
 
   const isDirectPurchase = po.procurement_mode === "direct";
   const includesServices = ["services", "mixed"].includes(po.procurement_type);
@@ -116,6 +120,30 @@ export const PoExpandedDetails = ({
   const isManager = user?.role === "manager" || company?.owner_id === user?.id;
   const isVendor = company?.type === "vendor";
   const isBuyer = company?.type === "buyer";
+
+  const handleDownloadEfakturPdf = async (efaktur: any) => {
+    setDownloadingEfakturId(efaktur.id);
+    setEfakturDownloadError("");
+    try {
+      const response = await downloadEFakturPdf(efaktur.id);
+      const base64 = response?.pdf?.data?.arraybuff;
+      if (!base64) {
+        throw new Error(response?.pdf?.MsgStatus || "PDF belum tersedia. Pastikan e-Faktur telah disetujui.");
+      }
+      const content = base64.replace(/^data:application\/pdf;base64,/, "");
+      const bytes = Uint8Array.from(atob(content), (character) => character.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `efaktur-${efaktur.nofa || efaktur.id}.pdf`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch (error: any) {
+      setEfakturDownloadError(error?.message || "PDF e-Faktur tidak dapat diunduh.");
+    } finally {
+      setDownloadingEfakturId(null);
+    }
+  };
 
   return (
     <div className="p-4 bg-[var(--ui-bg-input)] border-t border-[var(--ui-border)] space-y-4">
@@ -702,6 +730,11 @@ export const PoExpandedDetails = ({
 
             {po.efakturs && po.efakturs.length > 0 ? (
               <div className="space-y-3">
+                {efakturDownloadError && (
+                  <p className="border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs text-red-600 dark:text-red-300">
+                    {efakturDownloadError}
+                  </p>
+                )}
                 {po.efakturs.map((ef: any) => (
                   <div
                     key={ef.id}
@@ -722,6 +755,19 @@ export const PoExpandedDetails = ({
                       <span>DPP: Rp {fmt(Number(ef.dpp || 0))}</span>
                       <span>PPN: Rp {fmt(Number(ef.ppn || 0))}</span>
                     </div>
+                    {String(ef.status || "").toUpperCase() === "APPROVED" ? (
+                      <button
+                        type="button"
+                        onClick={() => void handleDownloadEfakturPdf(ef)}
+                        disabled={downloadingEfakturId === ef.id}
+                        className="inline-flex w-full items-center justify-center gap-1.5 border border-[var(--ui-border-input)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)] disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {downloadingEfakturId === ef.id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        {downloadingEfakturId === ef.id ? "Menyiapkan PDF…" : "Unduh PDF e-Faktur"}
+                      </button>
+                    ) : (
+                      <p className="text-[10px] text-[var(--ui-text-muted)]">PDF tersedia setelah e-Faktur disetujui.</p>
+                    )}
                   </div>
                 ))}
               </div>
