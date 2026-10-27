@@ -1,5 +1,5 @@
 import React from "react";
-import { UploadCloud } from "lucide-react";
+import { Download, UploadCloud } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
 
 interface CatalogueBulkImportProps {
@@ -19,6 +19,22 @@ const primaryBtn = {
   fontSize: 12,
   fontWeight: 700,
   cursor: "pointer",
+};
+
+const downloadTemplate = () => {
+  const rows = [
+    ["Inventory Code", "Inventory name", "Category", "Specifications", "Primary UOM"],
+    ["SKU-CTH-001", "Contoh Produk", "Office Supplies", "Warna putih; ukuran A4", "Pcs"],
+  ];
+  const csv = rows
+    .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+    .join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "huntr-catalogue-import-template.csv";
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
 };
 
 export default function CatalogueBulkImport({
@@ -57,6 +73,25 @@ export default function CatalogueBulkImport({
           </p>
         </div>
         <form onSubmit={onSubmit} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={downloadTemplate}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--ui-border-input)",
+              background: "transparent",
+              color: "var(--ui-text-secondary)",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <Download size={15} /> {t("catalogue.importCard.downloadTemplate")}
+          </button>
           <input
             type="file"
             accept=".csv,.xlsx,.xls"

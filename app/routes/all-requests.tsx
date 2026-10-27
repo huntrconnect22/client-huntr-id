@@ -104,30 +104,15 @@ export default function AllRequests() {
           return;
         }
       }
-    } catch (e) {
-      console.warn("Public RFQs endpoint failed, falling back to authenticated endpoint", e);
+    } catch (error) {
+      console.error("Failed to fetch public RFQs", error);
     }
 
-    try {
-      // 2. Fallback to /api/rfqs?status=all_published
-      const res = await apiGet(`/api/rfqs?status=all_published`);
-      const data = Array.isArray(res) ? res : (res?.data ?? []);
-      if (Array.isArray(data) && data.length > 0) {
-        setRequests(data);
-        setLoading(false);
-        return;
-      }
-    } catch {}
-
-    try {
-      // 3. Fallback to /api/rfqs?status=active
-      const res = await apiGet(`/api/rfqs?status=active`);
-      setRequests(Array.isArray(res) ? res : (res?.data ?? []));
-    } catch (err) {
-      console.error("Failed to fetch global RFQs", err);
-    } finally {
-      setLoading(false);
-    }
+    // All Requests is intentionally company-agnostic. The private /api/rfqs
+    // endpoint is workspace scoped and requires company_id, so it must never
+    // be used as a fallback for a vendor browsing public opportunities.
+    setRequests([]);
+    setLoading(false);
   };
 
   const activeCount = requests.filter(r => !isTenderExpired(r)).length;

@@ -340,6 +340,7 @@ const id: Translations = {
     importCard: {
       title: "Impor Massal",
       subtitle: "Unggah katalog Anda via file Excel atau CSV.",
+      downloadTemplate: "Unduh template",
       selectFile: "Pilih file...",
       importBtn: "Impor",
       processing: "Memproses...",
@@ -1118,6 +1119,11 @@ const id: Translations = {
     overview: {
       allocationUsageTitle: "Pemakaian per Alokasi",
       allocationUsageDesc: "Komitmen PO dibandingkan dengan anggaran yang disediakan.",
+      utilizationPercent: "{{percent}}% terpakai",
+      utilizationPoCount: "{{count}} PO dikomitmenkan",
+      utilizationRemaining: "Sisa {{amount}}",
+      utilizationWaitingPo: "Belum ada komitmen PO. Hubungkan PO pada Procurement Plan agar pemakaian bertambah.",
+      utilizationOverBudget: "Melebihi alokasi anggaran",
       addAllocationBtn: "Tambah Alokasi",
       noAllocations: "Belum ada alokasi. Pecah anggaran menurut departemen atau kategori.",
       workflowTitle: "Alur Kerja",

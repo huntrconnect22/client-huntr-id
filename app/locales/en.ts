@@ -338,6 +338,7 @@ const en = {
     importCard: {
       title: "Bulk Import",
       subtitle: "Upload your catalogue via Excel or CSV file.",
+      downloadTemplate: "Download template",
       selectFile: "Select file...",
       importBtn: "Import",
       processing: "Processing...",
@@ -1116,6 +1117,11 @@ const en = {
     overview: {
       allocationUsageTitle: "Utilization by Allocation",
       allocationUsageDesc: "PO commitments compared against allocated budget.",
+      utilizationPercent: "{{percent}}% utilized",
+      utilizationPoCount: "{{count}} committed PO(s)",
+      utilizationRemaining: "{{amount}} remaining",
+      utilizationWaitingPo: "No PO commitment yet. Link a PO in its Procurement Plan to increase utilization.",
+      utilizationOverBudget: "Over allocated budget",
       addAllocationBtn: "Add Allocation",
       noAllocations: "No allocations yet. Split budget by department or category.",
       workflowTitle: "Workflow",

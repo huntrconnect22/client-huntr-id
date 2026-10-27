@@ -293,30 +293,7 @@ function Overview({ currency, summary, lines, plans, onOpen, t, locale }: any) {
           <div className="space-y-3">
             {lines.length ? (
               lines.slice(0, 6).map((line: any) => (
-                <div key={line.id}>
-                  <div className="flex justify-between gap-3 text-sm">
-                    <span className="font-medium text-[var(--ui-text-primary)]">
-                      {line.code} · {line.name}
-                    </span>
-                    <span className="text-[var(--ui-text-muted)]">
-                      {money(line.committed_amount, currency, locale)} /{" "}
-                      {money(line.allocated_amount, currency, locale)}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 h-2 bg-[var(--ui-bg-input)]">
-                    <div
-                      className="h-full bg-[var(--ui-text-brand)]"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          (Number(line.committed_amount || 0) /
-                            Math.max(1, Number(line.allocated_amount || 0))) *
-                            100
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                </div>
+                <AllocationUtilization key={line.id} line={line} currency={currency} locale={locale} t={t} />
               ))
             ) : (
               <p className="py-7 text-center text-sm text-[var(--ui-text-muted)]">
@@ -373,6 +350,58 @@ function Overview({ currency, summary, lines, plans, onOpen, t, locale }: any) {
         </div>
         <PlanRows plans={plans.slice(0, 5)} currency={currency} t={t} locale={locale} />
       </div>
+    </div>
+  );
+}
+
+function AllocationUtilization({ line, currency, locale, t }: any) {
+  const allocated = Number(line.allocated_amount || 0);
+  const committed = Number(line.committed_amount || 0);
+  const remaining = allocated - committed;
+  const rawPercent = allocated > 0 ? (committed / allocated) * 100 : 0;
+  const percent = Math.max(0, Math.round(rawPercent * 10) / 10);
+  const visualPercent = committed > 0 ? Math.max(2, Math.min(100, percent)) : 0;
+  const commitmentCount = Number(line.commitment_count || 0);
+  const isOverBudget = committed > allocated;
+
+  return (
+    <div>
+      <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-sm">
+        <span className="font-medium text-[var(--ui-text-primary)]">
+          {line.code} · {line.name}
+        </span>
+        <span className="text-[var(--ui-text-muted)]">
+          {money(committed, currency, locale)} / {money(allocated, currency, locale)}
+        </span>
+      </div>
+      <div
+        className="relative mt-1.5 h-2 overflow-hidden bg-[var(--ui-bg-input)]"
+        role="progressbar"
+        aria-label={`${line.code} ${t("budgeting.overview.allocationUsageTitle")}`}
+        aria-valuemin={0}
+        aria-valuemax={Math.max(0, allocated)}
+        aria-valuenow={Math.max(0, committed)}
+      >
+        {committed === 0 && <span className="absolute inset-y-0 left-0 w-px bg-[var(--ui-text-muted)]/70" />}
+        <div
+          className={`h-full transition-[width] duration-500 ${isOverBudget ? "bg-rose-500" : "bg-[var(--ui-text-brand)]"}`}
+          style={{ width: `${visualPercent}%` }}
+        />
+      </div>
+      <div className="mt-1 flex flex-wrap justify-between gap-x-3 gap-y-1 text-[11px] text-[var(--ui-text-muted)]">
+        <span className={isOverBudget ? "font-semibold text-rose-600 dark:text-rose-300" : ""}>
+          {isOverBudget
+            ? t("budgeting.overview.utilizationOverBudget")
+            : t("budgeting.overview.utilizationPercent", { percent: percent.toLocaleString(locale, { maximumFractionDigits: 1 }) })}
+        </span>
+        <span>{t("budgeting.overview.utilizationPoCount", { count: commitmentCount })}</span>
+        <span>{t("budgeting.overview.utilizationRemaining", { amount: money(Math.max(0, remaining), currency, locale) })}</span>
+      </div>
+      {commitmentCount === 0 && (
+        <p className="mt-1 text-[11px] text-[var(--ui-text-muted)]">
+          {t("budgeting.overview.utilizationWaitingPo")}
+        </p>
+      )}
     </div>
   );
 }

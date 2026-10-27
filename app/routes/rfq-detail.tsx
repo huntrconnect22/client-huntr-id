@@ -61,12 +61,13 @@ export default function RfqDetail() {
 
   const fetchRankings = useCallback(async (rfqId: string | number) => {
     try {
-      const data = await apiGet(`/api/rfqs/${rfqId}/rankings`);
+      const companyQuery = company?.id ? `?company_id=${encodeURIComponent(String(company.id))}` : "";
+      const data = await apiGet(`/api/rfqs/${rfqId}/rankings${companyQuery}`);
       setRankings(Array.isArray(data) ? data : data.rankings || []);
     } catch {
       setRankings([]);
     }
-  }, []);
+  }, [company?.id]);
 
   const handleTriggerDemoBots = async () => {
     if (!rfq?.id) return;
@@ -92,7 +93,8 @@ export default function RfqDetail() {
   };
 
   const loadRfq = useCallback(async (rfqId: string) => {
-    const response = await apiGet(`/api/rfqs/${rfqId}`);
+    const companyQuery = company?.id ? `?company_id=${encodeURIComponent(String(company.id))}` : "";
+    const response = await apiGet(`/api/rfqs/${rfqId}${companyQuery}`);
     const data = response?.rfq ?? response?.data ?? response;
     setRfq(data);
     if (data?.id) fetchRankings(data.id);
