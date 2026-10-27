@@ -7,168 +7,168 @@ import {
 
 export default [
   // ── SEO / Search Engine feeds ──────────────────────────────────────────────
-  route("robots.txt", "routes/robots.tsx"),
-  route("sitemap.xml", "routes/sitemap.tsx"),
-  route("sitemap.xsl", "routes/sitemap-style.tsx"),
+  route("robots.txt", "modules/public/seo/routes/RobotsRoute.tsx"),
+  route("sitemap.xml", "modules/public/seo/routes/SitemapRoute.tsx"),
+  route("sitemap.xsl", "modules/public/seo/routes/SitemapStyleRoute.tsx"),
 
   // ── Public / standalone routes (no persistent shell) ──────────────────────
-  route("login", "routes/login.tsx"),
-  route("register", "routes/register.tsx"),
-  route("forgot-password", "routes/forgot-password.tsx"),
-  route("onboarding", "routes/onboarding.tsx"),
-  route("select-company", "routes/select-company.tsx"),
-  route("admin", "routes/admin.tsx"),
-  route("admin/:tab", "routes/admin.tsx", { id: "admin-tab" }),
-  route("invite/accept", "routes/invite-accept.tsx"),
-  route("track", "routes/tracking.tsx"),
-  route("verify", "routes/verify.tsx"),
-  route("tender/:id", "routes/tender-public.tsx"),
-  route("t/:id", "routes/tender-public.tsx", { id: "tender-short" }),
-  route("crowd-buy", "routes/crowd-buy-index-public.tsx", { id: "crowd-buy-index-public" }),
-  route("crowd-buy/p/:id", "routes/crowd-buy-public.tsx", {
+  route("login", "modules/auth/routes/LoginRoute.tsx"),
+  route("register", "modules/auth/routes/RegisterRoute.tsx"),
+  route("forgot-password", "modules/auth/routes/ForgotPasswordRoute.tsx"),
+  route("onboarding", "modules/auth/routes/OnboardingRoute.tsx"),
+  route("select-company", "modules/auth/routes/SelectCompanyRoute.tsx"),
+  route("admin", "modules/admin/routes/AdminRoute.tsx"),
+  route("admin/:tab", "modules/admin/routes/AdminRoute.tsx", { id: "admin-tab" }),
+  route("invite/accept", "modules/auth/routes/InviteAcceptanceRoute.tsx"),
+  route("track", "modules/public/tracking/routes/TrackingRoute.tsx"),
+  route("verify", "modules/public/verification/routes/VerificationRoute.tsx"),
+  route("tender/:id", "modules/public/tender/routes/PublicTenderRoute.tsx"),
+  route("t/:id", "modules/public/tender/routes/PublicTenderRoute.tsx", { id: "tender-short" }),
+  route("crowd-buy", "modules/marketplace/crowd-buy/routes/PublicCampaignIndexRoute.tsx", { id: "crowd-buy-index-public" }),
+  route("crowd-buy/p/:id", "modules/marketplace/crowd-buy/routes/PublicCampaignRoute.tsx", {
     id: "crowd-buy-public",
   }),
-  route("cb/:id", "routes/crowd-buy-public.tsx", { id: "crowd-buy-short" }),
+  route("cb/:id", "modules/marketplace/crowd-buy/routes/PublicCampaignRoute.tsx", { id: "crowd-buy-short" }),
 
   // ── Authenticated routes (inside persistent AppShell) ─────────────────────
-  layout("routes/_app.tsx", [
-    index("routes/home.tsx"),
+  layout("modules/shell/src/features/AppShell.tsx", [
+    index("modules/buyer/dashboard/routes/HomeRoute.tsx"),
 
     // Dynamic company slug prefixed routes (e.g. /micro-padma-nusantara, /micro-padma-nusantara/dashboard)
-    route(":companySlug", "routes/home.tsx", { id: "company-home" }),
-    route(":companySlug/dashboard", "routes/home.tsx", {
+    route(":companySlug", "modules/buyer/dashboard/routes/HomeRoute.tsx", { id: "company-home" }),
+    route(":companySlug/dashboard", "modules/buyer/dashboard/routes/HomeRoute.tsx", {
       id: "company-dashboard",
     }),
-    route(":companySlug/crowd-buy", "routes/crowd-buy.tsx", {
+    route(":companySlug/crowd-buy", "modules/marketplace/crowd-buy/routes/CrowdBuyRoute.tsx", {
       id: "company-crowd-buy",
     }),
-    route(":companySlug/crowd-buy/:id", "routes/crowd-buy-detail.tsx", {
+    route(":companySlug/crowd-buy/:id", "modules/marketplace/crowd-buy/routes/CrowdBuyDetailRoute.tsx", {
       id: "company-crowd-buy-detail",
     }),
     route(
       ":companySlug/agentic-procurement",
-      "routes/agentic-procurement.tsx",
+      "modules/buyer/agentic-procurement/routes/AgenticProcurementRoute.tsx",
       { id: "company-agentic-procurement" },
     ),
-    route(":companySlug/marketplace", "routes/marketplace.tsx", {
+    route(":companySlug/marketplace", "modules/marketplace/catalogue/routes/MarketplaceRoute.tsx", {
       id: "company-marketplace",
     }),
-    route(":companySlug/apps", "routes/app-market.tsx", {
+    route(":companySlug/apps", "modules/app-market/routes/AppMarketRoute.tsx", {
       id: "company-app-market",
     }),
-    route(":companySlug/wms", "routes/wms.tsx", { id: "company-wms" }),
-    route(":companySlug/crm", "routes/crm.tsx", { id: "company-crm" }),
-    route(":companySlug/budgeting", "routes/budgeting.tsx", { id: "company-budgeting" }),
-    route(":companySlug/marketplace/:id", "routes/marketplace-detail.tsx", {
+    route(":companySlug/wms", "modules/buyer/wms/routes/WmsRoute.tsx", { id: "company-wms" }),
+    route(":companySlug/crm", "modules/buyer/crm/routes/CrmRoute.tsx", { id: "company-crm" }),
+    route(":companySlug/budgeting", "modules/buyer/budgeting/routes/BudgetingRoute.tsx", { id: "company-budgeting" }),
+    route(":companySlug/marketplace/:id", "modules/marketplace/catalogue/routes/MarketplaceProductDetailRoute.tsx", {
       id: "company-marketplace-detail",
     }),
-    route(":companySlug/cart", "routes/cart.tsx", { id: "company-cart" }),
+    route(":companySlug/cart", "modules/marketplace/checkout/routes/CartRoute.tsx", { id: "company-cart" }),
     // Cart page removed — cart is now inline sidebar on marketplace
-    route(":companySlug/my-pr", "routes/my-pr.tsx", { id: "company-my-pr" }),
-    route(":companySlug/my-pr/:id", "routes/my-pr-detail.tsx", {
+    route(":companySlug/my-pr", "modules/buyer/PR/routes/PurchaseRequestListRoute.tsx", { id: "company-my-pr" }),
+    route(":companySlug/my-pr/:id", "modules/buyer/PR/routes/PurchaseRequestDetailRoute.tsx", {
       id: "company-my-pr-detail",
     }),
-    route(":companySlug/compare-review/:id", "routes/compare-review.tsx", {
+    route(":companySlug/compare-review/:id", "modules/buyer/PR/routes/CompareReviewRoute.tsx", {
       id: "company-compare-review",
     }),
-    route(":companySlug/all-requests", "routes/all-requests.tsx", {
+    route(":companySlug/all-requests", "modules/vendor/requests/routes/AllRequestsRoute.tsx", {
       id: "company-all-requests",
     }),
-    route(":companySlug/rfq/:id", "routes/rfq-detail.tsx", {
+    route(":companySlug/rfq/:id", "modules/buyer/PR/routes/RfqDetailRoute.tsx", {
       id: "company-rfq-detail",
     }),
-    route(":companySlug/checkout", "routes/checkout.tsx", {
+    route(":companySlug/checkout", "modules/marketplace/checkout/routes/CheckoutRoute.tsx", {
       id: "company-checkout",
     }),
-    route(":companySlug/approvals", "routes/approvals.tsx", {
+    route(":companySlug/approvals", "modules/buyer/approvals/routes/ApprovalsRoute.tsx", {
       id: "company-approvals",
     }),
-    route(":companySlug/finance", "routes/finance.tsx", {
+    route(":companySlug/finance", "modules/finance/payables/routes/FinanceRoute.tsx", {
       id: "company-finance",
     }),
-    route(":companySlug/company", "routes/company.tsx", {
+    route(":companySlug/company", "modules/buyer/company/routes/CompanyRoute.tsx", {
       id: "company-company",
     }),
-    route(":companySlug/catalogue", "routes/catalogue.tsx", {
+    route(":companySlug/catalogue", "modules/vendor/catalogue/routes/CatalogueRoute.tsx", {
       id: "company-catalogue",
     }),
-    route(":companySlug/rfq", "routes/rfq.tsx", { id: "company-rfq" }),
-    route(":companySlug/proposals", "routes/proposals.tsx", {
+    route(":companySlug/rfq", "modules/buyer/PR/routes/RfqRoute.tsx", { id: "company-rfq" }),
+    route(":companySlug/proposals", "modules/vendor/proposals/routes/ProposalsRoute.tsx", {
       id: "company-proposals",
     }),
-    route(":companySlug/negotiation", "routes/negotiation.tsx", {
+    route(":companySlug/negotiation", "modules/buyer/negotiations/routes/NegotiationRoute.tsx", {
       id: "company-negotiation",
     }),
-    route(":companySlug/my-rank", "routes/my-rank.tsx", {
+    route(":companySlug/my-rank", "modules/vendor/proposals/routes/MyRankRoute.tsx", {
       id: "company-my-rank",
     }),
-    route(":companySlug/orders", "routes/orders.tsx", { id: "company-orders" }),
-    route(":companySlug/direct-po", "routes/direct-po.tsx", {
+    route(":companySlug/orders", "modules/buyer/PO/routes/OrdersRoute.tsx", { id: "company-orders" }),
+    route(":companySlug/direct-po", "modules/buyer/PO/routes/DirectPurchaseOrderRoute.tsx", {
       id: "company-direct-po",
     }),
-    route(":companySlug/receipts", "routes/receipts.tsx", {
+    route(":companySlug/receipts", "modules/buyer/PO/routes/GoodsReceiptsRoute.tsx", {
       id: "company-receipts",
     }),
-    route(":companySlug/payment-history", "routes/payment-history.tsx", {
+    route(":companySlug/payment-history", "modules/finance/payables/routes/PaymentHistoryRoute.tsx", {
       id: "company-payment-history",
     }),
-    route(":companySlug/returns", "routes/returns.tsx", {
+    route(":companySlug/returns", "modules/finance/payables/routes/ReturnsRoute.tsx", {
       id: "company-returns",
     }),
-    route(":companySlug/debit-notes", "routes/debit-notes.tsx", {
+    route(":companySlug/debit-notes", "modules/finance/payables/routes/DebitNotesRoute.tsx", {
       id: "company-debit-notes",
     }),
-    route(":companySlug/bast", "routes/bast.tsx", { id: "company-bast" }),
-    route(":companySlug/efaktur", "routes/efaktur.tsx", {
+    route(":companySlug/bast", "modules/finance/payables/routes/BastRoute.tsx", { id: "company-bast" }),
+    route(":companySlug/efaktur", "modules/finance/efaktur/routes/EFakturRoute.tsx", {
       id: "company-efaktur",
     }),
-    route(":companySlug/notifications", "routes/notifications.tsx", {
+    route(":companySlug/notifications", "modules/shell/routes/NotificationsRoute.tsx", {
       id: "company-notifications",
     }),
-    route(":companySlug/account", "routes/account.tsx", {
+    route(":companySlug/account", "modules/buyer/settings/routes/AccountRoute.tsx", {
       id: "company-account",
     }),
-    route(":companySlug/pr-audit", "routes/pr-audit.tsx", {
+    route(":companySlug/pr-audit", "modules/buyer/PR/routes/PurchaseRequestAuditRoute.tsx", {
       id: "company-pr-audit",
     }),
-    route(":companySlug/tasks", "routes/tasks.tsx", { id: "company-tasks" }),
+    route(":companySlug/tasks", "modules/shell/routes/TasksRoute.tsx", { id: "company-tasks" }),
 
     // Fallback legacy paths
-    route("agentic-procurement", "routes/agentic-procurement.tsx"),
-    route("marketplace", "routes/marketplace.tsx"),
-    route("apps", "routes/app-market.tsx"),
-    route("wms", "routes/wms.tsx"),
-    route("budgeting", "routes/budgeting.tsx"),
-    route("marketplace/:id", "routes/marketplace-detail.tsx"),
-    route("cart", "routes/cart.tsx"), // kept for deep-link /cart?add= backwards compat
-    route("my-pr", "routes/my-pr.tsx"),
-    route("my-pr/:id", "routes/my-pr-detail.tsx"),
-    route("compare-review/:id", "routes/compare-review.tsx"),
-    route("all-requests", "routes/all-requests.tsx"),
-    route("rfq/:id", "routes/rfq-detail.tsx"),
-    route("checkout", "routes/checkout.tsx"),
-    route("approvals", "routes/approvals.tsx"),
-    route("finance", "routes/finance.tsx"),
-    route("company", "routes/company.tsx"),
-    route("catalogue", "routes/catalogue.tsx"),
-    route("rfq", "routes/rfq.tsx"),
-    route("proposals", "routes/proposals.tsx"),
-    route("negotiation", "routes/negotiation.tsx"),
-    route("my-rank", "routes/my-rank.tsx"),
-    route("orders", "routes/orders.tsx"),
-    route("direct-po", "routes/direct-po.tsx"),
-    route("receipts", "routes/receipts.tsx"),
-    route("payment-history", "routes/payment-history.tsx"),
-    route("returns", "routes/returns.tsx"),
-    route("debit-notes", "routes/debit-notes.tsx"),
-    route("bast", "routes/bast.tsx"),
-    route("efaktur", "routes/efaktur.tsx"),
-    route("notifications", "routes/notifications.tsx"),
-    route("account", "routes/account.tsx"),
-    route("pr-audit", "routes/pr-audit.tsx"),
-    route("tasks", "routes/tasks.tsx"),
+    route("agentic-procurement", "modules/buyer/agentic-procurement/routes/AgenticProcurementRoute.tsx"),
+    route("marketplace", "modules/marketplace/catalogue/routes/MarketplaceRoute.tsx"),
+    route("apps", "modules/app-market/routes/AppMarketRoute.tsx"),
+    route("wms", "modules/buyer/wms/routes/WmsRoute.tsx"),
+    route("budgeting", "modules/buyer/budgeting/routes/BudgetingRoute.tsx"),
+    route("marketplace/:id", "modules/marketplace/catalogue/routes/MarketplaceProductDetailRoute.tsx"),
+    route("cart", "modules/marketplace/checkout/routes/CartRoute.tsx"),
+    route("my-pr", "modules/buyer/PR/routes/PurchaseRequestListRoute.tsx"),
+    route("my-pr/:id", "modules/buyer/PR/routes/PurchaseRequestDetailRoute.tsx"),
+    route("compare-review/:id", "modules/buyer/PR/routes/CompareReviewRoute.tsx"),
+    route("all-requests", "modules/vendor/requests/routes/AllRequestsRoute.tsx"),
+    route("rfq/:id", "modules/buyer/PR/routes/RfqDetailRoute.tsx"),
+    route("checkout", "modules/marketplace/checkout/routes/CheckoutRoute.tsx"),
+    route("approvals", "modules/buyer/approvals/routes/ApprovalsRoute.tsx"),
+    route("finance", "modules/finance/payables/routes/FinanceRoute.tsx"),
+    route("company", "modules/buyer/company/routes/CompanyRoute.tsx"),
+    route("catalogue", "modules/vendor/catalogue/routes/CatalogueRoute.tsx"),
+    route("rfq", "modules/buyer/PR/routes/RfqRoute.tsx"),
+    route("proposals", "modules/vendor/proposals/routes/ProposalsRoute.tsx"),
+    route("negotiation", "modules/buyer/negotiations/routes/NegotiationRoute.tsx"),
+    route("my-rank", "modules/vendor/proposals/routes/MyRankRoute.tsx"),
+    route("orders", "modules/buyer/PO/routes/OrdersRoute.tsx"),
+    route("direct-po", "modules/buyer/PO/routes/DirectPurchaseOrderRoute.tsx"),
+    route("receipts", "modules/buyer/PO/routes/GoodsReceiptsRoute.tsx"),
+    route("payment-history", "modules/finance/payables/routes/PaymentHistoryRoute.tsx"),
+    route("returns", "modules/finance/payables/routes/ReturnsRoute.tsx"),
+    route("debit-notes", "modules/finance/payables/routes/DebitNotesRoute.tsx"),
+    route("bast", "modules/finance/payables/routes/BastRoute.tsx"),
+    route("efaktur", "modules/finance/efaktur/routes/EFakturRoute.tsx"),
+    route("notifications", "modules/shell/routes/NotificationsRoute.tsx"),
+    route("account", "modules/buyer/settings/routes/AccountRoute.tsx"),
+    route("pr-audit", "modules/buyer/PR/routes/PurchaseRequestAuditRoute.tsx"),
+    route("tasks", "modules/shell/routes/TasksRoute.tsx"),
 
     // Catch-all
-    route("*", "routes/404.tsx"),
+    route("*", "modules/public/system/routes/NotFoundRoute.tsx"),
   ]),
 ] satisfies RouteConfig;

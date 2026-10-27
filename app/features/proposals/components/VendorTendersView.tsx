@@ -50,7 +50,7 @@ export function VendorTendersView({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {openRfqs.filter((rfq: any) => !isTenderExpired(rfq)).map(rfq => {
-            const hasSubmitted = vendorSubmittedRfqIds.includes(rfq.id);
+            const hasSubmitted = vendorSubmittedRfqIds.includes(String(rfq.id));
             return (
               <div 
                 key={rfq.id} 
@@ -90,7 +90,12 @@ export function VendorTendersView({
                   </div>
 
                   <button 
+                    type="button"
                     disabled={hasSubmitted}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!hasSubmitted) onSelectRfq(rfq);
+                    }}
                     style={hasSubmitted ? {} : { color: 'white' }}
                     className={`w-full py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                       hasSubmitted
