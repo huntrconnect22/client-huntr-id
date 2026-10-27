@@ -7,9 +7,11 @@ Huntr.id is a high-fidelity enterprise B2B E-Procurement ecosystem that connects
 - **Buyer Portal**: Handle Purchase Requisitions (PR), Request for Quotes (RFQ), vendor bidding comparison, and purchase orders.
 - **Vendor Portal**: Participate in e-bidding, submit proposals, track wins, and manage catalogue items.
 - **Unified Dashboard**: Live metrics, currency charts, weather widgets, and negotiation tools.
+- **Crowd Buy**: Public B2B collective procurement campaigns. Discover active campaigns at `/crowd-buy` and campaign details at `/crowd-buy/p/:campaignId`. Each public campaign exposes price, minimum order quantity, collective progress, deadline, and supplier or initiator context.
 
 ## Tech Stack
 - Frontend: React Router v7 (SSR), TypeScript, Vite.
 - Styling: Custom responsive CSS variables & TailwindCSS.
 - Backend: Laravel API backend.
 - Domain: https://app.huntr.id
+- Public discovery: `/robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/llms-full.txt`.

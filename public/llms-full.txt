@@ -21,6 +21,12 @@ This document provides a comprehensive overview of the Huntr.id platform for dev
 - **Catalogue Management**: Import (CSV/Excel) and manage active product listings. Path: `/catalogue`
 - **Order Fulfilment**: Track PO status and upload delivery receipts. Path: `/orders`
 
+### 4. Crowd Buy (Public B2B Collective Procurement)
+- **Public campaign catalogue**: `/crowd-buy` lists active group-buying campaigns available for company procurement teams.
+- **Campaign detail**: `/crowd-buy/p/:campaignId` is a public, canonical campaign page. It provides the campaign title, category, supplier or initiator, unit price in IDR, minimum order quantity, target and current collective quantity, deadline, delivery terms, and campaign description.
+- **Joining a campaign**: Authenticated buyer workspaces can join through the campaign flow; unauthenticated visitors are directed to sign in. Public URLs are intended for discovery and sharing, not for exposing buyer order records or private bid data.
+- **Search metadata**: Public Crowd Buy pages publish canonical links, Open Graph metadata, Twitter cards, and Schema.org Product/Offer + BreadcrumbList JSON-LD. Active campaigns are included in `/sitemap.xml`.
+
 ## System Integration Details
 - **Production Domain**: `app.huntr.id`
 - **API Protocol**: JSON API client with Bearer Token auth via session headers.

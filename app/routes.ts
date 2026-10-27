@@ -24,6 +24,7 @@ export default [
   route("verify", "routes/verify.tsx"),
   route("tender/:id", "routes/tender-public.tsx"),
   route("t/:id", "routes/tender-public.tsx", { id: "tender-short" }),
+  route("crowd-buy", "routes/crowd-buy-index-public.tsx", { id: "crowd-buy-index-public" }),
   route("crowd-buy/p/:id", "routes/crowd-buy-public.tsx", {
     id: "crowd-buy-public",
   }),

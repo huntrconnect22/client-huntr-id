@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, Link, useNavigate, useLoaderData } from "react-router";
 import {
   ArrowLeft,
   Clock,
@@ -15,17 +15,114 @@ import { crowdBuyApi } from "../lib/api/crowd-buy";
 import type { CrowdBuyCampaign } from "../features/crowd-buy/types";
 import { CampaignProgressBar } from "../features/crowd-buy/components/CampaignProgressBar";
 import { SessionManager } from "../lib/session";
+import { getAssetUrl } from "../lib/assets";
 import Swal from "sweetalert2";
+
+const baseUrl = "https://app.huntr.id";
+const defaultImage = `${baseUrl}/assets/img/logo/sidebar.png`;
+
+export async function loader({ params }: { params: { id?: string } }) {
+  if (!params.id) return { campaign: null, participants_count: 0 };
+  try {
+    return await crowdBuyApi.getCampaignDetail(params.id);
+  } catch {
+    return { campaign: null, participants_count: 0 };
+  }
+}
+
+export function meta({ data }: { data?: { campaign?: CrowdBuyCampaign | null } }) {
+  const campaign = data?.campaign;
+  if (!campaign) {
+    return [
+      { title: "Crowd Buy Campaign | Huntr.id" },
+      { name: "robots", content: "noindex,follow" },
+    ];
+  }
+
+  const canonical = `${baseUrl}/crowd-buy/p/${campaign.id}`;
+  const image = campaign.image_url || getAssetUrl(campaign.image_path) || defaultImage;
+  const description = (campaign.description || `Gabung Crowd Buy ${campaign.title} di Huntr.id.`).slice(0, 160);
+  const indexable = campaign.is_active && !["suspended", "cancelled", "failed"].includes(campaign.status);
+
+  return [
+    { title: `${campaign.title} | Crowd Buy Huntr.id` },
+    { name: "description", content: description },
+    { name: "keywords", content: `${campaign.title}, ${campaign.category}, crowd buy, pengadaan kolektif, grosir B2B, Huntr.id` },
+    { name: "robots", content: indexable ? "index,follow,max-image-preview:large" : "noindex,follow" },
+    { rel: "canonical", href: canonical },
+    { property: "og:type", content: "product" },
+    { property: "og:url", content: canonical },
+    { property: "og:title", content: `${campaign.title} | Crowd Buy Huntr.id` },
+    { property: "og:description", content: description },
+    { property: "og:image", content: image },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: `${campaign.title} | Crowd Buy Huntr.id` },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: image },
+  ];
+}
+
+function CampaignSchema({ campaign, participantsCount }: { campaign: CrowdBuyCampaign; participantsCount: number }) {
+  const url = `${baseUrl}/crowd-buy/p/${campaign.id}`;
+  const image = campaign.image_url || getAssetUrl(campaign.image_path) || defaultImage;
+  const supplier = campaign.supplier?.name || campaign.initiator_company?.name || "Huntr.id";
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Product",
+        name: campaign.title,
+        description: campaign.description || `Campaign pengadaan kolektif ${campaign.title}.`,
+        image: [image],
+        sku: campaign.code,
+        category: campaign.category,
+        brand: { "@type": "Organization", name: supplier },
+        offers: {
+          "@type": "Offer",
+          url,
+          priceCurrency: "IDR",
+          price: Number(campaign.base_price),
+          availability: campaign.is_active ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+          validThrough: campaign.ends_at,
+          seller: { "@type": "Organization", name: supplier },
+          eligibleQuantity: { "@type": "QuantitativeValue", minValue: campaign.min_order_qty, unitText: campaign.unit },
+        },
+        additionalProperty: [
+          { "@type": "PropertyValue", name: "Target quantity", value: `${campaign.target_quantity} ${campaign.unit}` },
+          { "@type": "PropertyValue", name: "Current collective quantity", value: `${campaign.current_quantity} ${campaign.unit}` },
+          { "@type": "PropertyValue", name: "Participating companies", value: participantsCount },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Huntr.id", item: baseUrl },
+          { "@type": "ListItem", position: 2, name: "Crowd Buy", item: `${baseUrl}/crowd-buy` },
+          { "@type": "ListItem", position: 3, name: campaign.title, item: url },
+        ],
+      },
+    ],
+  };
+
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />;
+}
 
 export default function CrowdBuyPublicPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [campaign, setCampaign] = useState<CrowdBuyCampaign | null>(null);
-  const [participantsCount, setParticipantsCount] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+  const loaderData = useLoaderData<typeof loader>();
+  const [campaign, setCampaign] = useState<CrowdBuyCampaign | null>(loaderData?.campaign ?? null);
+  const [participantsCount, setParticipantsCount] = useState<number>(loaderData?.participants_count ?? 0);
+  const [loading, setLoading] = useState(!loaderData?.campaign);
 
   useEffect(() => {
     if (!id) return;
+    if (loaderData?.campaign && String(loaderData.campaign.id) === id) {
+      setCampaign(loaderData.campaign);
+      setParticipantsCount(loaderData.participants_count || 0);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     crowdBuyApi
       .getCampaignDetail(id)
@@ -37,7 +134,7 @@ export default function CrowdBuyPublicPage() {
         console.error("Failed to load public campaign detail", err);
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, loaderData]);
 
   const handleJoinClick = () => {
     const company = SessionManager.getCompany();
@@ -85,10 +182,11 @@ export default function CrowdBuyPublicPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 md:px-8">
+      <CampaignSchema campaign={campaign} participantsCount={participantsCount} />
       <div className="max-w-5xl mx-auto space-y-5">
         {/* Navigation bar */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-slate-800">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/crowd-buy" className="flex items-center gap-2">
             <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
               HUNTR<span className="text-orange-500">.ID</span>
             </span>

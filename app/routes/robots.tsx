@@ -3,6 +3,10 @@ export function loader() {
 Allow: /
 Allow: /marketplace
 Allow: /marketplace/*
+Allow: /crowd-buy
+Allow: /crowd-buy/p/*
+Allow: /llms.txt
+Allow: /llms-full.txt
 Disallow: /admin
 Disallow: /checkout
 Disallow: /cart
