@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import Layout from "~/components/Layout";
 import { submitProposal, apiGet } from "~/lib/api";
-import { Loader2, Briefcase, CheckCircle2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
-
-import { NegotiationModal } from "~/features/proposals/components/NegotiationModal";
-import { BuyerProposalsView } from "~/features/proposals/components/BuyerProposalsView";
-import { VendorTendersView } from "~/features/proposals/components/VendorTendersView";
-import { VendorSubmissionsList } from "~/features/proposals/components/VendorSubmissionsList";
-import { VendorProposalForm } from "~/features/proposals/components/VendorProposalForm";
+import { ProposalsView } from "../components/ProposalsView";
 
 export default function Proposals() {
   const location = useLocation();
@@ -310,91 +303,14 @@ export default function Proposals() {
   const isVendor = activeCompany?.type === 'vendor';
   const isBuyer = activeCompany?.type === 'buyer';
 
-  if (!activeCompany) {
-    return (
-      <Layout title="Proposals" subtitle="Loading your workspace...">
-        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-          <Loader2 className="animate-spin text-orange-500" size={28} />
-          <span className="text-xs text-[var(--ui-text-muted)]">Loading workspace...</span>
-        </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout title="Proposals" subtitle={isBuyer ? "Review, negotiate, and award vendor proposals for your RFQs." : "Manage your bids, submit quotations, and review active tender opportunities."}>
-      <div className="w-full space-y-6">
-        
-        <div className="w-full">
-          {isBuyer ? (
-            <BuyerProposalsView
-              receivedProposals={receivedProposals}
-              proposalsLoading={proposalsLoading}
-              activeCompany={activeCompany}
-              awardingId={awardingId}
-              onRefresh={fetchReceivedProposals}
-              onNegotiate={(p) => { setSelectedNegProposal(p); setShowNegModal(true); }}
-              onAward={handleAward}
-            />
-          ) : isVendor && !selectedRfq ? (
-            <div className="space-y-6">
-              <VendorTendersView 
-                openRfqs={openRfqs}
-                rfqsLoading={rfqsLoading}
-                vendorSubmittedRfqIds={vendorSubmittedRfqIds}
-                isTenderExpired={isTenderExpired}
-                onRefresh={fetchOpenTenders}
-                onSelectRfq={handleSelectRfq}
-              />
-              <VendorSubmissionsList 
-                vendorSubmissions={vendorSubmissions}
-              />
-            </div>
-          ) : isVendor && selectedRfq ? (
-            <VendorProposalForm 
-              selectedRfq={selectedRfq}
-              form={form}
-              loading={loading}
-              error={error}
-              hasSubmittedForSelectedRfq={hasSubmittedForSelectedRfq}
-              isProcessing={isProcessing}
-              isDragging={isDragging}
-              fileInputRef={fileInputRef}
-              updateForm={updateForm}
-              handleDrag={handleDrag}
-              handleDrop={handleDrop}
-              handleSubmit={handleSubmit}
-              onCancel={() => { setSelectedRfq(null); setHasSubmittedForSelectedRfq(false); setError(null); }}
-            />
-          ) : (
-            <div className="border border-dashed border-[var(--ui-border)] rounded-xl py-16 flex flex-col items-center justify-center gap-2 text-center">
-              <Briefcase size={40} className="text-[var(--ui-text-muted)] opacity-20" />
-              <p className="text-sm font-semibold text-[var(--ui-text-primary)]">Workspace Not Found</p>
-              <p className="text-xs text-[var(--ui-text-muted)]">Please ensure you are logged in correctly.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Floating Success Notification */}
-        {result && (
-          <div className="fixed bottom-6 right-6 bg-emerald-500 text-white p-4 rounded-xl shadow-xl flex items-center gap-3 z-50 text-xs font-semibold">
-            <CheckCircle2 size={18} />
-            <div>
-              <p className="font-bold">Quotation Submitted!</p>
-              <p className="text-[11px] opacity-90">Your offer is now active in the tender system.</p>
-            </div>
-            <button onClick={() => setResult(null)} className="ml-2 text-white/80 hover:text-white font-bold text-sm">×</button>
-          </div>
-        )}
-      </div>
-
-      {showNegModal && selectedNegProposal && (
-        <NegotiationModal 
-          proposal={selectedNegProposal} 
-          onClose={() => { setShowNegModal(false); setSelectedNegProposal(null); }}
-          onSuccess={() => { setShowNegModal(false); setSelectedNegProposal(null); fetchReceivedProposals(activeCompany.id); }}
-        />
-      )}
-    </Layout>
-  );
+  return <ProposalsView {...{
+    activeCompany, isBuyer, isVendor, selectedRfq, receivedProposals,
+    proposalsLoading, awardingId, openRfqs, rfqsLoading, vendorSubmittedRfqIds,
+    vendorSubmissions, form, loading, error, hasSubmittedForSelectedRfq,
+    isProcessing, isDragging, fileInputRef, result, showNegModal,
+    selectedNegProposal, fetchReceivedProposals, fetchOpenTenders, handleAward,
+    handleSelectRfq, isTenderExpired, updateForm, handleDrag, handleDrop,
+    handleSubmit, setSelectedRfq, setHasSubmittedForSelectedRfq, setError,
+    setResult, setShowNegModal, setSelectedNegProposal,
+  }} />;
 }

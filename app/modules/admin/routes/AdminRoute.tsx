@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import AdminLogin from "~/components/admin/AdminLogin";
-import AdminDashboard from "~/components/admin/AdminDashboard";
-import type { AdminUser } from "~/components/admin/shared";
+import AdminLogin from "../src/components/AdminLogin";
+import AdminDashboard from "../src/components/AdminDashboard";
+import type { AdminUser } from "../src/components/shared";
 
 const VALID_TABS = [
   "overview",

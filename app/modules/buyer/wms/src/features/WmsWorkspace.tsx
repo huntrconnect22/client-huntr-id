@@ -31,14 +31,14 @@ import {
 } from "lucide-react";
 import Layout from "~/components/Layout";
 import { getAssetUrl } from "~/lib/assets";
-import { WmsOverview, WmsWorkflowGuide } from "~/components/wms/WmsOverview";
-import { RackManagement } from "~/components/wms/RackManagement";
-import { WarehouseMap } from "~/components/wms/WarehouseMap";
-import { UniversalWarehouseImportModal } from "~/components/wms/UniversalWarehouseImportModal";
-import type { PickerItem } from "~/components/wms/GenericPickerModal";
-import { GenericPickerModal } from "~/components/wms/GenericPickerModal";
-import type { StockPickerItem } from "~/components/wms/StockPickerModal";
-import { StockPickerModal } from "~/components/wms/StockPickerModal";
+import { WmsOverview, WmsWorkflowGuide } from "../components/WmsOverview";
+import { RackManagement } from "../components/RackManagement";
+import { WarehouseMap } from "../components/WarehouseMap";
+import { UniversalWarehouseImportModal } from "../components/UniversalWarehouseImportModal";
+import type { PickerItem } from "../components/GenericPickerModal";
+import { GenericPickerModal } from "../components/GenericPickerModal";
+import type { StockPickerItem } from "../components/StockPickerModal";
+import { StockPickerModal } from "../components/StockPickerModal";
 import { formatQuantity, toNumeric } from "../data/quantity";
 import {
   CatalogueSkuInput,
@@ -71,7 +71,7 @@ import {
   startWmsPicking,
   transferStock,
   updateWarehouse,
-} from "~/lib/api/wms";
+} from "~/modules/shared/api/wms";
 
 const card = "rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4";
 const input =
