@@ -1,6 +1,6 @@
 import { ChevronRight, Search, Warehouse } from "lucide-react";
-import type { PickerItem } from "~/components/wms/GenericPickerModal";
-import type { StockPickerItem } from "~/components/wms/StockPickerModal";
+import type { PickerItem } from "../components/GenericPickerModal";
+import type { StockPickerItem } from "../components/StockPickerModal";
 import { formatQuantity, toNumeric } from "../data/quantity";
 
 const browseButtonClass =

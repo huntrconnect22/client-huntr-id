@@ -17,11 +17,11 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useAppShell } from "~/modules/shell/src/features/AppShell";
-import { NegotiationModal } from "~/components/pr-detail/NegotiationModal";
-import { PRStatusCard } from "~/components/pr-detail/PRStatusCard";
-import { PRActions } from "~/components/pr-detail/PRActions";
-import { PRSummary } from "~/components/pr-detail/PRSummary";
-import { ProposalRankings } from "~/components/pr-detail/ProposalRankings";
+import { NegotiationModal } from "../components/pr-detail/NegotiationModal";
+import { PRStatusCard } from "../components/pr-detail/PRStatusCard";
+import { PRActions } from "../components/pr-detail/PRActions";
+import { PRSummary } from "../components/pr-detail/PRSummary";
+import { ProposalRankings } from "../components/pr-detail/ProposalRankings";
 
 function StatCell({
   label,

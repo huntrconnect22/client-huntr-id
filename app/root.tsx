@@ -14,9 +14,9 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import { EventBusProvider } from "./lib/EventBus";
-import WebSocketDebug from "./components/WebSocketDebug";
-import MaintenanceBanner from "./components/MaintenanceBanner";
+import { EventBusProvider } from "./shared/lib/EventBus";
+import WebSocketDebug from "~/shared/components/WebSocketDebug";
+import MaintenanceBanner from "~/shared/components/MaintenanceBanner";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },

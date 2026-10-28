@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import type { MetaFunction } from "react-router";
-import { PageSkeleton } from "~/components/dashboard/PageSkeleton";
-import { BuyerDashboard } from "~/components/dashboard/BuyerDashboard";
-import { VendorEbiddingDashboard } from "~/components/dashboard/VendorEbiddingDashboard";
-import { GuestMarketplaceView } from "~/components/dashboard/GuestMarketplaceView";
+import { PageSkeleton } from "../src/components/PageSkeleton";
+import { BuyerDashboard } from "../src/components/BuyerDashboard";
+import { VendorEbiddingDashboard } from "../src/components/VendorEbiddingDashboard";
+import { GuestMarketplaceView } from "../src/components/GuestMarketplaceView";
 
 
 

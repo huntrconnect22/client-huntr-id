@@ -5,8 +5,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { LOCALES, DEFAULT_LOCALE, type Locale } from "../locales";
-import en, { type Translations } from "../locales/en";
+import { LOCALES, DEFAULT_LOCALE, en, type Locale } from "~/modules/shared/i18n";
 
 // ─── Storage key ─────────────────────────────────────────────────────────────
 const STORAGE_KEY = "huntr_locale";

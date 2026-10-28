@@ -12,7 +12,7 @@ import {
   CompareRequestedItems,
   CompareAiAnalysis,
   VendorRankingsList,
-} from "~/components/compare-review";
+} from "../components/compare-review";
 
 export default function CompareReview() {
   const { id } = useParams<{ id: string }>();
