@@ -79,7 +79,7 @@ export default function AccountSettings() {
 
   return (
     <Layout title={pageTitle} subtitle={pageSubtitle}>
-      <div className="w-full space-y-6">
+      <div className="settings-workspace w-full space-y-6">
         {/* Mobile Back Button when inside a tab */}
         {isMobile && mobileSelectedTab && (
           <HuntrButton
@@ -108,7 +108,7 @@ export default function AccountSettings() {
         )}
 
         {/* Layout */}
-        <div className="flex flex-col md:flex-row gap-8 items-start min-h-[520px]">
+        <div className="flex w-full flex-col items-start gap-6 md:flex-row md:gap-8">
           {/* Navigation Sidebar: On mobile, shown only when NO sub-tab is selected */}
           {(!isMobile || !mobileSelectedTab) && (
             <div className="w-full md:w-64 flex-shrink-0">
@@ -129,7 +129,7 @@ export default function AccountSettings() {
 
           {/* Content Area: On mobile, shown only when a tab is selected. On desktop, always shown */}
           {(!isMobile || mobileSelectedTab) && (
-            <div className="flex-1 w-full space-y-6">
+            <div className="min-w-0 flex-1 w-full space-y-6">
               {currentTab === "security" && (
                 <AccountSecurityTab
                   user={user}

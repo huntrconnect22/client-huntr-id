@@ -320,7 +320,7 @@ export default function Marketplace() {
     <Layout title={t("marketplace.title")} subtitle={t("marketplace.subtitle")}>
       {/* ── Product area — padding-right when cart is open to avoid overlap on desktop only ── */}
       <div
-        className="w-full space-y-4 transition-all duration-300"
+        className="w-full space-y-6 transition-all duration-300"
         style={{ paddingRight: cartPanelOpen && !isMobile ? 296 : 0 }}
       >
         {/* Agentic Procurement Quick Launch Banner (Only visible when feature is enabled in Settings) */}
@@ -352,18 +352,19 @@ export default function Marketplace() {
 
         {/* Search */}
         <div className="flex items-center gap-3">
-          <div className="relative flex-1">
+          <div className="relative flex-1 overflow-hidden rounded-xl bg-[var(--ui-bg-input)] ring-1 ring-[var(--ui-border-input)] transition-shadow focus-within:ring-2 focus-within:ring-orange-500/25">
             {aiMode
-              ? <Sparkles size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-500" />
-              : <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+              ? <Sparkles size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-purple-500" />
+              : <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
             }
             <HuntrInput
               type="text"
               placeholder={t("marketplace.searchPlaceholder")}
+              data-field-chrome="none"
               value={localSearch}
               onChange={e => setLocalSearch(e.target.value)}
-              className={`w-full pl-9 pr-24 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border text-[var(--ui-text-primary)] text-sm outline-none transition-all ${aiMode ? "border-purple-500/50 ring-2 ring-purple-500/10" : "border-[var(--ui-border-input)] focus:border-orange-500/50"
-                }`}
+              className="w-full bg-transparent text-[var(--ui-text-primary)] text-sm outline-none"
+              style={{ minHeight: 52, paddingLeft: 48, paddingRight: aiMode ? 104 : 18 }}
             />
             {aiMode && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded">
@@ -493,7 +494,7 @@ export default function Marketplace() {
             <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">{t("marketplace.empty")}</p>
           </div>
         ) : (
-          <div className={`grid gap-3 sm:gap-4 ${cartPanelOpen ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`}>
+          <div className={`grid gap-4 sm:gap-5 ${cartPanelOpen ? "grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"}`}>
             {items.map(item => {
               const isSelected = compareIds.includes(item.id);
               const justAdded = addedId === item.id;
@@ -502,11 +503,11 @@ export default function Marketplace() {
                 <div
                   key={item.id}
                   onClick={() => navigate(`${getCompanyPrefix()}/marketplace/${item.id}`)}
-                  className={`group rounded-xl border bg-[var(--ui-bg-card)] overflow-hidden flex flex-col transition-all cursor-pointer hover:border-orange-400/50 hover:shadow-md ${isSelected ? "border-indigo-500/60 ring-2 ring-indigo-500/20" : "border-[var(--ui-border)]"
+                  className={`group overflow-hidden rounded-xl border bg-[var(--ui-bg-card)] flex flex-col transition-all cursor-pointer hover:border-orange-400/50 hover:shadow-md ${isSelected ? "border-indigo-500/60 ring-2 ring-indigo-500/20" : "border-[var(--ui-border)]"
                     }`}
                 >
                   {/* Image */}
-                  <div className="relative h-32 sm:h-40 bg-[var(--ui-bg-input)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="relative h-40 sm:h-44 bg-[var(--ui-bg-input)] flex items-center justify-center overflow-hidden flex-shrink-0">
                     {(item.image_url || item.image_path) ? (
                       <img
                         src={getAssetUrl(item.image_url || item.image_path)}
@@ -517,16 +518,6 @@ export default function Marketplace() {
                     ) : (
                       <Package size={28} className="text-[var(--ui-text-muted)] opacity-20" />
                     )}
-                    {/* Compare toggle */}
-                    <HuntrButton
-                      type="button"
-                      aria-label="Compare"
-                      onClick={e => { e.stopPropagation(); toggleCompare(item.id); }}
-                      className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all ${isSelected ? "bg-indigo-600 text-white shadow-sm" : "bg-black/40 text-white/80 hover:bg-black/60"
-                        }`}
-                    >
-                      {isSelected ? <CheckCircle2 size={13} /> : <GitCompare size={12} />}
-                    </HuntrButton>
                     {/* In-cart indicator */}
                     {inCart && !justAdded && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
@@ -536,7 +527,7 @@ export default function Marketplace() {
                   </div>
 
                   {/* Content */}
-                  <div className="p-3 flex flex-col gap-1.5 flex-1">
+                  <div className="p-4 flex flex-col gap-2 flex-1">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-orange-500 truncate">
                       {item.category || "General"}
                     </div>
@@ -565,13 +556,13 @@ export default function Marketplace() {
                     )}
 
                     {/* Add to cart — 1 click, no modal */}
-                    <div className="mt-auto pt-2">
+                    <div className="mt-auto flex items-center gap-2 pt-2">
                       <HuntrButton
                         type="button"
                         aria-label={t("marketplace.item.addToCart")}
                         onClick={e => handleAddToCart(item, e)}
                         style={{ color: "white" }}
-                        className={`w-full py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${justAdded
+                        className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${justAdded
                             ? "bg-emerald-500"
                             : inCart
                               ? "bg-orange-600 hover:bg-orange-700"
@@ -586,6 +577,14 @@ export default function Marketplace() {
                           <><ShoppingCart size={13} /> {t("marketplace.item.addToCart")}</>
                         )}
                       </HuntrButton>
+                      <button
+                        type="button"
+                        aria-label={isSelected ? "Remove from comparison" : "Compare"}
+                        onClick={e => { e.stopPropagation(); toggleCompare(item.id); }}
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] hover:border-indigo-500 hover:text-indigo-500"}`}
+                      >
+                        {isSelected ? <CheckCircle2 size={15} /> : <GitCompare size={15} />}
+                      </button>
                     </div>
                   </div>
                 </div>

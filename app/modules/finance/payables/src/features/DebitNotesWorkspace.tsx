@@ -161,7 +161,7 @@ export default function DebitNotesPage() {
 
   return (
     <Layout title="Debit Notes" subtitle="Manage debit notes for returns and adjustments">
-      <div style={{ width: "100%" }}>
+      <div className="finance-records" style={{ width: "100%" }}>
         {error && (
           <div style={{
             padding: 16, background: "rgba(239,68,68,0.1)", color: "#ef4444", borderRadius: 12, marginBottom: 24, display: "flex", alignItems: "center", gap: 10
@@ -172,9 +172,9 @@ export default function DebitNotesPage() {
         )}
 
         <div style={{
-          background: "linear-gradient(135deg, var(--ui-bg-card) 0%, var(--ui-bg-card-hover) 100%)",
-          borderRadius: 24, border: "1px solid var(--ui-border-input)", padding: 32, marginBottom: 32,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.05)"
+          background: "var(--ui-bg-card)",
+          borderRadius: 8, border: "1px solid var(--ui-border)", padding: 20, marginBottom: 20,
+          boxShadow: "none"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
             <div style={{ width: 48, height: 48, borderRadius: 16, background: "rgba(59,130,246,0.1)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -225,7 +225,7 @@ export default function DebitNotesPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {filteredNotes.map((note: DebitNote) => (
               <HuntrSurface key={note.id} style={{
-                background: "var(--ui-bg-card)", borderRadius: 20, border: "1px solid var(--ui-border-input)",
+                background: "var(--ui-bg-card)", borderRadius: 8, border: "1px solid var(--ui-border)",
                 overflow: "hidden", display: "flex", flexDirection: "column"
               }}>
                 <div style={{ padding: 24, borderBottom: "1px solid var(--ui-border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>

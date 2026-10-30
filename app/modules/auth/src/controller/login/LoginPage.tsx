@@ -158,7 +158,7 @@ export default function Login() {
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-email">
                 {t("login.emailLabel")}
               </label>
-              <div className="relative">
+              <div className="relative overflow-hidden rounded-lg bg-[var(--ui-bg-input)] ring-1 ring-[var(--ui-border-input)] transition-shadow focus-within:ring-2 focus-within:ring-orange-500/30">
                 <HuntrInput
                   id="login-email"
                   value={form.email}
@@ -167,10 +167,12 @@ export default function Login() {
                   inputMode="email"
                   autoComplete="username"
                   placeholder={t("login.emailPlaceholder")}
+                  data-field-chrome="none"
                   required
-                  className="w-full pl-11 pr-4 py-3 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-2 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
+                  className="w-full bg-transparent text-[var(--ui-text-primary)] text-sm outline-none placeholder:text-[var(--ui-text-muted)]/50"
+                  style={{ minHeight: 48, paddingLeft: 46, paddingRight: 16 }}
                 />
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+                <Mail size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
               </div>
             </div>
 
@@ -178,7 +180,7 @@ export default function Login() {
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-password">
                 {t("login.passwordLabel")}
               </label>
-              <div className="relative">
+              <div className="relative overflow-hidden rounded-lg bg-[var(--ui-bg-input)] ring-1 ring-[var(--ui-border-input)] transition-shadow focus-within:ring-2 focus-within:ring-orange-500/30">
                 <HuntrInput
                   id="login-password"
                   value={form.password}
@@ -186,18 +188,21 @@ export default function Login() {
                   type={showPw ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="••••••••"
+                  data-field-chrome="none"
                   required
-                  className="w-full pl-11 pr-12 py-3 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-2 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
+                  className="w-full bg-transparent text-[var(--ui-text-primary)] text-sm outline-none placeholder:text-[var(--ui-text-muted)]/50"
+                  style={{ minHeight: 48, paddingLeft: 46, paddingRight: 52 }}
                 />
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-                <HuntrButton
+                <Lock size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+                <button
                   type="button"
                   onClick={() => setShowPw(p => !p)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] p-1 rounded-lg transition-colors"
                   aria-label={showPw ? "Hide password" : "Show password"}
+                  className="absolute flex items-center justify-center rounded-md text-[var(--ui-text-muted)] transition-colors hover:bg-[var(--ui-bg-input-focus)] hover:text-[var(--ui-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500"
+                  style={{ right: 8, top: "50%", width: 36, height: 36, transform: "translateY(-50%)" }}
                 >
                   {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-                </HuntrButton>
+                </button>
               </div>
             </div>
           </div>
@@ -235,7 +240,7 @@ export default function Login() {
           <HuntrButton
             type="submit" 
             disabled={loading} 
-            className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-md shadow-orange-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-3 px-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-sm active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>

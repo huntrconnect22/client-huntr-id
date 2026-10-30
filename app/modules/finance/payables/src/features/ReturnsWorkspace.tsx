@@ -157,7 +157,7 @@ export default function ReturnsPage() {
 
   return (
     <Layout title="Returns Management" subtitle="Manage and monitor returned goods & quality rejections">
-      <div className="w-full space-y-4">
+      <div className="finance-records w-full space-y-5">
         {error && (
           <div className="p-3 px-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold flex items-center gap-2">
             <AlertCircle size={15} />
@@ -166,7 +166,7 @@ export default function ReturnsPage() {
         )}
 
         {/* ── Toolbar Header ── */}
-        <div className="flex items-center justify-between gap-3 flex-wrap bg-[var(--ui-bg-card)] border border-[var(--ui-border)] p-3.5 px-4 rounded-xl">
+        <div className="flex items-center justify-between gap-3 flex-wrap bg-[var(--ui-bg-card)] border border-[var(--ui-border)] p-4 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center text-white shadow-sm flex-shrink-0">
               <Package size={18} />
@@ -196,7 +196,7 @@ export default function ReturnsPage() {
         {/* ── Filter Tabs & Search Bar ── */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {/* Status Tabs */}
-          <div className="flex items-center gap-1 bg-[var(--ui-bg-input)] p-1 rounded-xl border border-[var(--ui-border)] overflow-x-auto max-w-full">
+          <div className="flex items-center gap-1 border-b border-[var(--ui-border)] overflow-x-auto max-w-full">
             {[
               { id: "all", label: "All Returns" },
               { id: "pending", label: "Pending" },
@@ -209,10 +209,10 @@ export default function ReturnsPage() {
                 key={tab.id}
                 onClick={() => setFilterStatus(tab.id)}
                 style={filterStatus === tab.id ? { color: "white" } : {}}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`rounded-none border-b-2 px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
                   filterStatus === tab.id
-                    ? "bg-orange-500 shadow-sm"
-                    : "text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+                    ? "border-orange-500 text-orange-500"
+                    : "border-transparent text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
                 }`}
               >
                 {tab.label}

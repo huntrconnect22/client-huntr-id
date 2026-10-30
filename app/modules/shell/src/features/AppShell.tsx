@@ -56,6 +56,7 @@ export function useAppShell() {
 export default function AppShell() {
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
+  const isMainMenuPath = pathname === "/menu" || /\/menu\/?$/.test(pathname);
   const { lastEvent } = useEventBus();
   const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const { t } = useLanguage();
@@ -122,6 +123,7 @@ export default function AppShell() {
   const [appDrawerOpen, setAppDrawerOpen] = useState(false);
   const appDrawerReturnFocusRef = useRef<HTMLElement | null>(null);
   const appDrawerFocusTimerRef = useRef<number | null>(null);
+  const appDrawerReturnPathRef = useRef<string | null>(null);
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>(
     {},
   );
@@ -341,37 +343,6 @@ export default function AppShell() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
-  const openAppDrawer = useCallback(() => {
-    const focusedElement = document.activeElement;
-    appDrawerReturnFocusRef.current =
-      focusedElement instanceof HTMLElement ? focusedElement : null;
-
-    // The Dialog is portalled outside `.huntr-app-shell`. Release focus from
-    // its trigger before MUI marks the shell aria-hidden.
-    appDrawerReturnFocusRef.current?.blur();
-    setAppDrawerOpen(true);
-  }, []);
-
-  const closeAppDrawer = useCallback(() => {
-    setAppDrawerOpen(false);
-
-    if (appDrawerFocusTimerRef.current !== null) {
-      window.clearTimeout(appDrawerFocusTimerRef.current);
-    }
-
-    const returnTarget = appDrawerReturnFocusRef.current;
-    if (!returnTarget) return;
-
-    // Wait until modal isolation is removed, then restore the keyboard user to
-    // the exact control that opened the menu.
-    appDrawerFocusTimerRef.current = window.setTimeout(() => {
-      if (returnTarget.isConnected) {
-        returnTarget.focus({ preventScroll: true });
-      }
-      appDrawerFocusTimerRef.current = null;
-    }, 250);
-  }, []);
-
   useEffect(() => {
     return () => {
       if (appDrawerFocusTimerRef.current !== null) {
@@ -447,9 +418,6 @@ export default function AppShell() {
     }
     // The root route is the application launchpad. Keep the user there and
     // open the full-screen Main Menu instead of silently routing to Dashboard.
-    if (pathname === "/") {
-      setAppDrawerOpen(true);
-    }
   }, [pathname]);
 
   // Real-time notification updates
@@ -486,12 +454,6 @@ export default function AppShell() {
       fetchUnreadCount(user.id);
     }
   }, [user?.id, activeCompany?.id]);
-
-  useEffect(() => {
-    if (pathname !== "/") {
-      setAppDrawerOpen(false);
-    }
-  }, [pathname]);
 
   // Handle outside clicks & escape key for dropdowns
   useEffect(() => {
@@ -592,6 +554,53 @@ export default function AppShell() {
           .replace(/(^-|-$)/g, "")
       : "");
   const companyPrefix = companySlug ? `/${companySlug}` : "";
+
+  const openAppDrawer = useCallback(() => {
+    const focusedElement = document.activeElement;
+    appDrawerReturnFocusRef.current =
+      focusedElement instanceof HTMLElement ? focusedElement : null;
+
+    // The Dialog is portalled outside `.huntr-app-shell`. Release focus from
+    // its trigger before MUI marks the shell aria-hidden.
+    appDrawerReturnFocusRef.current?.blur();
+    if (!isMainMenuPath) {
+      appDrawerReturnPathRef.current = `${pathname}${search}`;
+      navigate(companyPrefix ? `${companyPrefix}/menu` : "/menu");
+    }
+  }, [companyPrefix, isMainMenuPath, navigate, pathname, search]);
+
+  const closeAppDrawer = useCallback(() => {
+    setAppDrawerOpen(false);
+
+    if (appDrawerFocusTimerRef.current !== null) {
+      window.clearTimeout(appDrawerFocusTimerRef.current);
+    }
+
+    const returnTarget = appDrawerReturnFocusRef.current;
+    if (!returnTarget) return;
+
+    // Wait until modal isolation is removed, then restore the keyboard user to
+    // the exact control that opened the menu.
+    appDrawerFocusTimerRef.current = window.setTimeout(() => {
+      if (returnTarget.isConnected) {
+        returnTarget.focus({ preventScroll: true });
+      }
+      appDrawerFocusTimerRef.current = null;
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient || !user) return;
+
+    // The root remains the entry point, while the menu itself has a stable,
+    // reloadable route for the active workspace.
+    if (pathname === "/" && companyPrefix) {
+      navigate(`${companyPrefix}/menu`, { replace: true });
+      return;
+    }
+
+    setAppDrawerOpen(isMainMenuPath);
+  }, [companyPrefix, isClient, isMainMenuPath, navigate, pathname, user]);
   const isSubscriptionOverdue = Boolean(
     activeCompany?.id &&
     subscriptionAccess?.companyId === activeCompany.id &&
@@ -729,13 +738,17 @@ export default function AppShell() {
   const handleAppDrawerClose = useCallback(() => {
     closeAppDrawer();
 
-    // The authenticated root is only a launchpad. Closing it intentionally
-    // continues to the workspace dashboard, so the page behind the dialog is
-    // never a second, confusing home screen.
+    if (isMainMenuPath) {
+      const returnPath = appDrawerReturnPathRef.current;
+      appDrawerReturnPathRef.current = null;
+      navigate(returnPath || companyPrefix || "/", { replace: true });
+      return;
+    }
+
     if (pathname === "/" && companyPrefix) {
       navigate(companyPrefix, { replace: true });
     }
-  }, [closeAppDrawer, companyPrefix, navigate, pathname]);
+  }, [closeAppDrawer, companyPrefix, isMainMenuPath, navigate, pathname]);
 
   const activeNavItem = [...NAV]
     .sort((a, b) => b.to.length - a.to.length)

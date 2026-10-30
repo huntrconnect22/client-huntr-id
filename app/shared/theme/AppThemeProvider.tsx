@@ -19,12 +19,22 @@ const tokenStyles = {
 export function AppThemeProvider({ mode, children }: { mode: "light" | "dark"; children: ReactNode }) {
   const theme = useMemo(() => themes[mode], [mode]);
   return (
-    <StyledEngineProvider>
+    <>
+    {/*
+      Keep component defaults before the application stylesheet.  MUI's
+      generated rules otherwise win over Tailwind utility classes in the
+      production SSR bundle (for example `flex`, `block`, padding and width),
+      leaving dialogs and public/auth pages visually collapsed.  Do not use
+      `enableCssLayer` here: it makes Tailwind's base layer outrank MUI in the
+      opposite direction.
+    */}
+    <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <GlobalStyles styles={tokenStyles} />
         {children}
       </ThemeProvider>
     </StyledEngineProvider>
+    </>
   );
 }
