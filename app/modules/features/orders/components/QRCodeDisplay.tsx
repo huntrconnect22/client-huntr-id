@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect } from "react";
 import { QrCode } from "lucide-react";
 
@@ -13,7 +15,7 @@ export const QRCodeDisplay = ({ text, generateQR }: { text: string; generateQR: 
 
   return (
     <div style={{ position: "relative" }}>
-      <button
+      <HuntrButton
         onClick={() => setShowQR(!showQR)}
         style={{
           padding: "6px 10px",
@@ -32,9 +34,9 @@ export const QRCodeDisplay = ({ text, generateQR }: { text: string; generateQR: 
       >
         <QrCode size={14} />
         QR Code
-      </button>
+      </HuntrButton>
       {showQR && (
-        <div
+        <HuntrSurface
           style={{
             position: "absolute",
             top: "100%",
@@ -55,7 +57,7 @@ export const QRCodeDisplay = ({ text, generateQR }: { text: string; generateQR: 
               Generating...
             </div>
           )}
-        </div>
+        </HuntrSurface>
       )}
     </div>
   );

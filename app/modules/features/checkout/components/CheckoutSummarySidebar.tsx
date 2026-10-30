@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { ProcurementType } from "../types";
@@ -80,7 +81,7 @@ export function CheckoutSummarySidebar({
           </div>
         )}
 
-        <button
+        <HuntrButton
           onClick={onSubmit}
           disabled={loading || revisionLoading || !!error || cartLength === 0}
           style={{ color: "white" }}
@@ -94,7 +95,7 @@ export function CheckoutSummarySidebar({
               <CheckCircle2 size={16} />
             </>
           )}
-        </button>
+        </HuntrButton>
 
         <p className="text-[10px] text-[var(--ui-text-muted)] text-center leading-relaxed">
           By submitting, this request will be sent to your manager for approval

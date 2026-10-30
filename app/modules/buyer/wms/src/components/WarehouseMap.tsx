@@ -1,3 +1,5 @@
+import { Select as HuntrSelect, Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { type DragEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -397,7 +399,7 @@ export function WarehouseMap({
               bin tujuan, lalu tentukan jumlah stok yang ingin dipindahkan.
             </p>
           </div>
-          <select
+          <HuntrSelect
             value={warehouse?.id || ""}
             onChange={(event) => {
               setWarehouseId(event.target.value);
@@ -411,7 +413,7 @@ export function WarehouseMap({
                 {row.code} · {row.name}
               </option>
             ))}
-          </select>
+          </HuntrSelect>
         </div>
         <div className="mt-4 grid gap-2 border-t border-[var(--ui-border)] pt-3 md:grid-cols-[1fr_auto]">
           <label className="relative">
@@ -419,7 +421,7 @@ export function WarehouseMap({
               className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
               size={15}
             />
-            <input
+            <HuntrInput
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Cari kode atau nama bin"
@@ -434,14 +436,14 @@ export function WarehouseMap({
                 ["dispatch", "Dispatch"],
               ] as [Operation, string][]
             ).map(([key, title]) => (
-              <button
+              <HuntrButton
                 key={key}
                 type="button"
                 onClick={() => setOperation(key)}
                 className={`px-3 py-2 text-xs font-semibold ${operation === key ? "bg-[var(--ui-text-brand)] text-white" : "text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)]"}`}
               >
                 {title}
-              </button>
+              </HuntrButton>
             ))}
           </div>
         </div>
@@ -698,7 +700,7 @@ export function WarehouseMap({
                   Cari barang
                 </h3>
               </div>
-              <select
+              <HuntrSelect
                 value={selectedSku}
                 onChange={(event) => {
                   setSelectedSku(event.target.value);
@@ -723,7 +725,7 @@ export function WarehouseMap({
                     {row.sku} · {row.item_name}
                   </option>
                 ))}
-              </select>
+              </HuntrSelect>
               {selectedStock && (
                 <div className="mt-3 border-l-2 border-[var(--ui-text-brand)] bg-[var(--ui-text-brand)]/5 px-3 py-2 text-xs">
                   <p className="font-semibold text-[var(--ui-text-primary)]">
@@ -787,7 +789,7 @@ export function WarehouseMap({
                   {selectedBin ? selectedBin.code : "Pilih bin"}
                 </h3>
                 {selectedBin && (
-                  <button
+                  <HuntrButton
                     onClick={() => {
                       setSelectedBinId("");
                       setBinItems([]);
@@ -795,7 +797,7 @@ export function WarehouseMap({
                     className="text-[var(--ui-text-muted)]"
                   >
                     <X size={15} />
-                  </button>
+                  </HuntrButton>
                 )}
               </div>
               {inspecting ? (
@@ -818,7 +820,7 @@ export function WarehouseMap({
                       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--ui-text-muted)]">
                         Operasi dari denah
                       </p>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() =>
                           onOpenOperation?.("putaway", {
@@ -829,7 +831,7 @@ export function WarehouseMap({
                         className="mt-2 w-full border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-2.5 py-2 text-xs font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)]"
                       >
                         Put away ke bin ini
-                      </button>
+                      </HuntrButton>
                     </div>
                   )}
                   <div className="divide-y divide-[var(--ui-border)]">
@@ -847,7 +849,7 @@ export function WarehouseMap({
                               </p>
                             </div>
                             <div className="flex shrink-0 gap-1">
-                              <button
+                              <HuntrButton
                                 type="button"
                                 onClick={() =>
                                   onOpenOperation?.("adjust", {
@@ -859,8 +861,8 @@ export function WarehouseMap({
                                 className="border border-[var(--ui-border-input)] px-1.5 py-1 text-[10px] font-semibold text-[var(--ui-text-secondary)] hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
                               >
                                 Sesuaikan
-                              </button>
-                              <button
+                              </HuntrButton>
+                              <HuntrButton
                                 type="button"
                                 onClick={() =>
                                   onOpenOperation?.("transfer", {
@@ -872,7 +874,7 @@ export function WarehouseMap({
                                 className="border border-[var(--ui-border-input)] px-1.5 py-1 text-[10px] font-semibold text-[var(--ui-text-secondary)] hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
                               >
                                 Transfer
-                              </button>
+                              </HuntrButton>
                             </div>
                           </div>
                         </div>
@@ -902,14 +904,14 @@ export function WarehouseMap({
                 <h3 className="mt-1 text-base font-bold text-[var(--ui-text-primary)]">{draggedItem.item_name}</h3>
                 <p className="mt-1 text-xs text-[var(--ui-text-muted)]">{draggedItem.sku} · {draggedItem.bin_location} <ArrowRight size={12} className="mx-1 inline" /> {transferTarget.code}</p>
               </div>
-              <button type="button" disabled={moving} onClick={() => { setTransferTarget(null); setDraggedItem(null); setMoveError(""); }} className="text-[var(--ui-text-muted)]"><X size={18} /></button>
+              <HuntrButton type="button" disabled={moving} onClick={() => { setTransferTarget(null); setDraggedItem(null); setMoveError(""); }} className="text-[var(--ui-text-muted)]"><X size={18} /></HuntrButton>
             </div>
             <label className="mt-5 block text-xs font-semibold text-[var(--ui-text-secondary)]">Jumlah yang dipindahkan
-              <input autoFocus min="0.001" max={Math.max(0, number(draggedItem.on_hand) - number(draggedItem.allocated))} step="0.001" type="number" value={moveQuantity} onChange={(event) => setMoveQuantity(event.target.value)} className="mt-1.5 w-full border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)]" />
+              <HuntrInput autoFocus min="0.001" max={Math.max(0, number(draggedItem.on_hand) - number(draggedItem.allocated))} step="0.001" type="number" value={moveQuantity} onChange={(event) => setMoveQuantity(event.target.value)} className="mt-1.5 w-full border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)]" />
             </label>
             <p className="mt-2 text-xs text-[var(--ui-text-muted)]">Tersedia untuk dipindahkan: {Math.max(0, number(draggedItem.on_hand) - number(draggedItem.allocated))} {draggedItem.uom || "unit"}.</p>
             {moveError && <p className="mt-3 border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs text-red-600 dark:text-red-300">{moveError}</p>}
-            <div className="mt-5 flex justify-end gap-2"><button type="button" disabled={moving} onClick={() => { setTransferTarget(null); setDraggedItem(null); }} className="border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)]">Batal</button><button type="button" disabled={moving} onClick={() => void moveStock()} className="inline-flex items-center gap-2 bg-[var(--ui-text-brand)] px-3 py-2 text-xs font-semibold !text-white disabled:opacity-50">{moving && <Loader2 size={14} className="animate-spin" />}{moving ? "Memindahkan…" : "Pindahkan stok"}</button></div>
+            <div className="mt-5 flex justify-end gap-2"><HuntrButton type="button" disabled={moving} onClick={() => { setTransferTarget(null); setDraggedItem(null); }} className="border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)]">Batal</HuntrButton><HuntrButton type="button" disabled={moving} onClick={() => void moveStock()} className="inline-flex items-center gap-2 bg-[var(--ui-text-brand)] px-3 py-2 text-xs font-semibold !text-white disabled:opacity-50">{moving && <Loader2 size={14} className="animate-spin" />}{moving ? "Memindahkan…" : "Pindahkan stok"}</HuntrButton></div>
           </section>
         </div>
       )}

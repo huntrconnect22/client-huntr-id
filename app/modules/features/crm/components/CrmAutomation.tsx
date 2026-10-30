@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import {
   BookOpen,
@@ -92,13 +93,13 @@ export function CrmAutomation({
           )}
         </div>
         {emails.length > 0 && (
-          <button
+          <HuntrButton
             onClick={onSyncEmailInbox}
             className="mt-3.5 inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-xs font-semibold text-[var(--ui-text-primary)] transition-all hover:border-orange-500/50 hover:text-orange-500"
           >
             <RefreshCw size={13} />
             <span>Sinkronkan Inbox Sekarang</span>
-          </button>
+          </HuntrButton>
         )}
       </Panel>
 
@@ -151,21 +152,21 @@ export function CrmAutomation({
 
           {/* Action buttons for Channels */}
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--ui-border)]">
-            <button
+            <HuntrButton
               onClick={() => onCompose("integration")}
               className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-xs font-semibold text-[var(--ui-text-primary)] transition-all hover:border-orange-500/50 hover:text-orange-500"
             >
               <Plus size={13} />
               <span>Hubungkan Kanal</span>
-            </button>
+            </HuntrButton>
             {whatsApp && (
-              <button
+              <HuntrButton
                 type="button"
                 onClick={onDisconnectWhatsApp}
                 className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 text-xs font-semibold text-rose-400 transition-all hover:bg-rose-500/20"
               >
                 <span>Hapus Sesi WhatsApp</span>
-              </button>
+              </HuntrButton>
             )}
           </div>
 

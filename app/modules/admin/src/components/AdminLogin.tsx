@@ -1,3 +1,5 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { adminLogin } from "../../lib/api";
@@ -197,7 +199,7 @@ export default function AdminLogin({ onLogin }: Props) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={lbl}>Admin Email</label>
-            <input
+            <HuntrInput
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -209,7 +211,7 @@ export default function AdminLogin({ onLogin }: Props) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={lbl}>Password</label>
-            <input
+            <HuntrInput
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -219,7 +221,7 @@ export default function AdminLogin({ onLogin }: Props) {
             />
           </div>
 
-          <button
+          <HuntrButton
             type="submit"
             disabled={isLoading}
             style={{
@@ -251,7 +253,7 @@ export default function AdminLogin({ onLogin }: Props) {
             ) : (
               <>Sign In as Admin →</>
             )}
-          </button>
+          </HuntrButton>
 
           <div
             style={{

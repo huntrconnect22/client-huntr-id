@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React from "react";
 import { Package, Briefcase, Coins } from "lucide-react";
 import { getAssetUrl } from "../../../lib/assets";
@@ -68,23 +70,23 @@ export function CheckoutItemsTable({
         )}
         <div className="flex items-center gap-2">
           {procurementMode === "direct" && procurementType !== "services" && (
-            <button
+            <HuntrButton
               type="button"
               onClick={onAddManualItem}
               className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50 cursor-pointer"
             >
               + Add manual item
-            </button>
+            </HuntrButton>
           )}
           {procurementType !== "goods" && (
-            <button
+            <HuntrButton
               type="button"
               onClick={onAddServiceLine}
               className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-500/50 flex items-center gap-1.5 cursor-pointer"
             >
               <Briefcase size={12} className="text-orange-500" />
               + Tambah Jasa / Scope
-            </button>
+            </HuntrButton>
           )}
         </div>
       </div>
@@ -104,13 +106,13 @@ export function CheckoutItemsTable({
                 <p className="text-[11px] mt-1">
                   Tambahkan lingkup pekerjaan dan pagu budget yang dialokasikan.
                 </p>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={onAddServiceLine}
                   className="mt-3 px-3 py-1.5 rounded-lg bg-orange-500 text-white font-semibold text-xs inline-flex items-center gap-1 cursor-pointer"
                 >
                   + Tambah Jasa / Scope Pertama
-                </button>
+                </HuntrButton>
               </div>
             ) : (
               "Belum ada item terpilih."
@@ -147,7 +149,7 @@ export function CheckoutItemsTable({
               <div className="flex-1 min-w-0">
                 {item.manual ? (
                   <div>
-                    <input
+                    <HuntrInput
                       required
                       placeholder={
                         item.line_type === "service"
@@ -172,7 +174,7 @@ export function CheckoutItemsTable({
                   </>
                 )}
                 {item.manual && item.line_type === "service" && (
-                  <textarea
+                  <HuntrTextarea
                     value={item.service_scope || ""}
                     onChange={(event) =>
                       onUpdateManualItem(
@@ -192,7 +194,7 @@ export function CheckoutItemsTable({
                 <span className="mb-0.5 block text-[9px] font-bold uppercase text-[var(--ui-text-muted)]">
                   {item.line_type === "service" ? "Volume" : "Qty"}
                 </span>
-                <input
+                <HuntrInput
                   type="number"
                   min="1"
                   value={item.qty}
@@ -218,7 +220,7 @@ export function CheckoutItemsTable({
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-[var(--ui-text-muted)] pointer-events-none">
                     IDR
                   </span>
-                  <input
+                  <HuntrInput
                     type="number"
                     value={
                       item.estimated_price === 0 ? "" : item.estimated_price

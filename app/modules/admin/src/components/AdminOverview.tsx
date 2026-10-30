@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useEffect, useState } from "react";
 import { ArrowRight, Building2, CreditCard, Package } from "lucide-react";
 import {
@@ -82,7 +83,7 @@ export default function AdminOverview({
         </p>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {links.map(({ tab, Icon, title, note }) => (
-            <button
+            <HuntrButton
               key={tab}
               onClick={() => onNavigate(tab)}
               className="flex items-start gap-3 border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-4 text-left rounded-md"
@@ -95,7 +96,7 @@ export default function AdminOverview({
                 </span>
               </span>
               <ArrowRight size={15} />
-            </button>
+            </HuntrButton>
           ))}
         </div>
       </div>

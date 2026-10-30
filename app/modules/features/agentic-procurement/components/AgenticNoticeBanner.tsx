@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Sparkles, Zap, AlertCircle } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -30,19 +31,19 @@ export default function AgenticNoticeBanner({
             </div>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
+            <HuntrButton
               onClick={onActivateFeature}
               className="flex-1 sm:flex-initial justify-center px-3 py-2 sm:py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
             >
               <Zap size={13} />
               <span>{t("agentic.banner.activate")}</span>
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               onClick={onOpenSettings}
               className="flex-1 sm:flex-initial justify-center px-3 py-2 sm:py-1.5 rounded-lg bg-[var(--ui-bg-input)] hover:bg-[var(--ui-border)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] font-semibold transition-all cursor-pointer text-center"
             >
               {t("agentic.banner.settings")}
-            </button>
+            </HuntrButton>
           </div>
         </div>
       )}

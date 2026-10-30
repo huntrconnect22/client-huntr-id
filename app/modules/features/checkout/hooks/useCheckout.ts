@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { createRfq, getRfq, resubmitRfq } from "../../../lib/api";
 import { clearCart } from "../../../lib/cart";
 import { getWarehouses, getWmsApps } from "../../../lib/api/wms";
@@ -14,7 +14,10 @@ import type {
 export function useCheckout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const initialQuery = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -40,7 +43,7 @@ export function useCheckout() {
 
   // Procurement mode & types
   const [procurementMode, setProcurementMode] = useState<ProcurementMode>(
-    () => (searchParams.get("mode") === "direct" ? "direct" : "tender"),
+    () => (initialQuery.get("mode") === "direct" ? "direct" : "tender"),
   );
   const [procurementType, setProcurementType] = useState<ProcurementType>("goods");
 
@@ -54,9 +57,9 @@ export function useCheckout() {
   const [acceptanceCriteria, setAcceptanceCriteria] = useState("");
 
   // Revision states
-  const [revisionRfqId] = useState(() => searchParams.get("revise"));
+  const [revisionRfqId] = useState(() => initialQuery.get("revise"));
   const [revisionLoading, setRevisionLoading] = useState(
-    Boolean(searchParams.get("revise")),
+    Boolean(initialQuery.get("revise")),
   );
 
   const getCompanyPrefix = useCallback((comp?: any) => {
@@ -124,13 +127,18 @@ export function useCheckout() {
       }
 
       if (comp.type === "vendor") {
-        const slug = getCompanyPrefix(comp);
-        navigate(slug || "/");
+        const slug =
+          comp.slug ||
+          comp.name
+            ?.toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+        navigate(slug ? `/${slug}` : "/");
         return;
       }
     }
 
-    const fromAi = searchParams.get("from") === "ai";
+    const fromAi = new URLSearchParams(location.search).get("from") === "ai";
     const aiDraftStr = localStorage.getItem("ai_pr_draft");
 
     if (fromAi && aiDraftStr) {
@@ -172,7 +180,10 @@ export function useCheckout() {
         setCart(items);
       }
     }
-  }, [getCompanyPrefix, navigate, searchParams]);
+    // Session, cart, and revision mode are initialization data for this page.
+    // They must not be re-applied while the form itself updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load Revision PR
   useEffect(() => {

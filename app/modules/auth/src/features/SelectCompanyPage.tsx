@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { 
@@ -44,8 +45,7 @@ export default function SelectCompany() {
     if (!selected) return;
     SessionManager.setCompany(selected);
     localStorage.setItem("active_company", JSON.stringify(selected));
-    const slug = selected.slug || selected.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    navigate(`/${slug}`);
+    navigate("/");
   };
 
   const canRegisterNew = !companyCapacity || companyCapacity.remaining > 0;
@@ -91,12 +91,12 @@ export default function SelectCompany() {
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
-          <button
+          <HuntrButton
             onClick={handleSignOut}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded-lg text-xs font-semibold text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-all"
           >
             <LogOut size={13} /> <span className="hidden sm:inline">{t("selectCompany.signOut")}</span>
-          </button>
+          </HuntrButton>
         </div>
       </header>
 
@@ -137,12 +137,12 @@ export default function SelectCompany() {
                 <p className="text-xs text-[var(--ui-text-secondary)] mb-5">
                   {t("selectCompany.noCompany")}
                 </p>
-                <button
+                <HuntrButton
                   onClick={handleRegisterNew}
                   className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/25 transition-all"
                 >
                   <Plus size={16} /> {t("selectCompany.registerCompany")}
-                </button>
+                </HuntrButton>
               </div>
             ) : (
               <>
@@ -160,7 +160,7 @@ export default function SelectCompany() {
                     const selectedBorderColor = isBuyer ? "rgba(99,102,241,0.4)" : "rgba(249,115,22,0.4)";
                     const selectedBg = isBuyer ? "rgba(99,102,241,0.07)" : "rgba(249,115,22,0.07)";
                     return (
-                      <button
+                      <HuntrButton
                         key={c.id}
                         type="button"
                         onClick={() => setSelected(c)}
@@ -218,14 +218,14 @@ export default function SelectCompany() {
                             <CheckCircle2 size={12} className="text-white" />
                           </div>
                         )}
-                      </button>
+                      </HuntrButton>
                     );
                   })}
 
                 </div>
 
                 <div className="flex flex-col gap-2.5">
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={handleLogin}
                     disabled={!selected}
@@ -233,20 +233,20 @@ export default function SelectCompany() {
                     className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
                   >
                     {t("selectCompany.enterWorkspace")} <ArrowRight size={16} />
-                  </button>
+                  </HuntrButton>
 
                   {companyCapacity && (
                     <p className="text-center text-[11px] text-[var(--ui-text-muted)]">
                       {companyCapacity.used} / {companyCapacity.limit} company digunakan · {companyCapacity.plan_name}
                     </p>
                   )}
-                  <button
+                  <HuntrButton
                     onClick={handleRegisterNew}
                     disabled={!canRegisterNew}
                     className="w-full py-2 bg-[var(--ui-bg-input)] hover:bg-[var(--ui-bg-input-focus)] disabled:cursor-not-allowed disabled:opacity-55 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] rounded-lg font-medium text-xs transition-all"
                   >
                     {canRegisterNew ? t("selectCompany.registerAnother") : "Batas company paket tercapai"}
-                  </button>
+                  </HuntrButton>
                 </div>
               </>
             )}

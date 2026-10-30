@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import { useEffect, useState } from "react";
 import {
   getEnterprisePricing,
@@ -91,9 +93,9 @@ export function PricingSettings() {
       <div className={`${card} p-5 text-sm`}>
         {error || "Memuat konfigurasi..."}{" "}
         {error && (
-          <button className={`${button} ml-2`} onClick={load}>
+          <HuntrButton className={`${button} ml-2`} onClick={load}>
             Coba lagi
-          </button>
+          </HuntrButton>
         )}
       </div>
     );
@@ -138,7 +140,7 @@ export function PricingSettings() {
                   key={key}
                 >
                   {label}
-                  <input
+                  <HuntrInput
                     className={`${field} mt-1`}
                     type="number"
                     min={min}
@@ -150,7 +152,7 @@ export function PricingSettings() {
               ))}
               <label className="text-xs text-[var(--ui-text-muted)]">
                 SLA support
-                <input
+                <HuntrInput
                   className={`${field} mt-1`}
                   value={plan.support}
                   onChange={(e) => changePlan(index, "support", e.target.value)}
@@ -179,7 +181,7 @@ export function PricingSettings() {
               {addon.name} · {addon.quantity.toLocaleString("id-ID")}{" "}
               {addon.unit}
               {addon.billing_cycle === "monthly" ? " / bulan" : ""}
-              <input
+              <HuntrInput
                 type="number"
                 min="1"
                 step="1"
@@ -204,16 +206,16 @@ export function PricingSettings() {
         </div>
       </section>
       <div className="flex flex-wrap items-center gap-3">
-        <button
+        <HuntrButton
           className="bg-orange-500 px-4 py-2 text-sm font-semibold text-white rounded-md disabled:opacity-50"
           disabled={saving}
           onClick={save}
         >
           {saving ? "Menyimpan..." : "Simpan konfigurasi"}
-        </button>
-        <button className={button} disabled={saving} onClick={load}>
+        </HuntrButton>
+        <HuntrButton className={button} disabled={saving} onClick={load}>
           Muat ulang
-        </button>
+        </HuntrButton>
         {notice && (
           <span role="status" className="text-sm text-emerald-600">
             {notice}

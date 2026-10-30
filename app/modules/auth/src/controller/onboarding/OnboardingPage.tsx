@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { 
@@ -110,8 +111,7 @@ export default function Onboarding() {
     }
 
     vm.resetForm();
-    const slug = vm.selectedCompany.slug || vm.selectedCompany.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    navigate(`/${slug}`);
+    navigate("/");
   };
 
   return (
@@ -177,17 +177,17 @@ export default function Onboarding() {
             {vm.slide < SUCCESS_SLIDE && (
               <footer className="mt-8 pt-6 border-t border-[var(--ui-border)] flex items-center justify-between gap-4">
                 {vm.slide > 1 ? (
-                  <button 
+                  <HuntrButton
                     onClick={() => vm.setSlide((p: number) => p - 1)} 
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30 font-semibold text-sm transition-all"
                   >
                     <ChevronLeft size={16} /> Kembali
-                  </button>
+                  </HuntrButton>
                 ) : (
                   <div />
                 )}
 
-                <button 
+                <HuntrButton
                   onClick={nextSlide} 
                   disabled={vm.isLoading}
                   className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-500/25"
@@ -205,7 +205,7 @@ export default function Onboarding() {
                       Lanjutkan <ChevronRight size={16} />
                     </>
                   )}
-                </button>
+                </HuntrButton>
               </footer>
             )}
           </div>

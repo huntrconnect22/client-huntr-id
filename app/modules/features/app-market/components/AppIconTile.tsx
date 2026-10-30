@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Check } from "lucide-react";
 import type { MarketApp } from "../hooks/useAppMarket";
 
@@ -16,7 +17,7 @@ export default function AppIconTile({
 }: AppIconTileProps) {
   const Icon = app.icon;
   return (
-    <button
+    <HuntrButton
       type="button"
       onClick={onClick}
       disabled={busy}
@@ -97,7 +98,7 @@ export default function AppIconTile({
           </span>
         </span>
       </div>
-    </button>
+    </HuntrButton>
   );
 }
 

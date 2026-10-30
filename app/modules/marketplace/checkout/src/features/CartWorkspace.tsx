@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import Layout from "~/components/Layout";
@@ -117,12 +118,12 @@ export default function CartPage() {
             </div>
           </div>
           {cart.length > 0 && (
-            <button
+            <HuntrButton
               onClick={handleClear}
               className="text-xs text-red-500 hover:text-red-600 font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/5 transition-all"
             >
               <Trash2 size={12} /> Clear All
-            </button>
+            </HuntrButton>
           )}
         </div>
 
@@ -181,36 +182,36 @@ export default function CartPage() {
 
                   {/* Qty stepper */}
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button
+                    <HuntrButton
                       type="button"
                       aria-label="Decrease"
                       onClick={() => handleUpdateQty(item.id, -1)}
                       className="w-7 h-7 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex items-center justify-center text-[var(--ui-text-secondary)] hover:border-orange-400/50 transition-all"
                     >
                       <Minus size={12} />
-                    </button>
+                    </HuntrButton>
                     <span className="text-sm font-bold text-[var(--ui-text-primary)] min-w-[24px] text-center tabular-nums">
                       {item.qty}
                     </span>
-                    <button
+                    <HuntrButton
                       type="button"
                       aria-label="Increase"
                       onClick={() => handleUpdateQty(item.id, 1)}
                       className="w-7 h-7 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex items-center justify-center text-[var(--ui-text-secondary)] hover:border-orange-400/50 transition-all"
                     >
                       <Plus size={12} />
-                    </button>
+                    </HuntrButton>
                   </div>
 
                   {/* Remove */}
-                  <button
+                  <HuntrButton
                     type="button"
                     aria-label="Remove item"
                     onClick={() => handleRemove(item.id)}
                     className="w-7 h-7 rounded-md flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-500/8 flex-shrink-0 transition-all"
                   >
                     <Trash2 size={13} />
-                  </button>
+                  </HuntrButton>
                 </div>
               ))}
             </div>
@@ -226,14 +227,14 @@ export default function CartPage() {
                 <span className="font-bold text-[var(--ui-text-primary)]">{cart.length} product{cart.length !== 1 ? "s" : ""}</span>
               </div>
               <div className="pt-1 border-t border-[var(--ui-border)]">
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => navigate(`${prefix}/checkout`)}
                   style={{ color: 'white' }}
                   className="w-full py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
                 >
                   <CheckCircle2 size={15} /> Create Purchase Request
-                </button>
+                </HuntrButton>
                 <Link
                   to={`${prefix}/marketplace`}
                   className="mt-2 w-full py-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] flex items-center justify-center gap-1.5 hover:border-orange-400/40 transition-all"

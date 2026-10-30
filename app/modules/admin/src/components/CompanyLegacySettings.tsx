@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 import { Check, Layers, Loader2, Percent, Settings, ShieldCheck, X } from "lucide-react";
 import { adminBulkApplySubscription, adminGetSubscriptionSettings, adminUpdateSubscriptionSettings } from "../../lib/api";
@@ -125,7 +128,7 @@ export default function GlobalSubscriptionSettingsModal({
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div
+      <HuntrSurface
         style={{
           background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
           borderRadius: 16, width: "100%", maxWidth: 640,
@@ -144,9 +147,9 @@ export default function GlobalSubscriptionSettingsModal({
               Konfigurasi dinamis tarif pajak (PPN, PPh 23), biaya, dan hak migrasi skema platform
             </div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)" }}>
+          <HuntrButton onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)" }}>
             <X size={18} />
-          </button>
+          </HuntrButton>
         </div>
 
         {/* Content */}
@@ -163,7 +166,7 @@ export default function GlobalSubscriptionSettingsModal({
                   <ShieldCheck size={14} /> Hak Migrasi Seluruh Company
                 </div>
                 <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "var(--ui-text-primary)", fontWeight: 600 }}>
-                  <input
+                  <HuntrInput
                     type="checkbox"
                     checked={allowAllMigration}
                     onChange={(e) => setAllowAllMigration(e.target.checked)}
@@ -179,7 +182,7 @@ export default function GlobalSubscriptionSettingsModal({
               {/* Default Skema Platform */}
               <div>
                 <label style={lbl}>Default Skema Langganan Platform</label>
-                <select
+                <HuntrSelect
                   value={defaultPlan}
                   onChange={(e) => setDefaultPlan(e.target.value as any)}
                   style={{ ...inp, marginTop: 4, width: "100%" }}
@@ -187,7 +190,7 @@ export default function GlobalSubscriptionSettingsModal({
                   <option value="annual_upfront_po">Annual Pembayaran di Muka (1 Tahun Historical PO)</option>
                   <option value="saas_subscription">SaaS Subscription (Biaya Tetap / Flat)</option>
                   <option value="per_po">Per PO (Pay-As-You-Go per Transaksi)</option>
-                </select>
+                </HuntrSelect>
               </div>
 
               {/* Dynamic Rates Grid */}
@@ -202,7 +205,7 @@ export default function GlobalSubscriptionSettingsModal({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div>
                     <label style={lbl}>Tarif PPN Platform (%)</label>
-                    <input
+                    <HuntrInput
                       type="number"
                       step="0.1"
                       min="0"
@@ -218,7 +221,7 @@ export default function GlobalSubscriptionSettingsModal({
 
                   <div>
                     <label style={lbl}>Tarif PPh 23 Jasa (%)</label>
-                    <input
+                    <HuntrInput
                       type="number"
                       step="0.1"
                       min="0"
@@ -234,7 +237,7 @@ export default function GlobalSubscriptionSettingsModal({
 
                   <div>
                     <label style={lbl}>Fee Annual Upfront PO (%)</label>
-                    <input
+                    <HuntrInput
                       type="number"
                       step="0.1"
                       min="0"
@@ -250,7 +253,7 @@ export default function GlobalSubscriptionSettingsModal({
 
                   <div>
                     <label style={lbl}>Fee Per PO Transaksi (%)</label>
-                    <input
+                    <HuntrInput
                       type="number"
                       step="0.1"
                       min="0"
@@ -268,7 +271,7 @@ export default function GlobalSubscriptionSettingsModal({
                 <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginTop: 12 }}>
                   <div>
                     <label style={lbl}>Biaya Flat SaaS Pokok (Rp)</label>
-                    <input
+                    <HuntrInput
                       type="number"
                       min="0"
                       value={saasFee}
@@ -280,14 +283,14 @@ export default function GlobalSubscriptionSettingsModal({
                   </div>
                   <div>
                     <label style={lbl}>Siklus SaaS</label>
-                    <select
+                    <HuntrSelect
                       value={saasCycle}
                       onChange={(e) => setSaasCycle(e.target.value as any)}
                       style={{ ...inp, width: "100%", marginTop: 4 }}
                     >
                       <option value="monthly">Bulanan</option>
                       <option value="annual">Tahunan</option>
-                    </select>
+                    </HuntrSelect>
                   </div>
                 </div>
               </div>
@@ -305,7 +308,7 @@ export default function GlobalSubscriptionSettingsModal({
 
               {/* Action Buttons */}
               <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                <button
+                <HuntrButton
                   type="submit"
                   disabled={saving || bulkApplying}
                   style={{
@@ -316,9 +319,9 @@ export default function GlobalSubscriptionSettingsModal({
                 >
                   {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                   Simpan Konfigurasi Global
-                </button>
+                </HuntrButton>
 
-                <button
+                <HuntrButton
                   type="button"
                   onClick={handleBulkApply}
                   disabled={saving || bulkApplying}
@@ -330,12 +333,12 @@ export default function GlobalSubscriptionSettingsModal({
                 >
                   {bulkApplying ? <Loader2 size={14} className="animate-spin" /> : <Layers size={14} />}
                   Terapkan ke Buyer yang Memenuhi Syarat
-                </button>
+                </HuntrButton>
               </div>
             </form>
           )}
         </div>
-      </div>
+      </HuntrSurface>
     </div>
   );
 }

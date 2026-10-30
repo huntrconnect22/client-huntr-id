@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import Layout from "~/components/Layout";
@@ -328,14 +329,14 @@ export default function RfqDetail() {
                         </p>
                       </div>
                     </div>
-                    <button
+                    <HuntrButton
                       type="button"
                       disabled={generatingBots}
                       onClick={handleTriggerDemoBots}
                       className="px-3.5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white text-xs font-bold rounded-lg flex items-center gap-2 shrink-0 transition shadow-sm"
                     >
                       {generatingBots ? <Loader2 size={14} className="animate-spin" /> : t("rfqDetail.demoBot.triggerBtn")}
-                    </button>
+                    </HuntrButton>
                   </div>
                 )}
 

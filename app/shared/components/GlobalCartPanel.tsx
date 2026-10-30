@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useRef, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import CartSidebar from "./CartSidebar";
@@ -71,9 +72,9 @@ export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps)
         />
       )}
 
-      {isMobile && (
+      {isMobile && cartCount > 0 && (
         <div className="huntr-cart-fab md:hidden">
-          <button
+          <HuntrButton
             type="button"
             onClick={() => setCartOpen((p) => !p)}
             aria-label={`View cart (${cartCount} items)`}
@@ -85,7 +86,7 @@ export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps)
                 {cartCount > 99 ? "99+" : cartCount}
               </span>
             )}
-          </button>
+          </HuntrButton>
         </div>
       )}
 

@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { useNavigate } from "react-router";
 
@@ -19,7 +20,7 @@ export default function NotFound() {
         <p style={{ fontSize: "18px", color: "#666", margin: "0 0 20px 0" }}>
           Page not found
         </p>
-        <button
+        <HuntrButton
           onClick={() => navigate("/")}
           style={{
             padding: "10px 20px",
@@ -32,7 +33,7 @@ export default function NotFound() {
           }}
         >
           Go Home
-        </button>
+        </HuntrButton>
       </div>
     </div>
   );

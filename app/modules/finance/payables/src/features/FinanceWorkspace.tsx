@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import DemoDisabledBanner from "~/components/DemoDisabledBanner";
@@ -156,13 +158,13 @@ export default function Finance() {
             <span style={{ fontSize: 14, fontWeight: 600 }}>Loading data...</span>
           </div>
         ) : orders.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 12, border: "1px dashed var(--ui-border-input)" }}>
+          <HuntrSurface style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 12, border: "1px dashed var(--ui-border-input)" }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--ui-bg-input)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--ui-text-muted)" }}>
               <CheckCircle2 size={32} />
             </div>
             <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", margin: "0 0 8px" }}>No Pending Invoices</h3>
             <p style={{ fontSize: 14, color: "var(--ui-text-muted)", margin: 0 }}>All final invoices have been approved or paid.</p>
-          </div>
+          </HuntrSurface>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {orders.map((po: any) => {
@@ -174,7 +176,7 @@ export default function Finance() {
                 const dueInfo = getDueDateInfo(invDate, scheme);
 
                 return (
-                  <div key={inv.id} style={{
+                  <HuntrSurface key={inv.id} style={{
                     background: "var(--ui-bg-card)", borderRadius: 12, border: "1px solid var(--ui-border-input)",
                     overflow: "hidden", display: "flex", flexDirection: "column"
                   }}>
@@ -241,7 +243,7 @@ export default function Finance() {
                     </div>
 
                     <div style={{ padding: 20, background: "var(--ui-bg-input)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => void openAuthenticatedDocument(`/api/invoices/${inv.id}/print`)}
                         style={{ 
@@ -250,9 +252,9 @@ export default function Finance() {
                         }}
                       >
                         <FileText size={16} /> View Invoice Document
-                      </button>
+                      </HuntrButton>
                       
-                      <button
+                      <HuntrButton
                         onClick={() => handleApprove(inv.id)}
                         disabled={processingId === inv.id || !dueInfo.isEligible}
                         title={!dueInfo.isEligible ? `Approval di-disabled hingga tanggal ${dueInfo.formattedDueDate} sesuai Payment Scheme` : undefined}
@@ -281,9 +283,9 @@ export default function Finance() {
                         {!dueInfo.isEligible
                           ? `Di-disabled s.d ${dueInfo.formattedDueDate}`
                           : "Approve & Disburse Dana"}
-                      </button>
+                      </HuntrButton>
                     </div>
-                  </div>
+                  </HuntrSurface>
                 );
               });
             })}

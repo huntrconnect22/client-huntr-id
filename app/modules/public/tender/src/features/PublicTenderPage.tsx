@@ -1,3 +1,6 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 // Public, unauthenticated tender experience.
 import { useParams, Link, useNavigate } from "react-router";
@@ -156,7 +159,7 @@ export default function TenderPublicPage() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <button
+            <HuntrButton
               onClick={handleCopy}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer"
             >
@@ -165,7 +168,7 @@ export default function TenderPublicPage() {
               ) : (
                 <><Copy size={13} /><span>Salin Link</span></>
               )}
-            </button>
+            </HuntrButton>
             <Link
               to="/login"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-semibold text-white transition-all"
@@ -215,13 +218,13 @@ export default function TenderPublicPage() {
 
             {/* Share & CTA */}
             <div className="flex items-center gap-2">
-              <button
+              <HuntrButton
                 onClick={handleCopy}
                 className="p-2 rounded-md border border-white/15 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all cursor-pointer"
                 title="Salin link tender"
               >
                 <Share2 size={15} />
-              </button>
+              </HuntrButton>
             </div>
           </div>
 
@@ -259,43 +262,43 @@ export default function TenderPublicPage() {
                   Rincian Item ({lineItems})
                 </div>
                 <div className="overflow-x-auto rounded-lg border border-white/10">
-                  <table className="w-full text-xs text-left">
-                    <thead>
-                      <tr className="border-b border-white/10 text-gray-400 font-semibold">
-                        <th className="px-3 py-2.5">#</th>
-                        <th className="px-3 py-2.5">Nama Item</th>
-                        <th className="px-3 py-2.5 text-center">Qty</th>
-                        <th className="px-3 py-2.5">Satuan</th>
-                        <th className="px-3 py-2.5">Spesifikasi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
+                  <HuntrTable className="w-full text-xs text-left">
+                    <HuntrTableHead>
+                      <HuntrTableRow className="border-b border-white/10 text-gray-400 font-semibold">
+                        <HuntrTableHeaderCell className="px-3 py-2.5">#</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="px-3 py-2.5">Nama Item</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="px-3 py-2.5 text-center">Qty</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="px-3 py-2.5">Satuan</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="px-3 py-2.5">Spesifikasi</HuntrTableHeaderCell>
+                      </HuntrTableRow>
+                    </HuntrTableHead>
+                    <HuntrTableBody className="divide-y divide-white/5">
                       {rfq.items.map((item: any, idx: number) => (
-                        <tr key={item.id ?? idx} className="hover:bg-white/5 transition-colors">
-                          <td className="px-3 py-2.5 text-gray-500">{idx + 1}</td>
-                          <td className="px-3 py-2.5">
+                        <HuntrTableRow key={item.id ?? idx} className="hover:bg-white/5 transition-colors">
+                          <HuntrTableCell className="px-3 py-2.5 text-gray-500">{idx + 1}</HuntrTableCell>
+                          <HuntrTableCell className="px-3 py-2.5">
                             <div className="font-semibold text-white">
                               {item.catalogue?.name ?? item.name ?? "Item"}
                             </div>
                             {item.catalogue?.brand && (
                               <div className="text-[10px] text-gray-500">{item.catalogue.brand}</div>
                             )}
-                          </td>
-                          <td className="px-3 py-2.5 text-center font-mono font-bold text-orange-300">
+                          </HuntrTableCell>
+                          <HuntrTableCell className="px-3 py-2.5 text-center font-mono font-bold text-orange-300">
                             {item.qty}
-                          </td>
-                          <td className="px-3 py-2.5 text-gray-400">
+                          </HuntrTableCell>
+                          <HuntrTableCell className="px-3 py-2.5 text-gray-400">
                             {item.uom ?? item.catalogue?.uom ?? "unit"}
-                          </td>
-                          <td className="px-3 py-2.5 text-gray-400 max-w-[200px]">
+                          </HuntrTableCell>
+                          <HuntrTableCell className="px-3 py-2.5 text-gray-400 max-w-[200px]">
                             <span className="line-clamp-2">
                               {item.specifications ?? item.catalogue?.specifications ?? "-"}
                             </span>
-                          </td>
-                        </tr>
+                          </HuntrTableCell>
+                        </HuntrTableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </HuntrTableBody>
+                  </HuntrTable>
                 </div>
               </div>
             )}
@@ -403,17 +406,17 @@ export default function TenderPublicPage() {
                 <Share2 size={11} /> Bagikan Tender Ini
               </div>
               <div className="flex items-center gap-1.5">
-                <input
+                <HuntrInput
                   readOnly
                   value={shareUrl}
                   className="flex-1 bg-white/5 border border-white/10 rounded-md px-2.5 py-1.5 text-[11px] text-gray-400 font-mono outline-none truncate"
                 />
-                <button
+                <HuntrButton
                   onClick={handleCopy}
                   className="px-2.5 py-1.5 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold transition-all flex items-center gap-1 flex-shrink-0 cursor-pointer"
                 >
                   {copied ? <Check size={12} /> : <Copy size={12} />}
-                </button>
+                </HuntrButton>
               </div>
               {copied && <p className="text-[11px] text-emerald-400 font-medium">✓ Link tersalin ke clipboard!</p>}
             </div>

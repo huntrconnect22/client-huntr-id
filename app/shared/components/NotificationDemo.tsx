@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from 'react';
 import { Bell, X } from 'lucide-react';
 
@@ -54,7 +56,7 @@ export default function NotificationDemo() {
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       {/* Demo Trigger Button */}
-      <button
+      <HuntrButton
         onClick={() => setShowNotification(!showNotification)}
         style={{
           position: 'relative',
@@ -94,7 +96,7 @@ export default function NotificationDemo() {
             {notifications.filter(n => !n.read_at).length}
           </span>
         )}
-      </button>
+      </HuntrButton>
 
       {/* Notification Dropdown */}
       {showNotification && (
@@ -115,7 +117,7 @@ export default function NotificationDemo() {
           />
           
           {/* Notification Dropdown */}
-          <div 
+          <HuntrSurface
             className="huntr-notif-dropdown"
             onClick={(e) => e.stopPropagation()}
             style={{ 
@@ -155,7 +157,7 @@ export default function NotificationDemo() {
                   ENHANCED
                 </span>
               </div>
-              <button 
+              <HuntrButton
                 onClick={closeNotification}
                 style={{ 
                   background: 'none', 
@@ -171,7 +173,7 @@ export default function NotificationDemo() {
                 aria-label="Close notifications"
               >
                 <X size={14} />
-              </button>
+              </HuntrButton>
             </div>
             
             {/* Content */}
@@ -238,7 +240,7 @@ export default function NotificationDemo() {
                 💡 Click anywhere outside this box to close, or press Escape key
               </div>
             </div>
-          </div>
+          </HuntrSurface>
         </>
       )}
     </div>

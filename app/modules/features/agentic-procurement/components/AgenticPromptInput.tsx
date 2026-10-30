@@ -1,3 +1,5 @@
+import { Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Sparkles, Zap, Loader2, Sliders } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -47,7 +49,7 @@ export default function AgenticPromptInput({
 
       {/* Prompt Textarea */}
       <div className="flex flex-col sm:relative gap-2">
-        <textarea
+        <HuntrTextarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder={t("agentic.prompt.placeholder")}
@@ -60,7 +62,7 @@ export default function AgenticPromptInput({
             }
           }}
         />
-        <button
+        <HuntrButton
           onClick={() => onExecute()}
           disabled={isRunning || !prompt.trim()}
           className="sm:absolute sm:right-2.5 sm:bottom-3 w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-4 py-2.5 sm:py-1.5 rounded-lg sm:rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
@@ -76,7 +78,7 @@ export default function AgenticPromptInput({
               <span>{t("agentic.prompt.execute")}</span>
             </>
           )}
-        </button>
+        </HuntrButton>
       </div>
 
       {/* Preset Prompts (Compact chips) */}
@@ -85,7 +87,7 @@ export default function AgenticPromptInput({
           <Sliders size={11} /> {t("agentic.prompt.preset")}
         </span>
         {presetPrompts.map((item, idx) => (
-          <button
+          <HuntrButton
             key={idx}
             onClick={() => {
               setPrompt(item.prompt);
@@ -96,7 +98,7 @@ export default function AgenticPromptInput({
           >
             <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
             <span>{item.title}</span>
-          </button>
+          </HuntrButton>
         ))}
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { useNavigate } from "react-router";
 import { Building2 } from "lucide-react";
@@ -21,7 +23,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
 
   if (status === "rejected") {
     return (
-      <div
+      <HuntrSurface
         className="huntr-rejected-gate"
         style={{
           display: "flex",
@@ -84,7 +86,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
           className="huntr-rejected-gate-actions"
           style={{ display: "flex", gap: "10px" }}
         >
-          <button
+          <HuntrButton
             onClick={() => navigate("/company")}
             style={{
               padding: "10px 22px",
@@ -99,8 +101,8 @@ export const StatusGate: React.FC<StatusGateProps> = ({
             }}
           >
             {t("statusGate.rejected.viewDetails")}
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             onClick={onSwitchCompany}
             style={{
               padding: "10px 22px",
@@ -114,14 +116,14 @@ export const StatusGate: React.FC<StatusGateProps> = ({
             }}
           >
             {t("statusGate.rejected.switchCompany")}
-          </button>
+          </HuntrButton>
         </div>
-      </div>
+      </HuntrSurface>
     );
   }
 
   return (
-    <div
+    <HuntrSurface
       className="huntr-pending-gate"
       style={{
         display: "flex",
@@ -184,7 +186,7 @@ export const StatusGate: React.FC<StatusGateProps> = ({
         </p>
       </div>
       <div className="huntr-pending-gate-actions">
-        <button
+        <HuntrButton
           onClick={() => navigate("/company")}
           style={{
             padding: "10px 22px",
@@ -199,8 +201,8 @@ export const StatusGate: React.FC<StatusGateProps> = ({
           }}
         >
           {t("statusGate.pending.viewStatus")}
-        </button>
-        <button
+        </HuntrButton>
+        <HuntrButton
           onClick={onSwitchCompany}
           style={{
             padding: "10px 22px",
@@ -214,8 +216,8 @@ export const StatusGate: React.FC<StatusGateProps> = ({
           }}
         >
           {t("statusGate.pending.switchCompany")}
-        </button>
+        </HuntrButton>
       </div>
-    </div>
+    </HuntrSurface>
   );
 };

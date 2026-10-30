@@ -1,3 +1,7 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect, Input as HuntrInput } from "~/shared/ui/Fields";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useState, useEffect, useCallback } from "react";
 import Layout from "~/components/Layout";
 import DemoDisabledBanner from "~/components/DemoDisabledBanner";
@@ -51,14 +55,14 @@ function StatusBadge({ status }: { status?: string | null }) {
 /* ─── Tab button ─────────────────────────────────────────────────── */
 function Tab({ active, onClick, children }: { active: boolean; onClick(): void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} style={{
+    <HuntrButton onClick={onClick} style={{
       padding: "10px 0", fontSize: 14, fontWeight: 700, border: "none", background: "none", cursor: "pointer",
       color: active ? "var(--ui-text-primary)" : "var(--ui-text-muted)",
       borderBottom: active ? "2px solid var(--ui-primary)" : "2px solid transparent",
       transition: "all 0.15s",
     }}>
       {children}
-    </button>
+    </HuntrButton>
   );
 }
 
@@ -69,9 +73,9 @@ function Modal({ onClose, children, maxWidth = 480 }: { onClose(): void; childre
       style={{ position: "fixed", inset: 0, zIndex: 1000, background: "var(--ui-bg-overlay)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, width: "100%", maxWidth, maxHeight: "92dvh", overflowY: "auto", boxShadow: "var(--ui-glass-shadow)" }}>
+      <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 16, width: "100%", maxWidth, maxHeight: "92dvh", overflowY: "auto", boxShadow: "var(--ui-glass-shadow)" }}>
         {children}
-      </div>
+      </HuntrSurface>
     </div>
   );
 }
@@ -87,9 +91,9 @@ function ModalHeader({ icon, title, subtitle, onClose }: { icon: React.ReactNode
         <div style={{ fontWeight: 800, fontSize: 16, color: "var(--ui-text-primary)" }}>{title}</div>
         {subtitle && <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 2 }}>{subtitle}</div>}
       </div>
-      <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", cursor: "pointer", color: "var(--ui-text-muted)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <HuntrButton onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", cursor: "pointer", color: "var(--ui-text-muted)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         <X size={14} />
-      </button>
+      </HuntrButton>
     </div>
   );
 }
@@ -229,7 +233,7 @@ function IssueModal({ bast, company, onClose, onDone }: {
                     const isOpen = openDropdown === it.id;
 
                     return (
-                      <div key={it.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 10, padding: "12px 14px" }}>
+                      <HuntrSurface key={it.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 10, padding: "12px 14px" }}>
                         <div style={{ marginBottom: 10 }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>ITEM {idx + 1}</div>
                           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ui-text-primary)", wordBreak: "break-word", lineHeight: 1.4 }}>{it.nama}</div>
@@ -243,7 +247,7 @@ function IssueModal({ bast, company, onClose, onDone }: {
                           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
                             Kode Barang DJP <span style={{ color: "var(--ui-status-rejected)" }}>*</span>
                           </div>
-                          <button
+                          <HuntrButton
                             type="button"
                             ref={el => { btnRefs.current[it.id] = el; }}
                             onClick={() => isOpen ? (setOpenDropdown(null), setDropdownPos(null)) : openGoodsDropdown(it.id)}
@@ -254,17 +258,17 @@ function IssueModal({ bast, company, onClose, onDone }: {
                               <span style={{ color: "var(--ui-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11 }}>{selectedGoods?.bahasa || "Pilih kode barang DJP…"}</span>
                             </span>
                             <ChevronDown size={12} style={{ flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
-                          </button>
+                          </HuntrButton>
                         </div>
 
                         {/* Satuan */}
                         <div>
                           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>Satuan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></div>
-                          <select value={ov.satuan} onChange={e => updateOverride(it.id, "satuan", e.target.value)} style={{ ...field, padding: "8px 36px 8px 12px", fontSize: 12 }}>
+                          <HuntrSelect value={ov.satuan} onChange={e => updateOverride(it.id, "satuan", e.target.value)} style={{ ...field, padding: "8px 36px 8px 12px", fontSize: 12 }}>
                             {satuanRef.map(s => <option key={s.code} value={s.code}>{s.code} — {s.description}</option>)}
-                          </select>
+                          </HuntrSelect>
                         </div>
-                      </div>
+                      </HuntrSurface>
                     );
                   })}
                 </div>
@@ -276,10 +280,10 @@ function IssueModal({ bast, company, onClose, onDone }: {
                 </div>
 
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>Batal</button>
-                  <button type="button" onClick={() => setStep(2)} disabled={!isStep1Valid} style={{ flex: 2, padding: "11px", borderRadius: 9, background: isStep1Valid ? "var(--ui-primary)" : "var(--ui-bg-inset)", color: isStep1Valid ? "#fff" : "var(--ui-text-muted)", border: "none", cursor: isStep1Valid ? "pointer" : "not-allowed", fontWeight: 700, fontSize: 13, minHeight: 44 }}>
+                  <HuntrButton type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>Batal</HuntrButton>
+                  <HuntrButton type="button" onClick={() => setStep(2)} disabled={!isStep1Valid} style={{ flex: 2, padding: "11px", borderRadius: 9, background: isStep1Valid ? "var(--ui-primary)" : "var(--ui-bg-inset)", color: isStep1Valid ? "#fff" : "var(--ui-text-muted)", border: "none", cursor: isStep1Valid ? "pointer" : "not-allowed", fontWeight: 700, fontSize: 13, minHeight: 44 }}>
                     Lanjut ke Penandatangan →
-                  </button>
+                  </HuntrButton>
                 </div>
               </div>
             )
@@ -296,18 +300,18 @@ function IssueModal({ bast, company, onClose, onDone }: {
                 ))}
               </div>
               {error && <div style={{ padding: "10px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "var(--ui-status-rejected)", display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
-              <div><label style={lbl}>Nama Penandatangan</label><input value={signerName} onChange={e => setSignerName(e.target.value)} required style={field} /></div>
+              <div><label style={lbl}>Nama Penandatangan</label><HuntrInput value={signerName} onChange={e => setSignerName(e.target.value)} required style={field} /></div>
               <div>
                 <label style={lbl}>NPWP Penandatangan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></label>
-                <input value={signerNpwp} onChange={e => setSignerNpwp(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace", letterSpacing: "0.05em" }} placeholder="16 digit" />
+                <HuntrInput value={signerNpwp} onChange={e => setSignerNpwp(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace", letterSpacing: "0.05em" }} placeholder="16 digit" />
                 <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 4 }}>{signerNpwp.length}/16 digit</div>
               </div>
-              <div><label style={lbl}>Kota Penandatangan</label><input value={signerKota} onChange={e => setSignerKota(e.target.value)} required style={field} /></div>
+              <div><label style={lbl}>Kota Penandatangan</label><HuntrInput value={signerKota} onChange={e => setSignerKota(e.target.value)} required style={field} /></div>
               <div style={{ display: "flex", gap: 10 }}>
-                <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>← Kembali</button>
-                <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(249,115,22,0.5)" : "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: loading ? "none" : "0 4px 14px rgba(249,115,22,0.3)" }}>
+                <HuntrButton type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: 13, minHeight: 44 }}>← Kembali</HuntrButton>
+                <HuntrButton type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(249,115,22,0.5)" : "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: loading ? "none" : "0 4px 14px rgba(249,115,22,0.3)" }}>
                   {loading ? <><Loader2 size={14} className="animate-spin" />Memproses…</> : <><Send size={14} />Terbitkan Sekarang</>}
-                </button>
+                </HuntrButton>
               </div>
             </form>
           )}
@@ -316,19 +320,19 @@ function IssueModal({ bast, company, onClose, onDone }: {
 
       {/* Dropdown kode barang — fixed agar tidak tertutup overflow modal */}
       {openDropdown && dropdownPos && (
-        <div
+        <HuntrSurface
           style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, zIndex: 2000, background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 9, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", overflow: "hidden" }}
           onMouseDown={e => e.stopPropagation()}
         >
           <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--ui-border)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--ui-bg-input)", borderRadius: 7, padding: "6px 10px" }}>
               <Search size={12} style={{ color: "var(--ui-text-muted)", flexShrink: 0 }} />
-              <input autoFocus value={dropdownSearch} onChange={e => setDropdownSearch(e.target.value)} placeholder="Cari kode atau nama barang…" style={{ background: "none", border: "none", outline: "none", fontSize: 12, color: "var(--ui-text-primary)", width: "100%" }} />
+              <HuntrInput autoFocus value={dropdownSearch} onChange={e => setDropdownSearch(e.target.value)} placeholder="Cari kode atau nama barang…" style={{ background: "none", border: "none", outline: "none", fontSize: 12, color: "var(--ui-text-primary)", width: "100%" }} />
             </div>
           </div>
           <div style={{ maxHeight: 220, overflowY: "auto" }}>
             {filteredGoods(dropdownSearch).map(g => (
-              <button
+              <HuntrButton
                 key={g.code}
                 type="button"
                 onMouseDown={() => { updateOverride(openDropdown, "kd_brg", g.code); setOpenDropdown(null); setDropdownPos(null); }}
@@ -338,11 +342,11 @@ function IssueModal({ bast, company, onClose, onDone }: {
               >
                 <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "var(--ui-primary)", flexShrink: 0, width: 56 }}>{g.code}</span>
                 <span style={{ fontSize: 11, color: "var(--ui-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.bahasa}</span>
-              </button>
+              </HuntrButton>
             ))}
             {filteredGoods(dropdownSearch).length === 0 && <div style={{ padding: "12px", textAlign: "center", fontSize: 12, color: "var(--ui-text-muted)" }}>Tidak ditemukan</div>}
           </div>
-        </div>
+        </HuntrSurface>
       )}
     </>
   );
@@ -381,17 +385,17 @@ function UploadDJPModal({ efaktur, onClose, onDone }: { efaktur: EFaktur; onClos
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
             <label style={lbl}>Tempat Penandatangan</label>
-            <input value={tempat} onChange={e => setTempat(e.target.value)} required style={field} />
+            <HuntrInput value={tempat} onChange={e => setTempat(e.target.value)} required style={field} />
           </div>
           <div>
             <label style={lbl}>NPWP / NIK Penandatangan <span style={{ color: "var(--ui-status-rejected)" }}>*</span></label>
-            <input value={npwpNik} onChange={e => setNpwpNik(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace" }} placeholder="16 digit" />
+            <HuntrInput value={npwpNik} onChange={e => setNpwpNik(e.target.value.replace(/\D/g, "").slice(0, 16))} required maxLength={16} style={{ ...field, fontFamily: "monospace" }} placeholder="16 digit" />
           </div>
           <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Batal</button>
-            <button type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(34,197,94,0.5)" : "linear-gradient(135deg,#10b981,#059669)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+            <HuntrButton type="button" onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 9, background: "transparent", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", cursor: "pointer", fontWeight: 700, minHeight: 44 }}>Batal</HuntrButton>
+            <HuntrButton type="submit" disabled={loading} style={{ flex: 2, padding: "11px", borderRadius: 9, background: loading ? "rgba(34,197,94,0.5)" : "linear-gradient(135deg,#10b981,#059669)", color: "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer", fontWeight: 700, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
               {loading ? <><Loader2 size={14} className="animate-spin" />Mengirim…</> : <><Upload size={14} />Upload ke DJP</>}
-            </button>
+            </HuntrButton>
           </div>
         </form>
       </div>
@@ -577,7 +581,7 @@ function VatOutTab({ company }: { company: any }) {
           { label: "Siap Faktur", value: readyBasts.length, icon: <CheckCircle2 size={18} />, accent: "#3b82f6", bg: "rgba(59,130,246,0.10)" },
           { label: "Total PPN", value: `Rp ${totalPpn.toLocaleString("id")}`, icon: <TrendingUp size={18} />, accent: "var(--ui-text-primary)", bg: "var(--ui-bg-inset)" },
         ].map(s => (
-          <div key={s.label} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+          <HuntrSurface key={s.label} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 9, background: s.bg, color: s.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {s.icon}
             </div>
@@ -585,7 +589,7 @@ function VatOutTab({ company }: { company: any }) {
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
               <div style={{ fontSize: 18, fontWeight: 900, color: "var(--ui-text-primary)", lineHeight: 1.2, marginTop: 2 }}>{s.value}</div>
             </div>
-          </div>
+          </HuntrSurface>
         ))}
       </div>
 
@@ -606,11 +610,11 @@ function VatOutTab({ company }: { company: any }) {
         </div>
       ) : subTab === "list" ? (
         efakturs.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14 }}>
+          <HuntrSurface style={{ textAlign: "center", padding: "60px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14 }}>
             <ReceiptText size={40} style={{ color: "var(--ui-text-muted)", opacity: 0.35, marginBottom: 14 }} />
             <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ui-text-primary)" }}>Belum ada e-Faktur</div>
             <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 6 }}>Pindah ke tab "BAST Siap Faktur" untuk menerbitkan.</div>
-          </div>
+          </HuntrSurface>
         ) : (
           <>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -618,7 +622,7 @@ function VatOutTab({ company }: { company: any }) {
                 const isDraft = ef.status?.toUpperCase() === "DRAFT";
                 const isApproved = ef.status?.toUpperCase() === "APPROVED";
                 return (
-                  <div key={ef.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+                  <HuntrSurface key={ef.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
                     {/* Card header */}
                     <div style={{ padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
                       {/* Left icon */}
@@ -651,47 +655,47 @@ function VatOutTab({ company }: { company: any }) {
                     {/* Footer actions */}
                     <div style={{ padding: "10px 16px", background: "var(--ui-bg-inset)", borderTop: "1px solid var(--ui-border)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end" }}>
                       {isDraft && (
-                        <button onClick={() => setUploadTarget(ef)} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(34,197,94,0.10)", color: "var(--ui-status-approved)", border: "1px solid rgba(34,197,94,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                        <HuntrButton onClick={() => setUploadTarget(ef)} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(34,197,94,0.10)", color: "var(--ui-status-approved)", border: "1px solid rgba(34,197,94,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                           <Upload size={12} /> Upload ke DJP
-                        </button>
+                        </HuntrButton>
                       )}
                       {isApproved && (
                         <>
-                          <button onClick={() => handleDownloadPdf(ef)} disabled={downloadingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                          <HuntrButton onClick={() => handleDownloadPdf(ef)} disabled={downloadingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                             {downloadingId === ef.id ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} PDF
-                          </button>
-                          <button onClick={() => handleVerify(ef)} disabled={verifyingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(139,92,246,0.08)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                          </HuntrButton>
+                          <HuntrButton onClick={() => handleVerify(ef)} disabled={verifyingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(139,92,246,0.08)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                             {verifyingId === ef.id ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />} Verifikasi
-                          </button>
-                          <button onClick={() => handleVerifyPrepop(ef)} disabled={verifyPrepopId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }} title="Ambil approvalSign dari DJP — diperlukan untuk download PDF">
+                          </HuntrButton>
+                          <HuntrButton onClick={() => handleVerifyPrepop(ef)} disabled={verifyPrepopId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.22)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }} title="Ambil approvalSign dari DJP — diperlukan untuk download PDF">
                             {verifyPrepopId === ef.id ? <Loader2 size={12} className="animate-spin" /> : <FileCheck2 size={12} />} Verify Prepop
-                          </button>
+                          </HuntrButton>
                         </>
                       )}
-                      <button onClick={() => handleRefresh(ef.id)} disabled={refreshingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "transparent", color: "var(--ui-text-muted)", border: "1px solid var(--ui-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                      <HuntrButton onClick={() => handleRefresh(ef.id)} disabled={refreshingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "transparent", color: "var(--ui-text-muted)", border: "1px solid var(--ui-border)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                         <RefreshCw size={12} className={refreshingId === ef.id ? "animate-spin" : ""} /> Refresh
-                      </button>
+                      </HuntrButton>
                       {isApproved && ef.nofa && (
-                        <button onClick={() => handleCancel(ef)} disabled={cancellingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                        <HuntrButton onClick={() => handleCancel(ef)} disabled={cancellingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                           <X size={12} /> Batalkan
-                        </button>
+                        </HuntrButton>
                       )}
                       {isDraft && (
-                        <button onClick={() => handleDelete(ef.id)} disabled={deletingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                        <HuntrButton onClick={() => handleDelete(ef.id)} disabled={deletingId === ef.id} style={{ padding: "6px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: "rgba(239,68,68,0.08)", color: "var(--ui-status-rejected)", border: "1px solid rgba(239,68,68,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                           <Trash2 size={12} /> Hapus Draft
-                        </button>
+                        </HuntrButton>
                       )}
                     </div>
-                  </div>
+                  </HuntrSurface>
                 );
               })}
             </div>
             {/* Pagination */}
             {lastPage > 1 && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
-                <button onClick={() => { const p = Math.max(1, page - 1); setPage(p); fetchData(p); }} disabled={page === 1} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</button>
+                <HuntrButton onClick={() => { const p = Math.max(1, page - 1); setPage(p); fetchData(p); }} disabled={page === 1} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</HuntrButton>
                 <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{page} / {lastPage}</span>
-                <button onClick={() => { const p = Math.min(lastPage, page + 1); setPage(p); fetchData(p); }} disabled={page === lastPage} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</button>
+                <HuntrButton onClick={() => { const p = Math.min(lastPage, page + 1); setPage(p); fetchData(p); }} disabled={page === lastPage} style={{ padding: "6px 14px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</HuntrButton>
               </div>
             )}
           </>
@@ -703,18 +707,18 @@ function VatOutTab({ company }: { company: any }) {
             <Loader2 size={28} className="animate-spin" style={{ color: "var(--ui-primary)" }} />
           </div>
         ) : readyBasts.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "60px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14 }}>
+          <HuntrSurface style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "60px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 14 }}>
             <CheckCircle2 size={40} style={{ color: "var(--ui-status-approved)", opacity: 0.4, marginBottom: 14 }} />
             <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ui-text-primary)" }}>Semua BAST sudah dibuatkan faktur</div>
             <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 6 }}>Tidak ada BAST yang menunggu penerbitan e-Faktur.</div>
-            <button onClick={fetchBasts} style={{ marginTop: 14, padding: "7px 16px", borderRadius: 8, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <HuntrButton onClick={fetchBasts} style={{ marginTop: 14, padding: "7px 16px", borderRadius: 8, background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)", color: "var(--ui-text-muted)", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <RefreshCw size={12} /> Muat Ulang
-            </button>
-          </div>
+            </HuntrButton>
+          </HuntrSurface>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {readyBasts.map(bast => (
-              <div key={bast.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <HuntrSurface key={bast.id} style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(34,197,94,0.10)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <CheckCircle2 size={20} style={{ color: "var(--ui-status-approved)" }} />
                 </div>
@@ -730,10 +734,10 @@ function VatOutTab({ company }: { company: any }) {
                     <Calendar size={11} /> {bast.bast_date}
                   </div>
                 </div>
-                <button onClick={() => setIssueBast(bast)} style={{ padding: "10px 18px", borderRadius: 9, background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: "0 4px 14px rgba(249,115,22,0.25)", flexShrink: 0, minHeight: 42 }}>
+                <HuntrButton onClick={() => setIssueBast(bast)} style={{ padding: "10px 18px", borderRadius: 9, background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: "0 4px 14px rgba(249,115,22,0.25)", flexShrink: 0, minHeight: 42 }}>
                   <Send size={14} /> Terbitkan e-Faktur
-                </button>
-              </div>
+                </HuntrButton>
+              </HuntrSurface>
             ))}
           </div>
         )
@@ -823,59 +827,59 @@ function VatInTab({ company }: { company: any }) {
           <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", padding: "14px 16px", background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 10 }}>
             <div>
               <div style={lbl}>Periode</div>
-              <input value={periode} onChange={e => setPeriode(e.target.value)} placeholder="MM/YYYY" style={{ ...inputSm, width: 120 }} />
+              <HuntrInput value={periode} onChange={e => setPeriode(e.target.value)} placeholder="MM/YYYY" style={{ ...inputSm, width: 120 }} />
             </div>
-            <button onClick={() => fetchList(1)} disabled={loading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 38 }}>
+            <HuntrButton onClick={() => fetchList(1)} disabled={loading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 38 }}>
               {loading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />} Tampilkan
-            </button>
+            </HuntrButton>
           </div>
 
           {loading ? (
             <div style={{ padding: "48px 0", display: "flex", justifyContent: "center" }}><Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
           ) : vatInList.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "48px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12 }}>
+            <HuntrSurface style={{ textAlign: "center", padding: "48px 20px", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12 }}>
               <ArrowDownToLine size={36} style={{ color: "var(--ui-text-muted)", opacity: 0.35, marginBottom: 12 }} />
               <div style={{ fontWeight: 700, color: "var(--ui-text-primary)" }}>Tidak ada faktur masukan</div>
               <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 4 }}>Ubah filter periode lalu klik Tampilkan.</div>
-            </div>
+            </HuntrSurface>
           ) : (
             <>
               <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{total.toLocaleString("id")} faktur masukan ditemukan</div>
-              <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+              <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
                 <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
+                  <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <HuntrTableHead>
+                      <HuntrTableRow style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
                         {["No. Faktur", "Penjual", "Tanggal", "DPP", "PPN", "Status", "Kredit"].map(h => (
-                          <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h.toUpperCase()}</th>
+                          <HuntrTableHeaderCell key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h.toUpperCase()}</HuntrTableHeaderCell>
                         ))}
-                      </tr>
-                    </thead>
-                    <tbody>
+                      </HuntrTableRow>
+                    </HuntrTableHead>
+                    <HuntrTableBody>
                       {vatInList.map(item => (
-                        <tr key={item.id} style={{ borderBottom: "1px solid var(--ui-border)", transition: "background 0.1s" }}
+                        <HuntrTableRow key={item.id} style={{ borderBottom: "1px solid var(--ui-border)", transition: "background 0.1s" }}
                           onMouseEnter={e => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
                           onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                          <td style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>{item.nomorfaktur}</td>
-                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.namatokopenjual || item.npwppenjual}</td>
-                          <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{item.tanggalfaktur ? new Date(item.tanggalfaktur).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}</td>
-                          <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>Rp {Number(item.totaldpp).toLocaleString("id")}</td>
-                          <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-primary)", whiteSpace: "nowrap" }}>Rp {Number(item.totalppn).toLocaleString("id")}</td>
-                          <td style={{ padding: "11px 14px" }}><StatusBadge status={item.statusfaktur} /></td>
-                          <td style={{ padding: "11px 14px" }}>
+                          <HuntrTableCell style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>{item.nomorfaktur}</HuntrTableCell>
+                          <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.namatokopenjual || item.npwppenjual}</HuntrTableCell>
+                          <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{item.tanggalfaktur ? new Date(item.tanggalfaktur).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>Rp {Number(item.totaldpp).toLocaleString("id")}</HuntrTableCell>
+                          <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-primary)", whiteSpace: "nowrap" }}>Rp {Number(item.totalppn).toLocaleString("id")}</HuntrTableCell>
+                          <HuntrTableCell style={{ padding: "11px 14px" }}><StatusBadge status={item.statusfaktur} /></HuntrTableCell>
+                          <HuntrTableCell style={{ padding: "11px 14px" }}>
                             <StatusBadge status={item.statuspembeli || item.buyerstatus || undefined} />
-                          </td>
-                        </tr>
+                          </HuntrTableCell>
+                        </HuntrTableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </HuntrTableBody>
+                  </HuntrTable>
                 </div>
-              </div>
+              </HuntrSurface>
               {lastPage > 1 && (
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
-                  <button onClick={() => fetchList(Math.max(1, page - 1))} disabled={page === 1} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</button>
+                  <HuntrButton onClick={() => fetchList(Math.max(1, page - 1))} disabled={page === 1} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === 1 ? "not-allowed" : "pointer", background: page === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>← Prev</HuntrButton>
                   <span style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{page} / {lastPage} · {total.toLocaleString("id")} total</span>
-                  <button onClick={() => fetchList(Math.min(lastPage, page + 1))} disabled={page === lastPage} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</button>
+                  <HuntrButton onClick={() => fetchList(Math.min(lastPage, page + 1))} disabled={page === lastPage} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, border: "none", cursor: page === lastPage ? "not-allowed" : "pointer", background: page === lastPage ? "var(--ui-bg-input)" : "var(--ui-primary-muted)", color: page === lastPage ? "var(--ui-text-muted)" : "var(--ui-primary)" }}>Next →</HuntrButton>
                 </div>
               )}
             </>
@@ -885,61 +889,61 @@ function VatInTab({ company }: { company: any }) {
         /* Prepopulated DJP */
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ padding: "16px", background: "var(--ui-bg-inset)", border: "1px solid var(--ui-border)", borderRadius: 10, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
-            <div><div style={lbl}>Tahun Pajak</div><input value={ppTahun} onChange={e => setPpTahun(e.target.value)} style={{ ...inputSm, width: 90 }} /></div>
-            <div><div style={lbl}>Masa Pajak</div><input value={ppMasa} onChange={e => setPpMasa(e.target.value)} placeholder="09" style={{ ...inputSm, width: 70 }} /></div>
-            <div style={{ flex: 1, minWidth: 150 }}><div style={lbl}>NPWP Penjual (opsional)</div><input value={ppNpwp} onChange={e => setPpNpwp(e.target.value)} style={{ ...inputSm, width: "100%" }} /></div>
-            <div style={{ flex: 1, minWidth: 150 }}><div style={lbl}>No. Faktur (opsional)</div><input value={ppNofa} onChange={e => setPpNofa(e.target.value)} style={{ ...inputSm, width: "100%" }} /></div>
-            <button onClick={fetchPrepop} disabled={prepopLoading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 38 }}>
+            <div><div style={lbl}>Tahun Pajak</div><HuntrInput value={ppTahun} onChange={e => setPpTahun(e.target.value)} style={{ ...inputSm, width: 90 }} /></div>
+            <div><div style={lbl}>Masa Pajak</div><HuntrInput value={ppMasa} onChange={e => setPpMasa(e.target.value)} placeholder="09" style={{ ...inputSm, width: 70 }} /></div>
+            <div style={{ flex: 1, minWidth: 150 }}><div style={lbl}>NPWP Penjual (opsional)</div><HuntrInput value={ppNpwp} onChange={e => setPpNpwp(e.target.value)} style={{ ...inputSm, width: "100%" }} /></div>
+            <div style={{ flex: 1, minWidth: 150 }}><div style={lbl}>No. Faktur (opsional)</div><HuntrInput value={ppNofa} onChange={e => setPpNofa(e.target.value)} style={{ ...inputSm, width: "100%" }} /></div>
+            <HuntrButton onClick={fetchPrepop} disabled={prepopLoading} style={{ padding: "8px 18px", borderRadius: 8, background: "var(--ui-primary)", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, minHeight: 38 }}>
               {prepopLoading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />} Inquiry DJP
-            </button>
+            </HuntrButton>
           </div>
 
           {prepopList.length === 0 && !prepopLoading ? (
-            <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--ui-text-muted)", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12 }}>
+            <HuntrSurface style={{ textAlign: "center", padding: "40px 20px", color: "var(--ui-text-muted)", background: "var(--ui-bg-card)", border: "1px dashed var(--ui-border)", borderRadius: 12 }}>
               <Search size={32} style={{ opacity: 0.3, marginBottom: 10 }} />
               <div style={{ fontWeight: 700 }}>Isi filter lalu klik Inquiry DJP</div>
               <div style={{ fontSize: 13, marginTop: 4 }}>Data prepopulated langsung dari sistem DJP.</div>
-            </div>
+            </HuntrSurface>
           ) : prepopLoading ? (
             <div style={{ padding: "48px 0", display: "flex", justifyContent: "center" }}><Loader2 size={26} className="animate-spin" style={{ color: "var(--ui-primary)" }} /></div>
           ) : (
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
               <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
+                <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <HuntrTableHead>
+                    <HuntrTableRow style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
                       {["No. Faktur", "Penjual", "Tanggal", "DPP", "PPN", "Status DJP", "Buyer Status", "Aksi"].map(h => (
-                        <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h}</th>
+                        <HuntrTableHeaderCell key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h}</HuntrTableHeaderCell>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody>
+                    </HuntrTableRow>
+                  </HuntrTableHead>
+                  <HuntrTableBody>
                     {prepopList.map((item, i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid var(--ui-border)", transition: "background 0.1s" }}
+                      <HuntrTableRow key={i} style={{ borderBottom: "1px solid var(--ui-border)", transition: "background 0.1s" }}
                         onMouseEnter={e => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
                         onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                        <td style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{item.TaxInvoiceNumber}</td>
-                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis" }}>{item.SellerTaxpayerName}</td>
-                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{new Date(item.TaxInvoiceDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</td>
-                        <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Rp {item.SellingPrice?.toLocaleString("id")}</td>
-                        <td style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-primary)", whiteSpace: "nowrap" }}>Rp {item.VAT?.toLocaleString("id")}</td>
-                        <td style={{ padding: "11px 14px" }}><StatusBadge status={item.TaxInvoiceStatus} /></td>
-                        <td style={{ padding: "11px 14px" }}><StatusBadge status={item.BuyerStatus ?? undefined} /></td>
-                        <td style={{ padding: "11px 14px" }}>
+                        <HuntrTableCell style={{ padding: "11px 14px", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }}>{item.TaxInvoiceNumber}</HuntrTableCell>
+                        <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis" }}>{item.SellerTaxpayerName}</HuntrTableCell>
+                        <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>{new Date(item.TaxInvoiceDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</HuntrTableCell>
+                        <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Rp {item.SellingPrice?.toLocaleString("id")}</HuntrTableCell>
+                        <HuntrTableCell style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: "var(--ui-primary)", whiteSpace: "nowrap" }}>Rp {item.VAT?.toLocaleString("id")}</HuntrTableCell>
+                        <HuntrTableCell style={{ padding: "11px 14px" }}><StatusBadge status={item.TaxInvoiceStatus} /></HuntrTableCell>
+                        <HuntrTableCell style={{ padding: "11px 14px" }}><StatusBadge status={item.BuyerStatus ?? undefined} /></HuntrTableCell>
+                        <HuntrTableCell style={{ padding: "11px 14px" }}>
                           {item.BuyerStatus !== "CREDITED" ? (
-                            <button onClick={() => handleKredit(item)} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 11, fontWeight: 700, background: "var(--ui-primary-muted)", color: "var(--ui-primary)", border: "1px solid var(--ui-primary-border)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+                            <HuntrButton onClick={() => handleKredit(item)} style={{ padding: "5px 12px", borderRadius: 7, fontSize: 11, fontWeight: 700, background: "var(--ui-primary-muted)", color: "var(--ui-primary)", border: "1px solid var(--ui-primary-border)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
                               <ArrowDownToLine size={11} /> Kreditkan
-                            </button>
+                            </HuntrButton>
                           ) : (
                             <span style={{ fontSize: 11, color: "var(--ui-status-approved)" }}>✓ Sudah kredit</span>
                           )}
-                        </td>
-                      </tr>
+                        </HuntrTableCell>
+                      </HuntrTableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </HuntrTableBody>
+                </HuntrTable>
               </div>
-            </div>
+            </HuntrSurface>
           )}
         </div>
       )}

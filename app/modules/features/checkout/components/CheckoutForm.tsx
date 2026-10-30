@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React from "react";
 import {
   ClipboardList,
@@ -125,7 +127,7 @@ export function CheckoutForm({
               ],
               ["mixed", "Mixed", "A single PR contains goods and services."],
             ].map(([value, label, help]) => (
-              <button
+              <HuntrButton
                 key={value}
                 type="button"
                 onClick={() => {
@@ -149,7 +151,7 @@ export function CheckoutForm({
                 <span className="mt-0.5 block text-[10px] text-[var(--ui-text-muted)]">
                   {help}
                 </span>
-              </button>
+              </HuntrButton>
             ))}
           </div>
         </fieldset>
@@ -160,7 +162,7 @@ export function CheckoutForm({
             Procurement route
           </legend>
           <div className="grid gap-2 sm:grid-cols-2">
-            <button
+            <HuntrButton
               type="button"
               onClick={() => setProcurementMode("tender")}
               className={`border p-3 text-left transition-colors cursor-pointer ${
@@ -175,8 +177,8 @@ export function CheckoutForm({
               <span className="mt-0.5 block text-[10px] text-[var(--ui-text-muted)]">
                 Invite vendors after approval.
               </span>
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="button"
               onClick={() => {
                 setProcurementMode("direct");
@@ -194,7 +196,7 @@ export function CheckoutForm({
               <span className="mt-0.5 block text-[10px] text-[var(--ui-text-muted)]">
                 For urgent buying. No tender is published.
               </span>
-            </button>
+            </HuntrButton>
           </div>
         </fieldset>
 
@@ -204,7 +206,7 @@ export function CheckoutForm({
             <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">
               PR Title *
             </label>
-            <input
+            <HuntrInput
               type="text"
               placeholder="e.g. Office Supplies for Q3 2026"
               value={prTitle}
@@ -217,7 +219,7 @@ export function CheckoutForm({
             <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
               <Building size={12} /> Department *
             </label>
-            <select
+            <HuntrSelect
               value={prDepartment}
               onChange={(e) => setPrDepartment(e.target.value)}
               className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
@@ -227,7 +229,7 @@ export function CheckoutForm({
                   {dept}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           </div>
         </div>
 
@@ -236,7 +238,7 @@ export function CheckoutForm({
           <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] block">
             Purpose / Description
           </label>
-          <textarea
+          <HuntrTextarea
             placeholder="Explain why these items are needed..."
             value={prDesc}
             onChange={(e) => setPrDesc(e.target.value)}
@@ -270,7 +272,7 @@ export function CheckoutForm({
             <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
               <Building size={12} /> Receiving Warehouse
             </label>
-            <select
+            <HuntrSelect
               value={warehouseId}
               onChange={(e) => onWarehouseChange(e.target.value)}
               className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
@@ -284,7 +286,7 @@ export function CheckoutForm({
                     {warehouse.address ? ` · ${warehouse.address}` : ""}
                   </option>
                 ))}
-            </select>
+            </HuntrSelect>
             <p className="text-[11px] text-[var(--ui-text-muted)]">
               Goods Receipt for this PR will automatically enter the selected WMS
               warehouse. Its address becomes the delivery point.
@@ -301,7 +303,7 @@ export function CheckoutForm({
               : "Delivery Point *"}
           </label>
           {companyAddresses.length > 0 ? (
-            <select
+            <HuntrSelect
               value={deliveryPoint}
               onChange={(e) => {
                 setDeliveryPoint(e.target.value);
@@ -322,9 +324,9 @@ export function CheckoutForm({
                   {address.label}: {address.value}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           ) : (
-            <textarea
+            <HuntrTextarea
               placeholder="e.g. Jl. Sudirman No. 123, Jakarta"
               value={deliveryPoint}
               onChange={(e) => {
@@ -347,7 +349,7 @@ export function CheckoutForm({
               <label className="font-bold uppercase tracking-wider text-[10px] text-[var(--ui-text-muted)] flex items-center gap-1">
                 <Calendar size={12} /> Tender Duration (Days)
               </label>
-              <select
+              <HuntrSelect
                 value={prDuration}
                 onChange={(e) => setPrDuration(Number(e.target.value))}
                 className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60 transition-all"
@@ -357,7 +359,7 @@ export function CheckoutForm({
                     {opt.label}
                   </option>
                 ))}
-              </select>
+              </HuntrSelect>
             </div>
 
             <div className="space-y-1">
@@ -365,14 +367,14 @@ export function CheckoutForm({
                 <Paperclip size={12} /> Supporting Doc (Optional)
               </label>
               <div>
-                <input
+                <HuntrInput
                   type="file"
                   id="pr-document"
                   onChange={(e) => setPrDocument(e.target.files?.[0] || null)}
                   className="hidden"
                   accept=".pdf,.doc,.docx,.jpg,.png"
                 />
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() =>
                     document.getElementById("pr-document")?.click()
@@ -392,7 +394,7 @@ export function CheckoutForm({
                   ) : (
                     "Choose file..."
                   )}
-                </button>
+                </HuntrButton>
               </div>
             </div>
           </div>

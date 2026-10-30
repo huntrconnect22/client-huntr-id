@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { AlertTriangle, Clock, X, ArrowRight, ShieldCheck, Zap, PhoneCall, Sparkles } from "lucide-react";
 import { type TrialInfo, dismissTrialBanner } from "../lib/trial";
@@ -69,13 +70,13 @@ export default function TrialBanner({ trial, onDismiss }: TrialBannerProps) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
+          <HuntrButton
             onClick={handleContactSales}
             className="px-3 py-1.5 rounded-lg bg-white text-red-700 hover:bg-white/90 font-bold text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer"
           >
             <span>Upgrade Akun</span>
             <ArrowRight size={12} />
-          </button>
+          </HuntrButton>
         </div>
       </div>
     );
@@ -102,21 +103,21 @@ export default function TrialBanner({ trial, onDismiss }: TrialBannerProps) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
+          <HuntrButton
             onClick={handleContactSales}
             className="px-3 py-1 rounded-md bg-white text-orange-600 hover:bg-white/95 font-bold text-xs shadow-sm transition-all flex items-center gap-1 cursor-pointer"
           >
             <span>Perpanjang Sekarang</span>
             <ArrowRight size={12} />
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             onClick={handleDismiss}
             aria-label="Tutup pemberitahuan"
             className="p-1 rounded text-white/80 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
             title="Ingatkan nanti"
           >
             <X size={15} />
-          </button>
+          </HuntrButton>
         </div>
       </div>
     );
@@ -140,21 +141,21 @@ export default function TrialBanner({ trial, onDismiss }: TrialBannerProps) {
         </div>
       </div>
       <div className="flex items-center gap-2.5 flex-shrink-0">
-        <button
+        <HuntrButton
           onClick={handleContactSales}
           className="text-xs text-orange-500 hover:text-orange-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
         >
           <span>Upgrade Enterprise</span>
           <ArrowRight size={11} />
-        </button>
-        <button
+        </HuntrButton>
+        <HuntrButton
           onClick={handleDismiss}
           aria-label="Tutup pemberitahuan"
           className="p-1 rounded text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] transition-all cursor-pointer"
           title="Ingatkan nanti"
         >
           <X size={14} />
-        </button>
+        </HuntrButton>
       </div>
     </div>
   );

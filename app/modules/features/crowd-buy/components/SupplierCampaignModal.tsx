@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Plus, Trash2, AlertCircle, Sparkles } from "lucide-react";
@@ -139,12 +141,12 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               Kumpulkan kebutuhan banyak buyer untuk pesanan jumlah besar & harga terbaik
             </p>
           </div>
-          <button
+          <HuntrButton
             onClick={onClose}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
-          </button>
+          </HuntrButton>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5 max-h-[75vh] overflow-y-auto">
@@ -161,7 +163,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Judul Campaign / Produk *
               </label>
-              <input
+              <HuntrInput
                 type="text"
                 required
                 value={formData.title}
@@ -174,7 +176,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Kategori *
               </label>
-              <select
+              <HuntrSelect
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
@@ -186,7 +188,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
                 <option value="ATK & Kantor">ATK & Kantor</option>
                 <option value="Konstruksi & Material">Konstruksi & Material</option>
                 <option value="General">Lainnya / General</option>
-              </select>
+              </HuntrSelect>
             </div>
           </div>
 
@@ -196,7 +198,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Harga Dasar (Rp) *
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 required
                 min={1}
@@ -209,7 +211,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Satuan (Unit) *
               </label>
-              <input
+              <HuntrInput
                 type="text"
                 required
                 value={formData.unit}
@@ -222,7 +224,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Lead Time (Hari)
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 min={1}
                 value={formData.lead_time_days || ""}
@@ -239,7 +241,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Target Min. *
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 required
                 min={1}
@@ -252,7 +254,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Maks. Kuota
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 value={formData.max_quantity}
                 onChange={(e) => setFormData({ ...formData, max_quantity: e.target.value })}
@@ -264,7 +266,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 MOQ / Buyer *
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 required
                 min={1}
@@ -277,7 +279,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Maks. / Buyer
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 value={formData.max_order_qty}
                 onChange={(e) => setFormData({ ...formData, max_order_qty: e.target.value })}
@@ -293,7 +295,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Mulai Tayang *
               </label>
-              <input
+              <HuntrInput
                 type="datetime-local"
                 required
                 value={formData.starts_at}
@@ -305,7 +307,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Batas Waktu *
               </label>
-              <input
+              <HuntrInput
                 type="datetime-local"
                 required
                 value={formData.ends_at}
@@ -326,13 +328,13 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
                   Tawarkan harga lebih murah bila volume pemesanan mencapai tier tertentu
                 </p>
               </div>
-              <button
+              <HuntrButton
                 type="button"
                 onClick={handleAddTier}
                 className="px-2 py-1 text-xs font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 hover:bg-orange-100 border border-orange-200 dark:border-orange-800/60 rounded-md transition-colors flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Tambah Tier
-              </button>
+              </HuntrButton>
             </div>
 
             {priceTiers.length === 0 ? (
@@ -344,7 +346,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
                 {priceTiers.map((tier, idx) => (
                   <div key={idx} className="flex items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-md border border-slate-200 dark:border-slate-700">
                     <span className="text-[11px] text-slate-500 font-medium">Tier {idx + 1}:</span>
-                    <input
+                    <HuntrInput
                       type="number"
                       placeholder="Min Qty"
                       value={tier.min_quantity}
@@ -352,7 +354,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
                       className="w-20 text-xs py-1 px-1.5 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                     <span className="text-xs text-slate-400">s/d</span>
-                    <input
+                    <HuntrInput
                       type="number"
                       placeholder="Maks (opsional)"
                       value={tier.max_quantity || ""}
@@ -360,20 +362,20 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
                       className="w-24 text-xs py-1 px-1.5 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                     <span className="text-xs text-slate-400">Harga: Rp</span>
-                    <input
+                    <HuntrInput
                       type="number"
                       placeholder="Harga Satuan"
                       value={tier.unit_price}
                       onChange={(e) => handleUpdateTier(idx, "unit_price", Number(e.target.value))}
                       className="w-24 text-xs py-1 px-1.5 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => handleRemoveTier(idx)}
                       className="p-1 text-slate-400 hover:text-rose-500 transition-colors ml-auto"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </HuntrButton>
                   </div>
                 ))}
               </div>
@@ -385,7 +387,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Deskripsi & Spesifikasi Produk
             </label>
-            <textarea
+            <HuntrTextarea
               rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -399,7 +401,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Ketentuan Pengiriman
               </label>
-              <textarea
+              <HuntrTextarea
                 rows={2}
                 value={formData.delivery_terms}
                 onChange={(e) => setFormData({ ...formData, delivery_terms: e.target.value })}
@@ -410,7 +412,7 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Kebijakan Retur / Komplain
               </label>
-              <textarea
+              <HuntrTextarea
                 rows={2}
                 value={formData.return_policy}
                 onChange={(e) => setFormData({ ...formData, return_policy: e.target.value })}
@@ -421,20 +423,20 @@ export const SupplierCampaignModal: React.FC<SupplierCampaignModalProps> = ({
 
           {/* Footer CTA */}
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <button
+            <HuntrButton
               type="button"
               onClick={onClose}
               className="py-1.5 px-3.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
             >
               Batal
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="submit"
               disabled={loading}
               className="py-1.5 px-4 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-md transition-colors"
             >
               {loading ? "Menyimpan..." : campaign ? "Simpan Perubahan" : "Simpan Draft Campaign"}
-            </button>
+            </HuntrButton>
           </div>
         </form>
       </div>

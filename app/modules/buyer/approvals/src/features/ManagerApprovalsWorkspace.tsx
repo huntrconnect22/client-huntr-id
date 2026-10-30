@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import { apiGet, apiPost } from "~/lib/api";
@@ -200,7 +201,7 @@ export default function ManagerApprovals() {
         {selectedProposal && (
           <div style={{ flex: 1, position: "sticky", top: 20, height: "fit-content" }}>
             <div style={detailPanelStyle}>
-              <button
+              <HuntrButton
                 onClick={() => setSelectedProposal(null)}
                 style={{
                   background: "none",
@@ -211,7 +212,7 @@ export default function ManagerApprovals() {
                 }}
               >
                 <X size={20} />
-              </button>
+              </HuntrButton>
 
               <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--ui-text-primary)", margin: "16px 0" }}>
                 Complete Offer Details
@@ -298,7 +299,7 @@ export default function ManagerApprovals() {
               </div>
 
               {/* Action Button */}
-              <button
+              <HuntrButton
                 onClick={() => handleApprove(selectedProposal.id)}
                 disabled={approvingId === selectedProposal.id}
                 style={{
@@ -329,7 +330,7 @@ export default function ManagerApprovals() {
                     <CheckCircle2 size={14} /> Approve Winner
                   </>
                 )}
-              </button>
+              </HuntrButton>
             </div>
           </div>
         )}

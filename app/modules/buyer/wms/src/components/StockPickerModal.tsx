@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Boxes, Check, MapPin, PackageCheck, Search, Warehouse, X } from "lucide-react";
 
@@ -207,14 +209,14 @@ export function StockPickerModal({
               </p>
             )}
           </div>
-          <button
+          <HuntrButton
             type="button"
             onClick={onClose}
             className="shrink-0 rounded-md p-1.5 text-[var(--ui-text-muted)] transition-colors hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)]"
             aria-label="Close"
           >
             <X size={16} />
-          </button>
+          </HuntrButton>
         </div>
 
         <div className="border-b border-[var(--ui-border)] px-5 py-3">
@@ -223,7 +225,7 @@ export function StockPickerModal({
               size={14}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
             />
-            <input
+            <HuntrInput
               autoFocus
               type="text"
               value={query}
@@ -265,7 +267,7 @@ export function StockPickerModal({
                 const lowStock = group.available > 0 && group.available <= 5;
                 return (
                   <li key={group.key}>
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => {
                         const row = aggregateBySku
@@ -392,7 +394,7 @@ export function StockPickerModal({
                           <ul className="space-y-1">
                             {group.rows.map((row: StockPickerItem, i: number) => (
                               <li key={`${row.id}-${i}`}>
-                                <button
+                                <HuntrButton
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -434,7 +436,7 @@ export function StockPickerModal({
                                       / {fmtQty(row.on_hand)}
                                     </span>
                                   </span>
-                                </button>
+                                </HuntrButton>
                               </li>
                             ))}
                           </ul>
@@ -458,7 +460,7 @@ export function StockPickerModal({
                           ))}
                         </div>
                       )}
-                    </button>
+                    </HuntrButton>
                   </li>
                 );
               })}

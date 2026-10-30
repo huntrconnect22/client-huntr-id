@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { apiGet } from "~/lib/api";
@@ -255,19 +257,19 @@ export default function Tasks() {
               <div style={{ fontSize: 14, color: "var(--ui-text-secondary)" }}>
                 Ditemukan <strong style={{ color: "var(--ui-text-primary)" }}>{tasks.length} tugas</strong> penting
               </div>
-              <button 
+              <HuntrButton
                 onClick={() => fetchTasks(activeUser, activeCompany)}
                 style={{ background: "none", border: "none", color: "var(--huntr-orange)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
               >
                 Refresh Tugas
-              </button>
+              </HuntrButton>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {tasks.map(task => {
                 const priority = getPriorityStyle(task.priority);
                 return (
-                  <div 
+                  <HuntrSurface
                     key={task.id}
                     onClick={() => navigate(task.targetUrl)}
                     style={{
@@ -309,7 +311,7 @@ export default function Tasks() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--huntr-orange)", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
                       Kerjakan <ArrowRight size={14} />
                     </div>
-                  </div>
+                  </HuntrSurface>
                 );
               })}
             </div>

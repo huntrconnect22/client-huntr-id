@@ -1,12 +1,6 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import {
-  Link,
-  Outlet,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-} from "react-router";
-import { Menu, ShoppingCart, Bell } from "lucide-react";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { Outlet, useLocation, useNavigate, useOutletContext } from "react-router";
 import { getCartLineCount } from "~/lib/cart";
 import Breadcrumb from "~/components/Breadcrumb";
 import NotificationSound from "~/components/NotificationSound";
@@ -14,7 +8,6 @@ import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-  switchRole,
 } from "~/lib/api";
 import { SessionManager } from "~/lib/session";
 import { useMediaQuery, MOBILE_BREAKPOINT } from "~/hooks/useMediaQuery";
@@ -28,16 +21,21 @@ import { SubscriptionOverdueNotice } from "../components/SubscriptionOverdueNoti
 import { SubscriptionOverdueAlert } from "../components/SubscriptionOverdueAlert";
 import { VerificationBanner } from "~/components/VerificationBanner";
 
-import { SidebarNav } from "../components/SidebarNav";
-import { SidebarBottomSection } from "../components/SidebarBottomSection";
+import { AppDrawer } from "../components/AppDrawer";
+import { BottomNavigation } from "../components/BottomNavigation";
 import { NotificationDropdown } from "../components/NotificationDropdown";
 import { UserMenuDropdown } from "../components/UserMenuDropdown";
 import { StatusGate } from "../components/StatusGate";
-import { buildNavItems } from "../components/navigation";
+import {
+  buildBudgetBottomNavItems,
+  buildCrmBottomNavItems,
+  buildNavItems,
+  buildWmsBottomNavItems,
+} from "../components/navigation";
 import { calculateNotificationCounts } from "../components/notificationCounts";
 import { isAgenticProcurementEnabled } from "~/lib/features";
 import { useLanguage } from "~/context/LanguageContext";
-import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+import { AppTopbar } from "../components/AppTopbar";
 import { getWmsApps } from "~/lib/api/wms";
 import { getCrmApps } from "~/lib/api/crm";
 import { getBudgetApps } from "~/lib/api/budgeting";
@@ -74,7 +72,20 @@ export default function AppShell() {
         blur?: number;
         intensity?: string;
       }>;
+      // MUI's modal manager makes the application shell unavailable to screen
+      // readers while a child-route modal is open. Release any focus within
+      // that shell before it becomes isolated.
+      if (ev.detail?.active) {
+        const focusedElement = document.activeElement;
+        if (
+          focusedElement instanceof HTMLElement &&
+          focusedElement.closest(".huntr-app-shell")
+        ) {
+          focusedElement.blur();
+        }
+      }
       setGlobalBackdropActive(Boolean(ev.detail?.active));
+      if (ev.detail?.active) setAppDrawerOpen(false);
       if (ev.detail?.blur != null) {
         document.documentElement.style.setProperty(
           "--huntr-global-backdrop-blur",
@@ -108,11 +119,12 @@ export default function AppShell() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
+  const appDrawerReturnFocusRef = useRef<HTMLElement | null>(null);
+  const appDrawerFocusTimerRef = useRef<number | null>(null);
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>(
     {},
   );
-  const [roleSwitching, setRoleSwitching] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [agenticEnabled, setAgenticEnabled] = useState(false);
   const [allUserCompanies, setAllUserCompanies] = useState<any[]>([]);
@@ -329,6 +341,45 @@ export default function AppShell() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
+  const openAppDrawer = useCallback(() => {
+    const focusedElement = document.activeElement;
+    appDrawerReturnFocusRef.current =
+      focusedElement instanceof HTMLElement ? focusedElement : null;
+
+    // The Dialog is portalled outside `.huntr-app-shell`. Release focus from
+    // its trigger before MUI marks the shell aria-hidden.
+    appDrawerReturnFocusRef.current?.blur();
+    setAppDrawerOpen(true);
+  }, []);
+
+  const closeAppDrawer = useCallback(() => {
+    setAppDrawerOpen(false);
+
+    if (appDrawerFocusTimerRef.current !== null) {
+      window.clearTimeout(appDrawerFocusTimerRef.current);
+    }
+
+    const returnTarget = appDrawerReturnFocusRef.current;
+    if (!returnTarget) return;
+
+    // Wait until modal isolation is removed, then restore the keyboard user to
+    // the exact control that opened the menu.
+    appDrawerFocusTimerRef.current = window.setTimeout(() => {
+      if (returnTarget.isConnected) {
+        returnTarget.focus({ preventScroll: true });
+      }
+      appDrawerFocusTimerRef.current = null;
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (appDrawerFocusTimerRef.current !== null) {
+        window.clearTimeout(appDrawerFocusTimerRef.current);
+      }
+    };
+  }, []);
+
   const updateHeaderHeight = useCallback(() => {
     const height = headerRef.current?.offsetHeight ?? 64;
     document.documentElement.style.setProperty(
@@ -394,18 +445,10 @@ export default function AppShell() {
       navigate("/select-company");
       return;
     }
-    // Do NOT overwrite state here — syncSession (subscribed to SessionManager) already keeps state in sync.
-    // Only handle redirect for root path.
-    const slug =
-      c?.slug ||
-      (c?.name
-        ? c.name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)/g, "")
-        : "");
-    if (slug && pathname === "/") {
-      navigate(`/${slug}`, { replace: true });
+    // The root route is the application launchpad. Keep the user there and
+    // open the full-screen Main Menu instead of silently routing to Dashboard.
+    if (pathname === "/") {
+      setAppDrawerOpen(true);
     }
   }, [pathname]);
 
@@ -445,8 +488,10 @@ export default function AppShell() {
   }, [user?.id, activeCompany?.id]);
 
   useEffect(() => {
-    if (isMobile) setSidebarOpen(false);
-  }, [pathname, isMobile]);
+    if (pathname !== "/") {
+      setAppDrawerOpen(false);
+    }
+  }, [pathname]);
 
   // Handle outside clicks & escape key for dropdowns
   useEffect(() => {
@@ -554,6 +599,9 @@ export default function AppShell() {
   );
   const canManageSubscription = isOwner || user?.role === "manager";
   const isWmsPage = /(?:^|\/)wms\/?$/.test(pathname);
+  const isCrmPage = /(?:^|\/)crm\/?$/.test(pathname);
+  const isBudgetPage = /(?:^|\/)budgeting\/?$/.test(pathname);
+  const isCompanyDashboard = Boolean(companyPrefix) && pathname === companyPrefix;
   const isNewPrCheckout =
     /(?:^|\/)checkout\/?$/.test(pathname) &&
     !new URLSearchParams(search).has("revise");
@@ -651,22 +699,6 @@ export default function AppShell() {
     navigate("/select-company");
   };
 
-  const handleRoleSwitch = async (role: string) => {
-    if (!user) return;
-    try {
-      setRoleSwitching(true);
-      await switchRole(role);
-      await fetchFreshUserData();
-    } catch (err: any) {
-      console.error("Failed to switch role", err);
-      const errorMessage =
-        err?.response?.data?.message || err?.message || "Gagal beralih peran!";
-      alert(`${errorMessage} Silakan coba lagi.`);
-    } finally {
-      setRoleSwitching(false);
-    }
-  };
-
   const handleSwitchWorkspace = async (targetCompany: any) => {
     if (!targetCompany) return;
     setSwitchingWorkspace(true);
@@ -681,13 +713,7 @@ export default function AppShell() {
         SessionManager.setUser({ ...current, ...res.user });
       }
       await loadUserCompanies();
-      const slug =
-        freshCompany.slug ||
-        freshCompany.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "");
-      navigate(`/${slug}`);
+      navigate("/");
     } catch (err: any) {
       console.error("Failed to switch workspace", err);
       alert("Gagal beralih workspace. Silakan coba lagi.");
@@ -696,12 +722,63 @@ export default function AppShell() {
     }
   };
 
-  const closeSidebar = () => setSidebarOpen(false);
-  const handleNavClick = () => {
-    if (isMobile) closeSidebar();
+  const handleAppNavigate = () => {
+    setAppDrawerOpen(false);
   };
 
+  const handleAppDrawerClose = useCallback(() => {
+    closeAppDrawer();
+
+    // The authenticated root is only a launchpad. Closing it intentionally
+    // continues to the workspace dashboard, so the page behind the dialog is
+    // never a second, confusing home screen.
+    if (pathname === "/" && companyPrefix) {
+      navigate(companyPrefix, { replace: true });
+    }
+  }, [closeAppDrawer, companyPrefix, navigate, pathname]);
+
+  const activeNavItem = [...NAV]
+    .sort((a, b) => b.to.length - a.to.length)
+    .find(
+      ({ to, exact }) =>
+        pathname === to || (!exact && to !== "/" && pathname.startsWith(`${to}/`)),
+    );
+  const activeNavSection = activeNavItem?.section ?? "main";
+  const isProcurementOrDocumentPage =
+    activeNavSection === "procurement" ||
+    activeNavSection === "orders" ||
+    /\/(?:agentic-procurement|marketplace|crowd-buy|my-pr|approvals|pr-audit|rfq|compare-review|checkout|negotiation|orders|direct-po|receipts|bast|efaktur|returns|debit-notes)(?:\/|$)/.test(
+      pathname,
+    );
+  const procurementAndDocumentItems = NAV.filter(
+    (item) => item.section === "procurement" || item.section === "orders",
+  );
+  // The company dashboard is a workspace overview, not an application launcher.
+  // Apps are intentionally opened from Main Menu. Each application then owns its
+  // overview and operational navigation after the user explicitly enters it.
+  const dashboardAppRoutes = new Set([
+    `${companyPrefix}/apps`,
+    `${companyPrefix}/wms`,
+    `${companyPrefix}/crm`,
+    `${companyPrefix}/budgeting`,
+  ]);
+  const dashboardNavItems = NAV.filter(
+    (item) => item.section === "main" && !dashboardAppRoutes.has(item.to),
+  );
+  const contextualNavItems = isCompanyDashboard
+    ? dashboardNavItems
+    : isWmsPage
+    ? buildWmsBottomNavItems(companyPrefix)
+    : isCrmPage
+      ? buildCrmBottomNavItems(companyPrefix)
+      : isBudgetPage
+        ? buildBudgetBottomNavItems(companyPrefix)
+        : isProcurementOrDocumentPage
+          ? procurementAndDocumentItems
+        : NAV.filter((item) => item.section === activeNavSection);
+
   const handleNotificationToggle = useCallback(() => {
+    setShowUserMenu(false);
     if (isMobile) {
       navigate("/notifications");
     } else {
@@ -709,83 +786,15 @@ export default function AppShell() {
     }
   }, [isMobile, navigate, showNotifications]);
 
-  const sidebarInner = (
-    <>
-      <div
-        style={{
-          padding: "0 20px 24px",
-          width: "100%",
-          boxSizing: "border-box",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            width: "100%",
-          }}
-        >
-          <Link
-            to="/"
-            onClick={handleNavClick}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              width: "100%",
-              textDecoration: "none",
-            }}
-          >
-            <img
-              src="/assets/img/logo/sidebar.png"
-              alt="Huntr Logo"
-              style={{
-                width: 260,
-                height: 64,
-                objectFit: "contain",
-                flexShrink: 0,
-                marginLeft: 0,
-                display: "block",
-                cursor: "pointer",
-              }}
-            />
-          </Link>
-        </div>
-      </div>
-
-      <SidebarNav
-        navItems={NAV}
-        pathname={pathname}
-        pendingCounts={pendingCounts}
-        onNavClick={handleNavClick}
-      />
-
-      <SidebarBottomSection
-        user={user}
-        activeCompany={activeCompany}
-        isBuyerComp={isBuyerComp}
-        isVendorComp={isVendorComp}
-        enterprisePlan={subscriptionAccess?.enterprisePlan ?? null}
-        isTrialPlan={subscriptionAccess?.isTrial === true}
-        roleSwitching={roleSwitching}
-        switchingWorkspace={switchingWorkspace}
-        counterpartBuyer={counterpartBuyer}
-        counterpartVendor={counterpartVendor}
-        rejectedCounterpart={rejectedCounterpart}
-        onRoleSwitch={handleRoleSwitch}
-        onSwitchWorkspace={handleSwitchWorkspace}
-        onSwitchCompany={handleSwitchCompany}
-      />
-    </>
+  const shellContext = useMemo<AppShellContext>(
+    () => ({
+      setPageTitle,
+      setPageSubtitle,
+      user,
+      company: activeCompany,
+    }),
+    [activeCompany, user],
   );
-
-  const shellContext: AppShellContext = {
-    setPageTitle,
-    setPageSubtitle,
-    user,
-    company: activeCompany,
-  };
   const trialInfo = getTrialInfo(user);
   const isGuestRoute = pathname === "/" || pathname.startsWith("/marketplace/");
 
@@ -812,93 +821,57 @@ export default function AppShell() {
         />
       )}
 
-      {sidebarOpen && (
-        <div
-          className="huntr-sidebar-backdrop"
-          onClick={closeSidebar}
-          aria-hidden="true"
-        />
-      )}
-      <aside
-        className={`huntr-sidebar${sidebarOpen ? " huntr-sidebar--open" : ""}${globalBackdropActive ? " huntr-shell--blur" : ""}`}
-      >
-        {sidebarInner}
-      </aside>
-
+      <AppDrawer
+        navItems={NAV}
+        pathname={pathname}
+        pendingCounts={pendingCounts}
+        unreadCount={unreadCount}
+        companyId={activeCompany?.id}
+        user={user}
+        activeCompany={activeCompany}
+        isVendorComp={isVendorComp}
+        isBuyerComp={isBuyerComp}
+        counterpartBuyer={counterpartBuyer}
+        counterpartVendor={counterpartVendor}
+        rejectedCounterpart={rejectedCounterpart}
+        switchingWorkspace={switchingWorkspace}
+        onSwitchWorkspace={handleSwitchWorkspace}
+        onLogout={handleLogout}
+        open={appDrawerOpen}
+        onClose={handleAppDrawerClose}
+        onNavigate={handleAppNavigate}
+      />
       <div className="huntr-main">
-        <header
-          ref={headerRef}
-          className={`huntr-main-header${globalBackdropActive ? " huntr-shell--blur huntr-shell--dim" : ""}`}
-        >
-          <div className="huntr-header-leading">
-            <button
-              type="button"
-              className="huntr-menu-btn"
-              onClick={() => setSidebarOpen(true)}
-              aria-label={t("header.openMenu")}
-            >
-              <Menu size={20} />
-            </button>
-            <div className="huntr-header-titles">
-              <Breadcrumb />
-              <h1>{pageTitle}</h1>
-              {pageSubtitle && <p>{pageSubtitle}</p>}
-            </div>
-          </div>
-
-          <div className="huntr-header-actions">
-            {trialInfo.hasTrial &&
+        <AppTopbar
+          headerRef={headerRef}
+          notificationRef={notifButtonRef}
+          userMenuRef={userMenuRef}
+          obscured={globalBackdropActive}
+          title={pageTitle}
+          subtitle={pageSubtitle}
+          breadcrumb={<Breadcrumb />}
+          user={user}
+          cartCount={cartCount}
+          unreadCount={unreadCount}
+          notificationsOpen={showNotifications}
+          userMenuOpen={showUserMenu}
+          onHome={() => navigate(companyPrefix || "/")}
+          onCart={() => window.dispatchEvent(new CustomEvent("huntr-toggle-cart"))}
+          onNotifications={handleNotificationToggle}
+          onUserMenu={() => { setShowNotifications(false); setShowUserMenu(!showUserMenu); }}
+          status={trialInfo.hasTrial &&
               isBuyerComp &&
               !hasActiveSubscription &&
               !isMobile && (
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => navigate(`${companyPrefix}/account`)}
                   title={t("header.trialEndsOn", {
                     date: trialInfo.formattedEndDate,
                   })}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "5px 10px",
-                    borderRadius: 6,
-                    background: trialInfo.isExpired
-                      ? "rgba(239, 68, 68, 0.12)"
-                      : trialInfo.isUrgent
-                        ? "rgba(249, 115, 22, 0.15)"
-                        : "var(--ui-bg-input)",
-                    border: trialInfo.isExpired
-                      ? "1px solid rgba(239, 68, 68, 0.3)"
-                      : trialInfo.isUrgent
-                        ? "1px solid rgba(249, 115, 22, 0.35)"
-                        : "1px solid var(--ui-border)",
-                    color: trialInfo.isExpired
-                      ? "#ef4444"
-                      : trialInfo.isUrgent
-                        ? "#f97316"
-                        : "var(--ui-text-secondary)",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                  className="hover:border-orange-500/50"
+                  color={trialInfo.isExpired ? "error" : trialInfo.isUrgent ? "warning" : "primary"}
+                  style={{ minHeight: 44, fontSize: 14 }}
                 >
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: trialInfo.isExpired
-                        ? "#ef4444"
-                        : trialInfo.isUrgent
-                          ? "#f97316"
-                          : "#10b981",
-                      display: "inline-block",
-                    }}
-                    className={trialInfo.isUrgent ? "animate-pulse" : ""}
-                  />
                   <span>
                     {trialInfo.isExpired
                       ? t("header.trialExpired")
@@ -910,112 +883,9 @@ export default function AppShell() {
                             days: trialInfo.daysRemaining,
                           })}
                   </span>
-                </button>
+                </HuntrButton>
               )}
-
-            <LanguageSwitcher />
-
-            {!isMobile && (
-              <button
-                type="button"
-                onClick={() =>
-                  window.dispatchEvent(new CustomEvent("huntr-toggle-cart"))
-                }
-                aria-label={t("header.viewCart", { count: cartCount })}
-                style={{
-                  position: "relative",
-                  width: 34,
-                  height: 34,
-                  borderRadius: 4,
-                  background: "var(--ui-bg-input)",
-                  border: "1px solid var(--ui-border)",
-                  color: cartCount > 0 ? "#fb923c" : "var(--ui-text-muted)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.2s",
-                }}
-              >
-                <ShoppingCart size={16} />
-                {cartCount > 0 && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: -4,
-                      right: -4,
-                      minWidth: 16,
-                      height: 16,
-                      borderRadius: 2,
-                      background: "#f59e0b",
-                      color: "#fff",
-                      fontSize: 9,
-                      fontWeight: 700,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "0 3px",
-                    }}
-                  >
-                    {cartCount > 9 ? "9+" : cartCount}
-                  </span>
-                )}
-              </button>
-            )}
-
-            <div style={{ position: "relative" }}>
-              <button
-                ref={notifButtonRef}
-                onClick={handleNotificationToggle}
-                aria-label={
-                  unreadCount > 0
-                    ? t("header.notificationsUnread", { count: unreadCount })
-                    : t("header.notifications")
-                }
-                style={{
-                  position: "relative",
-                  width: 34,
-                  height: 34,
-                  borderRadius: 8,
-                  background: "var(--ui-bg-input)",
-                  border: "1px solid var(--ui-border)",
-                  color: unreadCount > 0 ? "#fb923c" : "var(--ui-text-muted)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.2s",
-                }}
-              >
-                <Bell
-                  size={16}
-                  fill={unreadCount > 0 ? "rgba(249,115,22,0.2)" : "none"}
-                />
-                {unreadCount > 0 && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: -4,
-                      right: -4,
-                      minWidth: 16,
-                      height: 16,
-                      borderRadius: 4,
-                      background: "#f59e0b",
-                      color: "#fff",
-                      fontSize: 9,
-                      fontWeight: 700,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "0 3px",
-                    }}
-                  >
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {showNotifications && (
+          notificationMenu={showNotifications && (
                 <NotificationDropdown
                   unreadCount={unreadCount}
                   recentNotifications={recentNotifications}
@@ -1024,40 +894,7 @@ export default function AppShell() {
                   onClose={() => setShowNotifications(false)}
                 />
               )}
-            </div>
-
-            {user && (
-              <div ref={userMenuRef} className="huntr-user-menu-wrap">
-                <button
-                  type="button"
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  aria-expanded={showUserMenu}
-                  aria-haspopup="true"
-                  aria-label={t("header.userMenu", { name: user.name || "" })}
-                  className={`huntr-user-menu-btn${showUserMenu ? " huntr-user-menu-btn--open" : ""}`}
-                >
-                  <div className="huntr-user-avatar overflow-hidden">
-                    {user?.profile_photo_url ? (
-                      <img
-                        src={user.profile_photo_url}
-                        alt={user.name || "User"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      user.name?.[0]?.toUpperCase() || "U"
-                    )}
-                  </div>
-                  {!isMobile && (
-                    <div className="huntr-user-menu-label">
-                      <span className="huntr-user-menu-name">{user.name}</span>
-                      <span className="huntr-user-menu-email">
-                        {user.email || "No email"}
-                      </span>
-                    </div>
-                  )}
-                </button>
-
-                {showUserMenu && (
+          userMenu={showUserMenu && (
                   <UserMenuDropdown
                     user={user}
                     activeCompany={activeCompany}
@@ -1072,10 +909,7 @@ export default function AppShell() {
                     onClose={() => setShowUserMenu(false)}
                   />
                 )}
-              </div>
-            )}
-          </div>
-        </header>
+        />
 
         {isBuyerComp && !hasActiveSubscription && !isSubscriptionOverdue && (
           <TrialBanner trial={trialInfo} />
@@ -1139,6 +973,14 @@ export default function AppShell() {
           )}
         </div>
       </div>
+
+      <BottomNavigation
+        navItems={contextualNavItems}
+        pathname={pathname}
+        search={search}
+        pendingCounts={pendingCounts}
+        onOpenMenu={openAppDrawer}
+      />
 
       <GlobalCartPanel companyPrefix={companyPrefix} />
     </div>

@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState } from "react";
 import { X, CheckCircle2, XCircle, AlertCircle, Loader2, Send } from "lucide-react";
 import { adminAuditCompany } from "../../lib/api";
@@ -90,7 +92,7 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
         />
 
         {/* Close button */}
-        <button
+        <HuntrButton
           onClick={onClose}
           aria-label="Close"
           style={{
@@ -111,7 +113,7 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
           }}
         >
           <X size={15} />
-        </button>
+        </HuntrButton>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -170,7 +172,7 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
               ? "Catatan Permintaan Dokumen (optional)"
               : "Reason for Decline *"}
           </label>
-          <textarea
+          <HuntrTextarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder={
@@ -246,7 +248,7 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
             flexWrap: "wrap",
           }}
         >
-          <button
+          <HuntrButton
             onClick={onClose}
             style={{
               flex: 1,
@@ -264,8 +266,8 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
             }}
           >
             Cancel
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             onClick={handleSubmit}
             disabled={isLoading}
             style={{
@@ -313,7 +315,7 @@ export default function AuditModal({ company, action, onClose, onDone }: Props) 
                   : "Decline Registration"}
               </>
             )}
-          </button>
+          </HuntrButton>
         </div>
       </div>
     </div>

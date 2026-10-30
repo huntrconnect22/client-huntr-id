@@ -1,3 +1,5 @@
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import Swal from "sweetalert2";
 import { Plus, X } from "lucide-react";
@@ -56,7 +58,7 @@ export function CrmComposer({
   const field = (key: string, label: string, type = "text") => (
     <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
       {label}
-      <input
+      <HuntrInput
         type={type}
         value={form[key] || ""}
         onChange={(e) => setForm({ ...form, [key]: e.target.value })}
@@ -200,13 +202,13 @@ export function CrmComposer({
             </div>
             <h3 className="font-bold text-[var(--ui-text-primary)]">{title}</h3>
           </div>
-          <button
+          <HuntrButton
             type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)] transition-colors"
           >
             <X size={16} />
-          </button>
+          </HuntrButton>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -262,7 +264,7 @@ export function CrmComposer({
               />
               <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
                 Prioritas
-                <select
+                <HuntrSelect
                   value={form.priority}
                   onChange={(e) =>
                     setForm({ ...form, priority: e.target.value })
@@ -272,7 +274,7 @@ export function CrmComposer({
                   <option value="normal">Normal</option>
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
-                </select>
+                </HuntrSelect>
               </label>
             </>
           )}
@@ -294,7 +296,7 @@ export function CrmComposer({
               {field("name", "Nama Workflow *")}
               <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
                 Trigger Peristiwa
-                <select
+                <HuntrSelect
                   value={form.trigger}
                   onChange={(e) =>
                     setForm({ ...form, trigger: e.target.value })
@@ -305,7 +307,7 @@ export function CrmComposer({
                   <option value="deal_stage_changed">Deal Berubah Tahap</option>
                   <option value="ticket_created">Tiket Bantuan Dibuat</option>
                   <option value="quote_approved">Quote Disetujui</option>
-                </select>
+                </HuntrSelect>
               </label>
             </>
           )}
@@ -313,7 +315,7 @@ export function CrmComposer({
             <>
               <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
                 Provider Email
-                <select
+                <HuntrSelect
                   value={form.provider}
                   onChange={(e) =>
                     setForm({ ...form, provider: e.target.value })
@@ -323,7 +325,7 @@ export function CrmComposer({
                   <option value="gmail">Gmail</option>
                   <option value="microsoft">Microsoft 365</option>
                   <option value="imap">IMAP Standar</option>
-                </select>
+                </HuntrSelect>
               </label>
               {form.provider === "imap" &&
                 field("email", "Email Kerja *", "email")}
@@ -342,7 +344,7 @@ export function CrmComposer({
               {field("scheduled_at", "Jadwal Pengiriman", "datetime-local")}
               <label className="sm:col-span-2 block text-xs font-semibold text-[var(--ui-text-secondary)]">
                 Konten Email *
-                <textarea
+                <HuntrTextarea
                   value={form.body || ""}
                   onChange={(e) => setForm({ ...form, body: e.target.value })}
                   className={`${input} mt-1 min-h-28`}
@@ -355,18 +357,18 @@ export function CrmComposer({
               {field("title", "Judul Panduan *")}
               <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
                 Status Publikasi
-                <select
+                <HuntrSelect
                   value={form.status || "draft"}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                   className={`${input} mt-1`}
                 >
                   <option value="draft">Draft</option>
                   <option value="published">Published</option>
-                </select>
+                </HuntrSelect>
               </label>
               <label className="sm:col-span-2 block text-xs font-semibold text-[var(--ui-text-secondary)]">
                 Konten Artikel *
-                <textarea
+                <HuntrTextarea
                   value={form.body || ""}
                   onChange={(e) => setForm({ ...form, body: e.target.value })}
                   className={`${input} mt-1 min-h-28`}
@@ -378,7 +380,7 @@ export function CrmComposer({
             <>
               <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
                 Provider Kanal
-                <select
+                <HuntrSelect
                   value={form.integration_provider}
                   onChange={(e) =>
                     setForm({
@@ -399,7 +401,7 @@ export function CrmComposer({
                   <option value="social">Social Media</option>
                   <option value="gmail">Google Workspace</option>
                   <option value="microsoft">Microsoft 365</option>
-                </select>
+                </HuntrSelect>
               </label>
               {field("settings", "Endpoint atau ID Workspace")}
             </>
@@ -420,19 +422,19 @@ export function CrmComposer({
         </div>
 
         <div className="mt-5 flex gap-2.5 pt-3 border-t border-[var(--ui-border)]">
-          <button
+          <HuntrButton
             type="button"
             onClick={onClose}
             className="flex-1 inline-flex h-9 items-center justify-center rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] transition-all hover:text-[var(--ui-text-primary)]"
           >
             Batal
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             disabled={saving}
             className="flex-1 inline-flex h-9 items-center justify-center rounded-lg bg-orange-500 text-xs font-bold text-white shadow-sm shadow-orange-500/20 transition-all hover:bg-orange-600 disabled:opacity-50"
           >
             {saving ? "Menyimpan…" : "Simpan Data"}
-          </button>
+          </HuntrButton>
         </div>
       </form>
     </div>
@@ -453,7 +455,7 @@ function Select({
   return (
     <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
       {label}
-      <select
+      <HuntrSelect
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`${input} mt-1`}
@@ -464,7 +466,7 @@ function Select({
             {o.name || o.title}
           </option>
         ))}
-      </select>
+      </HuntrSelect>
     </label>
   );
 }

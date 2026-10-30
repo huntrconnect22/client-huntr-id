@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { ShieldCheck, AlertCircle, Camera } from "lucide-react";
 
@@ -26,7 +27,7 @@ export function VerifyLandingState({ scanError, onOpenScanner }: Props) {
       </p>
 
       {/* Scan button */}
-      <button
+      <HuntrButton
         id="btn-open-scanner"
         onClick={onOpenScanner}
         style={{
@@ -48,7 +49,7 @@ export function VerifyLandingState({ scanError, onOpenScanner }: Props) {
       >
         <Camera size={20} />
         Scan QR Code
-      </button>
+      </HuntrButton>
 
       {/* Scan error */}
       {scanError && (

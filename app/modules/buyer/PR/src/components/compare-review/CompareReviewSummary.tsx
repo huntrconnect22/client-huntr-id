@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Calendar, MapPin, Package, CheckCircle2, Loader2 } from "lucide-react";
 
@@ -18,7 +20,7 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
   const isProcessing = processingId === String(proposalId);
 
   return (
-    <div
+    <HuntrSurface
       style={{
         padding: 24,
         borderRadius: 24,
@@ -93,7 +95,7 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
 
         {awardedProposal && (
           <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <button
+            <HuntrButton
               onClick={() => {
                 if (proposalId) onApproveWinner(proposalId);
               }}
@@ -119,10 +121,10 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
                 <CheckCircle2 size={16} />
               )}
               Approve & Generate PO
-            </button>
+            </HuntrButton>
           </div>
         )}
       </div>
-    </div>
+    </HuntrSurface>
   );
 };

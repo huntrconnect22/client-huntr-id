@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { RefreshCw, Loader2, Briefcase, FileText, Package, Calendar, ArrowRight } from "lucide-react";
 
@@ -28,12 +29,12 @@ export function VendorTendersView({
             Review and participate in active buyer requests.
           </p>
         </div>
-        <button
+        <HuntrButton
           onClick={onRefresh}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
         >
           <RefreshCw size={13} /> Refresh
-        </button>
+        </HuntrButton>
       </div>
 
       {rfqsLoading ? (
@@ -89,7 +90,7 @@ export function VendorTendersView({
                     </span>
                   </div>
 
-                  <button 
+                  <HuntrButton
                     type="button"
                     disabled={hasSubmitted}
                     onClick={(event) => {
@@ -104,7 +105,7 @@ export function VendorTendersView({
                     }`}
                   >
                     {hasSubmitted ? "Proposal Submitted" : "Submit Quotation"} <ArrowRight size={13} />
-                  </button>
+                  </HuntrButton>
                 </div>
               </div>
             );

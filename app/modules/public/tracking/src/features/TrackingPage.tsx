@@ -1,3 +1,5 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router";
 import {
@@ -256,7 +258,7 @@ export default function TrackingPage() {
               {/* PO input */}
               <div style={{ flex: 1, minWidth: 160, position: "relative" }}>
                 <FileText size={14} color="rgba(255,255,255,0.25)" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
-                <input
+                <HuntrInput
                   type="text" placeholder="PO Number"
                   value={poInput} onChange={e => setPoInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleSearch()}
@@ -274,7 +276,7 @@ export default function TrackingPage() {
               {/* Resi input */}
               <div style={{ flex: 1, minWidth: 160, position: "relative" }}>
                 <Truck size={14} color="rgba(255,255,255,0.25)" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
-                <input
+                <HuntrInput
                   type="text" placeholder="Tracking No. / Resi"
                   value={resiInput} onChange={e => setResiInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleSearch()}
@@ -288,7 +290,7 @@ export default function TrackingPage() {
               </div>
 
               {/* Button */}
-              <button
+              <HuntrButton
                 onClick={() => handleSearch()} disabled={loading}
                 style={{
                   padding: "10px 20px", borderRadius: 12, border: "none",
@@ -300,7 +302,7 @@ export default function TrackingPage() {
               >
                 {loading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Search size={14} />}
                 {loading ? "…" : "Track"}
-              </button>
+              </HuntrButton>
             </div>
           </div>
         </div>
@@ -419,7 +421,7 @@ export default function TrackingPage() {
 
             {/* Search again */}
             <div style={{ textAlign: "center" }}>
-              <button
+              <HuntrButton
                 onClick={() => { setResult(null); setPoInput(""); setResiInput(""); setSearched(false); setError(null); }}
                 style={{
                   background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10,
@@ -428,7 +430,7 @@ export default function TrackingPage() {
                 }}
               >
                 <RefreshCw size={12} /> Search Another Shipment
-              </button>
+              </HuntrButton>
             </div>
           </div>
         )}

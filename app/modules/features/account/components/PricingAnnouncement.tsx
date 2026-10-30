@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { BellRing, ChevronDown, ChevronUp } from "lucide-react";
@@ -107,7 +108,7 @@ export default function PricingAnnouncement({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 pl-7 lg:shrink-0 lg:pl-0">
-          <button
+          <HuntrButton
             type="button"
             onClick={toggleDetails}
             aria-expanded={expanded}
@@ -115,15 +116,15 @@ export default function PricingAnnouncement({
           >
             {expanded ? "Tutup rincian" : "Lihat rincian"}{" "}
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             type="button"
             onClick={acknowledge}
             disabled={saving}
             className="rounded bg-orange-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-orange-700 disabled:opacity-60"
           >
             {saving ? "Menyimpan..." : "Saya mengerti"}
-          </button>
+          </HuntrButton>
         </div>
       </div>
       {error && (

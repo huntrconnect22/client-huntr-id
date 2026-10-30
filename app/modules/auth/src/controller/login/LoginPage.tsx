@@ -1,3 +1,5 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Eye, EyeOff, ShieldCheck, Key, ArrowLeft, Mail, Lock, LogIn, AlertCircle } from "lucide-react";
@@ -157,7 +159,7 @@ export default function Login() {
                 {t("login.emailLabel")}
               </label>
               <div className="relative">
-                <input
+                <HuntrInput
                   id="login-email"
                   value={form.email}
                   onChange={e => set("email", e.target.value)}
@@ -177,7 +179,7 @@ export default function Login() {
                 {t("login.passwordLabel")}
               </label>
               <div className="relative">
-                <input
+                <HuntrInput
                   id="login-password"
                   value={form.password}
                   onChange={e => set("password", e.target.value)}
@@ -188,14 +190,14 @@ export default function Login() {
                   className="w-full pl-11 pr-12 py-3 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-2 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50"
                 />
                 <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setShowPw(p => !p)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] p-1 rounded-lg transition-colors"
                   aria-label={showPw ? "Hide password" : "Show password"}
                 >
                   {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                </HuntrButton>
               </div>
             </div>
           </div>
@@ -203,7 +205,7 @@ export default function Login() {
           {/* Options */}
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
+              <HuntrInput
                 id="remember-me"
                 type="checkbox"
                 checked={rememberMe}
@@ -230,7 +232,7 @@ export default function Login() {
           )}
 
           {/* Submit Button */}
-          <button 
+          <HuntrButton
             type="submit" 
             disabled={loading} 
             className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-md shadow-orange-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -244,7 +246,7 @@ export default function Login() {
                 <LogIn size={18} /> {t("login.loginBtn")}
               </>
             )}
-          </button>
+          </HuntrButton>
 
           {/* Footer Link */}
           <div className="text-center pt-2 border-t border-[var(--ui-border-subtle)]">
@@ -274,7 +276,7 @@ export default function Login() {
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="login-2fa">
               {useRecovery ? t("login.recoveryCodeLabel") : t("login.authCodeLabel")}
             </label>
-            <input
+            <HuntrInput
               id="login-2fa"
               value={twoFactorCode}
               onChange={e => setTwoFactorCode(e.target.value)}
@@ -294,31 +296,31 @@ export default function Login() {
             </div>
           )}
 
-          <button 
+          <HuntrButton
             type="submit" 
             disabled={loading} 
             className="w-full py-3 px-6 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-md shadow-emerald-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : t("login.verifyBtn")}
-          </button>
+          </HuntrButton>
 
           <div className="space-y-2 pt-2 text-center">
-            <button
+            <HuntrButton
               type="button"
               onClick={() => { setUseRecovery(!useRecovery); setTwoFactorCode(""); }}
               className="text-xs font-bold text-orange-500 hover:underline flex items-center justify-center gap-1.5 w-full"
             >
               <Key size={14} />
               {useRecovery ? t("login.useAuthApp") : t("login.useRecovery")}
-            </button>
+            </HuntrButton>
 
-            <button
+            <HuntrButton
               type="button"
               onClick={() => { setShow2FA(false); setTwoFactorCode(""); }}
               className="text-xs font-medium text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-colors w-full"
             >
               {t("login.backToLogin")}
-            </button>
+            </HuntrButton>
           </div>
         </form>
       )}

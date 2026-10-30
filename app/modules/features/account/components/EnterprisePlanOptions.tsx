@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useState } from "react";
 import type { EnterpriseCatalog } from "../../../lib/api/subscription";
 import type { SubscriptionPurchase } from "./SubscriptionCheckout";
@@ -34,22 +35,22 @@ export function EnterprisePlanOptions({
         className="inline-flex border border-[var(--ui-border)] p-0.5 text-xs"
         aria-label="Periode pembayaran"
       >
-        <button
+        <HuntrButton
           type="button"
           onClick={() => setAnnual(false)}
           aria-pressed={!annual}
           className={`px-3 py-2 ${!annual ? "bg-orange-600 !text-white" : "text-[var(--ui-text-secondary)]"}`}
         >
           Bulanan
-        </button>
-        <button
+        </HuntrButton>
+        <HuntrButton
           type="button"
           onClick={() => setAnnual(true)}
           aria-pressed={annual}
           className={`px-3 py-2 ${annual ? "bg-orange-600 !text-white" : "text-[var(--ui-text-secondary)]"}`}
         >
           Tahunan
-        </button>
+        </HuntrButton>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {catalog.plans.map((plan, index) => {
@@ -127,7 +128,7 @@ export function EnterprisePlanOptions({
                     : "CRM Enterprise tersedia di Pro"}
                 </li>
               </ul>
-              <button
+              <HuntrButton
                 type="button"
                 disabled={disabled}
                 onClick={() =>
@@ -145,7 +146,7 @@ export function EnterprisePlanOptions({
                 {!catalog.checkout_enabled
                   ? "Checkout belum tersedia"
                   : buttonLabel}
-              </button>
+              </HuntrButton>
             </article>
           );
         })}

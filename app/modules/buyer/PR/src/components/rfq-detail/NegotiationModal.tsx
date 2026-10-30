@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 import { MessageSquare, X, Loader2 } from "lucide-react";
 import { apiPost } from "~/lib/api";
@@ -88,13 +91,13 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: isMobile ? 16 : 20 }}>
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: isMobile ? 12 : 16, width: "100%", maxWidth: isMobile ? "100%" : 600, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
+      <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: isMobile ? 12 : 16, width: "100%", maxWidth: isMobile ? "100%" : 600, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
         <div style={{ padding: isMobile ? "20px 24px" : "24px 32px", borderBottom: "1px solid var(--ui-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "var(--ui-text-primary)" }}>{t("rfqDetail.negotiation.modalTitle")}</h3>
             <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 600 }}>{t("rfqDetail.negotiation.proposalBy", { name: proposal.company?.name })}</p>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer" }}><X size={24} /></button>
+          <HuntrButton onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer" }}><X size={24} /></HuntrButton>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -113,7 +116,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
                   <div style={{ width: isMobile ? "100%" : 140 }}>
                     <div style={{ position: "relative" }}>
                       <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 10, fontWeight: 600, color: "var(--ui-text-muted)" }}>Rp</span>
-                      <input 
+                      <HuntrInput
                         type="number"
                         value={it.negotiated_price}
                         onChange={(e) => handleItemPriceChange(it.proposal_item_id, e.target.value)}
@@ -129,7 +132,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
             <div>
               <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("rfqDetail.negotiation.paymentScheme")}</label>
-              <select 
+              <HuntrSelect
                 value={paymentScheme}
                 onChange={e => setPaymentScheme(e.target.value)}
                 style={{ width: "100%", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: 12, fontSize: 14, color: "var(--ui-text-primary)", fontWeight: 700, appearance: "auto" }}
@@ -139,11 +142,11 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
                 <option value="30 days">Net 30 Days</option>
                 <option value="60 days">Net 60 Days</option>
                 <option value="COD">Cash on Delivery (COD)</option>
-              </select>
+              </HuntrSelect>
             </div>
             <div>
               <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("rfqDetail.negotiation.deliveryInfo")}</label>
-              <select 
+              <HuntrSelect
                 value={deliveryTerms}
                 onChange={e => setDeliveryTerms(e.target.value)}
                 style={{ width: "100%", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: 12, fontSize: 14, color: "var(--ui-text-primary)", fontWeight: 700, appearance: "auto" }}
@@ -153,13 +156,13 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
                 <option value="14">14 Days</option>
                 <option value="30">30 Days</option>
                 <option value="60">60 Days</option>
-              </select>
+              </HuntrSelect>
             </div>
           </div>
 
           <div>
             <label style={{ fontSize: 10, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("rfqDetail.negotiation.notes")}</label>
-            <textarea 
+            <HuntrTextarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder={t("rfqDetail.negotiation.notesPlaceholder")}
@@ -169,16 +172,16 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
         </div>
 
         <div style={{ padding: 12, borderTop: "1px solid var(--ui-border)", display: "flex", gap: 16, flexDirection: isMobile ? "column" : "row" }}>
-          <button onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 8, border: "1px solid var(--ui-border-input)", background: "none", fontSize: 14, fontWeight: 700, color: "var(--ui-text-secondary)", cursor: "pointer" }}>{t("rfqDetail.negotiation.cancel")}</button>
-          <button 
+          <HuntrButton onClick={onClose} style={{ flex: 1, padding: 12, borderRadius: 8, border: "1px solid var(--ui-border-input)", background: "none", fontSize: 14, fontWeight: 700, color: "var(--ui-text-secondary)", cursor: "pointer" }}>{t("rfqDetail.negotiation.cancel")}</HuntrButton>
+          <HuntrButton
             onClick={handleSubmit}
             disabled={loading}
             style={{ flex: 2, padding: 12, borderRadius: 8, background: "var(--huntr-gradient)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 10px 20px rgba(249,115,22,0.2)", opacity: loading ? 0.5 : 1 }}
           >
             {loading ? <Loader2 className="animate-spin" style={{ margin: "0 auto" }} /> : t("rfqDetail.negotiation.submit")}
-          </button>
+          </HuntrButton>
         </div>
-      </div>
+      </HuntrSurface>
     </div>
   );
 }

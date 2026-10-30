@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useLoaderData } from "react-router";
 import Layout from "~/components/Layout";
@@ -56,9 +57,9 @@ function SpecsBlock({ text }: { text?: string }) {
       <div className={`text-xs text-[var(--ui-text-primary)] leading-relaxed whitespace-pre-wrap break-words overflow-hidden transition-all ${expanded ? "" : "max-h-24"}`}>
         {text}
       </div>
-      <button onClick={() => setExpanded(p => !p)} className="text-xs font-semibold text-orange-500 hover:underline mt-1.5">
+      <HuntrButton onClick={() => setExpanded(p => !p)} className="text-xs font-semibold text-orange-500 hover:underline mt-1.5">
         {expanded ? "Show less" : "Read more"}
-      </button>
+      </HuntrButton>
     </div>
   );
 }
@@ -180,9 +181,9 @@ export default function MarketplaceDetail() {
                     Rp {Number(item.price).toLocaleString("id-ID")} <span className="text-xs font-normal text-[var(--ui-text-muted)]">/ {item.uom}</span>
                   </div>
                 )}
-                <button onClick={() => navigate("/login")} style={{ color: "white" }} className="w-full py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex items-center justify-center gap-2">
+                <HuntrButton onClick={() => navigate("/login")} style={{ color: "white" }} className="w-full py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex items-center justify-center gap-2">
                   <ShoppingCart size={15} /> Sign In to Request
-                </button>
+                </HuntrButton>
               </div>
             </div>
           )}
@@ -195,9 +196,9 @@ export default function MarketplaceDetail() {
   return (
     <Layout title={item?.name || "Product Detail"} subtitle="Product details from vendor catalog">
       <div className="w-full space-y-4">
-        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-orange-500 font-semibold text-xs hover:underline">
+        <HuntrButton onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-orange-500 font-semibold text-xs hover:underline">
           <ArrowLeft size={14} /> Back to Catalog
-        </button>
+        </HuntrButton>
 
         {loading && <div className="flex justify-center py-16"><Package size={28} className="animate-spin text-orange-500" /></div>}
         {error   && <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold">{error}</div>}
@@ -257,7 +258,7 @@ export default function MarketplaceDetail() {
                 </div>
 
                 {/* Add to cart — no modal */}
-                <button
+                <HuntrButton
                   type="button"
                   onClick={handleAddToCart}
                   style={{ color: "white" }}
@@ -272,7 +273,7 @@ export default function MarketplaceDetail() {
                   ) : (
                     <><ShoppingCart size={16} /> Add to Cart</>
                   )}
-                </button>
+                </HuntrButton>
 
                 <p className="text-[11px] text-center text-[var(--ui-text-muted)]">
                   Prices confirmed when vendors submit proposals. You can edit quantity in your cart.

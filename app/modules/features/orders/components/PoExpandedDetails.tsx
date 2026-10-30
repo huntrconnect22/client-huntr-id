@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useState } from "react";
 import {
   FileText,
@@ -225,40 +227,40 @@ export const PoExpandedDetails = ({
       {/* ── Quick Action Badges / Modals Trigger Bar ── */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* DO Trigger */}
-        <button
+        <HuntrButton
           onClick={() => setActiveModal("do")}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-400/50 transition-all"
         >
           <Package size={13} className="text-blue-500" />
           <span>Delivery Orders ({po.delivery_orders?.length || 0})</span>
-        </button>
+        </HuntrButton>
 
         {/* BAST Trigger */}
-        <button
+        <HuntrButton
           onClick={() => setActiveModal("bast")}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-400/50 transition-all"
         >
           <FileCheck size={13} className="text-orange-500" />
           <span>BAST Documents ({po.basts?.length || 0})</span>
-        </button>
+        </HuntrButton>
 
         {/* E-Faktur Trigger */}
-        <button
+        <HuntrButton
           onClick={() => setActiveModal("efaktur")}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-400/50 transition-all"
         >
           <FileText size={13} className="text-emerald-500" />
           <span>E-Faktur Pajak ({po.efakturs?.length || 0})</span>
-        </button>
+        </HuntrButton>
 
         {/* Print PO */}
-        <button
+        <HuntrButton
           type="button"
           onClick={() => void openAuthenticatedDocument(`/api/orders/${po.id}/print`)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-orange-500 hover:bg-orange-500/5 transition-all ml-auto"
         >
           <FileText size={13} /> Print PO
-        </button>
+        </HuntrButton>
       </div>
 
       {/* ── Grid: Classification & Invoice Summary ── */}
@@ -348,34 +350,34 @@ export const PoExpandedDetails = ({
                 </span>
               </div>
               <div className="flex items-center gap-2 pt-1 border-t border-[var(--ui-border)]">
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => void openAuthenticatedDocument(`/api/invoices/${displayedInvoice.id}/print`)}
                   className="text-xs font-semibold text-orange-500 hover:underline flex items-center gap-1"
                 >
                   <FileText size={12} /> Print Invoice
-                </button>
+                </HuntrButton>
                 {displayedInvoice.status === "unpaid" &&
                   company?.type === "buyer" && (
-                    <button
+                    <HuntrButton
                       onClick={() => onPayInvoice(displayedInvoice)}
                       style={{ color: "white" }}
                       className="ml-auto px-3 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-bold transition-all"
                     >
                       Bayar Sekarang
-                    </button>
+                    </HuntrButton>
                   )}
                 {displayedInvoice.type === "final" &&
                   displayedInvoice.status === "draft" &&
                   company?.type === "vendor" && (
-                    <button
+                    <HuntrButton
                       onClick={() => onPublishInvoice(displayedInvoice.id)}
                       disabled={processingId === displayedInvoice.id}
                       style={{ color: "white" }}
                       className="ml-auto px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-xs font-bold transition-all"
                     >
                       Terbitkan Invoice
-                    </button>
+                    </HuntrButton>
                   )}
               </div>
             </div>
@@ -396,54 +398,54 @@ export const PoExpandedDetails = ({
           <span>{po.items?.length || 0} items</span>
         </div>
         <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-card)]">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] font-bold text-[10px] uppercase">
-                <th className="p-2.5 w-8 text-center">#</th>
-                <th className="p-2.5">Item Name & Code</th>
-                <th className="p-2.5">Qty</th>
-                <th className="p-2.5">Unit Price</th>
-                <th className="p-2.5 text-right">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--ui-border)]">
+          <HuntrTable className="w-full text-xs text-left">
+            <HuntrTableHead>
+              <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] font-bold text-[10px] uppercase">
+                <HuntrTableHeaderCell className="p-2.5 w-8 text-center">#</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="p-2.5">Item Name & Code</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="p-2.5">Qty</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="p-2.5">Unit Price</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="p-2.5 text-right">Subtotal</HuntrTableHeaderCell>
+              </HuntrTableRow>
+            </HuntrTableHead>
+            <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
               {po.items?.length ? (
                 po.items.map((item: any, idx: number) => (
-                  <tr key={idx}>
-                    <td className="p-2.5 text-center text-[var(--ui-text-muted)]">
+                  <HuntrTableRow key={idx}>
+                    <HuntrTableCell className="p-2.5 text-center text-[var(--ui-text-muted)]">
                       {idx + 1}
-                    </td>
-                    <td className="p-2.5">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="p-2.5">
                       <p className="font-semibold text-[var(--ui-text-primary)]">
                         {item.inventory_name}
                       </p>
                       <p className="text-[10px] text-[var(--ui-text-muted)] font-mono">
                         {item.inventory_code || "NO-CODE"}
                       </p>
-                    </td>
-                    <td className="p-2.5 font-bold text-orange-500">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="p-2.5 font-bold text-orange-500">
                       {item.qty} {item.uom}
-                    </td>
-                    <td className="p-2.5 text-[var(--ui-text-secondary)]">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="p-2.5 text-[var(--ui-text-secondary)]">
                       {fmt(Number(item.unit_price))}
-                    </td>
-                    <td className="p-2.5 text-right font-semibold text-[var(--ui-text-primary)] tabular-nums">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="p-2.5 text-right font-semibold text-[var(--ui-text-primary)] tabular-nums">
                       {fmt(Number(item.total_amount))}
-                    </td>
-                  </tr>
+                    </HuntrTableCell>
+                  </HuntrTableRow>
                 ))
               ) : (
-                <tr>
-                  <td
+                <HuntrTableRow>
+                  <HuntrTableCell
                     colSpan={5}
                     className="px-3 py-6 text-center text-xs text-[var(--ui-text-muted)]"
                   >
                     No line item data was found in this restored historical PO.
-                  </td>
-                </tr>
+                  </HuntrTableCell>
+                </HuntrTableRow>
               )}
-            </tbody>
-          </table>
+            </HuntrTableBody>
+          </HuntrTable>
         </div>
       </div>
 
@@ -464,12 +466,12 @@ export const PoExpandedDetails = ({
                 <Package size={16} className="text-blue-500" /> Delivery Orders
                 (DO)
               </h3>
-              <button
+              <HuntrButton
                 onClick={() => setActiveModal(null)}
                 className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
               >
                 <X size={16} />
-              </button>
+              </HuntrButton>
             </div>
 
             {po.delivery_orders && po.delivery_orders.length > 0 ? (
@@ -483,13 +485,13 @@ export const PoExpandedDetails = ({
                       <span className="font-bold text-blue-500">
                         {doItem.do_number}
                       </span>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => void openAuthenticatedDocument(`/api/do/${doItem.id}/print`)}
                         className="text-[10px] font-semibold text-orange-500 hover:underline"
                       >
                         Print DO
-                      </button>
+                      </HuntrButton>
                     </div>
                     {doItem.tracking_number && (
                       <p className="text-[var(--ui-text-muted)] text-[11px]">
@@ -516,7 +518,7 @@ export const PoExpandedDetails = ({
                             <CheckCircle2 size={12} /> Signed
                           </span>
                         ) : (
-                          <button
+                          <HuntrButton
                             onClick={() => onSign("do", doItem.id, "handed-by")}
                             disabled={
                               processingId === doItem.id ||
@@ -529,7 +531,7 @@ export const PoExpandedDetails = ({
                             className="mt-1 w-full py-1 rounded bg-orange-500 hover:bg-orange-600 text-[10px] font-bold disabled:opacity-40"
                           >
                             Sign
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
 
@@ -542,7 +544,7 @@ export const PoExpandedDetails = ({
                             <CheckCircle2 size={12} /> Signed
                           </span>
                         ) : (
-                          <button
+                          <HuntrButton
                             onClick={() =>
                               onSign("do", doItem.id, "received-by")
                             }
@@ -557,7 +559,7 @@ export const PoExpandedDetails = ({
                             className="mt-1 w-full py-1 rounded bg-orange-500 hover:bg-orange-600 text-[10px] font-bold disabled:opacity-40"
                           >
                             Sign
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
                     </div>
@@ -588,19 +590,19 @@ export const PoExpandedDetails = ({
                 <FileCheck size={16} className="text-orange-500" /> BAST
                 Documents
               </h3>
-              <button
+              <HuntrButton
                 onClick={() => setActiveModal(null)}
                 className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
               >
                 <X size={16} />
-              </button>
+              </HuntrButton>
             </div>
 
             {/* Issue BAST Button */}
             {isVendor &&
               ["delivered", "completed", "done", "paid"].includes(po.status) &&
               (!po.basts || po.basts.length === 0) && (
-                <button
+                <HuntrButton
                   onClick={() => onIssueBast(po.id)}
                   disabled={issuingBastId === po.id}
                   style={{ color: "white" }}
@@ -612,7 +614,7 @@ export const PoExpandedDetails = ({
                     <CheckCircle2 size={13} />
                   )}
                   Issue BAST (Auto-Generated)
-                </button>
+                </HuntrButton>
               )}
 
             {po.basts && po.basts.length > 0 ? (
@@ -626,13 +628,13 @@ export const PoExpandedDetails = ({
                       <span className="font-bold text-orange-500">
                         {bast.bast_number}
                       </span>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => void openAuthenticatedDocument(`/api/basts/${bast.id}/pdf`)}
                         className="text-[10px] font-semibold text-orange-500 hover:underline"
                       >
                         View BAST PDF
-                      </button>
+                      </HuntrButton>
                     </div>
                     <p className="text-[var(--ui-text-muted)] text-[11px]">
                       Date: {bast.bast_date} • Issued by:{" "}
@@ -650,7 +652,7 @@ export const PoExpandedDetails = ({
                             <CheckCircle2 size={12} /> Signed
                           </span>
                         ) : (
-                          <button
+                          <HuntrButton
                             onClick={() => onSign("bast", bast.id, "handed-by")}
                             disabled={
                               processingId === bast.id ||
@@ -663,7 +665,7 @@ export const PoExpandedDetails = ({
                             className="mt-1 w-full py-1 rounded bg-orange-500 hover:bg-orange-600 text-[10px] font-bold disabled:opacity-40"
                           >
                             Sign
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
 
@@ -676,7 +678,7 @@ export const PoExpandedDetails = ({
                             <CheckCircle2 size={12} /> Signed
                           </span>
                         ) : (
-                          <button
+                          <HuntrButton
                             onClick={() =>
                               onSign("bast", bast.id, "received-by")
                             }
@@ -689,7 +691,7 @@ export const PoExpandedDetails = ({
                             className="mt-1 w-full py-1 rounded bg-orange-500 hover:bg-orange-600 text-[10px] font-bold disabled:opacity-40"
                           >
                             Sign
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
                     </div>
@@ -720,12 +722,12 @@ export const PoExpandedDetails = ({
                 <FileText size={16} className="text-emerald-500" /> E-Faktur
                 Pajak
               </h3>
-              <button
+              <HuntrButton
                 onClick={() => setActiveModal(null)}
                 className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
               >
                 <X size={16} />
-              </button>
+              </HuntrButton>
             </div>
 
             {po.efakturs && po.efakturs.length > 0 ? (
@@ -756,7 +758,7 @@ export const PoExpandedDetails = ({
                       <span>PPN: Rp {fmt(Number(ef.ppn || 0))}</span>
                     </div>
                     {String(ef.status || "").toUpperCase() === "APPROVED" ? (
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => void handleDownloadEfakturPdf(ef)}
                         disabled={downloadingEfakturId === ef.id}
@@ -764,7 +766,7 @@ export const PoExpandedDetails = ({
                       >
                         {downloadingEfakturId === ef.id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                         {downloadingEfakturId === ef.id ? "Menyiapkan PDF…" : "Unduh PDF e-Faktur"}
-                      </button>
+                      </HuntrButton>
                     ) : (
                       <p className="text-[10px] text-[var(--ui-text-muted)]">PDF tersedia setelah e-Faktur disetujui.</p>
                     )}

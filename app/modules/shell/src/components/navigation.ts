@@ -19,6 +19,18 @@ import {
   Users,
   ContactRound,
   WalletCards,
+  Boxes,
+  Map,
+  ArrowDownToLine,
+  Truck,
+  BarChart3,
+  Layers,
+  PackageCheck,
+  SlidersHorizontal,
+  Target,
+  Headphones,
+  Zap,
+  Landmark,
 } from "lucide-react";
 import { isNavItemDisabledInDemo } from "~/lib/demo-mode";
 import type { TranslationKey } from "~/context/LanguageContext";
@@ -26,12 +38,61 @@ import type { TranslationKey } from "~/context/LanguageContext";
 export interface NavItemConfig {
   to: string;
   label: string;
+  bottomLabel?: string;
   labelKey?: TranslationKey;
   Icon: any;
   section: string;
   badge?: string;
   exact?: boolean;
   isAi?: boolean;
+}
+
+/**
+ * Warehouse operations exposed while the user is working in WMS.
+ */
+export function buildWmsBottomNavItems(companyPrefix: string): NavItemConfig[] {
+  const wmsPath = `${companyPrefix}/wms`;
+
+  return [
+    { to: wmsPath, label: "Overview", Icon: LayoutDashboard, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Stock`, label: "Stock", Icon: Boxes, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Warehouse%20Map`, label: "Peta Gudang", Icon: Map, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Racks`, label: "Rak", Icon: Layers, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Receiving`, label: "Terima", Icon: ArrowDownToLine, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Fulfillment`, label: "Fulfillment", Icon: PackageCheck, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Transfers`, label: "Transfer", Icon: Truck, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Adjustments`, label: "Penyesuaian", Icon: SlidersHorizontal, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Warehouses`, label: "Gudang", Icon: Building2, section: "wms", exact: true },
+    { to: `${wmsPath}?tab=Reports`, label: "Laporan", Icon: BarChart3, section: "wms", exact: true },
+  ];
+}
+
+/** CRM operations exposed while the user is working in CRM Enterprise. */
+export function buildCrmBottomNavItems(companyPrefix: string): NavItemConfig[] {
+  const crmPath = `${companyPrefix}/crm`;
+
+  return [
+    { to: crmPath, label: "Overview", Icon: LayoutDashboard, section: "crm", exact: true },
+    { to: `${crmPath}?tab=leads`, label: "Leads", Icon: Target, section: "crm", exact: true },
+    { to: `${crmPath}?tab=pipeline`, label: "Pipeline", Icon: ContactRound, section: "crm", exact: true },
+    { to: `${crmPath}?tab=customers`, label: "Customer", Icon: Users, section: "crm", exact: true },
+    { to: `${crmPath}?tab=tasks`, label: "Tasks", Icon: ListTodo, section: "crm", exact: true },
+    { to: `${crmPath}?tab=helpdesk`, label: "Helpdesk", Icon: Headphones, section: "crm", exact: true },
+    { to: `${crmPath}?tab=cpq`, label: "Quotes", Icon: FileText, section: "crm", exact: true },
+    { to: `${crmPath}?tab=automation`, label: "Automasi", Icon: Zap, section: "crm", exact: true },
+    { to: `${crmPath}?tab=insights`, label: "Insights", Icon: Sparkles, section: "crm", exact: true },
+  ];
+}
+
+/** Budgeting operations exposed while the user is working in Budgeting. */
+export function buildBudgetBottomNavItems(companyPrefix: string): NavItemConfig[] {
+  const budgetPath = `${companyPrefix}/budgeting`;
+
+  return [
+    { to: budgetPath, label: "Overview", Icon: WalletCards, section: "budgeting", exact: true },
+    { to: `${budgetPath}?tab=allocations`, label: "Alokasi", Icon: Landmark, section: "budgeting", exact: true },
+    { to: `${budgetPath}?tab=plans`, label: "Rencana", Icon: ClipboardList, section: "budgeting", exact: true },
+  ];
 }
 
 interface BuildNavItemsParams {
@@ -111,6 +172,7 @@ export function buildNavItems({
                       {
                         to: `${companyPrefix}/agentic-procurement`,
                         label: "AI Agentic Procurement",
+                        bottomLabel: "Agentic",
                         labelKey: "nav.items.agenticProcurement",
                         Icon: Sparkles,
                         section: "procurement",
@@ -121,6 +183,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/marketplace`,
                   label: "Huntr Catalog",
+                  bottomLabel: "Katalog",
                   labelKey: "nav.items.huntrCatalog",
                   Icon: Package,
                   section: "procurement",
@@ -147,6 +210,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/approvals`,
                   label: "Approvals",
+                  bottomLabel: "Approval",
                   labelKey: "nav.items.approvals",
                   Icon: CheckCircle2,
                   section: "procurement",
@@ -159,6 +223,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/pr-audit`,
                   label: "PR Audit Log",
+                  bottomLabel: "PR Audit",
                   labelKey: "nav.items.prAuditLog",
                   Icon: History,
                   section: "procurement",
@@ -253,6 +318,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/negotiation`,
             label: "Negotiations",
+            bottomLabel: "Negosiasi",
             labelKey: "nav.items.negotiations",
             Icon: MessageSquare,
             section: "orders",
@@ -263,6 +329,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/orders`,
                   label: "Purchase Order",
+                  bottomLabel: "PO",
                   labelKey: "nav.items.purchaseOrder",
                   Icon: ReceiptText,
                   section: "orders",
@@ -273,6 +340,7 @@ export function buildNavItems({
                 {
                   to: `${companyPrefix}/orders`,
                   label: "Purchase Order",
+                  bottomLabel: "PO",
                   labelKey: "nav.items.purchaseOrder",
                   Icon: ReceiptText,
                   section: "orders",
@@ -282,6 +350,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/receipts`,
             label: "Goods Receipt",
+            bottomLabel: "GR",
             labelKey: "nav.items.goodsReceipt",
             Icon: CheckCircle2,
             section: "orders",
@@ -305,6 +374,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/returns`,
             label: "Returns",
+            bottomLabel: "Retur",
             labelKey: "nav.items.returns",
             Icon: Package,
             section: "orders",
@@ -313,6 +383,7 @@ export function buildNavItems({
           {
             to: `${companyPrefix}/debit-notes`,
             label: "Debit Notes",
+            bottomLabel: "Debit",
             labelKey: "nav.items.debitNotes",
             Icon: Briefcase,
             section: "orders",

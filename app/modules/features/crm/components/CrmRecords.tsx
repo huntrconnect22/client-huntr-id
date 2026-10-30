@@ -1,3 +1,6 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useMemo, useState } from "react";
 import { ChevronRight, Plus, Search } from "lucide-react";
 import type { RecordRow } from "../types";
@@ -62,7 +65,7 @@ export function CrmRecords({
               size={13}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
             />
-            <input
+            <HuntrInput
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -71,42 +74,42 @@ export function CrmRecords({
             />
           </div>
 
-          <button
+          <HuntrButton
             onClick={onCreate}
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-3.5 text-xs font-semibold text-white shadow-sm shadow-orange-500/20 transition-all hover:bg-orange-600"
           >
             <Plus size={14} />
             <span>{createLabel || "Tambah Data"}</span>
-          </button>
+          </HuntrButton>
         </div>
       </div>
 
       {/* ── Responsive Data Table ───────────────────────────────────── */}
       {filteredRows.length ? (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-xs">
-            <thead className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]/60 text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-              <tr>
+          <HuntrTable className="w-full min-w-[700px] text-left text-xs">
+            <HuntrTableHead className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]/60 text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+              <HuntrTableRow>
                 {cols.map((c) => (
-                  <th key={c} className="px-4 py-3">
+                  <HuntrTableHeaderCell key={c} className="px-4 py-3">
                     {c.replaceAll("_", " ")}
-                  </th>
+                  </HuntrTableHeaderCell>
                 ))}
                 {(onAction || onSecondaryAction) && (
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                  <HuntrTableHeaderCell className="px-4 py-3 text-right">Aksi</HuntrTableHeaderCell>
                 )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--ui-border)]">
+              </HuntrTableRow>
+            </HuntrTableHead>
+            <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
               {filteredRows.map((row) => (
-                <tr
+                <HuntrTableRow
                   key={row.id}
                   className="transition-colors hover:bg-[var(--ui-bg-input)]/40"
                 >
                   {cols.map((c) => {
                     const val = row[c];
                     return (
-                      <td key={c} className="max-w-[260px] px-4 py-3">
+                      <HuntrTableCell key={c} className="max-w-[260px] px-4 py-3">
                         {c === "name" ? (
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-xs font-bold text-orange-500">
@@ -140,24 +143,24 @@ export function CrmRecords({
                             {String(val ?? "—")}
                           </span>
                         )}
-                      </td>
+                      </HuntrTableCell>
                     );
                   })}
 
                   {(onAction || onSecondaryAction) && (
-                    <td className="px-4 py-3 text-right">
+                    <HuntrTableCell className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {onSecondaryAction && (
-                          <button
+                          <HuntrButton
                             type="button"
                             onClick={() => onSecondaryAction(row)}
                             className="inline-flex h-8 items-center justify-center rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] px-3 text-xs font-semibold text-[var(--ui-text-primary)] transition-all hover:border-orange-500/50 hover:text-orange-500"
                           >
                             {secondaryActionLabel}
-                          </button>
+                          </HuntrButton>
                         )}
                         {onAction && (
-                          <button
+                          <HuntrButton
                             type="button"
                             disabled={canAction ? !canAction(row) : false}
                             onClick={() => onAction(row)}
@@ -169,15 +172,15 @@ export function CrmRecords({
                                 : actionLabel}
                             </span>
                             <ChevronRight size={12} />
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
-                    </td>
+                    </HuntrTableCell>
                   )}
-                </tr>
+                </HuntrTableRow>
               ))}
-            </tbody>
-          </table>
+            </HuntrTableBody>
+          </HuntrTable>
         </div>
       ) : (
         <Empty

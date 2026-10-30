@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -126,7 +129,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
         padding: 20 
       }}
     >
-      <div 
+      <HuntrSurface
         ref={modalContentRef}
         style={{ 
           background: "var(--ui-bg-card)", 
@@ -156,7 +159,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
               Proposal by {proposal.company?.name}
             </p>
           </div>
-          <button 
+          <HuntrButton
             onClick={onClose} 
             style={{ 
               background: "none", 
@@ -166,7 +169,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
             }}
           >
             <X size={24} />
-          </button>
+          </HuntrButton>
         </div>
 
         <div style={{ 
@@ -225,7 +228,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
                       }}>
                         Rp
                       </span>
-                      <input 
+                      <HuntrInput
                         type="number"
                         value={it.negotiated_price}
                         onChange={(e) => handleItemPriceChange(it.proposal_item_id, e.target.value)}
@@ -261,7 +264,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
               }}>
                 Payment Scheme
               </label>
-              <select 
+              <HuntrSelect
                 value={paymentScheme}
                 onChange={e => setPaymentScheme(e.target.value)}
                 style={{ 
@@ -281,7 +284,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
                 <option value="30 days">Net 30 Days</option>
                 <option value="60 days">Net 60 Days</option>
                 <option value="COD">Cash on Delivery (COD)</option>
-              </select>
+              </HuntrSelect>
             </div>
             <div>
               <label style={{ 
@@ -295,7 +298,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
               }}>
                 Delivery Info
               </label>
-              <select 
+              <HuntrSelect
                 value={deliveryTerms}
                 onChange={e => setDeliveryTerms(e.target.value)}
                 style={{ 
@@ -315,7 +318,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
                 <option value="14">14 Days</option>
                 <option value="30">30 Days</option>
                 <option value="60">60 Days</option>
-              </select>
+              </HuntrSelect>
             </div>
           </div>
 
@@ -331,7 +334,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
             }}>
               Negotiation Notes
             </label>
-            <textarea 
+            <HuntrTextarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Tell vendor why you are negotiating..."
@@ -357,7 +360,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
           display: "flex", 
           gap: 16 
         }}>
-          <button 
+          <HuntrButton
             onClick={onClose} 
             style={{ 
               flex: 1, 
@@ -372,8 +375,8 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
             }}
           >
             Cancel
-          </button>
-          <button 
+          </HuntrButton>
+          <HuntrButton
             onClick={handleSubmit}
             disabled={loading}
             style={{ 
@@ -391,9 +394,9 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: NegotiationMo
             }}
           >
             {loading ? <Loader2 className="animate-spin" style={{ margin: "0 auto" }} /> : "Submit Negotiation"}
-          </button>
+          </HuntrButton>
         </div>
-      </div>
+      </HuntrSurface>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Sparkles, X } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
@@ -67,28 +69,28 @@ function ComparisonTableRenderer({ text }: { text: string }) {
 
       {tableRows.length > 0 && (
         <div style={{ width: "100%", overflowX: "auto", borderRadius: 14, border: "1px solid rgba(249,115,22,0.15)", background: "rgba(0,0,0,0.25)", marginTop: 8, marginBottom: 8 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, textAlign: "left" }}>
-            <thead>
-              <tr style={{ background: "rgba(249,115,22,0.12)", borderBottom: "1px solid rgba(249,115,22,0.2)" }}>
+          <HuntrTable style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, textAlign: "left" }}>
+            <HuntrTableHead>
+              <HuntrTableRow style={{ background: "rgba(249,115,22,0.12)", borderBottom: "1px solid rgba(249,115,22,0.2)" }}>
                 {tableRows[0].map((cell, idx) => (
-                  <th key={idx} style={{ padding: "10px 14px", fontWeight: 800, color: "#f97316" }}>
+                  <HuntrTableHeaderCell key={idx} style={{ padding: "10px 14px", fontWeight: 800, color: "#f97316" }}>
                     {cell}
-                  </th>
+                  </HuntrTableHeaderCell>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
+              </HuntrTableRow>
+            </HuntrTableHead>
+            <HuntrTableBody>
               {tableRows.slice(1).map((row, rowIdx) => (
-                <tr key={rowIdx} style={{ borderBottom: rowIdx === tableRows.length - 2 ? "none" : "1px solid rgba(255,255,255,0.05)" }}>
+                <HuntrTableRow key={rowIdx} style={{ borderBottom: rowIdx === tableRows.length - 2 ? "none" : "1px solid rgba(255,255,255,0.05)" }}>
                   {row.map((cell, cellIdx) => (
-                    <td key={cellIdx} style={{ padding: "10px 14px", color: cellIdx === 0 ? "var(--ui-text-secondary)" : "var(--ui-text-primary)", fontWeight: cellIdx === 0 ? 700 : 400 }}>
+                    <HuntrTableCell key={cellIdx} style={{ padding: "10px 14px", color: cellIdx === 0 ? "var(--ui-text-secondary)" : "var(--ui-text-primary)", fontWeight: cellIdx === 0 ? 700 : 400 }}>
                       {cell}
-                    </td>
+                    </HuntrTableCell>
                   ))}
-                </tr>
+                </HuntrTableRow>
               ))}
-            </tbody>
-          </table>
+            </HuntrTableBody>
+          </HuntrTable>
         </div>
       )}
 
@@ -236,7 +238,7 @@ export default function AiInsightCard({
         </div>
 
         {/* Dismiss */}
-        <button
+        <HuntrButton
           onClick={onDismiss}
           style={{
             width: 28,
@@ -254,7 +256,7 @@ export default function AiInsightCard({
           aria-label={t("marketplace.aiInsight.closeAria")}
         >
           <X size={14} />
-        </button>
+        </HuntrButton>
       </div>
 
       {/* Stats + Action */}
@@ -288,7 +290,7 @@ export default function AiInsightCard({
         </div>
 
         {catalogueIds.length > 0 && (
-          <button
+          <HuntrButton
             onClick={onGeneratePr}
             disabled={isGenerating}
             style={{
@@ -333,7 +335,7 @@ export default function AiInsightCard({
                 {t("marketplace.aiInsight.generatePrBtn")}
               </>
             )}
-          </button>
+          </HuntrButton>
         )}
       </div>
 

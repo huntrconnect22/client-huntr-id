@@ -1,3 +1,5 @@
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import {
   UserPlus,
@@ -178,7 +180,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
               />
-              <input
+              <HuntrInput
                 type="email"
                 required
                 placeholder="colleague@company.com"
@@ -195,7 +197,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
             <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
               Workspace Role <span className="text-red-500">*</span>
             </span>
-            <select
+            <HuntrSelect
               required
               value={inviteForm.role}
               onChange={(e) =>
@@ -205,10 +207,10 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
             >
               <option value="">Select Role...</option>
               {getValidRoles().map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
-            </select>
+            </HuntrSelect>
           </div>
 
-          <button
+          <HuntrButton
             type="submit"
             disabled={isInviting}
             className="h-[38px] px-4 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50"
@@ -220,7 +222,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                 <Mail size={16} /> Send Email Invite
               </>
             )}
-          </button>
+          </HuntrButton>
         </form>
 
         {inviteError && (
@@ -251,7 +253,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               {teamMembers.length} Members
             </span>
             {process.env.NODE_ENV === "development" && (
-              <button
+              <HuntrButton
                 onClick={async () => {
                   try {
                     const { diagnoseRoleInconsistencies } =
@@ -272,7 +274,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                 title="Diagnose role inconsistencies"
               >
                 Diagnose
-              </button>
+              </HuntrButton>
             )}
           </div>
         </div>
@@ -323,7 +325,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                   {editingUserId === member.id ? (
                     // Edit Mode
                     <div className="flex items-center gap-1">
-                      <select
+                      <HuntrSelect
                         value={newRole}
                         onChange={(e) => setNewRole(e.target.value)}
                         className="px-2 py-1 rounded-md text-[10px] font-semibold bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] focus:border-orange-500/50 outline-none"
@@ -334,8 +336,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                             {role.label}
                           </option>
                         ))}
-                      </select>
-                      <button
+                      </HuntrSelect>
+                      <HuntrButton
                         onClick={() => handleRoleSave(member.id)}
                         disabled={updatingRole}
                         className="p-1 rounded text-emerald-500 hover:bg-emerald-500/10 transition-all disabled:opacity-50"
@@ -346,15 +348,15 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                         ) : (
                           <Check size={12} />
                         )}
-                      </button>
-                      <button
+                      </HuntrButton>
+                      <HuntrButton
                         onClick={handleRoleCancel}
                         disabled={updatingRole}
                         className="p-1 rounded text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-50"
                         title="Batal"
                       >
                         <X size={12} />
-                      </button>
+                      </HuntrButton>
                     </div>
                   ) : (
                     // View Mode
@@ -371,13 +373,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
                       {/* Only show edit button for managers (or company owners in the future) */}
                       {/* Assuming current user role check will be added later */}
-                      <button
+                      <HuntrButton
                         onClick={() => handleRoleEdit(member.id, member.role, member.role_id)}
                         className="opacity-0 group-hover:opacity-100 p-1 rounded text-[var(--ui-text-muted)] hover:text-orange-500 hover:bg-orange-500/10 transition-all"
                         title="Edit role"
                       >
                         <Settings size={12} />
-                      </button>
+                      </HuntrButton>
                     </>
                   )}
                 </div>

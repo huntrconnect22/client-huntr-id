@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect, useRef } from "react";
 import Layout from "~/components/Layout";
 import {
@@ -796,7 +797,7 @@ export default function AgenticProcurementPage() {
                 {TABS.map((tab) => {
                   const count = tabBadgeCount(tab.key);
                   return (
-                    <button
+                    <HuntrButton
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
@@ -812,22 +813,22 @@ export default function AgenticProcurementPage() {
                           {count}
                         </span>
                       )}
-                    </button>
+                    </HuntrButton>
                   );
                 })}
               </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
+                <HuntrButton
                   onClick={handleExportToCart}
                   className="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg bg-[var(--ui-bg-card)] hover:bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
                 >
                   <ShoppingBag size={13} />
                   <span>{t("agentic.tabs.checkout")}</span>
-                </button>
+                </HuntrButton>
 
-                <button
+                <HuntrButton
                   onClick={() => handleCreatePrNow()}
                   disabled={isCreatingPr}
                   className="flex-1 sm:flex-initial justify-center px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
@@ -843,7 +844,7 @@ export default function AgenticProcurementPage() {
                       <span>{t("agentic.tabs.createPr")}</span>
                     </>
                   )}
-                </button>
+                </HuntrButton>
               </div>
             </div>
 

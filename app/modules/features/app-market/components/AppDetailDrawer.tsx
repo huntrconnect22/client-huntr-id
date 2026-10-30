@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useEffect, useRef, useCallback, type ReactNode } from "react";
 import { X, Check, Download } from "lucide-react";
 import type { MarketApp } from "../hooks/useAppMarket";
@@ -169,14 +171,14 @@ export default function AppDetailDrawer({
                 </span>
               </div>
             </div>
-            <button
+            <HuntrButton
               type="button"
               onClick={onClose}
               aria-label="Close"
               className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white/85 ring-1 ring-white/25 transition hover:bg-white/25 hover:text-white"
             >
               <X size={16} />
-            </button>
+            </HuntrButton>
           </div>
         </header>
 
@@ -227,7 +229,7 @@ export default function AppDetailDrawer({
             >
               Informasi lisensi
             </h3>
-            <div
+            <HuntrSurface
               className="rounded-xl border p-3"
               style={{
                 borderColor: "var(--ui-border)",
@@ -261,7 +263,7 @@ export default function AppDetailDrawer({
                       : "Membutuhkan Enterprise Pro"}
                 </span>
               </div>
-            </div>
+            </HuntrSurface>
           </section>
 
           {error && (
@@ -287,16 +289,16 @@ export default function AppDetailDrawer({
         >
           <div className="flex items-stretch gap-2.5">
             {installed ? (
-              <button
+              <HuntrButton
                 type="button"
                 onClick={onOpen}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[image:var(--huntr-gradient)] px-4 py-2.5 text-[13px] font-bold text-white shadow-md shadow-orange-500/20 transition hover:brightness-110"
               >
                 <Check size={15} strokeWidth={2.4} />
                 Buka aplikasi
-              </button>
+              </HuntrButton>
             ) : (
-              <button
+              <HuntrButton
                 type="button"
                 disabled={busy || app.badge === "Coming soon" || !eligible}
                 onClick={onInstall}
@@ -310,11 +312,11 @@ export default function AppDetailDrawer({
                     : !eligible
                       ? "Butuh Enterprise Pro"
                       : "Install sekarang"}
-              </button>
+              </HuntrButton>
             )}
           </div>
           {installed && (
-            <button
+            <HuntrButton
               type="button"
               disabled={busy}
               onClick={onUninstall}
@@ -333,7 +335,7 @@ export default function AppDetailDrawer({
               }}
             >
               {busy ? "Menghapus instalasi…" : "Uninstall aplikasi"}
-            </button>
+            </HuntrButton>
           )}
         </footer>
       </div>

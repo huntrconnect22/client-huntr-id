@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearAllNotifications } from "~/lib/api";
@@ -99,7 +101,7 @@ export default function Notifications() {
             <Bell size={20} color="#f59e0b" /> Recent Activity
           </h3>
           <div style={{ display: "flex", gap: 8 }}>
-            <button
+            <HuntrButton
               onClick={handleReadAll}
               disabled={notifications.length === 0 || notifications.every(n => n.read_at)}
               style={{
@@ -111,8 +113,8 @@ export default function Notifications() {
               }}
             >
               <MailOpen size={14} /> Mark all as read
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               onClick={handleClearAll}
               disabled={notifications.length === 0}
               style={{
@@ -124,7 +126,7 @@ export default function Notifications() {
               }}
             >
               <Trash2 size={14} /> Clear All
-            </button>
+            </HuntrButton>
           </div>
         </div>
 
@@ -133,10 +135,10 @@ export default function Notifications() {
             <Loader2 className="animate-spin" size={32} color="#f59e0b" />
           </div>
         ) : notifications.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", background: "var(--ui-bg-card)", borderRadius: 12, border: "1px dashed var(--ui-border-input)", transition: "all 0.3s ease" }}>
+          <HuntrSurface style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", background: "var(--ui-bg-card)", borderRadius: 12, border: "1px dashed var(--ui-border-input)", transition: "all 0.3s ease" }}>
             <Bell size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
             <h3 style={{ color: "var(--ui-text-secondary)", margin: 0, fontSize: 16, transition: "color 0.3s ease" }}>No notifications yet</h3>
-          </div>
+          </HuntrSurface>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {notifications.map(n => {

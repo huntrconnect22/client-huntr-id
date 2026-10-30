@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { ContactRound, RefreshCw, Tag } from "lucide-react";
 import { card } from "../crm-utils";
@@ -228,13 +229,13 @@ export function AccessState({
       <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-[var(--ui-text-secondary)]">
         {error}
       </p>
-      <button
+      <HuntrButton
         onClick={onRetry}
         className="mt-5 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-4 text-xs font-bold text-white shadow-sm shadow-orange-500/20 hover:bg-orange-600 transition-all"
       >
         <RefreshCw size={14} />
         <span>Coba Lagi</span>
-      </button>
+      </HuntrButton>
     </section>
   );
 }

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import type { MetaFunction } from "react-router";
+import { useLocation } from "react-router";
 import { PageSkeleton } from "../src/components/PageSkeleton";
 import { BuyerDashboard } from "../src/components/BuyerDashboard";
 import { VendorEbiddingDashboard } from "../src/components/VendorEbiddingDashboard";
-import { GuestMarketplaceView } from "../src/components/GuestMarketplaceView";
+import { GuestMarketplaceLanding } from "~/modules/public/marketplace/src/components/GuestMarketplaceLanding";
 
 
 
@@ -29,6 +30,7 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Home() {
+  const { pathname } = useLocation();
   const [user, setUser] = useState<any>(null);
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,13 @@ export default function Home() {
   }
 
   if (user && activeCompany) {
+    // Root is a launchpad owned by AppShell. The full-screen Main Menu opens
+    // above this neutral loading surface; closing it takes the user to their
+    // company dashboard.
+    if (pathname === "/") {
+      return <PageSkeleton />;
+    }
+
     // Route to dashboard based purely on workspace type
     if (activeCompany.type === "buyer") {
       return <BuyerDashboard user={user} activeCompany={activeCompany} />;
@@ -53,5 +62,5 @@ export default function Home() {
     return <VendorEbiddingDashboard user={user} activeCompany={activeCompany} />;
   }
 
-  return <GuestMarketplaceView />;
+  return <GuestMarketplaceLanding />;
 }

@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Layout from "~/components/Layout";
@@ -98,13 +100,13 @@ export default function PaymentHistory() {
             </div>
           </div>
           
-          <button 
+          <HuntrButton
             onClick={() => fetchPayments(company.id, currentPage)}
             disabled={refreshing}
             className="w-11 h-11 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] flex items-center justify-center text-[var(--ui-text-secondary)] hover:text-orange-500 transition-all active:scale-95"
           >
             <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
-          </button>
+          </HuntrButton>
         </div>
 
         {/* Transaction List */}
@@ -116,31 +118,31 @@ export default function PaymentHistory() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-[24px] border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[var(--ui-bg-input)]/50">
-                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Transaction</th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Entity</th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Amount</th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Method</th>
-                    <th className="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Status</th>
-                    <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--ui-border-input)]">
+              <HuntrTable className="w-full border-collapse">
+                <HuntrTableHead>
+                  <HuntrTableRow className="bg-[var(--ui-bg-input)]/50">
+                    <HuntrTableHeaderCell className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Transaction</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Entity</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Amount</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Method</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Status</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)]">Date</HuntrTableHeaderCell>
+                  </HuntrTableRow>
+                </HuntrTableHead>
+                <HuntrTableBody className="divide-y divide-[var(--ui-border-input)]">
                   {payments.map((p) => {
                     const status = getStatusStyle(p.status);
                     const isOut = company.id === p.invoice?.purchase_order?.buyer_company_id;
                     
                     return (
-                      <tr key={p.id} className="hover:bg-white/5 transition-colors group">
-                        <td className="px-6 py-5">
+                      <HuntrTableRow key={p.id} className="hover:bg-white/5 transition-colors group">
+                        <HuntrTableCell className="px-6 py-5">
                           <div className="flex flex-col gap-1">
                             <span className="text-xs font-bold text-[var(--ui-text-primary)] group-hover:text-orange-400 transition-colors">#{p.external_id}</span>
                             <span className="text-[10px] text-[var(--ui-text-muted)] font-mono uppercase tracking-tighter">PO: {p.invoice?.purchase_order?.po_number || 'N/A'}</span>
                           </div>
-                        </td>
-                        <td className="px-6 py-5">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-6 py-5">
                           <div className="flex items-center gap-3">
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isOut ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
                               {isOut ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
@@ -149,36 +151,36 @@ export default function PaymentHistory() {
                               {isOut ? p.invoice?.purchase_order?.vendor_name : 'Direct Payment'}
                             </span>
                           </div>
-                        </td>
-                        <td className="px-6 py-5 text-xs font-black text-[var(--ui-text-primary)]">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-6 py-5 text-xs font-black text-[var(--ui-text-primary)]">
                           IDR {Number(p.amount).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-5">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-6 py-5">
                           <div className="flex items-center gap-2">
                             <div className="w-5 h-5 rounded bg-white/5 flex items-center justify-center">
                               <CreditCard size={10} className="text-[var(--ui-text-muted)]" />
                             </div>
                             <span className="text-[10px] font-bold uppercase text-[var(--ui-text-secondary)]">{p.payment_method.replace('_', ' ')}</span>
                           </div>
-                        </td>
-                        <td className="px-6 py-5">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-6 py-5">
                           <div className="flex justify-center">
                             <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ background: status.bg, color: status.color }}>
                               {status.label === 'Success' ? <CheckCircle2 size={10} /> : status.label === 'Pending' ? <Clock size={10} /> : <XCircle size={10} />}
                               {status.label}
                             </span>
                           </div>
-                        </td>
-                        <td className="px-6 py-5 text-right">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-6 py-5 text-right">
                           <span className="text-[10px] font-medium text-[var(--ui-text-muted)]">
                             {new Date(p.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </span>
-                        </td>
-                      </tr>
+                        </HuntrTableCell>
+                      </HuntrTableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </HuntrTableBody>
+              </HuntrTable>
             </div>
           )}
         </div>
@@ -186,23 +188,23 @@ export default function PaymentHistory() {
         {/* Pagination */}
         {lastPage > 1 && (
           <div className="flex justify-center items-center gap-6 mt-4">
-            <button
+            <HuntrButton
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="w-10 h-10 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] flex items-center justify-center text-[var(--ui-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed hover:border-orange-500/50 transition-all"
             >
               <ChevronLeft size={20} />
-            </button>
+            </HuntrButton>
             <span className="text-xs font-bold text-[var(--ui-text-secondary)]">
               Page {currentPage} <span className="text-[var(--ui-text-muted)] font-medium">of</span> {lastPage}
             </span>
-            <button
+            <HuntrButton
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === lastPage}
               className="w-10 h-10 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] flex items-center justify-center text-[var(--ui-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed hover:border-orange-500/50 transition-all"
             >
               <ChevronRight size={20} />
-            </button>
+            </HuntrButton>
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { getInvitationInfo, acceptInvitation } from "~/lib/api";
@@ -92,12 +93,12 @@ export default function InviteAccept() {
               <h2 className="text-2xl font-black text-[var(--ui-text-primary)] tracking-tight">Invitation Error</h2>
               <p className="text-sm text-[var(--ui-text-muted)] mt-2">{error}</p>
             </div>
-            <button 
+            <HuntrButton
               onClick={() => navigate("/")}
               className="w-full py-3 bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded-xl text-sm font-bold text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input-focus)] transition-all"
             >
               Back to Home
-            </button>
+            </HuntrButton>
           </div>
         )}
       </div>

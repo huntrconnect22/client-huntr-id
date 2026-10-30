@@ -1,3 +1,5 @@
+import { Select as HuntrSelect, Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { FormLabel } from "./OnboardingUI";
 import { AddressAutocomplete } from "./AddressAutocomplete";
@@ -91,7 +93,7 @@ export const LocationStep: React.FC<LocationStepProps> = ({
       {/* Province */}
       <div className="flex flex-col gap-1.5">
         <FormLabel>Province *</FormLabel>
-        <select
+        <HuntrSelect
           value={formData.provincy_country}
           onChange={(e) => handleProvinceChange(e.target.value)}
           className={selectClass}
@@ -102,14 +104,14 @@ export const LocationStep: React.FC<LocationStepProps> = ({
               {p}{geoDetails.state === p ? " ✓" : ""}
             </option>
           ))}
-        </select>
+        </HuntrSelect>
       </div>
 
       {/* City & District */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="flex flex-col gap-1.5">
           <FormLabel>City / Regency *</FormLabel>
-          <select
+          <HuntrSelect
             value={formData.city}
             onChange={(e) => handleCityChange(e.target.value)}
             disabled={!formData.provincy_country}
@@ -123,12 +125,12 @@ export const LocationStep: React.FC<LocationStepProps> = ({
                 {c}{geoDetails.city === c ? " ✓" : ""}
               </option>
             ))}
-          </select>
+          </HuntrSelect>
         </div>
 
         <div className="flex flex-col gap-1.5">
           <FormLabel>District / Kecamatan</FormLabel>
-          <select
+          <HuntrSelect
             value={formData.regency}
             onChange={(e) => updateField("regency", e.target.value)}
             disabled={!formData.city}
@@ -142,7 +144,7 @@ export const LocationStep: React.FC<LocationStepProps> = ({
                 {d}{geoDetails.county === d ? " ✓" : ""}
               </option>
             ))}
-          </select>
+          </HuntrSelect>
         </div>
       </div>
 
@@ -150,7 +152,7 @@ export const LocationStep: React.FC<LocationStepProps> = ({
       <div className="flex flex-col gap-1.5">
         <FormLabel>Postal Code</FormLabel>
         {postalOptions.length > 0 ? (
-          <select
+          <HuntrSelect
             value={formData.zip_code}
             onChange={(e) => updateField("zip_code", e.target.value)}
             className={selectClass}
@@ -161,9 +163,9 @@ export const LocationStep: React.FC<LocationStepProps> = ({
                 {code}{geoDetails.postcode === code ? " ✓" : ""}
               </option>
             ))}
-          </select>
+          </HuntrSelect>
         ) : (
-          <input
+          <HuntrInput
             type="text"
             value={formData.zip_code}
             onChange={(e) => updateField("zip_code", e.target.value)}
@@ -180,17 +182,17 @@ export const LocationStep: React.FC<LocationStepProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <FormLabel>HQ/Office Addresses</FormLabel>
-          <button
+          <HuntrButton
             type="button"
             onClick={addHqAddress}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-bold hover:bg-orange-500/20 transition-all"
           >
             <Plus size={16} /> Add Address
-          </button>
+          </HuntrButton>
         </div>
         {formData.hq_addresses?.map((addr: string, idx: number) => (
           <div key={idx} className="flex gap-2">
-            <input
+            <HuntrInput
               type="text"
               value={addr}
               onChange={(e) => updateHqAddress(idx, e.target.value)}
@@ -198,13 +200,13 @@ export const LocationStep: React.FC<LocationStepProps> = ({
               className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm"
             />
             {formData.hq_addresses.length > 1 && (
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => removeHqAddress(idx)}
                 className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all"
               >
                 <X size={16} />
-              </button>
+              </HuntrButton>
             )}
           </div>
         ))}

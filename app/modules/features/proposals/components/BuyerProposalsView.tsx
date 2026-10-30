@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { RefreshCw, Loader2, Briefcase, Building2, Clock, ShieldCheck, DollarSign, Calendar, MessageSquare, Trophy } from "lucide-react";
 
@@ -30,12 +31,12 @@ export function BuyerProposalsView({
             Evaluate vendor offers and proceed to negotiation or award.
           </p>
         </div>
-        <button
+        <HuntrButton
           onClick={() => onRefresh(activeCompany.id)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
         >
           <RefreshCw size={13} /> Refresh
-        </button>
+        </HuntrButton>
       </div>
 
       {proposalsLoading ? (
@@ -87,20 +88,20 @@ export function BuyerProposalsView({
 
               {p.rfq?.status === 'active' && p.winner_status !== 'rejected' && p.winner_status !== 'awarded' && p.winner_status !== 'approved' && (
                 <div className="flex items-center justify-end gap-2 pt-1">
-                  <button 
+                  <HuntrButton
                     onClick={() => onNegotiate(p)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-orange-500 hover:border-orange-400/50 transition-all"
                   >
                     <MessageSquare size={13} /> Negotiate
-                  </button>
-                  <button 
+                  </HuntrButton>
+                  <HuntrButton
                     onClick={() => onAward(p.id)}
                     disabled={awardingId === p.id}
                     style={{ color: 'white' }}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-bold transition-all disabled:opacity-60"
                   >
                     {awardingId === p.id ? <Loader2 size={13} className="animate-spin" /> : <><Trophy size={13} /> Award Proposal</>}
-                  </button>
+                  </HuntrButton>
                 </div>
               )}
             </div>

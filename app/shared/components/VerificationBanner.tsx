@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { ShieldCheck, X, ChevronRight, AlertTriangle, Sparkles, Clock } from "lucide-react";
@@ -103,22 +104,22 @@ export const VerificationBanner: React.FC<VerificationBannerProps> = ({ company 
       </div>
 
       {/* CTA */}
-      <button
+      <HuntrButton
         onClick={handleCta}
         className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${config.ctaStyle}`}
       >
         {config.ctaLabel} <ChevronRight size={12} />
-      </button>
+      </HuntrButton>
 
       {/* Dismiss */}
       {isPending && (
-        <button
+        <HuntrButton
           onClick={() => setDismissed(true)}
           className="shrink-0 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-colors"
           aria-label="Tutup banner"
         >
           <X size={14} />
-        </button>
+        </HuntrButton>
       )}
     </div>
   );

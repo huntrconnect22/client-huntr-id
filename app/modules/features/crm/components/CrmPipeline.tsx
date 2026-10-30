@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 import { ContactRound, GripVertical, Plus } from "lucide-react";
 import type { RecordRow } from "../types";
@@ -63,13 +65,13 @@ export function CrmPipeline({
             Seret kartu deal ke tahapan tujuan. Perubahan langsung disimpan ke pipeline.
           </p>
         </div>
-        <button
+        <HuntrButton
           onClick={onCreate}
           className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-3.5 text-xs font-semibold text-white shadow-sm shadow-orange-500/20 transition-colors hover:bg-orange-600"
         >
           <Plus size={14} />
           <span>Deal Baru</span>
-        </button>
+        </HuntrButton>
       </div>
 
       <div className="overflow-x-auto p-4 sm:p-5">
@@ -175,7 +177,7 @@ export function CrmPipeline({
                           <label className="mb-1 block text-[10px] font-semibold text-[var(--ui-text-muted)]">
                             Pindah Tahapan
                           </label>
-                          <select
+                          <HuntrSelect
                             value={deal.stage}
                             disabled={isSaving}
                             onChange={(event) => void moveDeal(deal, event.target.value)}
@@ -186,7 +188,7 @@ export function CrmPipeline({
                                 {stageConfig[item]?.label ?? item.replaceAll("_", " ")}
                               </option>
                             ))}
-                          </select>
+                          </HuntrSelect>
                         </div>
                       </article>
                     );

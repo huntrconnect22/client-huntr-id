@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
 import React from "react";
 import { ChevronLeft, Building2, DollarSign, Clock, Upload, CheckCircle2, Info, ShieldCheck, Loader2, CheckSquare, Square, PackageCheck } from "lucide-react";
 
@@ -34,14 +36,14 @@ export function VendorProposalForm({
     <div className="w-full space-y-4">
       {/* Top back title */}
       <div className="flex items-center gap-3">
-        <button
+        <HuntrButton
           onClick={onCancel}
           className="w-8 h-8 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center text-[var(--ui-text-primary)] hover:border-orange-400/50 transition-all"
           aria-label="Back to tender list"
           title="Back to tender list"
         >
           <ChevronLeft size={16} />
-        </button>
+        </HuntrButton>
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 block">SUBMIT PROPOSAL</span>
           <h2 className="text-sm sm:text-base font-bold text-[var(--ui-text-primary)]">{selectedRfq.title}</h2>
@@ -75,7 +77,7 @@ export function VendorProposalForm({
                 <DollarSign size={14} className="text-orange-500" /> Penawaran Harga per Barang
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => {
                     const newItems = form.items.map((it: any) => ({ ...it, is_participating: true }));
@@ -84,9 +86,9 @@ export function VendorProposalForm({
                   className="text-[11px] font-semibold text-orange-500 hover:underline"
                 >
                   Pilih Semua
-                </button>
+                </HuntrButton>
                 <span className="text-[var(--ui-text-muted)]">·</span>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => {
                     const newItems = form.items.map((it: any) => ({ ...it, is_participating: false }));
@@ -95,7 +97,7 @@ export function VendorProposalForm({
                   className="text-[11px] font-semibold text-[var(--ui-text-muted)] hover:underline"
                 >
                   Kosongkan
-                </button>
+                </HuntrButton>
               </div>
             </div>
 
@@ -123,7 +125,7 @@ export function VendorProposalForm({
                     }`}
                   >
                     <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => {
                           const newItems = [...form.items];
@@ -134,7 +136,7 @@ export function VendorProposalForm({
                         title={isParticipating ? "Hapus dari penawaran" : "Ikuti tender untuk barang ini"}
                       >
                         {isParticipating ? <CheckSquare size={16} /> : <Square size={16} className="text-[var(--ui-text-muted)]" />}
-                      </button>
+                      </HuntrButton>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -176,7 +178,7 @@ export function VendorProposalForm({
                       )}
                       <div className="relative w-44">
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[var(--ui-text-muted)]">Rp</span>
-                        <input
+                        <HuntrInput
                           value={item.price_offer}
                           disabled={!isParticipating}
                           onChange={e => {
@@ -236,31 +238,31 @@ export function VendorProposalForm({
               <div className="space-y-2">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">Lead Time (Days to Delivery)</label>
-                  <select value={form.delivery_days} onChange={e => updateForm("delivery_days", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
+                  <HuntrSelect value={form.delivery_days} onChange={e => updateForm("delivery_days", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
                     <option value="3">3 Days (Express)</option>
                     <option value="7">7 Days (Standard)</option>
                     <option value="14">14 Days</option>
                     <option value="30">30 Days</option>
-                  </select>
+                  </HuntrSelect>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">Warranty Period (Months)</label>
-                  <select value={form.warranty_months} onChange={e => updateForm("warranty_months", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
+                  <HuntrSelect value={form.warranty_months} onChange={e => updateForm("warranty_months", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
                     <option value="0">No Warranty</option>
                     <option value="6">6 Months</option>
                     <option value="12">12 Months (1 Year)</option>
                     <option value="24">24 Months (2 Years)</option>
                     <option value="36">36 Months (3 Years)</option>
-                  </select>
+                  </HuntrSelect>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)] block">Payment Scheme</label>
-                  <select value={form.payment_term} onChange={e => updateForm("payment_term", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
+                  <HuntrSelect value={form.payment_term} onChange={e => updateForm("payment_term", e.target.value)} className="w-full p-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60">
                     <option value="7 days">Net 7 Days</option>
                     <option value="14 days">Net 14 Days</option>
                     <option value="30 days">Net 30 Days</option>
                     <option value="60 days">Net 60 Days</option>
-                  </select>
+                  </HuntrSelect>
                 </div>
               </div>
             </section>
@@ -278,7 +280,7 @@ export function VendorProposalForm({
                     isDragging ? "border-orange-500 bg-orange-500/5" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] hover:border-orange-400/50"
                   }`}
                 >
-                  <input type="file" ref={fileInputRef} onChange={e => updateForm("document", e.target.files?.[0] || null)} className="hidden" />
+                  <HuntrInput type="file" ref={fileInputRef} onChange={e => updateForm("document", e.target.files?.[0] || null)} className="hidden" />
                   <div className="w-9 h-9 rounded-full bg-[var(--ui-bg-card)] flex items-center justify-center">
                     {form.document ? <CheckCircle2 size={18} className="text-emerald-500" /> : <Upload size={18} className="text-[var(--ui-text-muted)]" />}
                   </div>
@@ -303,14 +305,14 @@ export function VendorProposalForm({
 
           {/* Form Actions Footer */}
           <div className="pt-3 border-t border-[var(--ui-border)] flex items-center justify-end gap-2">
-            <button
+            <HuntrButton
               type="button"
               onClick={onCancel}
               className="px-3.5 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] transition-all"
             >
               Cancel
-            </button>
-            <button 
+            </HuntrButton>
+            <HuntrButton
               type="submit" 
               disabled={loading || hasSubmittedForSelectedRfq || isProcessing.current}
               style={(loading || hasSubmittedForSelectedRfq || isProcessing.current) ? {} : { color: 'white' }}
@@ -321,7 +323,7 @@ export function VendorProposalForm({
               }`}
             >
               {loading ? <Loader2 size={13} className="animate-spin" /> : <><ShieldCheck size={13} /> Submit Official Proposal</>}
-            </button>
+            </HuntrButton>
           </div>
 
           {hasSubmittedForSelectedRfq && (

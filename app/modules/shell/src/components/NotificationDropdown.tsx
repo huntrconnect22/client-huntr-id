@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { useNavigate } from "react-router";
 import { useLanguage } from "~/context/LanguageContext";
@@ -21,7 +23,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div
+    <HuntrSurface
       className="huntr-notif-dropdown"
       onClick={(e) => e.stopPropagation()}
       role="dialog"
@@ -80,7 +82,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             </span>
           )}
         </div>
-        <button
+        <HuntrButton
           onClick={(e) => {
             e.stopPropagation();
             onMarkAllAsRead();
@@ -96,7 +98,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           }}
         >
           {t("notifications.markAllRead")}
-        </button>
+        </HuntrButton>
       </div>
 
       <div style={{ maxHeight: 340, overflowY: "auto" }}>
@@ -167,7 +169,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         )}
       </div>
 
-      <button
+      <HuntrButton
         onClick={() => {
           onClose();
           if (window.location.pathname === "/notifications") {
@@ -189,7 +191,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         }}
       >
         {t("notifications.viewAll")}
-      </button>
-    </div>
+      </HuntrButton>
+    </HuntrSurface>
   );
 };

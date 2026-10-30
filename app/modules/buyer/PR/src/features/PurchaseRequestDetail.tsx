@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import Layout from "~/components/Layout";
@@ -158,13 +160,13 @@ export default function MyPurchaseRequisitionDetail() {
           <p className="text-sm font-semibold text-[var(--ui-text-primary)]">
             {error || "Request not found"}
           </p>
-          <button
+          <HuntrButton
             type="button"
             onClick={() => navigate("/my-pr")}
             className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold"
           >
             Back to My PRs
-          </button>
+          </HuntrButton>
         </div>
       </Layout>
     );
@@ -203,28 +205,28 @@ export default function MyPurchaseRequisitionDetail() {
       <div className="w-full flex flex-col gap-4">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
-          <button
+          <HuntrButton
             type="button"
             onClick={() => navigate("/my-pr")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors"
           >
             <ArrowLeft size={14} /> My PRs
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             type="button"
             onClick={handleRefresh}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors"
           >
             <RefreshCw size={13} /> Refresh
-          </button>
+          </HuntrButton>
           {canResubmit && (
-            <button
+            <HuntrButton
               type="button"
               onClick={handleReviseAndResubmit}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
             >
               Revise &amp; resubmit
-            </button>
+            </HuntrButton>
           )}
           {request.project_type && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
@@ -238,22 +240,22 @@ export default function MyPurchaseRequisitionDetail() {
           )}
           {request.status === "approved" &&
             request.procurement_mode === "direct" && (
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => navigate(`/direct-po?pr=${request.id}`)}
                 className="inline-flex items-center gap-1.5 rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-600"
               >
                 Create direct PO
-              </button>
+              </HuntrButton>
             )}
           {request.status === "active" && (
-            <button
+            <HuntrButton
               type="button"
               onClick={() => navigate(`/rfq/${request.id}`)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors ml-auto"
             >
               Open RFQ View
-            </button>
+            </HuntrButton>
           )}
         </div>
 
@@ -421,52 +423,52 @@ export default function MyPurchaseRequisitionDetail() {
                     </div>
                     {mobilePageCount > 1 && (
                       <div className="flex items-center justify-between px-1">
-                        <button
+                        <HuntrButton
                           type="button"
                           disabled={itemPage === 1}
                           onClick={() => setItemPage((p) => p - 1)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
                         >
                           <ChevronLeft size={13} /> Prev
-                        </button>
+                        </HuntrButton>
                         <span className="text-[11px] text-[var(--ui-text-muted)]">
                           {itemPage} / {mobilePageCount}
                         </span>
-                        <button
+                        <HuntrButton
                           type="button"
                           disabled={itemPage === mobilePageCount}
                           onClick={() => setItemPage((p) => p + 1)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
                         >
                           Next <ChevronRight size={13} />
-                        </button>
+                        </HuntrButton>
                       </div>
                     )}
                   </div>
 
                   {/* ── Desktop table (≥ sm) ── */}
                   <div className="hidden sm:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-10">
+                    <HuntrTable className="w-full text-sm border-collapse">
+                      <HuntrTableHead>
+                        <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                          <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-10">
                             #
-                          </th>
-                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                          </HuntrTableHeaderCell>
+                          <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
                             Product
-                          </th>
-                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">
+                          </HuntrTableHeaderCell>
+                          <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">
                             Qty
-                          </th>
-                          <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">
+                          </HuntrTableHeaderCell>
+                          <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">
                             Unit Est.
-                          </th>
-                          <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">
+                          </HuntrTableHeaderCell>
+                          <HuntrTableHeaderCell className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">
                             Line Total
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[var(--ui-border)]">
+                          </HuntrTableHeaderCell>
+                        </HuntrTableRow>
+                      </HuntrTableHead>
+                      <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
                         {desktopItems.map((item: any, idx: number) => {
                           const index = (itemPage - 1) * DESKTOP_PER_PAGE + idx;
                           const cat = item.catalogue;
@@ -474,14 +476,14 @@ export default function MyPurchaseRequisitionDetail() {
                             item.estimated_price || cat?.estimated_price || 0;
                           const lineTotal = unitPrice * (item.qty || 0);
                           return (
-                            <tr
+                            <HuntrTableRow
                               key={index}
                               className="hover:bg-[var(--ui-bg-input)] transition-colors"
                             >
-                              <td className="px-3 py-2 text-xs text-[var(--ui-text-muted)]">
+                              <HuntrTableCell className="px-3 py-2 text-xs text-[var(--ui-text-muted)]">
                                 {index + 1}
-                              </td>
-                              <td className="px-3 py-2">
+                              </HuntrTableCell>
+                              <HuntrTableCell className="px-3 py-2">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <div className="w-8 h-8 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center shrink-0 overflow-hidden">
                                     {cat?.image_path ? (
@@ -520,63 +522,63 @@ export default function MyPurchaseRequisitionDetail() {
                                     )}
                                   </div>
                                 </div>
-                              </td>
-                              <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
+                              </HuntrTableCell>
+                              <HuntrTableCell className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
                                 {item.qty} {cat?.uom || item.uom || "unit"}
-                              </td>
-                              <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
+                              </HuntrTableCell>
+                              <HuntrTableCell className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
                                 Rp {Number(unitPrice).toLocaleString("id-ID")}
-                              </td>
-                              <td className="px-3 py-2 text-xs font-bold text-orange-400 text-right whitespace-nowrap">
+                              </HuntrTableCell>
+                              <HuntrTableCell className="px-3 py-2 text-xs font-bold text-orange-400 text-right whitespace-nowrap">
                                 Rp {Number(lineTotal).toLocaleString("id-ID")}
-                              </td>
-                            </tr>
+                              </HuntrTableCell>
+                            </HuntrTableRow>
                           );
                         })}
-                      </tbody>
+                      </HuntrTableBody>
                       <tfoot>
-                        <tr className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                          <td
+                        <HuntrTableRow className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                          <HuntrTableCell
                             colSpan={4}
                             className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-muted)]"
                           >
                             {totalQty} units across {lineItems} SKU
                             {lineItems !== 1 ? "s" : ""}
-                          </td>
-                          <td className="px-3 py-2 text-xs font-bold text-[var(--ui-text-primary)] text-right">
+                          </HuntrTableCell>
+                          <HuntrTableCell className="px-3 py-2 text-xs font-bold text-[var(--ui-text-primary)] text-right">
                             Rp {estimatedTotal.toLocaleString("id-ID")}
-                          </td>
-                        </tr>
+                          </HuntrTableCell>
+                        </HuntrTableRow>
                         {desktopPageCount > 1 && (
-                          <tr className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                            <td colSpan={5} className="px-3 py-2">
+                          <HuntrTableRow className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                            <HuntrTableCell colSpan={5} className="px-3 py-2">
                               <div className="flex items-center justify-between gap-3">
-                                <button
+                                <HuntrButton
                                   type="button"
                                   disabled={itemPage === 1}
                                   onClick={() => setItemPage((p) => p - 1)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
                                 >
                                   <ChevronLeft size={13} /> Prev
-                                </button>
+                                </HuntrButton>
                                 <span className="text-[11px] text-[var(--ui-text-muted)]">
                                   Page {itemPage} of {desktopPageCount}{" "}
                                   &nbsp;·&nbsp; {lineItems} items total
                                 </span>
-                                <button
+                                <HuntrButton
                                   type="button"
                                   disabled={itemPage === desktopPageCount}
                                   onClick={() => setItemPage((p) => p + 1)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] disabled:opacity-40 disabled:cursor-not-allowed hover:border-orange-500/40 transition-colors"
                                 >
                                   Next <ChevronRight size={13} />
-                                </button>
+                                </HuntrButton>
                               </div>
-                            </td>
-                          </tr>
+                            </HuntrTableCell>
+                          </HuntrTableRow>
                         )}
                       </tfoot>
-                    </table>
+                    </HuntrTable>
                   </div>
                 </>
               )}

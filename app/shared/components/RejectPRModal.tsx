@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useEffect, useRef, useState } from "react";
 import { AlertTriangle, X, XCircle, Loader2 } from "lucide-react";
 
@@ -104,7 +107,7 @@ export function RejectPRModal({
         }
       `}</style>
 
-      <div style={{
+      <HuntrSurface style={{
         background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
         borderRadius: 20, boxShadow: "0 28px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(239,68,68,0.08)",
         width: "100%", maxWidth: 460,
@@ -143,14 +146,14 @@ export function RejectPRModal({
               )}
             </div>
           </div>
-          <button onClick={onClose} style={{
+          <HuntrButton onClick={onClose} style={{
             background: "var(--ui-bg-input)", border: "1px solid var(--ui-border)",
             borderRadius: 8, width: 30, height: 30, cursor: "pointer", flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             color: "var(--ui-text-muted)",
           }}>
             <X size={14} />
-          </button>
+          </HuntrButton>
         </div>
 
         {/* Body */}
@@ -176,7 +179,7 @@ export function RejectPRModal({
             }}>
               Alasan Penolakan <span style={{ color: "#ef4444" }}>*</span>
             </label>
-            <textarea
+            <HuntrTextarea
               id="rpr-reason"
               ref={textareaRef}
               className={`rpr-textarea${(error || isTooShort || isOver) ? " rpr-err" : ""}`}
@@ -204,18 +207,18 @@ export function RejectPRModal({
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" className="rpr-btn-cancel" onClick={onClose} disabled={loading}>
+            <HuntrButton type="button" className="rpr-btn-cancel" onClick={onClose} disabled={loading}>
               Batal
-            </button>
-            <button type="submit" className="rpr-btn-reject" disabled={loading || !isValid}>
+            </HuntrButton>
+            <HuntrButton type="submit" className="rpr-btn-reject" disabled={loading || !isValid}>
               {loading
                 ? <><Loader2 size={14} className="animate-spin" /> Menolak...</>
                 : <><XCircle size={14} /> Tolak PR</>
               }
-            </button>
+            </HuntrButton>
           </div>
         </form>
-      </div>
+      </HuntrSurface>
     </div>
   );
 }

@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { Search, Loader2, X } from "lucide-react";
 import { adminGetTransactions, adminGetEscrowSummary } from "../../lib/api";
@@ -101,7 +104,7 @@ export default function AdminTransactionsTab() {
         }}
       >
         <Search size={14} color="var(--ui-text-muted)" />
-        <input
+        <HuntrInput
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari PO number, buyer, vendor…"
@@ -115,7 +118,7 @@ export default function AdminTransactionsTab() {
           }}
         />
         {search && (
-          <button
+          <HuntrButton
             onClick={() => setSearch("")}
             style={{
               background: "none",
@@ -127,7 +130,7 @@ export default function AdminTransactionsTab() {
             }}
           >
             <X size={13} />
-          </button>
+          </HuntrButton>
         )}
       </div>
 
@@ -163,7 +166,7 @@ export default function AdminTransactionsTab() {
           </div>
         ) : (
           transactions.map((tx) => (
-            <div
+            <HuntrSurface
               key={tx.id}
               style={{
                 background: "var(--ui-bg-card)",
@@ -236,7 +239,7 @@ export default function AdminTransactionsTab() {
                   </div>
                 </div>
               </div>
-            </div>
+            </HuntrSurface>
           ))
         )}
       </div>
@@ -251,7 +254,7 @@ export default function AdminTransactionsTab() {
             gap: 8,
           }}
         >
-          <button
+          <HuntrButton
             onClick={() => fetchData(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
             style={{
@@ -271,13 +274,13 @@ export default function AdminTransactionsTab() {
             }}
           >
             ← Prev
-          </button>
+          </HuntrButton>
           <span
             style={{ fontSize: 12, color: "var(--ui-text-muted)" }}
           >
             {currentPage} / {totalPages}
           </span>
-          <button
+          <HuntrButton
             onClick={() =>
               fetchData(Math.min(totalPages, currentPage + 1))
             }
@@ -302,7 +305,7 @@ export default function AdminTransactionsTab() {
             }}
           >
             Next →
-          </button>
+          </HuntrButton>
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { Sparkles } from "lucide-react";
 import {
@@ -85,7 +86,7 @@ export function AccountFeaturesTab({ onSuccess }: AccountFeaturesTabProps) {
 
             {/* Interactive Switch Toggle */}
             <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 flex-shrink-0 pt-2 sm:pt-0">
-              <button
+              <HuntrButton
                 type="button"
                 role="switch"
                 aria-checked={agenticEnabled}
@@ -102,7 +103,7 @@ export function AccountFeaturesTab({ onSuccess }: AccountFeaturesTabProps) {
                     agenticEnabled ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
-              </button>
+              </HuntrButton>
             </div>
           </div>
         </div>

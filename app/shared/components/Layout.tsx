@@ -26,16 +26,18 @@ export default function Layout({ children, title, subtitle }: Props) {
   // Get context from the persistent AppShell (_app.tsx).
   // This is always available since all authenticated routes are nested under _app.tsx.
   const ctx = useOutletContext<ShellContext | null>();
+  const setPageTitle = ctx?.setPageTitle;
+  const setPageSubtitle = ctx?.setPageSubtitle;
 
   useEffect(() => {
-    if (ctx?.setPageTitle) {
-      ctx.setPageTitle(title);
-      ctx.setPageSubtitle(subtitle ?? "");
+    if (setPageTitle && setPageSubtitle) {
+      setPageTitle(title);
+      setPageSubtitle(subtitle ?? "");
     } else {
       // Fallback: update the browser tab title directly
       document.title = `${title} — Huntr.id`;
     }
-  }, [title, subtitle, ctx]);
+  }, [setPageSubtitle, setPageTitle, subtitle, title]);
 
   // The shell (_app.tsx) already renders the outer container, sidebar, header, etc.
   // This component just renders the page content directly.

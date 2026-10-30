@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import {
   Zap,
@@ -209,7 +210,7 @@ export function AccountSubscriptionTab({
               month: usageData?.month || t("settings.subscription.thisMonth"),
             })}
           </span>
-          <button
+          <HuntrButton
             onClick={fetchUsage}
             disabled={loadingUsage}
             className="text-[11px] text-orange-500 hover:text-orange-600 flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer disabled:opacity-50"
@@ -219,7 +220,7 @@ export function AccountSubscriptionTab({
               className={loadingUsage ? "animate-spin" : ""}
             />
             <span>{t("settings.subscription.refresh")}</span>
-          </button>
+          </HuntrButton>
         </div>
 
         <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5">
@@ -360,13 +361,13 @@ export function AccountSubscriptionTab({
               </p>
             </div>
             {(enterpriseTrialExpired || canOfferUpgrade) && canManageSubscription && (
-              <button
+              <HuntrButton
                 type="button"
                 onClick={openUpgradeOptions}
                 className="bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600"
               >
                 Upgrade paket
-              </button>
+              </HuntrButton>
             )}
           </div>
           {subscription.scheduled_change && (
@@ -513,7 +514,7 @@ export function AccountSubscriptionTab({
             <div className="text-xs text-[var(--ui-text-muted)]">
               {t("settings.subscription.upgradePrompt")}
             </div>
-            <button
+            <HuntrButton
               type="button"
               onClick={handleContactSales}
               style={{ color: "white" }}
@@ -522,7 +523,7 @@ export function AccountSubscriptionTab({
               <PhoneCall size={14} />
               <span>{t("settings.subscription.contactSalesBtn")}</span>
               <ArrowRight size={13} />
-            </button>
+            </HuntrButton>
           </div>
         </div>
       </div>}

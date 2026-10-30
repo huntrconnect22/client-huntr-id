@@ -1,10 +1,12 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import Layout from "../Layout";
 import WeatherWidget from "../WeatherWidget";
 import CurrencyWidget from "../CurrencyWidget";
 import { 
   PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
-  LineChart as RechartsLineChart, Line, AreaChart, Area, CartesianGrid, XAxis, YAxis
+  BarChart, Bar, AreaChart, Area, CartesianGrid, XAxis, YAxis
 } from "recharts";
 import { 
   Activity, AlertTriangle, Clock, DollarSign, TrendingDown, PieChart, LineChart, ArrowDownCircle, ClipboardList, ChevronLeft, ChevronRight
@@ -86,7 +88,7 @@ function DepartmentSpendMobileList({
 
       {totalPages > 1 && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, paddingTop: 4, borderTop: "1px solid var(--ui-border)" }}>
-          <button
+          <HuntrButton
             type="button"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
@@ -106,11 +108,11 @@ function DepartmentSpendMobileList({
             }}
           >
             <ChevronLeft size={16} />
-          </button>
+          </HuntrButton>
           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-muted)" }}>
             {page + 1} / {totalPages}
           </span>
-          <button
+          <HuntrButton
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
@@ -130,7 +132,7 @@ function DepartmentSpendMobileList({
             }}
           >
             <ChevronRight size={16} />
-          </button>
+          </HuntrButton>
         </div>
       )}
     </div>
@@ -175,12 +177,12 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
   const COLORS = ['#fb923c', '#fbbf24', '#f87171', '#60a5fa', '#34d399', '#a78bfa'];
 
   const cycleTimeData = [
-    { month: 'Jan', time: 3.2 },
-    { month: 'Feb', time: 2.8 },
-    { month: 'Mar', time: 2.5 },
-    { month: 'Apr', time: 2.1 },
-    { month: 'May', time: 1.9 },
-    { month: 'Jun', time: 1.8 },
+    { month: 'Jan', close: 3.1 },
+    { month: 'Feb', close: 2.8 },
+    { month: 'Mar', close: 2.5 },
+    { month: 'Apr', close: 2.1 },
+    { month: 'May', close: 1.9 },
+    { month: 'Jun', close: 1.8 },
   ];
 
   const savingsData = [
@@ -253,9 +255,12 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
   };
 
   const handleDownloadCycleTimeData = () => {
-    const headers = ["Month", "Cycle Time (Days)"];
-    const rows = cycleTimeData.map(item => [item.month, item.time]);
-    downloadCSV("PO_Cycle_Time_Avg", headers, rows);
+    const headers = ["Month", "Average Cycle Time (Days)"];
+    const rows = cycleTimeData.map(item => [
+      item.month,
+      item.close,
+    ]);
+    downloadCSV("PO_Cycle_Time", headers, rows);
   };
 
   const handleDownloadSavingsData = () => {
@@ -281,9 +286,9 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
 
   return (
     <Layout title={t("dashboard.buyer.title")} subtitle={t("dashboard.buyer.subtitle")}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 40, boxSizing: "border-box", width: "100%" }}>
-        {/* Weather + Currency compact row */}
-        <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, alignItems: "stretch" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 28, boxSizing: "border-box", width: "100%" }}>
+        {/* The wider canvas gives context widgets a deliberate hierarchy. */}
+        <section style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 0.9fr) minmax(0, 1.1fr)", gap: 16, alignItems: "stretch" }}>
           <WeatherWidget embedded />
           <CurrencyWidget embedded />
         </section>
@@ -295,7 +300,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
               <PieChart size={18} /> {t("dashboard.buyer.spendAnalysisTitle")}
             </h2>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button 
+              <HuntrButton
                 onClick={handleDownloadOverallStats} 
                 style={{ 
                   background: "rgba(249,115,22,0.1)", 
@@ -312,8 +317,8 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                 }}
               >
                 <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadMetrics")}
-              </button>
-              <button 
+              </HuntrButton>
+              <HuntrButton
                 onClick={handleDownloadSpendData} 
                 style={{ 
                   background: "rgba(249,115,22,0.1)", 
@@ -330,34 +335,34 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                 }}
               >
                 <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadSpend")}
-              </button>
+              </HuntrButton>
             </div>
           </div>
           {/* Stat cards row — compact, small */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.totalSpend")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{formatCurrency(totalRealSpend)}</div>
               <div style={{ fontSize: 10, color: "#34d399", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}><TrendingDown size={10}/> {t("dashboard.buyer.realPoAgg")}</div>
-            </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+            </HuntrSurface>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.maverickSpend")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#ef4444", marginTop: 4, lineHeight: 1 }}>0%</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.offContract")}</div>
-            </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+            </HuntrSurface>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.defectRate")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#22c55e", marginTop: 4, lineHeight: 1 }}>0.0%</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.defectTarget")}</div>
-            </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+            </HuntrSurface>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.leadTimeAvg")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#60a5fa", marginTop: 4, lineHeight: 1 }}>7.0 Days</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.leadTimeSub")}</div>
-            </div>
+            </HuntrSurface>
           </div>
           {/* Chart — full width */}
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: isMobile ? "14px 16px" : "18px 20px" }}>
+          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: isMobile ? "14px 16px" : "18px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("dashboard.buyer.spendPerDept")}</h3>
             {loadingOrders ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: isMobile ? 80 : 260, fontSize: 12, color: "var(--ui-text-muted)" }}>
@@ -375,7 +380,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                 total={totalRealSpend}
               />
             ) : (
-              <div style={{ height: 260, width: "100%" }}>
+              <div style={{ height: isMobile ? 260 : 300, width: "100%" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsPieChart>
                     <Pie data={realSpendData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
@@ -389,16 +394,18 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                 </ResponsiveContainer>
               </div>
             )}
-          </div>
+          </HuntrSurface>
         </section>
 
+        {/* The two secondary analyses now share the wider desktop canvas. */}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 20, alignItems: "start" }}>
         {/* 2. Operational Efficiency */}
         <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#60a5fa" }}>
               <Activity size={18} /> {t("dashboard.buyer.opEffTitle")}
             </h2>
-            <button 
+            <HuntrButton
               onClick={handleDownloadCycleTimeData} 
               style={{ 
                 background: "rgba(59,130,246,0.1)", 
@@ -415,41 +422,45 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
               }}
             >
               <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadCycleTime")}
-            </button>
+            </HuntrButton>
           </div>
           {/* Stat cards row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.activePo")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#fb923c", marginTop: 4, lineHeight: 1 }}>8</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.inTransit")}</div>
-            </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+            </HuntrSurface>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.unprocessedPrs")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>24</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.needsReview")}</div>
-            </div>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+            </HuntrSurface>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.buyer.posPerStaff")}</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#f472b6", marginTop: 4, lineHeight: 1 }}>45</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.average")}</div>
-            </div>
+            </HuntrSurface>
           </div>
-          {/* Line chart — full width */}
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
+          {/* Cycle time bar chart */}
+          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("dashboard.buyer.cyclePo")}</h3>
-            <div style={{ height: 260, width: "100%" }}>
+            <div style={{ height: isMobile ? 240 : 300, width: "100%" }}>
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsLineChart data={cycleTimeData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <BarChart data={cycleTimeData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--ui-chart-grid)" vertical={false} />
                   <XAxis dataKey="month" stroke="var(--ui-chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="var(--ui-chart-axis)" fontSize={12} tickLine={false} axisLine={false} domain={[0, 4]} />
-                  <Tooltip {...chartTooltipStyle("1px solid rgba(59,130,246,0.35)")} />
-                  <Line type="monotone" dataKey="time" name="Cycle Time (Days)" stroke="#60a5fa" strokeWidth={3} dot={{ r: 4, fill: "#2563eb", strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                </RechartsLineChart>
+                  <Tooltip
+                    formatter={(value) => [`${Number(value ?? 0).toFixed(1)} days`, "Average cycle time"]}
+                    {...chartTooltipStyle("1px solid rgba(59,130,246,0.35)")}
+                    cursor={{ fill: "var(--ui-primary-muted)" }}
+                  />
+                  <Bar dataKey="close" name="Average cycle time" fill="#3b82f6" radius={[5, 5, 0, 0]} maxBarSize={48} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </HuntrSurface>
         </section>
 
         {/* 3. Financial & Cost Management */}
@@ -458,7 +469,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#fbbf24" }}>
               <LineChart size={18} /> {t("dashboard.buyer.finTitle")}
             </h2>
-            <button 
+            <HuntrButton
               onClick={handleDownloadSavingsData} 
               style={{ 
                 background: "rgba(251,191,36,0.1)", 
@@ -475,20 +486,20 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
               }}
             >
               <ArrowDownCircle size={14} /> {t("dashboard.buyer.downloadSavings")}
-            </button>
+            </HuntrButton>
           </div>
           {/* Stat card */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #34d399" }}>
+            <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #34d399" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>PPV</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: "#34d399", marginTop: 4, lineHeight: 1 }}>{formatCurrency(-450000000)}</div>
               <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.buyer.favorableVariance")}</div>
-            </div>
+            </HuntrSurface>
           </div>
           {/* Area chart — full width */}
-          <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
+          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "16px 20px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("dashboard.buyer.savingsYtd")}</h3>
-            <div style={{ height: 260, width: "100%" }}>
+            <div style={{ height: isMobile ? 240 : 300, width: "100%" }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={savingsData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                   <defs>
@@ -508,8 +519,9 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </HuntrSurface>
         </section>
+        </div>
 
       </div>
     </Layout>

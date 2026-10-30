@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import {
@@ -400,7 +402,7 @@ export default function CompanySubscriptionTab({
             }}
           >
             {(["annual", "monthly"] as const).map((cycle) => (
-              <button
+              <HuntrButton
                 key={cycle}
                 type="button"
                 onClick={() => setBillingCycle(cycle)}
@@ -421,7 +423,7 @@ export default function CompanySubscriptionTab({
                 }}
               >
                 {cycle === "annual" ? "Tahunan" : "Bulanan"}
-              </button>
+              </HuntrButton>
             ))}
           </div>
         </div>
@@ -436,7 +438,7 @@ export default function CompanySubscriptionTab({
                 ? plan.annual_price
                 : plan.monthly_price;
             return (
-              <button
+              <HuntrButton
                 key={plan.key}
                 type="button"
                 onClick={() => setSelectedPlan(plan.key)}
@@ -535,7 +537,7 @@ export default function CompanySubscriptionTab({
                   {plan.crm && <span>CRM Enterprise</span>}
                   <span>{plan.support}</span>
                 </div>
-              </button>
+              </HuntrButton>
             );
           })}
         </div>
@@ -574,7 +576,7 @@ export default function CompanySubscriptionTab({
         }}
       >
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button
+          <HuntrButton
             type="button"
             onClick={grantTrial}
             disabled={trialSaving || saving || revokeSaving}
@@ -603,9 +605,9 @@ export default function CompanySubscriptionTab({
               : hasEnterpriseHistory
                 ? "Berikan retrial 14 hari"
                 : "Mulai trial 14 hari"}
-          </button>
+          </HuntrButton>
           {active && (
-            <button
+            <HuntrButton
               type="button"
               onClick={revokeEntitlement}
               disabled={saving || trialSaving || revokeSaving}
@@ -630,10 +632,10 @@ export default function CompanySubscriptionTab({
                 <XCircle size={15} />
               )}
               {revokeSaving ? "Mencabut hak…" : "Cabut hak paket"}
-            </button>
+            </HuntrButton>
           )}
         </div>
-        <button
+        <HuntrButton
           type="button"
           onClick={applyPlan}
           disabled={saving || trialSaving || revokeSaving || !selected}
@@ -661,7 +663,7 @@ export default function CompanySubscriptionTab({
           {saving
             ? "Menerapkan paket…"
             : `Terapkan ${selected?.name ?? "paket"}`}
-        </button>
+        </HuntrButton>
       </div>
     </div>
   );
@@ -677,7 +679,7 @@ function Metric({
   icon: React.ReactNode;
 }) {
   return (
-    <div
+    <HuntrSurface
       style={{
         padding: "8px 9px",
         border: "1px solid var(--ui-border)",
@@ -710,6 +712,6 @@ function Metric({
       >
         {value}
       </div>
-    </div>
+    </HuntrSurface>
   );
 }

@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect, Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import { createRfq, apiGet, apiPost } from "~/lib/api";
@@ -276,7 +279,7 @@ export default function Rfq() {
         {/* Create RFQ Section */}
         <div className="rfq-form">
           {result ? (
-            <div className="glass-panel" style={{ padding: 28 }}>
+            <HuntrSurface className="glass-panel" style={{ padding: 28 }}>
               <div
                 style={{
                   display: "flex",
@@ -319,10 +322,10 @@ export default function Rfq() {
                 />
                 <KV label="Items" value={`${cartItems.length} items`} />
               </div>
-              <button onClick={() => setResult(null)} style={primaryBtn}>
+              <HuntrButton onClick={() => setResult(null)} style={primaryBtn}>
                 Buat RFQ Baru
-              </button>
-            </div>
+              </HuntrButton>
+            </HuntrSurface>
           ) : (
             <form
               onSubmit={handleSubmit}
@@ -348,7 +351,7 @@ export default function Rfq() {
                   <ClipboardList size={20} color="#f59e0b" />
                   <Section>Create New Purchase Request</Section>
                 </div>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => (window.location.href = "/checkout")}
                   style={{
@@ -363,7 +366,7 @@ export default function Rfq() {
                   }}
                 >
                   Buka Form Checkout RFQ Terpadu →
-                </button>
+                </HuntrButton>
               </div>
 
               <Field
@@ -378,7 +381,7 @@ export default function Rfq() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={lbl}>Objek Pengadaan</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => setF("procurement_type", "goods")}
                     style={{
@@ -395,8 +398,8 @@ export default function Rfq() {
                   >
                     📦 Pengadaan Barang
                     <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginTop: 2 }}>Fisik / Material / Asset</div>
-                  </button>
-                  <button
+                  </HuntrButton>
+                  <HuntrButton
                     type="button"
                     onClick={() => setF("procurement_type", "services")}
                     style={{
@@ -413,7 +416,7 @@ export default function Rfq() {
                   >
                     💼 Pengadaan Jasa
                     <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, marginTop: 2 }}>Proyek / Layanan / Kontrak</div>
-                  </button>
+                  </HuntrButton>
                 </div>
               </div>
 
@@ -436,7 +439,7 @@ export default function Rfq() {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     <label style={lbl}>Jenis Proyek / Kategori Layanan *</label>
-                    <select
+                    <HuntrSelect
                       value={form.project_type}
                       onChange={(e) => setF("project_type", e.target.value)}
                       style={inputStyle}
@@ -449,13 +452,13 @@ export default function Rfq() {
                       <option value="Logistik & Transportasi">Logistik & Transportasi</option>
                       <option value="Konsultasi & Jasa Profesional">Konsultasi & Jasa Profesional</option>
                       <option value="Lainnya">Lainnya (Custom)</option>
-                    </select>
+                    </HuntrSelect>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       <label style={{ ...lbl, fontSize: 10 }}>Tanggal Mulai Pengerjaan</label>
-                      <input
+                      <HuntrInput
                         type="date"
                         value={form.service_start_date}
                         onChange={(e) => setF("service_start_date", e.target.value)}
@@ -464,7 +467,7 @@ export default function Rfq() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       <label style={{ ...lbl, fontSize: 10 }}>Target Selesai (Deadline)</label>
-                      <input
+                      <HuntrInput
                         type="date"
                         min={form.service_start_date || undefined}
                         value={form.service_end_date}
@@ -478,7 +481,7 @@ export default function Rfq() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={lbl}>Department</label>
-                <select
+                <HuntrSelect
                   value={form.department}
                   onChange={(e) => setF("department", e.target.value)}
                   style={inputStyle}
@@ -505,12 +508,12 @@ export default function Rfq() {
                   <option value="Engineering & Maintenance">
                     Engineering & Maintenance
                   </option>
-                </select>
+                </HuntrSelect>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={lbl}>Justification / Description</label>
-                <textarea
+                <HuntrTextarea
                   value={form.description}
                   onChange={(e) => setF("description", e.target.value)}
                   required
@@ -522,7 +525,7 @@ export default function Rfq() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={lbl}>Tender Duration (days)</label>
-                <input
+                <HuntrInput
                   type="number"
                   min="1"
                   value={form.duration_days}
@@ -546,13 +549,13 @@ export default function Rfq() {
                   }}
                 >
                   <Section>Items to Procure ({cartItems.length})</Section>
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => (window.location.href = "/catalogue")}
                     style={{ ...ghostBtn, fontSize: 11 }}
                   >
                     + Add More Items
-                  </button>
+                  </HuntrButton>
                 </div>
 
                 {cartItems.length === 0 ? (
@@ -573,7 +576,7 @@ export default function Rfq() {
                     <div style={{ fontSize: 12, color: "#6b7280" }}>
                       Your cart is empty.
                     </div>
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => (window.location.href = "/catalogue")}
                       style={{
@@ -587,7 +590,7 @@ export default function Rfq() {
                       }}
                     >
                       Browse Catalogue
-                    </button>
+                    </HuntrButton>
                   </div>
                 ) : (
                   <div
@@ -635,7 +638,7 @@ export default function Rfq() {
                           <label style={{ ...lbl, fontSize: 10 }}>
                             Expected Date
                           </label>
-                          <input
+                          <HuntrInput
                             value={item.expected_date}
                             onChange={(e) =>
                               updateItemDate(item.id, e.target.value)
@@ -659,7 +662,7 @@ export default function Rfq() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={lbl}>Attach Document (Optional)</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <input
+                  <HuntrInput
                     type="file"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
                     onChange={(e) =>
@@ -700,7 +703,7 @@ export default function Rfq() {
                   style={{ display: "flex", flexDirection: "column", gap: 6 }}
                 >
                   <label style={lbl}>Delivery Point</label>
-                  <select
+                  <HuntrSelect
                     value={selectedDeliveryPoint}
                     onChange={(e) => setSelectedDeliveryPoint(e.target.value)}
                     style={{
@@ -719,7 +722,7 @@ export default function Rfq() {
                         {address.city && `, ${address.city}`}
                       </option>
                     ))}
-                  </select>
+                  </HuntrSelect>
                   <div style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>
                     Select the delivery location from your company's HQ
                     addresses
@@ -732,7 +735,7 @@ export default function Rfq() {
                   style={{ display: "flex", flexDirection: "column", gap: 6 }}
                 >
                   <label style={lbl}>Receiving Warehouse</label>
-                  <select
+                  <HuntrSelect
                     value={warehouseId}
                     onChange={(e) => setWarehouseId(e.target.value)}
                     style={{ ...inputStyle, appearance: "auto" }}
@@ -745,7 +748,7 @@ export default function Rfq() {
                           {warehouse.name} · {warehouse.code}
                         </option>
                       ))}
-                  </select>
+                  </HuntrSelect>
                   <div style={{ fontSize: 11, color: "var(--ui-text-muted)" }}>
                     Goods Receipt for this PR will be recorded in the selected
                     WMS warehouse.
@@ -754,7 +757,7 @@ export default function Rfq() {
               )}
 
               {error && <ErrorBox message={error} />}
-              <button
+              <HuntrButton
                 type="submit"
                 disabled={loading || cartItems.length === 0}
                 style={primaryBtn}
@@ -766,13 +769,13 @@ export default function Rfq() {
                 ) : (
                   "Submit for Approval"
                 )}
-              </button>
+              </HuntrButton>
             </form>
           )}
         </div>
 
         {/* RFQ Tracking Section */}
-        <div
+        <HuntrSurface
           className="rfq-tracking glass-panel"
           style={{
             padding: 28,
@@ -792,7 +795,7 @@ export default function Rfq() {
               <ClipboardList size={20} color="#f97316" />
               <Section>Your RFQs & Tenders</Section>
             </div>
-            <button
+            <HuntrButton
               onClick={() => activeCompany && fetchRfqs(activeCompany.id)}
               style={{
                 background: "none",
@@ -804,7 +807,7 @@ export default function Rfq() {
               }}
             >
               Refresh
-            </button>
+            </HuntrButton>
           </div>
 
           <div
@@ -901,7 +904,7 @@ export default function Rfq() {
                       rfq.status === "pending_approval") &&
                       (user?.role === "manager" ||
                         activeCompany?.owner_id === user?.id) && (
-                        <button
+                        <HuntrButton
                           onClick={(e) => {
                             e.stopPropagation();
                             handleApproveRfq(rfq.id);
@@ -921,7 +924,7 @@ export default function Rfq() {
                           }}
                         >
                           <UserCheck size={14} /> Approve RFQ
-                        </button>
+                        </HuntrButton>
                       )}
 
                     {rfq.status === "active" && (
@@ -943,7 +946,7 @@ export default function Rfq() {
               ))
             )}
           </div>
-        </div>
+        </HuntrSurface>
       </div>
     </Layout>
   );
@@ -1095,7 +1098,7 @@ function Field({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <label style={lbl}>{label}</label>
-      <input
+      <HuntrInput
         value={value}
         onChange={(e) => onChange(e.target.value)}
         type={type}

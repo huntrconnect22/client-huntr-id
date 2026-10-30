@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { apiGet } from "~/lib/api";
@@ -153,7 +156,7 @@ export default function AllRequests() {
                 Once your manager approves it, your request will be published here as a Global RFQ for vendors to bid on.
               </p>
             </div>
-            <button 
+            <HuntrButton
               onClick={() => navigate(companySlug ? `/${companySlug}/marketplace` : "/marketplace")}
               style={{
                 padding: "8px 16px", borderRadius: 8, background: "#f59e0b", border: "none", color: "#fff",
@@ -161,7 +164,7 @@ export default function AllRequests() {
               }}
             >
               Start Shopping
-            </button>
+            </HuntrButton>
           </div>
         )}
 
@@ -170,7 +173,7 @@ export default function AllRequests() {
           <div className="huntr-toolbar" style={{ marginBottom: 0 }}>
             <div className="huntr-toolbar-search">
               <Globe style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ui-text-muted)", transition: "color 0.3s ease" }} size={18} />
-              <input 
+              <HuntrInput
                 type="text" 
                 placeholder="Search active tenders by title, item, or company..." 
                 value={searchTerm}
@@ -186,7 +189,7 @@ export default function AllRequests() {
 
           {/* Status Tabs */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <button
+            <HuntrButton
               type="button"
               onClick={() => setStatusFilter("all")}
               style={{
@@ -202,8 +205,8 @@ export default function AllRequests() {
               }}
             >
               Semua ({requests.length})
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="button"
               onClick={() => setStatusFilter("active")}
               style={{
@@ -223,8 +226,8 @@ export default function AllRequests() {
             >
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusFilter === "active" ? "#fff" : "#22c55e" }} />
               Active RFQ ({activeCount})
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="button"
               onClick={() => setStatusFilter("closed")}
               style={{
@@ -244,7 +247,7 @@ export default function AllRequests() {
             >
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusFilter === "closed" ? "#fff" : "#ef4444" }} />
               Closed / Berakhir ({closedCount})
-            </button>
+            </HuntrButton>
           </div>
         </div>
 
@@ -273,7 +276,7 @@ export default function AllRequests() {
               const targetUrl = companySlug ? `/${companySlug}/rfq/${req.id}` : `/rfq/${req.id}`;
               
               return (
-                <div key={req.id} style={{
+                <HuntrSurface key={req.id} style={{
                   background: "var(--ui-bg-card)", 
                   borderRadius: 8, 
                   border: "1px solid var(--ui-border)",
@@ -380,7 +383,7 @@ export default function AllRequests() {
 
                   {/* Feed Footer Actions */}
                   <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--ui-border-subtle)", paddingTop: 16 }}>
-                    <button 
+                    <HuntrButton
                       onClick={() => navigate(targetUrl)}
                       style={{
                         padding: "8px 16px", 
@@ -400,9 +403,9 @@ export default function AllRequests() {
                       }}
                     >
                       {statusInfo.isClosed ? "View Details" : "View Details & Bid"} <ChevronRight size={16} />
-                    </button>
+                    </HuntrButton>
                   </div>
-                </div>
+                </HuntrSurface>
               );
             })}
           </div>

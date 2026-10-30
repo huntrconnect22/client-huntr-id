@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useState, useRef } from "react";
 import Layout from "~/components/Layout";
 import { getCatalogues } from "~/lib/api";
@@ -338,13 +340,13 @@ export default function Marketplace() {
                 </p>
               </div>
             </div>
-            <button
+            <HuntrButton
               onClick={() => navigate(`${getCompanyPrefix()}/agentic-procurement`)}
               className="w-full sm:w-auto justify-center px-3 py-2 sm:py-1 rounded-lg sm:rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
             >
               <span>{t("marketplace.agenticBanner.button")}</span>
               <ArrowRight size={13} />
-            </button>
+            </HuntrButton>
           </div>
         )}
 
@@ -355,7 +357,7 @@ export default function Marketplace() {
               ? <Sparkles size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-500" />
               : <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
             }
-            <input
+            <HuntrInput
               type="text"
               placeholder={t("marketplace.searchPlaceholder")}
               value={localSearch}
@@ -378,7 +380,7 @@ export default function Marketplace() {
             {primaryCats.map(({ key, label, Icon }) => {
               const isActive = activeCategory === label;
               return (
-                <button
+                <HuntrButton
                   key={label}
                   onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
                   style={isActive ? { color: "white" } : {}}
@@ -388,10 +390,10 @@ export default function Marketplace() {
                     }`}
                 >
                   <Icon size={12} strokeWidth={2} /> {t(`marketplace.categories.${key}` as any)}
-                </button>
+                </HuntrButton>
               );
             })}
-            <button
+            <HuntrButton
               onClick={() => setShowCategoryDropdown(p => !p)}
               style={activeInOverflow ? { color: "white" } : {}}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${activeInOverflow
@@ -409,7 +411,7 @@ export default function Marketplace() {
               ) : (
                 <>{t("marketplace.categories.more")} <ChevronDown size={11} className={`transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} /></>
               )}
-            </button>
+            </HuntrButton>
           </div>
           {showCategoryDropdown && (
             <div className="absolute left-0 top-full mt-2 z-50 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-xl shadow-xl p-3 min-w-[320px]">
@@ -418,7 +420,7 @@ export default function Marketplace() {
                 {overflowCats.map(({ key, label, Icon }) => {
                   const isActive = activeCategory === label;
                   return (
-                    <button
+                    <HuntrButton
                       key={label}
                       onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
                       style={isActive ? { color: "white" } : {}}
@@ -428,7 +430,7 @@ export default function Marketplace() {
                         }`}
                     >
                       <Icon size={14} strokeWidth={1.75} /> {t(`marketplace.categories.${key}` as any)}
-                    </button>
+                    </HuntrButton>
                   );
                 })}
               </div>
@@ -460,10 +462,10 @@ export default function Marketplace() {
               <span><strong className="text-indigo-500">{t("marketplace.compareBar.itemsSelected", { count: compareIds.length })}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setCompareIds([])} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-muted)]">{t("marketplace.compareBar.reset")}</button>
-              <button onClick={() => setShowCompareModal(true)} style={{ color: "white" }} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-bold shadow-sm">
+              <HuntrButton onClick={() => setCompareIds([])} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-muted)]">{t("marketplace.compareBar.reset")}</HuntrButton>
+              <HuntrButton onClick={() => setShowCompareModal(true)} style={{ color: "white" }} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-bold shadow-sm">
                 <Sparkles size={13} /> {t("marketplace.compareBar.compareWithAi")}
-              </button>
+              </HuntrButton>
             </div>
           </div>
         )}
@@ -516,7 +518,7 @@ export default function Marketplace() {
                       <Package size={28} className="text-[var(--ui-text-muted)] opacity-20" />
                     )}
                     {/* Compare toggle */}
-                    <button
+                    <HuntrButton
                       type="button"
                       aria-label="Compare"
                       onClick={e => { e.stopPropagation(); toggleCompare(item.id); }}
@@ -524,7 +526,7 @@ export default function Marketplace() {
                         }`}
                     >
                       {isSelected ? <CheckCircle2 size={13} /> : <GitCompare size={12} />}
-                    </button>
+                    </HuntrButton>
                     {/* In-cart indicator */}
                     {inCart && !justAdded && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
@@ -564,7 +566,7 @@ export default function Marketplace() {
 
                     {/* Add to cart — 1 click, no modal */}
                     <div className="mt-auto pt-2">
-                      <button
+                      <HuntrButton
                         type="button"
                         aria-label={t("marketplace.item.addToCart")}
                         onClick={e => handleAddToCart(item, e)}
@@ -583,7 +585,7 @@ export default function Marketplace() {
                         ) : (
                           <><ShoppingCart size={13} /> {t("marketplace.item.addToCart")}</>
                         )}
-                      </button>
+                      </HuntrButton>
                     </div>
                   </div>
                 </div>
@@ -595,21 +597,21 @@ export default function Marketplace() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-1.5 pt-4">
-            <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed">
+            <HuntrButton onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed">
               <ChevronLeft size={14} />
-            </button>
+            </HuntrButton>
             {getPaginationPages(totalPages, currentPage).map((page, idx) =>
               typeof page === "string" ? (
                 <span key={`el-${idx}`} className="px-1 text-xs text-[var(--ui-text-muted)]">…</span>
               ) : (
-                <button key={`p-${page}`} onClick={() => handlePageChange(page)} style={currentPage === page ? { color: "white" } : {}} className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${currentPage === page ? "bg-orange-500" : "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-primary)]"}`}>
+                <HuntrButton key={`p-${page}`} onClick={() => handlePageChange(page)} style={currentPage === page ? { color: "white" } : {}} className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${currentPage === page ? "bg-orange-500" : "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-primary)]"}`}>
                   {page}
-                </button>
+                </HuntrButton>
               )
             )}
-            <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed">
+            <HuntrButton onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed">
               <ChevronRight size={14} />
-            </button>
+            </HuntrButton>
           </div>
         )}
       </div>

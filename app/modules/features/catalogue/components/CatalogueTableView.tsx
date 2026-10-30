@@ -1,3 +1,7 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Trash2 } from "lucide-react";
 import { type CatalogueItem } from "../types";
@@ -25,7 +29,7 @@ export default function CatalogueTableView({
   const isAllSelected = selectedItemIds.length > 0 && selectedItemIds.length === topTen.length;
 
   return (
-    <div
+    <HuntrSurface
       style={{
         overflow: "hidden",
         borderRadius: 8,
@@ -33,18 +37,18 @@ export default function CatalogueTableView({
         border: "1px solid var(--ui-border)",
       }}
     >
-      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-        <thead>
-          <tr style={{ background: "var(--ui-bg-input)", borderBottom: "1px solid var(--ui-border)" }}>
-            <th style={{ padding: "10px 16px", width: 40 }}>
-              <input
+      <HuntrTable style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+        <HuntrTableHead>
+          <HuntrTableRow style={{ background: "var(--ui-bg-input)", borderBottom: "1px solid var(--ui-border)" }}>
+            <HuntrTableHeaderCell style={{ padding: "10px 16px", width: 40 }}>
+              <HuntrInput
                 type="checkbox"
                 checked={isAllSelected}
                 onChange={onToggleSelectAll}
                 style={{ accentColor: "var(--huntr-orange)", width: 15, height: 15, cursor: "pointer" }}
               />
-            </th>
-            <th
+            </HuntrTableHeaderCell>
+            <HuntrTableHeaderCell
               style={{
                 padding: "10px 16px",
                 color: "var(--ui-text-muted)",
@@ -55,8 +59,8 @@ export default function CatalogueTableView({
               }}
             >
               {t("catalogue.table.itemInfo")}
-            </th>
-            <th
+            </HuntrTableHeaderCell>
+            <HuntrTableHeaderCell
               style={{
                 padding: "10px 16px",
                 color: "var(--ui-text-muted)",
@@ -67,8 +71,8 @@ export default function CatalogueTableView({
               }}
             >
               {t("catalogue.table.category")}
-            </th>
-            <th
+            </HuntrTableHeaderCell>
+            <HuntrTableHeaderCell
               style={{
                 padding: "10px 16px",
                 color: "var(--ui-text-muted)",
@@ -79,8 +83,8 @@ export default function CatalogueTableView({
               }}
             >
               {t("catalogue.table.uom")}
-            </th>
-            <th
+            </HuntrTableHeaderCell>
+            <HuntrTableHeaderCell
               style={{
                 padding: "10px 16px",
                 color: "var(--ui-text-muted)",
@@ -92,14 +96,14 @@ export default function CatalogueTableView({
               }}
             >
               {t("catalogue.table.actions")}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </HuntrTableHeaderCell>
+          </HuntrTableRow>
+        </HuntrTableHead>
+        <HuntrTableBody>
           {items.map((item) => {
             const isSelected = selectedItemIds.includes(item.id);
             return (
-              <tr
+              <HuntrTableRow
                 key={item.id}
                 style={{
                   borderBottom: "1px solid var(--ui-border-subtle)",
@@ -107,33 +111,33 @@ export default function CatalogueTableView({
                   transition: "background 0.1s ease",
                 }}
               >
-                <td style={{ padding: "14px 16px" }}>
-                  <input
+                <HuntrTableCell style={{ padding: "14px 16px" }}>
+                  <HuntrInput
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => onToggleSelectItem(item.id)}
                     style={{ accentColor: "var(--huntr-orange)", width: 15, height: 15, cursor: "pointer" }}
                   />
-                </td>
-                <td style={{ padding: "14px 16px" }}>
+                </HuntrTableCell>
+                <HuntrTableCell style={{ padding: "14px 16px" }}>
                   <div style={{ color: "var(--ui-text-primary)", fontWeight: 600, fontSize: 13 }}>
                     {item.name}
                   </div>
                   <div style={{ color: "var(--ui-text-muted)", fontSize: 11, marginTop: 2, fontFamily: "monospace" }}>
                     {item.item_code}
                   </div>
-                </td>
-                <td style={{ padding: "14px 16px" }}>
+                </HuntrTableCell>
+                <HuntrTableCell style={{ padding: "14px 16px" }}>
                   <span style={{ color: "var(--ui-text-brand)", fontSize: 12, fontWeight: 600 }}>
                     {item.category || t("catalogue.table.generalCategory")}
                   </span>
-                </td>
-                <td style={{ padding: "14px 16px", color: "var(--ui-text-secondary)", fontSize: 12 }}>
+                </HuntrTableCell>
+                <HuntrTableCell style={{ padding: "14px 16px", color: "var(--ui-text-secondary)", fontSize: 12 }}>
                   {item.uom}
-                </td>
-                <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                </HuntrTableCell>
+                <HuntrTableCell style={{ padding: "14px 16px", textAlign: "right" }}>
                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center" }}>
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => onEditItem(item)}
                       style={{
@@ -151,9 +155,9 @@ export default function CatalogueTableView({
                       onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = "var(--ui-border-input)")}
                     >
                       {t("catalogue.table.edit")}
-                    </button>
+                    </HuntrButton>
                     {onDeleteItem && (
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => onDeleteItem(item)}
                         style={{
@@ -182,16 +186,16 @@ export default function CatalogueTableView({
                       >
                         <Trash2 size={13} />
                         {t("catalogue.table.delete")}
-                      </button>
+                      </HuntrButton>
                     )}
                   </div>
-                </td>
-              </tr>
+                </HuntrTableCell>
+              </HuntrTableRow>
             );
           })}
-        </tbody>
-      </table>
-    </div>
+        </HuntrTableBody>
+      </HuntrTable>
+    </HuntrSurface>
   );
 }
 

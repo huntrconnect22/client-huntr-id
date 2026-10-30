@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import DemoDisabledBanner from "~/components/DemoDisabledBanner";
@@ -180,14 +182,14 @@ export default function ReturnsPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap ml-auto">
-            <button
+            <HuntrButton
               onClick={() => fetchReturns()}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
             >
               <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
               <span>Refresh</span>
-            </button>
+            </HuntrButton>
           </div>
         </div>
 
@@ -203,7 +205,7 @@ export default function ReturnsPage() {
               { id: "processed", label: "Processed" },
               { id: "cancelled", label: "Cancelled" },
             ].map((tab) => (
-              <button
+              <HuntrButton
                 key={tab.id}
                 onClick={() => setFilterStatus(tab.id)}
                 style={filterStatus === tab.id ? { color: "white" } : {}}
@@ -214,14 +216,14 @@ export default function ReturnsPage() {
                 }`}
               >
                 {tab.label}
-              </button>
+              </HuntrButton>
             ))}
           </div>
 
           {/* Search Input */}
           <div className="relative min-w-[220px] flex-1 max-w-sm">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-            <input
+            <HuntrInput
               type="text"
               placeholder="Search by return no, PO, reason..."
               value={searchQuery}
@@ -327,7 +329,7 @@ export default function ReturnsPage() {
                         </div>
                       </div>
 
-                      <button
+                      <HuntrButton
                         onClick={() => handleDownloadPdf(ret.id)}
                         disabled={downloadingId === ret.id}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-500/40 hover:text-orange-500 transition-all shrink-0"
@@ -338,7 +340,7 @@ export default function ReturnsPage() {
                           <Download size={12} />
                         )}
                         <span>PDF</span>
-                      </button>
+                      </HuntrButton>
                     </div>
                   </div>
                 </div>

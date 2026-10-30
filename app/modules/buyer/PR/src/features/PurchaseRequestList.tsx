@@ -1,3 +1,6 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { apiGet } from "~/lib/api";
@@ -122,7 +125,7 @@ export default function MyPurchaseRequisitions() {
               size={15}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
             />
-            <input
+            <HuntrInput
               type="text"
               placeholder="Search by title or PR ID..."
               value={searchTerm}
@@ -132,20 +135,20 @@ export default function MyPurchaseRequisitions() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {isAgenticProcurementEnabled() && (
-              <button
+              <HuntrButton
                 onClick={() => navigate("/agentic-procurement")}
                 className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 transition-all cursor-pointer"
               >
                 <Sparkles size={15} />
                 <span>AI Agent Procurement</span>
-              </button>
+              </HuntrButton>
             )}
-            <button
+            <HuntrButton
               onClick={() => navigate("/checkout?mode=direct")}
               className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-xs font-semibold text-white hover:bg-orange-600 sm:text-sm"
             >
               <Plus size={15} /> Direct PR
-            </button>
+            </HuntrButton>
           </div>
         </div>
 
@@ -168,60 +171,60 @@ export default function MyPurchaseRequisitions() {
                 Create a new PR from the marketplace.
               </p>
             </div>
-            <button
+            <HuntrButton
               onClick={() => navigate("/marketplace")}
               style={{ color: "white" }}
               className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-sm font-semibold transition-all"
             >
               Go to Marketplace
-            </button>
+            </HuntrButton>
           </div>
         ) : (
           <>
             {/* ── Desktop Table ── (hidden on mobile) */}
             <div className="hidden md:block rounded-xl border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                    <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">
+              <HuntrTable className="w-full text-sm border-collapse">
+                <HuntrTableHead>
+                  <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                    <HuntrTableHeaderCell className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">
                       PR ID
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
                       Title
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">
                       Items
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">
                       Date
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[160px]">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[160px]">
                       Status
-                    </th>
-                    <th className="px-5 py-3 w-[52px]" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--ui-border)]">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-5 py-3 w-[52px]" />
+                  </HuntrTableRow>
+                </HuntrTableHead>
+                <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
                   {filtered.map((req) => {
                     const s = getStatus(req.status);
                     const href = getRoute(req);
                     return (
-                      <tr
+                      <HuntrTableRow
                         key={req.id}
                         onClick={() => navigate(href)}
                         className="hover:bg-[var(--ui-bg-input)] transition-colors cursor-pointer group"
                       >
                         {/* PR ID */}
-                        <td className="px-5 py-3.5 whitespace-nowrap">
+                        <HuntrTableCell className="px-5 py-3.5 whitespace-nowrap">
                           <span className="text-xs font-bold text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded">
                             #
                             {String(req.id ?? "")
                               .substring(0, 8)
                               .toUpperCase()}
                           </span>
-                        </td>
+                        </HuntrTableCell>
                         {/* Title + description */}
-                        <td className="px-5 py-3.5">
+                        <HuntrTableCell className="px-5 py-3.5">
                           <div className="font-semibold text-[var(--ui-text-primary)] truncate max-w-[360px]">
                             {req.title}
                           </div>
@@ -230,9 +233,9 @@ export default function MyPurchaseRequisitions() {
                               {req.description}
                             </div>
                           )}
-                        </td>
+                        </HuntrTableCell>
                         {/* Items count */}
-                        <td className="px-5 py-3.5 whitespace-nowrap">
+                        <HuntrTableCell className="px-5 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-sm text-[var(--ui-text-secondary)]">
                             <Package
                               size={13}
@@ -240,9 +243,9 @@ export default function MyPurchaseRequisitions() {
                             />
                             {req.items?.length ?? 0}
                           </div>
-                        </td>
+                        </HuntrTableCell>
                         {/* Date */}
-                        <td className="px-5 py-3.5 whitespace-nowrap">
+                        <HuntrTableCell className="px-5 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-muted)]">
                             <Calendar size={12} />
                             {new Date(req.created_at).toLocaleDateString(
@@ -254,9 +257,9 @@ export default function MyPurchaseRequisitions() {
                               },
                             )}
                           </div>
-                        </td>
+                        </HuntrTableCell>
                         {/* Status badge */}
-                        <td className="px-5 py-3.5 whitespace-nowrap">
+                        <HuntrTableCell className="px-5 py-3.5 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${s.bg} ${s.color}`}
                           >
@@ -265,18 +268,18 @@ export default function MyPurchaseRequisitions() {
                             />
                             {s.label}
                           </span>
-                        </td>
+                        </HuntrTableCell>
                         {/* Arrow */}
-                        <td className="px-4 py-3.5 text-right">
+                        <HuntrTableCell className="px-4 py-3.5 text-right">
                           <span className="w-7 h-7 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] inline-flex items-center justify-center text-[var(--ui-text-muted)] group-hover:text-orange-500 group-hover:border-orange-500/30 transition-all">
                             <ArrowUpRight size={13} />
                           </span>
-                        </td>
-                      </tr>
+                        </HuntrTableCell>
+                      </HuntrTableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </HuntrTableBody>
+              </HuntrTable>
 
               {/* Row count */}
               <div className="px-5 py-2.5 border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-between">
@@ -295,7 +298,7 @@ export default function MyPurchaseRequisitions() {
               {filtered.map((req) => {
                 const s = getStatus(req.status);
                 return (
-                  <button
+                  <HuntrButton
                     key={req.id}
                     onClick={() => navigate(getRoute(req))}
                     className="w-full text-left p-4 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] hover:border-orange-500/30 transition-all"
@@ -330,7 +333,7 @@ export default function MyPurchaseRequisitions() {
                         })}
                       </span>
                     </div>
-                  </button>
+                  </HuntrButton>
                 );
               })}
               <p className="text-xs text-center text-[var(--ui-text-muted)] pt-1">

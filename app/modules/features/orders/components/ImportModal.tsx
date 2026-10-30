@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React from "react";
 import {
   Loader2, X, FileSpreadsheet
@@ -29,7 +32,7 @@ export const ImportModal = ({
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)",
       display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 12,
     }}>
-      <div style={{
+      <HuntrSurface style={{
         background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12,
         width: "100%", maxWidth: 500, padding: 12, display: "flex", flexDirection: "column", gap: 16,
         transition: "all 0.3s ease",
@@ -38,9 +41,9 @@ export const ImportModal = ({
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "var(--ui-text-primary)", transition: "color 0.3s ease" }}>
             Import {companyType === "buyer" ? "Historical PO" : "Catalogue"}
           </h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer", transition: "color 0.3s ease" }}>
+          <HuntrButton onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer", transition: "color 0.3s ease" }}>
             <X size={20} />
-          </button>
+          </HuntrButton>
         </div>
 
         <div
@@ -57,7 +60,7 @@ export const ImportModal = ({
           <p style={{ color: "var(--ui-text-muted)", fontSize: 12, marginTop: 8, transition: "color 0.3s ease" }}>
             Supported formats: CSV, Excel (.xlsx, .xls, .xlsm, .ods)
           </p>
-          <input
+          <HuntrInput
             id="csv-input"
             type="file"
             accept=".csv, .xlsx, .xls, .xlsm, .ods"
@@ -78,7 +81,7 @@ export const ImportModal = ({
           </div>
         )}
 
-        <button
+        <HuntrButton
           onClick={onImport}
           disabled={!importFile || isImporting || importSuccess}
           style={{
@@ -89,8 +92,8 @@ export const ImportModal = ({
           }}
         >
           {isImporting ? <Loader2 size={20} className="animate-spin" /> : "Start Import"}
-        </button>
-      </div>
+        </HuntrButton>
+      </HuntrSurface>
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -264,18 +266,18 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               </p>
             </div>
           </div>
-          <button
+          <HuntrButton
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
-          </button>
+          </HuntrButton>
         </div>
 
         {/* Tab Selection (2 Options) */}
         <div className="px-5 pt-3.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="grid grid-cols-2 gap-2.5 pb-3.5">
-            <button
+            <HuntrButton
               type="button"
               onClick={() => setActiveTab("buyer_catalog")}
               className={`p-3 rounded-md border text-left transition-all flex items-start gap-2.5 ${
@@ -299,9 +301,9 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   Pilih barang dari supplier terdaftar & ajak buyer lain pesan bareng
                 </div>
               </div>
-            </button>
+            </HuntrButton>
 
-            <button
+            <HuntrButton
               type="button"
               onClick={() => setActiveTab("collective_rfq")}
               className={`p-3 rounded-md border text-left transition-all flex items-start gap-2.5 ${
@@ -325,7 +327,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   Ajukan spesifikasi custom, kumpulkan volume, lalu lelang ke supplier
                 </div>
               </div>
-            </button>
+            </HuntrButton>
           </div>
         </div>
 
@@ -347,7 +349,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   Cari dari Katalog Produk Huntr (Opsional)
                 </label>
                 <div className="relative">
-                  <input
+                  <HuntrInput
                     type="text"
                     value={catalogSearchQuery}
                     onChange={(e) => handleSearchCatalog(e.target.value)}
@@ -363,7 +365,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 {showCatalogDropdown && catalogSearchResults.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg z-20 max-h-48 overflow-y-auto">
                     {catalogSearchResults.map((item) => (
-                      <button
+                      <HuntrButton
                         key={item.id}
                         type="button"
                         onClick={() => handleSelectCatalogItem(item)}
@@ -380,7 +382,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 shrink-0 font-medium">
                           Pilih
                         </span>
-                      </button>
+                      </HuntrButton>
                     ))}
                   </div>
                 )}
@@ -392,7 +394,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   <Building2 className="w-3.5 h-3.5 text-orange-500" />
                   Supplier / Vendor Penyedia Barang *
                 </label>
-                <select
+                <HuntrSelect
                   value={supplierCompanyId}
                   onChange={(e) => setSupplierCompanyId(e.target.value)}
                   required
@@ -408,7 +410,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                       {sup.name} {sup.industry_type ? `(${sup.industry_type})` : ""}
                     </option>
                   ))}
-                </select>
+                </HuntrSelect>
               </div>
 
               {/* Notice helper */}
@@ -417,13 +419,13 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   <span className="shrink-0">💡</span>
                   <p className="leading-snug">
                     Belum menentukan supplier atau butuh barang custom?{" "}
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => setActiveTab("collective_rfq")}
                       className="text-orange-600 dark:text-orange-400 font-semibold underline hover:no-underline"
                     >
                       Beralih ke Opsi 2 (Collective RFQ)
-                    </button>{" "}
+                    </HuntrButton>{" "}
                     agar para supplier yang mengajukan penawaran harga.
                   </p>
                 </div>
@@ -438,7 +440,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 ? "Nama Produk / Barang Katalog *"
                 : "Nama Kebutuhan Pengadaan (Spesifikasi Barang) *"}
             </label>
-            <input
+            <HuntrInput
               type="text"
               required
               placeholder={
@@ -459,7 +461,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 ? "Catatan / Deskripsi Tambahan"
                 : "Rincian Spesifikasi & Kebutuhan Teknis *"}
             </label>
-            <textarea
+            <HuntrTextarea
               rows={3}
               placeholder={
                 activeTab === "buyer_catalog"
@@ -478,7 +480,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Kategori Produk
               </label>
-              <select
+              <HuntrSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
@@ -490,14 +492,14 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 <option value="Electronic & Hardware">Electronic & Hardware</option>
                 <option value="Food & Agriculture">Food & Agriculture</option>
                 <option value="General">General</option>
-              </select>
+              </HuntrSelect>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Satuan Ukuran (Unit)
               </label>
-              <input
+              <HuntrInput
                 type="text"
                 placeholder="pcs, box, kg, drum, pack"
                 value={unit}
@@ -513,7 +515,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Target Total Kuota ({unit}) *
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 min="1"
                 required
@@ -528,7 +530,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Batas Waktu Pengumpulan *
               </label>
-              <input
+              <HuntrInput
                 type="date"
                 required
                 value={endsAt}
@@ -546,7 +548,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Harga Normal / Base Price (Rp) *
                   </label>
-                  <input
+                  <HuntrInput
                     type="number"
                     min="1"
                     required
@@ -560,7 +562,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Estimasi Lead Time (Hari)
                   </label>
-                  <input
+                  <HuntrInput
                     type="number"
                     min="1"
                     value={leadTimeDays}
@@ -576,14 +578,14 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Tier Diskon Volume (Makin banyak makin murah)
                   </label>
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={handleAddTier}
                     className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Tambah Tier
-                  </button>
+                  </HuntrButton>
                 </div>
 
                 <div className="space-y-1.5">
@@ -593,7 +595,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                       className="flex items-center gap-2 p-2 rounded-md bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
                     >
                       <span className="text-slate-500 shrink-0 text-[11px]">Min:</span>
-                      <input
+                      <HuntrInput
                         type="number"
                         min="1"
                         value={tier.min_quantity}
@@ -604,7 +606,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                       />
                       <span className="text-slate-500 shrink-0 text-[11px]">{unit}</span>
                       <span className="text-slate-500 shrink-0 text-[11px] ml-1">Harga: Rp</span>
-                      <input
+                      <HuntrInput
                         type="number"
                         min="1"
                         value={tier.unit_price}
@@ -613,13 +615,13 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                         }
                         className="flex-1 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-white text-xs"
                       />
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => handleRemoveTier(idx)}
                         className="text-slate-400 hover:text-rose-500 p-1"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </HuntrButton>
                     </div>
                   ))}
                 </div>
@@ -634,7 +636,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-2 text-xs text-slate-400 font-medium">Rp</span>
-                  <input
+                  <HuntrInput
                     type="number"
                     min="1"
                     required
@@ -663,7 +665,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
             <p className="text-[11px] text-slate-600 dark:text-slate-400">
               Berapa kuantiti yang ingin perusahaan Anda pesan langsung sebagai inisiator?
             </p>
-            <input
+            <HuntrInput
               type="number"
               min="1"
               value={initialQuantity}
@@ -675,15 +677,15 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
 
         {/* Footer */}
         <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <button
+          <HuntrButton
             type="button"
             onClick={onClose}
             className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
           >
             Batal
-          </button>
+          </HuntrButton>
 
-          <button
+          <HuntrButton
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
@@ -700,7 +702,7 @@ export const BuyerInitiativeModal: React.FC<BuyerInitiativeModalProps> = ({
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
-          </button>
+          </HuntrButton>
         </div>
       </div>
     </div>,

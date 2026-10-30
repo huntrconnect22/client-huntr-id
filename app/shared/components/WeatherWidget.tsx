@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect, Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useMemo, useState } from "react";
 import { Cloud, MapPin, RefreshCw, ThermometerSun, Wind } from "lucide-react";
 import { fetchCurrentWeather } from "../lib/api/weather";
@@ -18,7 +21,7 @@ const WEATHER_LOCATIONS = [
 
 const STORAGE_KEY = "huntr_weather_location";
 
-export default function WeatherWidget({ embedded = false }: { embedded?: boolean }) {
+export default function WeatherWidget({ embedded = false, compact = false }: { embedded?: boolean; compact?: boolean }) {
   const [location, setLocation] = useState("Jakarta");
   const [customLocation, setCustomLocation] = useState("");
   const [data, setData] = useState<any>(null);
@@ -73,8 +76,58 @@ export default function WeatherWidget({ embedded = false }: { embedded?: boolean
     };
   }, [resolvedLocation]);
 
+  if (compact) {
+    const weather = data?.weather?.[0];
+
+    return (
+      <HuntrSurface style={{
+        margin: 0,
+        minHeight: 96,
+        padding: "14px 16px",
+        borderRadius: 6,
+        border: "1px solid var(--ui-border)",
+        background: "var(--ui-bg-card)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          <div style={{ width: 40, height: 40, display: "grid", placeItems: "center", borderRadius: 6, background: "rgba(249,115,22,0.14)", color: "#d97706", flexShrink: 0 }}>
+            <Cloud size={21} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "var(--ui-text-primary)" }}>Cuaca {data?.name || resolvedLocation}</div>
+            {loading ? (
+              <div style={{ marginTop: 4, fontSize: 12, color: "var(--ui-text-muted)" }}>Memuat informasi cuaca…</div>
+            ) : error ? (
+              <div style={{ marginTop: 4, fontSize: 12, color: "var(--ui-text-muted)" }}>Informasi cuaca belum tersedia.</div>
+            ) : data ? (
+              <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", gap: 7, minWidth: 0 }}>
+                <strong style={{ fontSize: 22, lineHeight: 1, color: "var(--ui-text-primary)" }}>{Math.round(data.main.temp)}°C</strong>
+                <span style={{ fontSize: 12, color: "var(--ui-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: "capitalize" }}>{weather?.description}</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <HuntrButton
+          type="button"
+          onClick={() => resolvedLocation && void fetchCurrentWeather(resolvedLocation).then((weatherData) => {
+            setData(weatherData);
+            setUpdatedAt(Date.now());
+            setError(null);
+          }).catch((err: any) => setError(err?.message || "Failed to load weather."))}
+          style={{ width: 36, height: 36, borderRadius: 6, border: "1px solid var(--ui-border)", background: "var(--ui-bg-card)", color: "var(--ui-text-primary)", display: "grid", placeItems: "center", flexShrink: 0 }}
+          aria-label="Muat ulang cuaca"
+        >
+          <RefreshCw size={16} />
+        </HuntrButton>
+      </HuntrSurface>
+    );
+  }
+
   return (
-    <div style={{
+    <HuntrSurface style={{
       margin: embedded ? 0 : "0 10px 14px",
       padding: 14,
       borderRadius: 4,
@@ -91,7 +144,7 @@ export default function WeatherWidget({ embedded = false }: { embedded?: boolean
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)" }}>Lokasi bisa dipilih</div>
           </div>
         </div>
-        <button
+        <HuntrButton
           type="button"
           onClick={() => resolvedLocation && void fetchCurrentWeather(resolvedLocation).then((weather) => {
             setData(weather);
@@ -113,14 +166,14 @@ export default function WeatherWidget({ embedded = false }: { embedded?: boolean
           aria-label="Refresh weather"
         >
           <RefreshCw size={14} />
-        </button>
+        </HuntrButton>
       </div>
 
       <div style={{ marginBottom: 10 }}>
         <label style={{ display: "block", fontSize: 10, fontWeight: 800, color: "var(--ui-text-muted)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>
           Choose location
         </label>
-        <select
+        <HuntrSelect
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           style={{
@@ -137,7 +190,7 @@ export default function WeatherWidget({ embedded = false }: { embedded?: boolean
           {WEATHER_LOCATIONS.map((item) => (
             <option key={item} value={item}>{item}</option>
           ))}
-        </select>
+        </HuntrSelect>
       </div>
 
       {location === "Custom" && (
@@ -145,7 +198,7 @@ export default function WeatherWidget({ embedded = false }: { embedded?: boolean
           <label style={{ display: "block", fontSize: 10, fontWeight: 800, color: "var(--ui-text-muted)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             Custom location
           </label>
-          <input
+          <HuntrInput
             value={customLocation}
             onChange={(e) => setCustomLocation(e.target.value)}
             placeholder="e.g. Tangerang"
@@ -213,13 +266,13 @@ export default function WeatherWidget({ embedded = false }: { embedded?: boolean
           </div>
         </div>
       )}
-    </div>
+    </HuntrSurface>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{
+    <HuntrSurface style={{
       padding: 10,
       borderRadius: 4,
       background: "var(--ui-bg-card)",
@@ -231,6 +284,6 @@ function Metric({ label, value }: { label: string; value: string }) {
       <div style={{ fontSize: 13, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 3 }}>
         {value}
       </div>
-    </div>
+    </HuntrSurface>
   );
 }

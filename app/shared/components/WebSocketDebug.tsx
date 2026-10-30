@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect, useRef } from 'react';
 import { useEventBus } from '../lib/EventBus';
 import { getConnectionState } from '../lib/echo';
@@ -97,7 +98,7 @@ export default function WebSocketDebug() {
           
           <div className="flex gap-2 mt-2">
             {(connectionStatus === 'failed' || connectionStatus === 'disconnected') && (
-              <button
+              <HuntrButton
                 onClick={(e) => {
                   e.stopPropagation();
                   reconnect();
@@ -105,9 +106,9 @@ export default function WebSocketDebug() {
                 className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
               >
                 Reconnect
-              </button>
+              </HuntrButton>
             )}
-            <button
+            <HuntrButton
               onClick={(e) => {
                 e.stopPropagation();
                 console.log('WebSocket Debug Info:', {
@@ -119,7 +120,7 @@ export default function WebSocketDebug() {
               className="px-2 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
             >
               Log Info
-            </button>
+            </HuntrButton>
           </div>
         </div>
       )}
