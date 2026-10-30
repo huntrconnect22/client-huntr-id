@@ -1,0 +1,46 @@
+# Use this version when the HTTPS gateway is itself an Nginx Docker container,
+# such as api.huntr.id/docker-compose.production.yml's `web` service.
+#
+# Add this to the gateway service first:
+#   extra_hosts:
+#     - "host.docker.internal:host-gateway"
+#
+# Then add these server blocks to its Nginx configuration. Provision the
+# app.huntr.id certificate before enabling the HTTPS block.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name app.huntr.id;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/public;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name app.huntr.id;
+
+    ssl_certificate /etc/letsencrypt/live/app.huntr.id/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.huntr.id/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    location / {
+        proxy_pass http://host.docker.internal:5173;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+}
