@@ -1,22 +1,50 @@
-FROM node:20-alpine AS development-dependencies-env
-COPY . /app
+FROM node:20-alpine AS dependencies
 WORKDIR /app
+COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json /app/
+FROM node:20-alpine AS build
 WORKDIR /app
-RUN npm ci --omit=dev
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY . ./
 
-FROM node:20-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
-WORKDIR /app
+ARG VITE_API_URL
+ARG VITE_REVERB_APP_KEY
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT
+ARG VITE_REVERB_SCHEME
+ARG VITE_BASE_URL_IMAGE
+ARG VITE_DEBUG_GR_DATE=false
+ARG VITE_DEMO_MODE=false
+ARG VITE_GEOAPIFY_API_KEY
+ARG VITE_WEATHER_API_KEY
+ARG VITE_CURRENCY_API_KEY
+
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+    VITE_REVERB_HOST=$VITE_REVERB_HOST \
+    VITE_REVERB_PORT=$VITE_REVERB_PORT \
+    VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME \
+    VITE_BASE_URL_IMAGE=$VITE_BASE_URL_IMAGE \
+    VITE_DEBUG_GR_DATE=$VITE_DEBUG_GR_DATE \
+    VITE_DEMO_MODE=$VITE_DEMO_MODE \
+    VITE_GEOAPIFY_API_KEY=$VITE_GEOAPIFY_API_KEY \
+    VITE_WEATHER_API_KEY=$VITE_WEATHER_API_KEY \
+    VITE_CURRENCY_API_KEY=$VITE_CURRENCY_API_KEY
+
 RUN npm run build
 
-FROM node:20-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
+FROM node:20-alpine AS runtime
 WORKDIR /app
-CMD ["npm", "run", "start"]
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=3000
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build /app/build ./build
+COPY --from=build /app/public ./public
+
+USER node
+EXPOSE 3000
+CMD ["node_modules/.bin/react-router-serve", "build/server/index.js"]

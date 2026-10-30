@@ -1,4 +1,11 @@
+.git
+.github
 .react-router
+.vercel
 build
 node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
 README.md
