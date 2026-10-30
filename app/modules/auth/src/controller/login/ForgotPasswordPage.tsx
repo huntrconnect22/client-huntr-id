@@ -2,7 +2,7 @@ import { Input as HuntrInput } from "~/shared/ui/Fields";
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Loader2, ArrowLeft, Key, MessageSquare, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, Key, MessageSquare, ShieldCheck, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { sendOtp, verifyOtp, resetPasswordWhatsapp } from "~/lib/api/auth";
 import AuthLayout from "~/components/AuthLayout";
 import { useLanguage } from "~/context/LanguageContext";
@@ -18,6 +18,8 @@ export default function ForgotPassword() {
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,15 +162,23 @@ export default function ForgotPassword() {
                 id="new-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 required
-                className="auth-input auth-input--with-icon"
+                className="auth-input auth-input--with-icon auth-input--with-action"
                 minLength={8}
               />
               <div className="auth-input-icon">
                 <Key size={18} />
               </div>
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="auth-eye-btn"
+                aria-label={showPassword ? "Hide new password" : "Show new password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
@@ -179,15 +189,23 @@ export default function ForgotPassword() {
                 id="confirm-password"
                 value={passwordConfirmation}
                 onChange={e => setPasswordConfirmation(e.target.value)}
-                type="password"
+                type={showPasswordConfirmation ? "text" : "password"}
                 placeholder="••••••••"
                 required
-                className="auth-input auth-input--with-icon"
+                className="auth-input auth-input--with-icon auth-input--with-action"
                 minLength={8}
               />
               <div className="auth-input-icon">
                 <Key size={18} />
               </div>
+              <button
+                type="button"
+                onClick={() => setShowPasswordConfirmation((visible) => !visible)}
+                className="auth-eye-btn"
+                aria-label={showPasswordConfirmation ? "Hide password confirmation" : "Show password confirmation"}
+              >
+                {showPasswordConfirmation ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 

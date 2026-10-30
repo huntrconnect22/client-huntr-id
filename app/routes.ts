@@ -35,6 +35,7 @@ export default [
     index("modules/buyer/dashboard/routes/HomeRoute.tsx"),
 
     // Dynamic company slug prefixed routes (e.g. /micro-padma-nusantara, /micro-padma-nusantara/dashboard)
+    route(":companySlug/menu", "modules/buyer/dashboard/routes/HomeRoute.tsx", { id: "company-main-menu" }),
     route(":companySlug", "modules/buyer/dashboard/routes/HomeRoute.tsx", { id: "company-home" }),
     route(":companySlug/dashboard", "modules/buyer/dashboard/routes/HomeRoute.tsx", {
       id: "company-dashboard",
@@ -134,6 +135,7 @@ export default [
     route(":companySlug/tasks", "modules/shell/routes/TasksRoute.tsx", { id: "company-tasks" }),
 
     // Fallback legacy paths
+    route("menu", "modules/buyer/dashboard/routes/HomeRoute.tsx", { id: "main-menu" }),
     route("agentic-procurement", "modules/buyer/agentic-procurement/routes/AgenticProcurementRoute.tsx"),
     route("marketplace", "modules/marketplace/catalogue/routes/MarketplaceRoute.tsx"),
     route("apps", "modules/app-market/routes/AppMarketRoute.tsx"),

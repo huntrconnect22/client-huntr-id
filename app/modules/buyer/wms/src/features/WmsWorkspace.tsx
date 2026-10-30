@@ -76,9 +76,9 @@ import {
   updateWarehouse,
 } from "~/modules/shared/api/wms";
 
-const card = "rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4";
+const card = "rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 sm:p-6";
 const input =
-  "w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm text-[var(--ui-text-primary)] outline-none focus:border-[var(--ui-text-brand)] transition-colors";
+  "w-full rounded-lg bg-[var(--ui-bg-input)] px-3 py-2.5 text-sm text-[var(--ui-text-primary)] outline-none ring-1 ring-transparent focus:ring-2 focus:ring-[var(--ui-text-brand)]/25 transition-shadow";
 
 type PickerKind =
   | "receive_warehouse"

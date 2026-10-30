@@ -278,7 +278,7 @@ export function AppDrawer({ navItems, pathname, pendingCounts, unreadCount = 0, 
                   sx={{ minHeight: { xs: 100, sm: 108 }, p: 1.5, display: "grid", gridTemplateColumns: "48px minmax(0, 1fr)", alignItems: "center", gap: 1.25, borderRadius: 1.5, border: 1, borderColor: active ? tone.main : "divider", bgcolor: active ? tone.surface : "background.paper", color: "text.primary", transition: "transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease", "&:hover": { borderColor: tone.main, transform: "translateY(-2px)", boxShadow: `0 6px 16px ${tone.surface}` }, "&.Mui-focusVisible": { outline: `2px solid ${tone.main}`, outlineOffset: 2 } }}>
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Badge badgeContent={badge ? pendingCounts[badge] ?? 0 : 0} color="primary" max={99}>
-                      <Box aria-hidden="true" sx={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 1.5, bgcolor: tone.surface, border: `1px solid ${tone.border}`, color: tone.main }}><Icon size={24} strokeWidth={1.8} /></Box>
+                      <Box aria-hidden="true" sx={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 1.5, bgcolor: tone.main, border: "none", boxShadow: `0 8px 18px -10px ${tone.main}`, color: "#fff" }}><Icon size={24} strokeWidth={2} /></Box>
                     </Badge>
                   </Box>
                   <Box sx={{ minWidth: 0, display: "grid", gap: 0.35, textAlign: "left" }}>

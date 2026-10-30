@@ -36,7 +36,7 @@ export default function AuthLayout({
             <img 
               src="/assets/img/logo/sidebar.png" 
               alt="HUNTR" 
-              className="h-9 sm:h-10 w-auto object-contain" 
+              className="h-9 w-32 object-cover object-center sm:h-10 sm:w-36" 
             />
           </div>
           <div className="flex items-center gap-3">

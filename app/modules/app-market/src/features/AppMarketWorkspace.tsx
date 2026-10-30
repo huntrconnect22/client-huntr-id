@@ -69,10 +69,10 @@ export default function AppMarket() {
       title="App Market"
       subtitle="Add-on siap pakai untuk workspace perusahaan Anda."
     >
-      <div className="w-full space-y-6">
-        <section className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+      <div className="w-full space-y-8">
+        <section className="grid gap-6 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 lg:grid-cols-[minmax(0,1fr)_minmax(520px,auto)] lg:items-center lg:p-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[image:var(--huntr-gradient)] text-white shadow-lg shadow-indigo-500/30">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
               <Store size={24} />
             </div>
             <div>
@@ -89,27 +89,28 @@ export default function AppMarket() {
             </div>
           </div>
 
-          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-stretch">
-            <label className="flex items-center gap-2 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 focus-within:ring-2 focus-within:ring-[var(--ui-text-brand)]/30">
+          <div className="grid w-full gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] lg:w-auto lg:min-w-[520px]">
+            <label className="flex min-h-12 items-center gap-2 rounded-lg bg-[var(--ui-bg-input)] px-3 ring-1 ring-[var(--ui-border-input)] focus-within:ring-2 focus-within:ring-[var(--ui-text-brand)]/30">
               <Search size={17} className="text-[var(--ui-text-muted)]" />
               <HuntrInput
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Cari aplikasi…"
-                className="w-full bg-transparent py-2.5 text-sm outline-none md:w-60"
+                data-field-chrome="none"
+                className="w-full bg-transparent text-sm outline-none"
               />
             </label>
             <HuntrSelect
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--ui-text-brand)]/30"
+              className="min-h-12 rounded-lg bg-[var(--ui-bg-input)] px-3 text-sm outline-none ring-1 ring-[var(--ui-border-input)] focus:ring-2 focus:ring-[var(--ui-text-brand)]/30"
             >
               <option>All categories</option>
               {CATEGORIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </HuntrSelect>
-            <label className="flex items-center gap-2 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-sm">
+            <label className="flex min-h-12 items-center gap-2 rounded-lg bg-[var(--ui-bg-input)] px-3 text-sm ring-1 ring-[var(--ui-border-input)]">
               <SlidersHorizontal
                 size={16}
                 className="text-[var(--ui-text-muted)]"
@@ -130,7 +131,7 @@ export default function AppMarket() {
         </section>
 
         {visibleApps.length > 0 ? (
-          <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:gap-5 2xl:grid-cols-4">
             {visibleApps.map((app) => (
               <AppIconTile
                 key={app.key}

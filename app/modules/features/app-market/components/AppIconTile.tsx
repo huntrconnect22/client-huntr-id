@@ -21,7 +21,7 @@ export default function AppIconTile({
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="group relative flex h-full w-full flex-col items-stretch gap-4 overflow-hidden rounded-3xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 text-left text-[var(--ui-text-primary)] shadow-[0_1px_0_rgba(15,23,42,0.02)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[color:var(--ui-text-brand)]/25 hover:shadow-[0_24px_50px_-28px_rgba(99,102,241,0.55),0_10px_20px_-15px_rgba(15,23,42,0.25)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-text-brand)]/40 disabled:opacity-60"
+      className="group relative !grid h-full w-full !grid-rows-[auto_1fr_auto] !items-stretch !justify-stretch gap-4 overflow-hidden rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 text-left text-[var(--ui-text-primary)] shadow-[0_1px_0_rgba(15,23,42,0.02)] transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--ui-text-brand)]/35 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--ui-text-brand)]/40 disabled:opacity-60"
     >
       <span
         aria-hidden="true"
@@ -34,12 +34,12 @@ export default function AppIconTile({
 
       <div className="relative flex items-center gap-4">
         <div
-          className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl shadow-[0_14px_28px_-16px_rgba(15,23,42,0.55),0_0_0_1px_rgba(255,255,255,0.08)_inset] transition-transform duration-300 group-hover:scale-[1.06] group-hover:-rotate-[2deg]"
+          className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-xl shadow-[0_14px_28px_-16px_rgba(15,23,42,0.55),0_0_0_1px_rgba(255,255,255,0.08)_inset] transition-transform duration-300 group-hover:scale-[1.06] group-hover:-rotate-[2deg]"
           style={{ background: app.iconBgGradient }}
         >
           <Icon size={36} strokeWidth={1.9} color={app.iconColor} />
           <span
-            className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             style={{
               background:
                 "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 60%)",
@@ -76,7 +76,7 @@ export default function AppIconTile({
         </div>
       </div>
 
-      <p className="line-clamp-3 text-[13px] leading-5 text-[var(--ui-text-secondary)]">
+      <p className="line-clamp-3 rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2.5 text-[13px] leading-5 text-[var(--ui-text-secondary)]">
         {app.description}
       </p>
 

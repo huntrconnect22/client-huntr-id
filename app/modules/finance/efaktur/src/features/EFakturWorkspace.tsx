@@ -570,7 +570,7 @@ function VatOutTab({ company }: { company: any }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="finance-records" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
       {/* Stat strip */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
@@ -847,7 +847,7 @@ function VatInTab({ company }: { company: any }) {
               <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{total.toLocaleString("id")} faktur masukan ditemukan</div>
               <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
                 <div style={{ overflowX: "auto" }}>
-                  <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <HuntrTable className="finance-data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                     <HuntrTableHead>
                       <HuntrTableRow style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
                         {["No. Faktur", "Penjual", "Tanggal", "DPP", "PPN", "Status", "Kredit"].map(h => (
@@ -909,7 +909,7 @@ function VatInTab({ company }: { company: any }) {
           ) : (
             <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
               <div style={{ overflowX: "auto" }}>
-                <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
+                <HuntrTable className="finance-data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                   <HuntrTableHead>
                     <HuntrTableRow style={{ background: "var(--ui-bg-inset)", borderBottom: "1px solid var(--ui-border)" }}>
                       {["No. Faktur", "Penjual", "Tanggal", "DPP", "PPN", "Status DJP", "Buyer Status", "Aksi"].map(h => (

@@ -193,38 +193,38 @@ export function WmsOverview({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpiCards.map(({ label, value, Icon, tab, color, bg }) => (
           <HuntrButton
             key={label}
             type="button"
             onClick={() => onTabChange(tab)}
-            className="group flex flex-col gap-3 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 text-left transition-all hover:border-[var(--ui-border)]/60 hover:shadow-md hover:-translate-y-0.5"
+            className="group !grid !w-full !grid-rows-[auto_1fr] !items-stretch !justify-stretch min-h-36 gap-5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 text-left transition-all hover:border-[var(--ui-text-brand)]/35 hover:shadow-sm hover:-translate-y-0.5"
           >
             <div className="flex items-center justify-between">
-              <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${bg} ${color}`}>
-                <Icon size={18} />
+              <span className={`flex h-11 w-11 items-center justify-center rounded-md ${bg} ${color}`}>
+                <Icon size={20} />
               </span>
               <ArrowUpRight size={13} className="text-[var(--ui-text-muted)] opacity-0 transition-opacity group-hover:opacity-100" />
             </div>
-            <div>
-              <p className="text-2xl font-black tabular-nums text-[var(--ui-text-primary)]">{value}</p>
-              <p className="mt-0.5 text-[11px] font-medium text-[var(--ui-text-muted)] uppercase tracking-wider">{label}</p>
+            <div className="self-end">
+              <p className="text-3xl font-black leading-none tabular-nums tracking-tight text-[var(--ui-text-primary)]">{value}</p>
+              <p className="mt-1 text-[11px] font-medium text-[var(--ui-text-muted)] uppercase tracking-wider">{label}</p>
             </div>
           </HuntrButton>
         ))}
       </div>
 
       {/* Setup checklist + Activity */}
-      <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(340px,0.7fr)]">
         {/* Setup checklist */}
-        <section className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] px-5 py-4">
+        <section className="overflow-hidden rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--ui-border)] px-6 py-5">
             <div>
-              <p className="font-bold text-[var(--ui-text-primary)]">Getting started</p>
-              <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+              <p className="text-base font-bold text-[var(--ui-text-primary)]">Getting started</p>
+              <p className="mt-1 text-sm text-[var(--ui-text-muted)]">
                 Follow the operational flow once to set up your warehouse.
               </p>
             </div>
@@ -233,7 +233,7 @@ export function WmsOverview({
                 <span className="text-xs font-bold text-[var(--ui-text-brand)]">
                   {completedSteps}/{setupSteps.length} complete
                 </span>
-                <div className="h-1.5 w-24 overflow-hidden rounded-full bg-[var(--ui-bg-input)]">
+                <div className="h-2 w-28 overflow-hidden rounded-full bg-[var(--ui-bg-input)]">
                   <div
                     className="h-full rounded-full bg-[var(--ui-text-brand)] transition-all duration-700"
                     style={{ width: `${progressPct}%` }}
@@ -248,20 +248,20 @@ export function WmsOverview({
                 key={title}
                 type="button"
                 onClick={() => onTabChange(tab)}
-                className="flex items-start gap-3.5 p-4 text-left transition-colors hover:bg-[var(--ui-bg-input)]/60 group"
+                className="group flex min-h-36 items-start gap-4 p-5 text-left transition-colors hover:bg-[var(--ui-bg-input)]/60"
               >
                 <span
-                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-gradient-to-br ${ready ? color : "from-[var(--ui-bg-input)] to-[var(--ui-bg-input)] border-[var(--ui-border)]"} transition-all`}
+                  className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-gradient-to-br ${ready ? color : "from-[var(--ui-bg-input)] to-[var(--ui-bg-input)] border-[var(--ui-border)]"} transition-all`}
                 >
                   {ready ? (
-                    <CheckCircle2 size={16} className={iconColor} />
+                    <CheckCircle2 size={18} className={iconColor} />
                   ) : (
                     <span className="text-xs font-bold text-[var(--ui-text-muted)]">{index + 1}</span>
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`block text-sm font-semibold ${ready ? "text-[var(--ui-text-primary)]" : "text-[var(--ui-text-secondary)]"}`}>
+                    <span className={`block text-[15px] font-semibold ${ready ? "text-[var(--ui-text-primary)]" : "text-[var(--ui-text-secondary)]"}`}>
                       {title}
                     </span>
                     {ready && (
@@ -270,7 +270,7 @@ export function WmsOverview({
                       </span>
                     )}
                   </div>
-                  <span className="mt-0.5 block text-xs text-[var(--ui-text-muted)] leading-relaxed">
+                  <span className="mt-1 block text-sm text-[var(--ui-text-muted)] leading-relaxed">
                     {description}
                   </span>
                 </div>
@@ -284,7 +284,7 @@ export function WmsOverview({
         </section>
 
         {/* Recent activity */}
-        <section className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] overflow-hidden">
+        <section className="overflow-hidden rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
           <div className="flex items-center justify-between gap-3 border-b border-[var(--ui-border)] px-4 py-3.5">
             <div className="flex items-center gap-2">
               <Activity size={15} className="text-[var(--ui-text-brand)]" />

@@ -11,12 +11,20 @@ const fieldStyles = ({ theme }: { theme: Theme }) => ({
   backgroundColor: theme.palette.background.paper,
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
-  transition: theme.transitions.create(["border-color", "box-shadow"], { duration: 150 }),
+  transition: theme.transitions.create(["border-color", "box-shadow", "background-color"], { duration: 150 }),
   "&:hover:not(:disabled)": { borderColor: theme.palette.text.secondary },
   "&:focus": { outline: 0, borderColor: theme.palette.primary.main, boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.15)}` },
   "&:disabled": { color: theme.palette.text.disabled, backgroundColor: theme.palette.action.disabledBackground, cursor: "not-allowed" },
   "&::placeholder": { color: theme.palette.text.secondary, opacity: 0.8 },
-  "&[aria-invalid='true']": { borderColor: theme.palette.error.main },
+  "&[aria-invalid='true']": { borderColor: theme.palette.error.main, boxShadow: `0 0 0 2px ${alpha(theme.palette.error.main, 0.2)}` },
+  // Only icon/search wrappers opt out of the control's own chrome. Their
+  // wrapper supplies the single visible border and focus treatment.
+  "&[data-field-chrome='none']": {
+    border: "0 !important",
+    backgroundColor: "transparent",
+    boxShadow: "none",
+    "&:hover, &:focus": { borderColor: "transparent", backgroundColor: "transparent", boxShadow: "none" },
+  },
 });
 
 export const Input = styled("input", { name: "HuntrInput" })(fieldStyles, ({ theme }) => ({

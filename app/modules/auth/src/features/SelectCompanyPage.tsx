@@ -75,8 +75,8 @@ export default function SelectCompany() {
 
       {/* Background accents */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-8%] w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 65%)" }} />
-        <div className="absolute bottom-[-15%] left-[-8%] w-[350px] h-[350px] rounded-full" style={{ background: "radial-gradient(circle, rgba(251,146,60,0.05) 0%, transparent 65%)" }} />
+        <div className="absolute top-[-10%] right-[-8%] w-[300px] h-[300px] rounded-full" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 65%)" }} />
+        <div className="absolute bottom-[-15%] left-[-8%] w-[350px] h-[350px] rounded-full" style={{ background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 65%)" }} />
       </div>
 
       {/* Top bar */}
@@ -85,7 +85,7 @@ export default function SelectCompany() {
           <img 
             src="/assets/img/logo/sidebar.png" 
             alt="Huntr Logo" 
-            className="w-28 h-7 object-contain"
+            className="h-8 w-32 object-cover object-center"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -104,13 +104,13 @@ export default function SelectCompany() {
       <div className="w-full max-w-md relative z-1 mt-16">
         <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-xl overflow-hidden shadow-xl">
           {/* Top accent line */}
-          <div className="h-0.5 bg-gradient-to-r from-orange-500 via-orange-400 to-yellow-500" />
+          <div className="h-0.5 bg-indigo-500" />
 
           <div className="p-6">
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center mx-auto mb-3 shadow-md shadow-orange-500/20">
-                <LayoutGrid size={22} className="text-white" />
+              <div className="w-12 h-12 rounded-lg bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 flex items-center justify-center mx-auto mb-3">
+                <LayoutGrid size={22} />
               </div>
               <h1 className="text-xl font-bold text-[var(--ui-text-primary)] tracking-tight mb-1">
                 {t("selectCompany.chooseWorkspace")}
@@ -118,7 +118,7 @@ export default function SelectCompany() {
               {user?.name ? (
                 <p className="text-xs text-[var(--ui-text-secondary)]">
                   {t("selectCompany.welcomeBack")}{" "}
-                  <span className="text-orange-400 font-semibold">{user.name}</span>
+                  <span className="text-indigo-500 font-semibold">{user.name}</span>
                 </p>
               ) : null}
             </div>
@@ -126,7 +126,7 @@ export default function SelectCompany() {
             {/* Body */}
             {isLoading ? (
               <div className="flex flex-col items-center gap-3 py-8">
-                <Loader2 size={24} className="text-orange-500 animate-spin" />
+                <Loader2 size={24} className="text-indigo-500 animate-spin" />
                 <span className="text-xs text-[var(--ui-text-muted)] font-medium">{t("selectCompany.loadingWorkspaces")}</span>
               </div>
             ) : companies.length === 0 ? (
@@ -139,7 +139,7 @@ export default function SelectCompany() {
                 </p>
                 <HuntrButton
                   onClick={handleRegisterNew}
-                  className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+                  className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all"
                 >
                   <Plus size={16} /> {t("selectCompany.registerCompany")}
                 </HuntrButton>
@@ -152,13 +152,13 @@ export default function SelectCompany() {
                     const isSelected = selected?.id === c.id;
                     const meta = getMeta(c.status);
                     const isBuyer = c.type === "buyer";
-                    const typeColor = isBuyer ? "#818cf8" : "#f97316";
-                    const typeBg = isBuyer ? "rgba(99,102,241,0.15)" : "rgba(249,115,22,0.15)";
+                    const typeColor = isBuyer ? "#818cf8" : "#38bdf8";
+                    const typeBg = isBuyer ? "rgba(99,102,241,0.15)" : "rgba(56,189,248,0.15)";
                     const gradientBg = isBuyer
                       ? "linear-gradient(135deg,#6366f1,#8b5cf6)"
-                      : "linear-gradient(135deg,#f97316,#f59e0b)";
-                    const selectedBorderColor = isBuyer ? "rgba(99,102,241,0.4)" : "rgba(249,115,22,0.4)";
-                    const selectedBg = isBuyer ? "rgba(99,102,241,0.07)" : "rgba(249,115,22,0.07)";
+                      : "linear-gradient(135deg,#0ea5e9,#38bdf8)";
+                    const selectedBorderColor = isBuyer ? "rgba(99,102,241,0.4)" : "rgba(56,189,248,0.4)";
+                    const selectedBg = isBuyer ? "rgba(99,102,241,0.07)" : "rgba(56,189,248,0.07)";
                     return (
                       <HuntrButton
                         key={c.id}
@@ -168,7 +168,7 @@ export default function SelectCompany() {
                           p-3 rounded-lg text-left transition-all border flex items-center gap-3 group
                           ${isSelected
                             ? ""
-                            : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-orange-500/30"
+                            : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] hover:border-indigo-500/30"
                           }
                         `}
                         style={isSelected ? { background: selectedBg, borderColor: selectedBorderColor } : {}}
@@ -230,7 +230,7 @@ export default function SelectCompany() {
                     onClick={handleLogin}
                     disabled={!selected}
                     style={{ color: 'white' }}
-                    className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
+                    className="w-full py-2.5 bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
                   >
                     {t("selectCompany.enterWorkspace")} <ArrowRight size={16} />
                   </HuntrButton>

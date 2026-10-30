@@ -298,15 +298,16 @@ export default function Register() {
                 className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
               />
               <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-              <HuntrButton
+              <button
                 type="button"
                 onClick={() => setShowPw(p => !p)}
                 disabled={otpSent}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] p-1 rounded-lg transition-colors disabled:opacity-50"
                 aria-label={showPw ? "Hide password" : "Show password"}
+                className="absolute flex items-center justify-center rounded-md text-[var(--ui-text-muted)] transition-colors hover:bg-[var(--ui-bg-input-focus)] hover:text-[var(--ui-text-primary)] disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500"
+                style={{ right: 10, top: "50%", width: 36, height: 36, transform: "translateY(-50%)" }}
               >
                 {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-              </HuntrButton>
+              </button>
             </div>
           </div>
 

@@ -1,52 +1,199 @@
-.huntr-topbar {
+.huntr-topbar.MuiAppBar-root {
   display: grid;
-  grid-template-columns: 128px minmax(0, 1fr) auto;
+  grid-template-columns: 168px minmax(0, 1fr) auto;
   grid-template-areas: "brand context actions";
   align-items: center;
   gap: 24px;
-  padding: 16px var(--ui-layout-padding, 24px);
+  min-height: 76px;
   width: 100%;
   min-width: 0;
+  padding: 12px var(--ui-layout-padding, 24px);
   flex-shrink: 0;
   border-bottom: 1px solid var(--ui-border);
   background: var(--ui-bg-header);
   color: var(--ui-text-primary);
+  isolation: isolate;
   z-index: 100;
 }
-.huntr-topbar-brand { grid-area: brand; width: 128px; height: 44px; justify-content: flex-start; }
-.huntr-topbar-brand img { display: block; width: 100%; height: 36px; object-fit: cover; object-position: center; }
-.huntr-topbar-context { grid-area: context; display: flex; align-items: center; gap: 16px; min-width: 0; }
-.huntr-topbar-heading { flex: 1; min-width: 0; }
-.huntr-topbar-heading h1 { margin: 0; font-size: 20px; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
-.huntr-topbar-heading p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: var(--ui-text-muted); overflow-wrap: anywhere; }
-.huntr-topbar-heading .huntr-breadcrumb-scroll { margin: 0 0 4px; padding: 0; max-width: 100%; }
-.huntr-topbar-status { flex-shrink: 0; max-width: 180px; }
-.huntr-topbar-actions { grid-area: actions; display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
-.huntr-topbar-action { width: 44px; height: 44px; flex-shrink: 0; color: var(--ui-text-secondary); border: 1px solid var(--ui-border); background: var(--ui-bg-input); }
-.huntr-topbar-menu-anchor { position: relative; flex-shrink: 0; }
-.huntr-topbar-account { padding-left: 8px; border-left: 1px solid var(--ui-border); }
-.huntr-topbar-user { display: flex; align-items: center; gap: 10px; height: 44px; min-width: 44px; padding: 6px; border-radius: 6px; }
-.huntr-topbar-user:hover, .huntr-topbar-user[aria-expanded="true"] { background: var(--ui-bg-input); }
-.huntr-topbar-user-label { display: flex; flex-direction: column; text-align: left; max-width: 160px; min-width: 0; }
-.huntr-topbar-user-label strong, .huntr-topbar-user-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; }
-.huntr-topbar-user-label strong { font-size: 14px; font-weight: 600; }
-.huntr-topbar-user-label > span { font-size: 12px; color: var(--ui-text-muted); }
-@media (max-width: 1399px) {
+
+.huntr-topbar-brand.MuiButtonBase-root {
+  grid-area: brand;
+  justify-content: flex-start;
+  width: 168px;
+  min-width: 0;
+  height: 44px;
+  border-radius: 6px;
+}
+
+.huntr-topbar-brand img {
+  display: block;
+  width: 100%;
+  height: 42px;
+  object-fit: cover;
+  object-position: left center;
+}
+
+.huntr-topbar-context {
+  grid-area: context;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.huntr-topbar-heading { min-width: 0; }
+
+.huntr-topbar-heading h1 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ui-text-primary);
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.huntr-topbar-heading p {
+  overflow: hidden;
+  margin: 3px 0 0;
+  color: var(--ui-text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.huntr-topbar-heading .huntr-breadcrumb-scroll {
+  max-width: 100%;
+  margin: 0 0 3px;
+  padding: 0;
+}
+
+.huntr-topbar-status {
+  min-width: 0;
+  max-width: 220px;
+  white-space: nowrap;
+}
+
+.huntr-topbar-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.huntr-topbar-action.MuiIconButton-root,
+.huntr-topbar-language {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  background: var(--ui-bg-input);
+  color: var(--ui-text-secondary);
+}
+
+.huntr-topbar-action.MuiIconButton-root:hover,
+.huntr-topbar-action.MuiIconButton-root:focus-visible,
+.huntr-topbar-language:hover,
+.huntr-topbar-language:focus-visible {
+  border-color: var(--ui-primary);
+  background: var(--ui-bg-inset);
+  color: var(--ui-primary);
+}
+
+.huntr-topbar-menu-anchor { position: relative; flex: 0 0 auto; }
+
+.huntr-topbar-account {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  margin-left: 2px;
+  padding-left: 10px;
+  border-left: 1px solid var(--ui-border);
+}
+
+.huntr-topbar-user.MuiButtonBase-root {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 44px;
+  min-width: 44px;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.huntr-topbar-user.MuiButtonBase-root:hover,
+.huntr-topbar-user.MuiButtonBase-root[aria-expanded="true"] { background: var(--ui-bg-input); }
+
+.huntr-topbar-user-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 164px;
+  text-align: left;
+}
+
+.huntr-topbar-user-label strong,
+.huntr-topbar-user-label > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.huntr-topbar-user-label strong { font-size: 13px; font-weight: 700; line-height: 1.35; }
+.huntr-topbar-user-label > span { color: var(--ui-text-muted); font-size: 11px; line-height: 1.35; }
+
+@media (max-width: 1439px) {
   .huntr-topbar-user-label { display: none; }
+  .huntr-topbar-user { width: 44px; }
 }
-@media (max-width: 1199px) {
-  .huntr-topbar { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "brand actions" "context context"; gap: 12px 16px; }
-  .huntr-topbar-context { border-top: 1px solid var(--ui-border); padding-top: 12px; }
+
+@media (max-width: 1120px) {
+  .huntr-topbar.MuiAppBar-root {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "brand actions" "context context";
+    gap: 10px 16px;
+  }
+
+  .huntr-topbar-context {
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 46px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ui-border);
+  }
 }
-@media (max-width: 768px) {
-  .huntr-topbar { position: sticky; top: 0; padding: 12px 16px; gap: 12px 8px; }
+
+@media (max-width: 720px) {
+  .huntr-topbar.MuiAppBar-root {
+    position: sticky;
+    top: 0;
+    gap: 8px 10px;
+    min-height: 0;
+    padding: 10px 16px;
+  }
+
+  .huntr-topbar-brand { width: 120px; height: 40px; }
+  .huntr-topbar-brand img { height: 36px; }
+  .huntr-topbar-actions { gap: 5px; }
+  .huntr-topbar-cart,
+  .huntr-topbar-language { display: none !important; }
+  .huntr-topbar-account { margin-left: 0; padding-left: 0; border-left: 0; }
+  .huntr-topbar-context { display: block; min-height: 0; padding-top: 9px; }
+  .huntr-topbar-heading .huntr-breadcrumb-scroll,
+  .huntr-topbar-heading p,
+  .huntr-topbar-status { display: none; }
+  .huntr-topbar-heading h1 { font-size: 16px; line-height: 1.35; }
+}
+
+@media (max-width: 380px) {
+  .huntr-topbar.MuiAppBar-root { padding-right: 12px; padding-left: 12px; }
   .huntr-topbar-brand { width: 104px; }
-  .huntr-topbar-brand img { height: 32px; }
-  .huntr-topbar-actions { gap: 6px; }
-  .huntr-topbar-cart { display: none; }
-  .huntr-topbar-account { border: 0; padding: 0; }
-  .huntr-topbar-heading h1 { font-size: 18px; }
-  .huntr-topbar-heading p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .huntr-topbar-context { flex-direction: column; align-items: stretch; gap: 10px; }
-  .huntr-topbar-status { max-width: 100%; align-self: flex-start; }
 }

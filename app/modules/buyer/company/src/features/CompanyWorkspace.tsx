@@ -52,7 +52,7 @@ export default function CompanyDetails() {
     return (
       <Layout title="Company" subtitle="Loading...">
         <div className="flex items-center justify-center min-h-[50vh] gap-3">
-          <Loader2 size={28} className="animate-spin text-orange-500" />
+          <Loader2 size={28} className="animate-spin text-indigo-500" />
           <span className="text-sm text-[var(--ui-text-muted)]">Loading workspace...</span>
         </div>
       </Layout>
@@ -65,18 +65,11 @@ export default function CompanyDetails() {
       <Layout title="Company" subtitle="Select workspace">
         <div className="w-full">
           {vm.companyListLoading ? (
-            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-orange-500" /></div>
+            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-500" /></div>
           ) : vm.companies.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                <Building2 size={28} className="text-orange-500" />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-[var(--ui-text-primary)] mb-1">No company workspaces</p>
-                <p className="text-sm text-[var(--ui-text-muted)]">Register your first company to get started.</p>
-              </div>
-              <HuntrButton onClick={() => vm.navigate("/onboarding")} style={{ color: 'white' }} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-sm font-semibold transition-all">
-                Register a Company
+            <div className="grid max-w-sm grid-cols-1 gap-3 py-12">
+              <HuntrButton type="button" onClick={() => vm.navigate("/onboarding")} className="!min-h-32 !w-full !justify-start rounded-lg border border-dashed border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] p-5 text-left hover:border-indigo-500/50 hover:bg-indigo-500/5">
+                <span className="flex items-center gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-500"><Plus size={20} /></span><span><span className="block text-sm font-bold text-[var(--ui-text-primary)]">Register Company</span><span className="mt-1 block text-xs font-normal leading-relaxed text-[var(--ui-text-muted)]">Create a workspace for your business.</span></span></span>
               </HuntrButton>
             </div>
           ) : (
@@ -86,10 +79,10 @@ export default function CompanyDetails() {
                 type="button"
                 disabled={vm.companyCapacity?.remaining === 0}
                 onClick={() => vm.navigate("/onboarding")}
-                className="text-left p-4 rounded-xl border border-dashed border-[var(--ui-border)] bg-transparent hover:border-orange-500/40 hover:bg-orange-500/3 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:border-[var(--ui-border)] disabled:hover:bg-transparent transition-all flex flex-col items-center justify-center gap-2 min-h-[120px]"
+                className="min-h-32 text-left p-4 rounded-lg border border-dashed border-[var(--ui-border)] bg-transparent hover:border-indigo-500/40 hover:bg-indigo-500/5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:border-[var(--ui-border)] disabled:hover:bg-transparent transition-all flex flex-col items-center justify-center gap-2"
               >
-                <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                  <Plus size={18} className="text-orange-500" />
+                <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                  <Plus size={18} className="text-indigo-500" />
                 </div>
                 <span className="text-sm font-semibold text-[var(--ui-text-muted)]">
                   {vm.companyCapacity?.remaining === 0 ? "Batas company paket tercapai" : "Register Company"}
@@ -109,21 +102,21 @@ export default function CompanyDetails() {
                     key={c.id}
                     onClick={() => vm.openCompanyWorkspace(c)}
                     className={`text-left p-4 rounded-xl border transition-all hover:-translate-y-0.5 ${
-                      active ? "border-orange-500/60 bg-orange-500/5 shadow-md shadow-orange-500/8" : "border-[var(--ui-border)] bg-[var(--ui-bg-card)] hover:border-orange-500/30"
+                      active ? "border-indigo-500/60 bg-indigo-500/5 shadow-sm" : "border-[var(--ui-border)] bg-[var(--ui-bg-card)] hover:border-indigo-500/30"
                     }`}
                   >
                     {/* Logo + Name row */}
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-lg bg-[var(--ui-bg-input)] flex items-center justify-center overflow-hidden border border-[var(--ui-border)] flex-shrink-0">
                         {c.logo_url || c.logo_path
-                          ? <img src={getAssetUrl(c.logo_url || c.logo_path)} className="w-full h-full object-cover" alt="" />
-                          : <Building2 size={18} className="text-orange-500" />}
+                          ? <img src={getAssetUrl(c.logo_url || c.logo_path)} className="block h-full w-full object-cover object-center" alt="" />
+                          : <Building2 size={18} className="text-indigo-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-bold text-[var(--ui-text-primary)] truncate">{c.name}</div>
-                        <span className="text-[10px] font-bold uppercase text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded">{c.type}</span>
+                        <span className="text-[10px] font-bold uppercase text-indigo-500 bg-indigo-500/10 px-1.5 py-0.5 rounded">{c.type}</span>
                       </div>
-                      {active && <CheckCircle2 size={16} className="text-orange-500 flex-shrink-0" />}
+                      {active && <CheckCircle2 size={16} className="text-indigo-500 flex-shrink-0" />}
                     </div>
                     {/* Meta */}
                     <div className="flex items-center justify-between gap-2">
@@ -203,7 +196,7 @@ export default function CompanyDetails() {
                   <div className="relative group flex-shrink-0">
                     <div className="w-12 h-12 rounded-xl bg-[var(--ui-bg-input)] border-2 border-[var(--ui-bg-card)] flex items-center justify-center overflow-hidden shadow-md">
                       {vm.company.logo_url || vm.company.logo_path
-                        ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="w-full h-full object-cover" alt={vm.company.name} />
+                        ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="block h-full w-full object-cover object-center" alt={vm.company.name} />
                         : <Building2 size={18} className="text-orange-500" />}
                       <HuntrButton
                         onClick={() => document.getElementById('logo-upload-mobile')?.click()}
@@ -305,7 +298,7 @@ export default function CompanyDetails() {
                 <div className="relative group w-fit">
                   <div className="w-14 h-14 rounded-xl bg-[var(--ui-bg-input)] border-2 border-[var(--ui-bg-card)] flex items-center justify-center overflow-hidden shadow-lg">
                     {vm.company.logo_url || vm.company.logo_path
-                      ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="w-full h-full object-cover" alt={vm.company.name} />
+                      ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="block h-full w-full object-cover object-center" alt={vm.company.name} />
                       : <Building2 size={22} className="text-orange-500" />}
                     <HuntrButton
                       onClick={() => document.getElementById('logo-upload-2')?.click()}

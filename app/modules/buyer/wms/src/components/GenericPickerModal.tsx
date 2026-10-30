@@ -95,15 +95,15 @@ export function GenericPickerModal({
       <div
         ref={dialogRef}
         onClick={(e) => e.stopPropagation()}
-        className="relative z-10 flex h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-none border border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] shadow-2xl transition-all duration-200 sm:h-[min(82vh,720px)] sm:rounded-2xl app-modal-base"
+        className="relative z-10 flex h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-none border border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] shadow-2xl transition-all duration-200 sm:h-[min(82vh,720px)] sm:rounded-xl app-modal-base"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--ui-border)] px-5 py-4">
-          <div className="min-w-0">
-            <h3 className="text-base font-bold text-[var(--ui-text-primary)]">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--ui-border)] px-5 py-5 sm:px-6">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-lg font-bold leading-6 text-[var(--ui-text-primary)]">
               {title}
             </h3>
             {description && (
-              <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--ui-text-muted)]">
                 {description}
               </p>
             )}
@@ -117,8 +117,8 @@ export function GenericPickerModal({
             <X size={16} />
           </HuntrButton>
         </div>
-        <div className="border-b border-[var(--ui-border)] px-5 py-3">
-          <label className="relative block">
+        <div className="border-b border-[var(--ui-border)] px-5 py-4 sm:px-6">
+          <label className="relative block overflow-hidden rounded-lg bg-[var(--ui-bg-input)] ring-1 ring-[var(--ui-border-input)] focus-within:ring-2 focus-within:ring-[var(--ui-text-brand)]/25">
             <Search
               size={14}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
@@ -129,11 +129,13 @@ export function GenericPickerModal({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
-              className="w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] py-2 pl-9 pr-3 text-sm text-[var(--ui-text-primary)] placeholder:text-[var(--ui-text-muted)] focus:border-[var(--ui-text-brand)]/60 focus:outline-none"
+              className="w-full bg-transparent text-sm text-[var(--ui-text-primary)] placeholder:text-[var(--ui-text-muted)] focus:outline-none"
+              data-field-chrome="none"
+              style={{ minHeight: 46, paddingLeft: 38, paddingRight: 12 }}
             />
           </label>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-3">
+        <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
           {filtered.length === 0 ? (
             <div className="flex h-full min-h-[140px] flex-col items-center justify-center text-center">
               <Search size={22} className="text-[var(--ui-text-muted)]" />
@@ -147,7 +149,7 @@ export function GenericPickerModal({
               )}
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {filtered.map((item) => {
                 const isSelected = selectedId === item.id;
                 return (
@@ -156,13 +158,13 @@ export function GenericPickerModal({
                       type="button"
                       onClick={() => onSelect(item)}
                       className={
-                        "group relative block w-full rounded-xl border p-3 text-left transition-all duration-150 " +
+                        "group relative block w-full !justify-start rounded-lg border p-4 text-left transition-all duration-150 " +
                         (isSelected
                           ? "border-[var(--ui-text-brand)]/60 bg-[var(--ui-text-brand)]/5 shadow-[0_0_0_1px_var(--ui-text-brand)]/20"
                           : "border-[var(--ui-border)] bg-[var(--ui-bg-card)] hover:border-[var(--ui-text-brand)]/40 hover:bg-[var(--ui-bg-card-hover)]")
                       }
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
                         {item.imageUrl !== undefined && (item.imageUrl ? (
                           <img
                             src={item.imageUrl}
@@ -175,7 +177,7 @@ export function GenericPickerModal({
                             <Package size={16} />
                           </span>
                         ))}
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 pr-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <p className="truncate text-sm font-semibold text-[var(--ui-text-primary)]">
                               {item.title}
