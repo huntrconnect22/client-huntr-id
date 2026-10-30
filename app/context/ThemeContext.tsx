@@ -14,11 +14,11 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: "dark",
-  toggleTheme: () => {},
-  setThemeMode: () => {},
+  toggleTheme: () => { },
+  setThemeMode: () => { },
   isDark: true,
   isAuto: true,
-  resetToAuto: () => {},
+  resetToAuto: () => { },
 });
 
 function getSystemTheme(): Theme {
@@ -39,7 +39,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setManual(savedTheme === "dark" || savedTheme === "light" ? savedTheme : null);
     } catch { /* Theme switching also works when browser storage is unavailable. */ }
     setSystemTheme(getSystemTheme());
-    
+
     // Listen for OS theme changes
     const mq = window.matchMedia("(prefers-color-scheme: light)");
     const handler = (e: MediaQueryListEvent) => {
