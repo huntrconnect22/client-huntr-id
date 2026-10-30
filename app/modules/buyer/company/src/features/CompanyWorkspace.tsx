@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Textarea as HuntrTextarea, Select as HuntrSelect } from "~/shared/ui/Fields";
 import React from "react";
 import Layout from "~/components/Layout";
 import { 
@@ -73,14 +75,14 @@ export default function CompanyDetails() {
                 <p className="font-semibold text-[var(--ui-text-primary)] mb-1">No company workspaces</p>
                 <p className="text-sm text-[var(--ui-text-muted)]">Register your first company to get started.</p>
               </div>
-              <button onClick={() => vm.navigate("/onboarding")} style={{ color: 'white' }} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-sm font-semibold transition-all">
+              <HuntrButton onClick={() => vm.navigate("/onboarding")} style={{ color: 'white' }} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-sm font-semibold transition-all">
                 Register a Company
-              </button>
+              </HuntrButton>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* Register new — as a ghost card */}
-              <button
+              <HuntrButton
                 type="button"
                 disabled={vm.companyCapacity?.remaining === 0}
                 onClick={() => vm.navigate("/onboarding")}
@@ -97,13 +99,13 @@ export default function CompanyDetails() {
                     {vm.companyCapacity.used} / {vm.companyCapacity.limit} company · {vm.companyCapacity.plan_name}
                   </span>
                 )}
-              </button>
+              </HuntrButton>
 
               {vm.companies.map((c: any) => {
                 const active = vm.selectedWorkspace?.id === c.id;
                 const cfg = statusCfg[c.status] || statusCfg.pending;
                 return (
-                  <button
+                  <HuntrButton
                     key={c.id}
                     onClick={() => vm.openCompanyWorkspace(c)}
                     className={`text-left p-4 rounded-xl border transition-all hover:-translate-y-0.5 ${
@@ -142,7 +144,7 @@ export default function CompanyDetails() {
                         {c.status}
                       </div>
                     </div>
-                  </button>
+                  </HuntrButton>
                 );
               })}
             </div>
@@ -170,9 +172,9 @@ export default function CompanyDetails() {
               <span className="text-xs text-amber-600 font-semibold">Complete profile:</span>
               <span className="text-xs text-[var(--ui-text-secondary)] truncate">{missingFields.join(" · ")}</span>
             </div>
-            <button onClick={() => setProfileBannerDismissed(true)} className="text-amber-500 hover:text-amber-600 flex-shrink-0" aria-label="Dismiss">
+            <HuntrButton onClick={() => setProfileBannerDismissed(true)} className="text-amber-500 hover:text-amber-600 flex-shrink-0" aria-label="Dismiss">
               <X size={14} />
-            </button>
+            </HuntrButton>
           </div>
         )}
 
@@ -203,20 +205,20 @@ export default function CompanyDetails() {
                       {vm.company.logo_url || vm.company.logo_path
                         ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="w-full h-full object-cover" alt={vm.company.name} />
                         : <Building2 size={18} className="text-orange-500" />}
-                      <button
+                      <HuntrButton
                         onClick={() => document.getElementById('logo-upload-mobile')?.click()}
                         className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-xl"
                         aria-label="Upload logo"
                       >
                         <Camera size={13} className="text-white" />
-                      </button>
+                      </HuntrButton>
                     </div>
                     {vm.logoUploading && (
                       <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
                         <Loader2 size={12} className="animate-spin text-white" />
                       </div>
                     )}
-                    <input id="logo-upload-mobile" type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) vm.handleLogoUpload(f); }} />
+                    <HuntrInput id="logo-upload-mobile" type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) vm.handleLogoUpload(f); }} />
                   </div>
                   {/* Name + type */}
                   <div className="flex-1 min-w-0 pt-2">
@@ -256,28 +258,28 @@ export default function CompanyDetails() {
                 {/* Mobile action button */}
                 <div className="mt-3">
                   {!vm.isEditing ? (
-                    <button
+                    <HuntrButton
                       onClick={() => vm.setIsEditing(true)}
                       className="w-full px-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] font-semibold text-sm hover:border-orange-500/40 transition-all"
                     >
                       Edit Profile
-                    </button>
+                    </HuntrButton>
                   ) : (
                     <div className="flex gap-2">
-                      <button
+                      <HuntrButton
                         onClick={vm.handleSaveCompany}
                         disabled={vm.updatingCompany}
                         style={{ color: 'white' }}
                         className="flex-1 px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex items-center justify-center gap-2"
                       >
                         {vm.updatingCompany ? <Loader2 size={14} className="animate-spin" /> : "Save Changes"}
-                      </button>
-                      <button
+                      </HuntrButton>
+                      <HuntrButton
                         onClick={() => vm.setIsEditing(false)}
                         className="px-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] font-medium text-sm"
                       >
                         Cancel
-                      </button>
+                      </HuntrButton>
                     </div>
                   )}
                 </div>
@@ -305,20 +307,20 @@ export default function CompanyDetails() {
                     {vm.company.logo_url || vm.company.logo_path
                       ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="w-full h-full object-cover" alt={vm.company.name} />
                       : <Building2 size={22} className="text-orange-500" />}
-                    <button
+                    <HuntrButton
                       onClick={() => document.getElementById('logo-upload-2')?.click()}
                       className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-xl"
                       aria-label="Upload logo"
                     >
                       <Camera size={16} className="text-white" />
-                    </button>
+                    </HuntrButton>
                   </div>
                   {vm.logoUploading && (
                     <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
                       <Loader2 size={14} className="animate-spin text-white" />
                     </div>
                   )}
-                  <input id="logo-upload-2" type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) vm.handleLogoUpload(f); }} />
+                  <HuntrInput id="logo-upload-2" type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) vm.handleLogoUpload(f); }} />
                 </div>
               </div>
 
@@ -418,28 +420,28 @@ export default function CompanyDetails() {
             {/* Edit actions */}
             <div className="flex flex-col gap-2">
               {!vm.isEditing ? (
-                <button
+                <HuntrButton
                   onClick={() => vm.setIsEditing(true)}
                   className="w-full px-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] font-semibold text-sm hover:border-orange-500/40 transition-all"
                 >
                   Edit Profile
-                </button>
+                </HuntrButton>
               ) : (
                 <>
-                  <button
+                  <HuntrButton
                     onClick={vm.handleSaveCompany}
                     disabled={vm.updatingCompany}
                     style={{ color: 'white' }}
                     className="w-full px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex items-center justify-center gap-2"
                   >
                     {vm.updatingCompany ? <Loader2 size={14} className="animate-spin" /> : "Save Changes"}
-                  </button>
-                  <button
+                  </HuntrButton>
+                  <HuntrButton
                     onClick={() => vm.setIsEditing(false)}
                     className="w-full px-4 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] font-medium text-sm"
                   >
                     Cancel
-                  </button>
+                  </HuntrButton>
                 </>
               )}
             </div>
@@ -454,7 +456,7 @@ export default function CompanyDetails() {
                 {tabs.map(t => {
                   const isActive = vm.activeTab === t.id;
                   return (
-                    <button
+                    <HuntrButton
                       key={t.id}
                       type="button"
                       onClick={() => vm.setActiveTab(t.id)}
@@ -466,7 +468,7 @@ export default function CompanyDetails() {
                     >
                       <t.icon size={13} />
                       <span>{t.label}</span>
-                    </button>
+                    </HuntrButton>
                   );
                 })}
               </div>
@@ -474,7 +476,7 @@ export default function CompanyDetails() {
               {/* Desktop: horizontal tab bar */}
               <div className="hidden sm:flex gap-0.5 border-b border-[var(--ui-border)] overflow-x-auto scrollbar-hide">
                 {tabs.map(t => (
-                  <button
+                  <HuntrButton
                     key={t.id}
                     onClick={() => vm.setActiveTab(t.id)}
                     className={`flex items-center gap-1.5 px-3.5 pb-2.5 pt-1 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${
@@ -484,7 +486,7 @@ export default function CompanyDetails() {
                     }`}
                   >
                     <t.icon size={14} /> {t.label}
-                  </button>
+                  </HuntrButton>
                 ))}
               </div>
             </div>
@@ -568,9 +570,9 @@ export default function CompanyDetails() {
                 <div className="flex items-center justify-between px-0.5 pt-1">
                   <SectionLabel>HQ / Office Addresses</SectionLabel>
                   {vm.isEditing && (
-                    <button type="button" onClick={vm.addHqAddress} className="flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 text-xs font-semibold hover:bg-orange-500/20 transition-all">
+                    <HuntrButton type="button" onClick={vm.addHqAddress} className="flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 text-xs font-semibold hover:bg-orange-500/20 transition-all">
                       <Plus size={12} /> Add
-                    </button>
+                    </HuntrButton>
                   )}
                 </div>
 
@@ -578,11 +580,11 @@ export default function CompanyDetails() {
                   <div className="space-y-2">
                     {vm.editForm.hq_addresses?.map((addr: string, idx: number) => (
                       <div key={idx} className="flex gap-2">
-                        <textarea value={addr} onChange={e => vm.updateHqAddress(idx, e.target.value)} placeholder={`HQ Address ${idx + 1}`} rows={2} className="flex-1 px-3 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-xs sm:text-sm focus:border-orange-500/50 outline-none transition-all resize-none" />
+                        <HuntrTextarea value={addr} onChange={e => vm.updateHqAddress(idx, e.target.value)} placeholder={`HQ Address ${idx + 1}`} rows={2} className="flex-1 px-3 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-xs sm:text-sm focus:border-orange-500/50 outline-none transition-all resize-none" />
                         {vm.editForm.hq_addresses.length > 1 && (
-                          <button type="button" onClick={() => vm.removeHqAddress(idx)} className="px-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all h-fit py-2">
+                          <HuntrButton type="button" onClick={() => vm.removeHqAddress(idx)} className="px-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all h-fit py-2">
                             <X size={13} />
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
                     ))}
@@ -705,7 +707,7 @@ export default function CompanyDetails() {
                       <label className="text-[10px] font-bold text-[var(--ui-text-muted)] uppercase tracking-wider block mb-1.5">
                         Jenis Dokumen *
                       </label>
-                      <select
+                      <HuntrSelect
                         value={docType}
                         onChange={(e) => setDocType(e.target.value)}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-xs transition-all focus:border-orange-500/50 appearance-none"
@@ -719,11 +721,11 @@ export default function CompanyDetails() {
                         <option value="Rekening Koran">Rekening Koran / Bukti Bank</option>
                         <option value="SPPKP">SPPKP (Pengusaha Kena Pajak)</option>
                         <option value="Other">Dokumen Lainnya</option>
-                      </select>
+                      </HuntrSelect>
                     </div>
 
                     <div className="sm:col-span-2 flex items-end gap-2">
-                      <input
+                      <HuntrInput
                         ref={docFileInputRef}
                         type="file"
                         accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
@@ -736,7 +738,7 @@ export default function CompanyDetails() {
                           }
                         }}
                       />
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => docFileInputRef.current?.click()}
                         disabled={vm.docUploading}
@@ -751,7 +753,7 @@ export default function CompanyDetails() {
                             <Plus size={15} /> Pilih File & Unggah Sekarang
                           </>
                         )}
-                      </button>
+                      </HuntrButton>
                     </div>
                   </div>
                 </div>
@@ -802,7 +804,7 @@ export default function CompanyDetails() {
                               <Download size={13} /> <span className="hidden sm:inline">Unduh</span>
                             </a>
 
-                            <button
+                            <HuntrButton
                               type="button"
                               onClick={() => {
                                 if (window.confirm(`Hapus dokumen ${doc.type} (${doc.name})?`)) {
@@ -818,7 +820,7 @@ export default function CompanyDetails() {
                               ) : (
                                 <Trash2 size={13} />
                               )}
-                            </button>
+                            </HuntrButton>
                           </div>
                         </div>
                       ))
@@ -927,10 +929,10 @@ function SelectField({ label, value, onChange, options, placeholder }: { label: 
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs font-semibold text-[var(--ui-text-muted)]">{label}</span>
-      <select value={value} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all appearance-none">
+      <HuntrSelect value={value} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all appearance-none">
         {placeholder && <option value="">{placeholder}</option>}
         {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-      </select>
+      </HuntrSelect>
     </div>
   );
 }
@@ -940,9 +942,9 @@ function EditField({ label, value, onChange, textarea, type = "text", placeholde
     <div className="flex flex-col gap-1.5">
       <span className="text-xs font-semibold text-[var(--ui-text-muted)]">{label}</span>
       {textarea ? (
-        <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all resize-none" />
+        <HuntrTextarea value={value} onChange={e => onChange(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all resize-none" />
       ) : (
-        <input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all" />
+        <HuntrInput type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all" />
       )}
     </div>
   );
@@ -995,13 +997,13 @@ function NpwpField({
         <span className="text-[10px] text-[var(--ui-text-muted)]">Pajak Express VSWP</span>
       </div>
       <div className="flex gap-2">
-        <input
+        <HuntrInput
           value={value || ""}
           inputMode="numeric"
           onChange={event => onChange(event.target.value)}
           className="min-w-0 flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all"
         />
-        <button
+        <HuntrButton
           type="button"
           onClick={onVerify}
           disabled={unavailable || verification.state === "loading" || !value?.trim()}
@@ -1009,7 +1011,7 @@ function NpwpField({
         >
           {verification.state === "loading" ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
           Validasi
-        </button>
+        </HuntrButton>
       </div>
       {unavailable && <p className="m-0 text-[11px] text-[var(--ui-text-muted)]">Validasi NPWP tersedia untuk perusahaan Indonesia.</p>}
       {verification.state !== "idle" && verification.state !== "loading" && verification.message && (

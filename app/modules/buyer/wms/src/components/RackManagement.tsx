@@ -1,3 +1,6 @@
+import { Select as HuntrSelect, Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import { useState, useMemo, useEffect } from "react";
 import Swal from "sweetalert2";
 import {
@@ -314,7 +317,7 @@ export function RackManagement({
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs">
             <WarehouseIcon size={14} className="text-[var(--ui-text-secondary)]" />
-            <select
+            <HuntrSelect
               value={selectedWarehouseId}
               onChange={(e) => setSelectedWarehouseId(e.target.value)}
               className="bg-transparent font-semibold text-[var(--ui-text-primary)] outline-none"
@@ -324,17 +327,17 @@ export function RackManagement({
                   {w.name} ({w.code})
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           </div>
 
-          <button
+          <HuntrButton
             type="button"
             onClick={handleOpenAdd}
             className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ui-text-brand)] px-3 py-1.5 text-xs font-semibold !text-white shadow hover:opacity-95"
           >
             <Plus size={14} />
             Tambah Rak Baru
-          </button>
+          </HuntrButton>
         </div>
       </div>
 
@@ -402,7 +405,7 @@ export function RackManagement({
                 size={14}
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
               />
-              <input
+              <HuntrInput
                 className={input + " pl-8 text-xs"}
                 placeholder="Cari kode rak (misal RAK-A-01) atau nama..."
                 value={search}
@@ -412,7 +415,7 @@ export function RackManagement({
 
             <div className="flex items-center gap-1">
               <SlidersHorizontal size={13} className="text-[var(--ui-text-muted)]" />
-              <select
+              <HuntrSelect
                 className={input + " w-auto text-xs py-1.5"}
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
@@ -424,7 +427,7 @@ export function RackManagement({
                 <option value="quarantine">Quarantine (Karantina / Rusak)</option>
                 <option value="staging">Staging</option>
                 <option value="packing">Packing</option>
-              </select>
+              </HuntrSelect>
             </div>
           </div>
 
@@ -437,18 +440,18 @@ export function RackManagement({
       {/* Table / List of Racks */}
       <div className={card + " overflow-hidden p-0 rounded-lg"}>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-sm">
-            <thead className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Kode & Nama Rak</th>
-                <th className="py-3 font-semibold">Tipe Lokasi</th>
-                <th className="py-3 font-semibold">Kapasitas & Utilisasi</th>
-                <th className="py-3 text-right font-semibold">Jumlah SKU</th>
-                <th className="py-3 text-right font-semibold">Total Unit</th>
-                <th className="px-4 py-3 text-right font-semibold">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--ui-border)]">
+          <HuntrTable className="w-full min-w-[700px] text-left text-sm">
+            <HuntrTableHead className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
+              <HuntrTableRow>
+                <HuntrTableHeaderCell className="px-4 py-3 font-semibold">Kode & Nama Rak</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="py-3 font-semibold">Tipe Lokasi</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="py-3 font-semibold">Kapasitas & Utilisasi</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="py-3 text-right font-semibold">Jumlah SKU</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="py-3 text-right font-semibold">Total Unit</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="px-4 py-3 text-right font-semibold">Aksi</HuntrTableHeaderCell>
+              </HuntrTableRow>
+            </HuntrTableHead>
+            <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
               {filteredBins.map((bin) => {
                 const totalUnits = Number(bin.total_units || 0);
                 const capacity = bin.capacity_units ? Number(bin.capacity_units) : null;
@@ -462,11 +465,11 @@ export function RackManagement({
                 const isHigh = occupancyPct !== null && occupancyPct >= 80;
 
                 return (
-                  <tr
+                  <HuntrTableRow
                     key={bin.id}
                     className="hover:bg-[var(--ui-bg-input)]/50 transition-colors"
                   >
-                    <td className="px-4 py-3 align-middle">
+                    <HuntrTableCell className="px-4 py-3 align-middle">
                       <div className="flex items-center gap-2">
                         <span className="rounded border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2 py-0.5 font-mono text-xs font-bold text-[var(--ui-text-primary)]">
                           {bin.code}
@@ -480,9 +483,9 @@ export function RackManagement({
                       <p className="mt-0.5 text-xs text-[var(--ui-text-muted)]">
                         {bin.name || "Tanpa deskripsi"}
                       </p>
-                    </td>
+                    </HuntrTableCell>
 
-                    <td className="py-3 align-middle">
+                    <HuntrTableCell className="py-3 align-middle">
                       <span
                         className={`inline-block rounded border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${getTypeBadgeClass(
                           bin.type,
@@ -490,9 +493,9 @@ export function RackManagement({
                       >
                         {bin.type}
                       </span>
-                    </td>
+                    </HuntrTableCell>
 
-                    <td className="py-3 align-middle">
+                    <HuntrTableCell className="py-3 align-middle">
                       {capacity ? (
                         <div className="w-40 space-y-1">
                           <div className="flex justify-between text-xs">
@@ -531,62 +534,62 @@ export function RackManagement({
                             : "Tak terbatas"}
                         </span>
                       )}
-                    </td>
+                    </HuntrTableCell>
 
-                    <td className="py-3 text-right align-middle tabular-nums font-medium text-[var(--ui-text-secondary)]">
+                    <HuntrTableCell className="py-3 text-right align-middle tabular-nums font-medium text-[var(--ui-text-secondary)]">
                       {bin.sku_count || 0} SKU
-                    </td>
+                    </HuntrTableCell>
 
-                    <td className="py-3 text-right align-middle tabular-nums font-bold text-[var(--ui-text-primary)]">
+                    <HuntrTableCell className="py-3 text-right align-middle tabular-nums font-bold text-[var(--ui-text-primary)]">
                       {new Intl.NumberFormat("id-ID").format(totalUnits)}
-                    </td>
+                    </HuntrTableCell>
 
-                    <td className="px-4 py-3 text-right align-middle">
+                    <HuntrTableCell className="px-4 py-3 text-right align-middle">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
+                        <HuntrButton
                           type="button"
                           onClick={() => handleInspectBin(bin)}
                           className="inline-flex items-center gap-1 rounded border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-brand)] hover:border-[var(--ui-text-brand)]/40 hover:bg-[var(--ui-text-brand)]/10"
                         >
                           <Boxes size={12} />
                           Lihat Isi ({totalUnits})
-                        </button>
+                        </HuntrButton>
 
-                        <button
+                        <HuntrButton
                           type="button"
                           onClick={() => handleOpenEdit(bin)}
                           className="rounded border border-[var(--ui-border)] p-1 text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
                           title="Edit Rak"
                         >
                           <Edit3 size={13} />
-                        </button>
+                        </HuntrButton>
 
                         {!bin.is_system && (
-                          <button
+                          <HuntrButton
                             type="button"
                             onClick={() => handleDeleteBin(bin)}
                             className="rounded border border-[var(--ui-border)] p-1 text-[var(--ui-text-muted)] hover:text-red-500 hover:border-red-500/30"
                             title="Hapus Rak"
                           >
                             <Trash2 size={13} />
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </HuntrTableCell>
+                  </HuntrTableRow>
                 );
               })}
 
               {!filteredBins.length && (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-[var(--ui-text-muted)]">
+                <HuntrTableRow>
+                  <HuntrTableCell colSpan={6} className="py-8 text-center text-sm text-[var(--ui-text-muted)]">
                     <Layers size={28} className="mx-auto mb-2 text-[var(--ui-text-muted)] opacity-50" />
                     Belum ada rak yang sesuai dengan pencarian atau filter.
-                  </td>
-                </tr>
+                  </HuntrTableCell>
+                </HuntrTableRow>
               )}
-            </tbody>
-          </table>
+            </HuntrTableBody>
+          </HuntrTable>
         </div>
       </div>
 
@@ -603,13 +606,13 @@ export function RackManagement({
                   Gudang: {activeWarehouse?.name} ({activeWarehouse?.code})
                 </p>
               </div>
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
               >
                 <X size={18} />
-              </button>
+              </HuntrButton>
             </div>
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
@@ -619,20 +622,20 @@ export function RackManagement({
                     <span className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Gunakan Format Standar Gudang (Aisle/Rack/Tier/Bin)
                     </span>
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => setUseGenerator(!useGenerator)}
                       className="text-xs font-semibold text-[var(--ui-text-brand)] hover:underline"
                     >
                       {useGenerator ? "Mode Manual" : "Aktifkan Helper"}
-                    </button>
+                    </HuntrButton>
                   </div>
 
                   {useGenerator && (
                     <div className="grid grid-cols-4 gap-2 pt-1">
                       <div>
                         <label className="text-[10px] text-[var(--ui-text-muted)]">Lorong</label>
-                        <input
+                        <HuntrInput
                           className={input + " py-1 text-xs"}
                           value={genAisle}
                           onChange={(e) => setGenAisle(e.target.value.toUpperCase())}
@@ -641,7 +644,7 @@ export function RackManagement({
                       </div>
                       <div>
                         <label className="text-[10px] text-[var(--ui-text-muted)]">Nomor Rak</label>
-                        <input
+                        <HuntrInput
                           className={input + " py-1 text-xs"}
                           value={genRack}
                           onChange={(e) => setGenRack(e.target.value)}
@@ -650,7 +653,7 @@ export function RackManagement({
                       </div>
                       <div>
                         <label className="text-[10px] text-[var(--ui-text-muted)]">Tingkat / Level</label>
-                        <input
+                        <HuntrInput
                           className={input + " py-1 text-xs"}
                           value={genTier}
                           onChange={(e) => setGenTier(e.target.value)}
@@ -659,7 +662,7 @@ export function RackManagement({
                       </div>
                       <div>
                         <label className="text-[10px] text-[var(--ui-text-muted)]">Kotak / Bin</label>
-                        <input
+                        <HuntrInput
                           className={input + " py-1 text-xs"}
                           value={genBin}
                           onChange={(e) => setGenBin(e.target.value)}
@@ -675,7 +678,7 @@ export function RackManagement({
                 <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Kode Rak <span className="text-red-500">*</span>
                 </label>
-                <input
+                <HuntrInput
                   required
                   disabled={Boolean(editingBin)}
                   className={input + " uppercase font-mono disabled:opacity-60"}
@@ -696,7 +699,7 @@ export function RackManagement({
                 <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Nama / Keterangan Lokasi <span className="text-red-500">*</span>
                 </label>
-                <input
+                <HuntrInput
                   required
                   className={input}
                   placeholder="Contoh: Lorong A - Rak 1 Tingkat 1"
@@ -710,7 +713,7 @@ export function RackManagement({
                   <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                     Tipe Lokasi <span className="text-red-500">*</span>
                   </label>
-                  <select
+                  <HuntrSelect
                     className={input}
                     value={binForm.type}
                     onChange={(e) => setBinForm({ ...binForm, type: e.target.value })}
@@ -721,14 +724,14 @@ export function RackManagement({
                     <option value="quarantine">Quarantine (Karantina / Rusak)</option>
                     <option value="staging">Staging</option>
                     <option value="packing">Packing</option>
-                  </select>
+                  </HuntrSelect>
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                     Kapasitas Maksimal (Unit)
                   </label>
-                  <input
+                  <HuntrInput
                     type="number"
                     min="0.001"
                     step="0.001"
@@ -746,7 +749,7 @@ export function RackManagement({
                 <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Prioritas Picking (0 - 1000)
                 </label>
-                <input
+                <HuntrInput
                   type="number"
                   min="0"
                   max="100000"
@@ -763,21 +766,21 @@ export function RackManagement({
               </div>
 
               <div className="flex items-center justify-end gap-2 border-t border-[var(--ui-border)] pt-3">
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="rounded-md border border-[var(--ui-border)] px-4 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)]"
                 >
                   Batal
-                </button>
-                <button
+                </HuntrButton>
+                <HuntrButton
                   type="submit"
                   disabled={formBusy}
                   className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-semibold !text-white shadow disabled:opacity-50"
                 >
                   {formBusy && <Loader2 size={13} className="animate-spin" />}
                   {editingBin ? "Simpan Perubahan" : "Buat Rak"}
-                </button>
+                </HuntrButton>
               </div>
             </form>
           </div>
@@ -806,13 +809,13 @@ export function RackManagement({
                   {inspectingBin?.name} · Gudang: {activeWarehouse?.name}
                 </p>
               </div>
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setInspectModalOpen(false)}
                 className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
               >
                 <X size={18} />
-              </button>
+              </HuntrButton>
             </div>
 
             {inspectLoading ? (
@@ -843,24 +846,24 @@ export function RackManagement({
                 </div>
 
                 <div className="max-h-80 overflow-y-auto rounded-lg border border-[var(--ui-border)]">
-                  <table className="w-full text-left text-xs">
-                    <thead className="sticky top-0 bg-[var(--ui-bg-input)] border-b border-[var(--ui-border)] text-[10px] uppercase text-[var(--ui-text-muted)]">
-                      <tr>
-                        <th className="px-3 py-2 font-semibold">SKU & Nama Barang</th>
-                        <th className="py-2 text-right font-semibold">On Hand</th>
-                        <th className="py-2 text-right font-semibold">Reserved</th>
-                        <th className="px-3 py-2 text-right font-semibold">Available</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--ui-border)]">
+                  <HuntrTable className="w-full text-left text-xs">
+                    <HuntrTableHead className="sticky top-0 bg-[var(--ui-bg-input)] border-b border-[var(--ui-border)] text-[10px] uppercase text-[var(--ui-text-muted)]">
+                      <HuntrTableRow>
+                        <HuntrTableHeaderCell className="px-3 py-2 font-semibold">SKU & Nama Barang</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="py-2 text-right font-semibold">On Hand</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="py-2 text-right font-semibold">Reserved</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="px-3 py-2 text-right font-semibold">Available</HuntrTableHeaderCell>
+                      </HuntrTableRow>
+                    </HuntrTableHead>
+                    <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
                       {inspectItems.map((item) => {
                         const onHand = Number(item.on_hand || 0);
                         const allocated = Number(item.allocated || 0);
                         const available = onHand - allocated;
 
                         return (
-                          <tr key={item.id} className="hover:bg-[var(--ui-bg-input)]/40">
-                            <td className="px-3 py-2 align-middle">
+                          <HuntrTableRow key={item.id} className="hover:bg-[var(--ui-bg-input)]/40">
+                            <HuntrTableCell className="px-3 py-2 align-middle">
                               <p className="font-semibold text-[var(--ui-text-primary)]">
                                 {item.item_name}
                               </p>
@@ -877,30 +880,30 @@ export function RackManagement({
                                   </>
                                 )}
                               </div>
-                            </td>
-                            <td className="py-2 text-right align-middle tabular-nums font-medium">
+                            </HuntrTableCell>
+                            <HuntrTableCell className="py-2 text-right align-middle tabular-nums font-medium">
                               {new Intl.NumberFormat("id-ID").format(onHand)} {item.uom}
-                            </td>
-                            <td className="py-2 text-right align-middle tabular-nums text-[var(--ui-text-muted)]">
+                            </HuntrTableCell>
+                            <HuntrTableCell className="py-2 text-right align-middle tabular-nums text-[var(--ui-text-muted)]">
                               {new Intl.NumberFormat("id-ID").format(allocated)}
-                            </td>
-                            <td className="px-3 py-2 text-right align-middle tabular-nums font-bold text-emerald-500">
+                            </HuntrTableCell>
+                            <HuntrTableCell className="px-3 py-2 text-right align-middle tabular-nums font-bold text-emerald-500">
                               {new Intl.NumberFormat("id-ID").format(available)}
-                            </td>
-                          </tr>
+                            </HuntrTableCell>
+                          </HuntrTableRow>
                         );
                       })}
 
                       {!inspectItems.length && (
-                        <tr>
-                          <td colSpan={4} className="py-8 text-center text-[var(--ui-text-muted)]">
+                        <HuntrTableRow>
+                          <HuntrTableCell colSpan={4} className="py-8 text-center text-[var(--ui-text-muted)]">
                             <Boxes size={24} className="mx-auto mb-1.5 opacity-40" />
                             Rak ini kosong. Belum ada stok barang yang ditempatkan di sini.
-                          </td>
-                        </tr>
+                          </HuntrTableCell>
+                        </HuntrTableRow>
                       )}
-                    </tbody>
-                  </table>
+                    </HuntrTableBody>
+                  </HuntrTable>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
@@ -910,7 +913,7 @@ export function RackManagement({
                   </div>
 
                   {onNavigateToPutAway && (
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => {
                         setInspectModalOpen(false);
@@ -920,7 +923,7 @@ export function RackManagement({
                     >
                       Buka Put Away
                       <ArrowRight size={13} />
-                    </button>
+                    </HuntrButton>
                   )}
                 </div>
               </div>

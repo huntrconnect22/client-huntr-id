@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import Layout from "~/components/Layout";
@@ -89,7 +90,7 @@ export default function CompareReview() {
           <p style={{ color: "var(--ui-text-muted)", marginTop: 8 }}>
             Please check the URL or try again later.
           </p>
-          <button
+          <HuntrButton
             onClick={() => navigate("/approvals")}
             style={{
               marginTop: 20,
@@ -104,7 +105,7 @@ export default function CompareReview() {
             }}
           >
             Back to Approvals
-          </button>
+          </HuntrButton>
         </div>
       </Layout>
     );

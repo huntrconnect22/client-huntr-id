@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeftRight, Settings, LogOut } from "lucide-react";
@@ -34,7 +36,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div
+    <HuntrSurface
       style={{
         position: "absolute",
         top: "calc(100% + 8px)",
@@ -116,7 +118,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
 
       {/* Real Workspace Switcher in user menu */}
       {(isVendorComp || isBuyerComp) && (
-        <button
+        <HuntrButton
           disabled={switchingWorkspace}
           onClick={() => {
             onClose();
@@ -177,10 +179,10 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
               ? t("userMenu.activateBuyerMode")
               : t("userMenu.registerAsVendor")}
           </span>
-        </button>
+        </HuntrButton>
       )}
 
-      <button
+      <HuntrButton
         onClick={() => {
           onClose();
           navigate("/account");
@@ -204,9 +206,9 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
       >
         <Settings size={14} className="text-[var(--ui-text-muted)]" />
         <span>{t("userMenu.accountSettings")}</span>
-      </button>
+      </HuntrButton>
 
-      <button
+      <HuntrButton
         onClick={() => {
           onClose();
           onLogout();
@@ -230,7 +232,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
       >
         <LogOut size={14} />
         <span>{t("userMenu.signOut")}</span>
-      </button>
-    </div>
+      </HuntrButton>
+    </HuntrSurface>
   );
 };

@@ -1,4 +1,8 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router";
 import Swal from "sweetalert2";
 import {
   Activity,
@@ -19,7 +23,6 @@ import {
   PackageCheck,
   Plus,
   Printer,
-  RefreshCw,
   Search,
   ShieldCheck,
   ShoppingCart,
@@ -100,6 +103,7 @@ type PickerKind =
 
 export default function WmsPage() {
   const company = useActiveCompany<any>();
+  const { search } = useLocation();
   const [installed, setInstalled] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -258,15 +262,24 @@ export default function WmsPage() {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const paramTab = new URLSearchParams(window.location.search).get("tab");
-      if (paramTab) {
-        if (paramTab === "Reports") setTab("Reports");
-        else if (paramTab === "Stock" || paramTab === "Inventory") setTab("Stock");
-        else if (paramTab === "Receiving") setTab("Receiving & Put Away");
-      }
-    }
-  }, []);
+    const paramTab = new URLSearchParams(search).get("tab");
+    const tabByQuery: Record<string, string> = {
+      Inventory: "Stock",
+      Stock: "Stock",
+      "Warehouse Map": "Warehouse Map",
+      Racks: "Rak & Lokasi",
+      Receiving: "Receiving & Put Away",
+      "Receiving & Put Away": "Receiving & Put Away",
+      Fulfillment: "Allocation & Packing",
+      "Allocation & Packing": "Allocation & Packing",
+      Transfers: "Transfers",
+      Adjustments: "Adjustments",
+      Warehouses: "Warehouses",
+      Reports: "Reports",
+    };
+
+    setTab(paramTab ? (tabByQuery[paramTab] ?? "Overview") : "Overview");
+  }, [search]);
 
   const handleOpenReorderModal = (item: any) => {
     const leadDays = toNumeric(item.lead_time_days || 0);
@@ -969,7 +982,7 @@ export default function WmsPage() {
                   {f}
                 </div>
               ))}
-              <button
+              <HuntrButton
                 disabled={busy}
                 onClick={() =>
                   run(async () => {
@@ -981,93 +994,18 @@ export default function WmsPage() {
               >
                 {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
                 Aktifkan WMS & Inventory
-              </button>
+              </HuntrButton>
             </div>
           </div>
         </div>
       </Layout>
     );
-  const tabs = [
-    { key: "Overview", label: "Overview", Icon: BarChart3 },
-    { key: "Stock", label: "Stok & Katalog", Icon: Boxes },
-    { key: "Warehouse Map", label: "Peta Gudang", Icon: MapPin },
-    { key: "Rak & Lokasi", label: "Rak & Lokasi", Icon: Layers },
-    {
-      key: "Receiving & Put Away",
-      label: "Penerimaan & QC",
-      Icon: ArrowDownToLine,
-      badge: receivingBinItems.length > 0 ? receivingBinItems.length : undefined,
-      badgeColor: "bg-blue-500 text-white",
-    },
-    {
-      key: "Allocation & Packing",
-      label: "Fulfillment",
-      Icon: PackageCheck,
-      badge: fulfillmentCounts.allocated > 0 ? fulfillmentCounts.allocated : undefined,
-      badgeColor: "bg-violet-500 text-white",
-    },
-    { key: "Transfers", label: "Transfer", Icon: Truck },
-    { key: "Adjustments", label: "Penyesuaian", Icon: Activity },
-    { key: "Warehouses", label: "Gudang", Icon: Building2 },
-    {
-      key: "Reports",
-      label: "Laporan",
-      Icon: BarChart3,
-      badge: report?.low_stock_items?.length > 0 ? report.low_stock_items.length : undefined,
-      badgeColor: "bg-amber-500 text-white",
-    },
-  ];
   return (
     <Layout
       title="WMS & Inventory"
       subtitle="Warehouse operations · connected to Huntr Catalogue"
     >
       <div className="w-full space-y-4">
-        {/* Tab navigation */}
-        <div className="flex items-center gap-2">
-          <div
-            className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none]"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {tabs.map(({ key, label, Icon, badge, badgeColor }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-                  tab === key
-                    ? "border-[var(--ui-text-brand)] bg-[var(--ui-text-brand)]/10 text-[var(--ui-text-brand)] shadow-sm"
-                    : "border-transparent bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-[var(--ui-border)] hover:bg-[var(--ui-bg-card)] hover:text-[var(--ui-text-primary)]"
-                }`}
-              >
-                <Icon size={13} />
-                <span>{label}</span>
-                {badge !== undefined && badge > 0 && (
-                  <span
-                    className={`ml-0.5 rounded-full px-1.5 py-0.2 text-[10px] font-bold leading-none ${
-                      badgeColor || "bg-[var(--ui-text-brand)] text-white"
-                    }`}
-                  >
-                    {badge}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setStockImportOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
-          >
-            <Upload size={13} /> Import stok
-          </button>
-          <button
-            onClick={refresh}
-            className="shrink-0 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-1.5 text-[var(--ui-text-secondary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
-            title="Refresh data"
-          >
-            <RefreshCw size={14} />
-          </button>
-        </div>
         {error && (
           <div className="flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-400">
             <AlertTriangle size={15} className="shrink-0" />
@@ -1095,13 +1033,13 @@ export default function WmsPage() {
                 </p>
               </div>
             </div>
-            <button
+            <HuntrButton
               onClick={() => setTab("Reports")}
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors"
             >
               <ShoppingCart size={13} />
               Review & Buat PO
-            </button>
+            </HuntrButton>
           </div>
         )}
         {stockImportOpen && (
@@ -1242,7 +1180,7 @@ export default function WmsPage() {
                       {/* Card Action Toolbar */}
                       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--ui-border)] pt-3">
                         <div className="flex items-center gap-2">
-                          <button
+                          <HuntrButton
                             type="button"
                             onClick={() => {
                               setStockWarehouseId(String(w.id));
@@ -1252,8 +1190,8 @@ export default function WmsPage() {
                           >
                             <Boxes size={13} className="text-[var(--ui-text-brand)]" />
                             <span>Lihat Stok</span>
-                          </button>
-                          <button
+                          </HuntrButton>
+                          <HuntrButton
                             type="button"
                             onClick={() => {
                               setTab("Rak & Lokasi");
@@ -1262,10 +1200,10 @@ export default function WmsPage() {
                           >
                             <Layers size={13} />
                             <span>Atur Rak & Bin</span>
-                          </button>
+                          </HuntrButton>
                         </div>
 
-                        <button
+                        <HuntrButton
                           type="button"
                           onClick={() =>
                             run(() =>
@@ -1281,7 +1219,7 @@ export default function WmsPage() {
                           }`}
                         >
                           {w.status === "active" ? "Nonaktifkan" : "Aktifkan"}
-                        </button>
+                        </HuntrButton>
                       </div>
                     </div>
                   ))}
@@ -1319,7 +1257,7 @@ export default function WmsPage() {
                 <div className="space-y-3">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Kode Gudang *</label>
-                    <input
+                    <HuntrInput
                       className={input}
                       placeholder="Misal: WH-JKT-01"
                       required
@@ -1331,7 +1269,7 @@ export default function WmsPage() {
 
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Nama Fasilitas *</label>
-                    <input
+                    <HuntrInput
                       className={input}
                       placeholder="Contoh: Gudang Distribusi Cakung"
                       required
@@ -1342,7 +1280,7 @@ export default function WmsPage() {
 
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Alamat Lengkap</label>
-                    <input
+                    <HuntrInput
                       className={input}
                       placeholder="Jalan, Kawasan Industri, Kota..."
                       value={warehouseForm.address}
@@ -1352,7 +1290,7 @@ export default function WmsPage() {
 
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">Target Kapasitas (unit)</label>
-                    <input
+                    <HuntrInput
                       className={input}
                       placeholder="0 (opsional)"
                       type="number"
@@ -1364,13 +1302,13 @@ export default function WmsPage() {
                   </div>
                 </div>
 
-                <button
+                <HuntrButton
                   type="submit"
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] py-2.5 text-xs font-bold !text-white shadow transition-all hover:opacity-90 active:scale-[0.99]"
                 >
                   <Plus size={15} />
                   Simpan Fasilitas Baru
-                </button>
+                </HuntrButton>
               </form>
             </div>
           </div>
@@ -1422,7 +1360,7 @@ export default function WmsPage() {
                   <p className="text-[11px] text-[var(--ui-text-muted)]">Siap Dipakai (Available)</p>
                 </div>
               </div>
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setStockFilterLowOnly(!stockFilterLowOnly)}
                 className={`${card} flex items-center justify-between gap-3 p-3.5 text-left transition-all ${
@@ -1457,7 +1395,7 @@ export default function WmsPage() {
                 >
                   {stockFilterLowOnly ? "Aktif" : "Filter"}
                 </span>
-              </button>
+              </HuntrButton>
             </div>
 
             <div className={card + " overflow-hidden p-0"}>
@@ -1476,14 +1414,14 @@ export default function WmsPage() {
                   {/* Search */}
                   <div className="relative min-w-[160px] flex-1 max-w-xs">
                     <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-                    <input
+                    <HuntrInput
                       className={input + " pl-8 py-1.5 text-xs"}
                       placeholder="Cari SKU, item, atau bin…"
                       value={stockSearch}
                       onChange={(e) => setStockSearch(e.target.value)}
                     />
                   </div>
-                  <select
+                  <HuntrSelect
                     style={{ width: "10rem" }}
                     className="shrink-0 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-1.5 text-xs text-[var(--ui-text-primary)] outline-none focus:border-[var(--ui-text-brand)] transition-colors"
                     value={stockWarehouseId}
@@ -1493,8 +1431,8 @@ export default function WmsPage() {
                     {warehouses.map((warehouse: any) => (
                       <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
                     ))}
-                  </select>
-                  <select
+                  </HuntrSelect>
+                  <HuntrSelect
                     style={{ width: "9rem" }}
                     className="shrink-0 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-1.5 text-xs text-[var(--ui-text-primary)] outline-none focus:border-[var(--ui-text-brand)] transition-colors"
                     value={stockCategory}
@@ -1504,9 +1442,16 @@ export default function WmsPage() {
                     {stockCategories.map((category) => (
                       <option key={category} value={category}>{category}</option>
                     ))}
-                  </select>
+                  </HuntrSelect>
+                  <HuntrButton
+                    type="button"
+                    onClick={() => setStockImportOpen(true)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ui-text-brand)]/30 bg-[var(--ui-text-brand)]/8 px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-brand)] transition-colors hover:bg-[var(--ui-text-brand)]/14"
+                  >
+                    <Upload size={13} /> Import stok
+                  </HuntrButton>
                   {hasStockFilters && (
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => {
                         setStockSearch("");
@@ -1517,7 +1462,7 @@ export default function WmsPage() {
                       className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--ui-border)] px-2 py-1.5 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)] transition-colors"
                     >
                       <X size={11} /> Reset
-                    </button>
+                    </HuntrButton>
                   )}
                 </div>
               </div>
@@ -1540,18 +1485,18 @@ export default function WmsPage() {
                           </span>
                         </div>
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[850px] text-left text-sm">
-                            <thead className="bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
-                              <tr>
-                                <th className="px-4 py-3 font-semibold">Item</th>
-                                <th className="py-3 font-semibold">Location</th>
-                                <th className="py-3 text-right font-semibold">On hand</th>
-                                <th className="py-3 text-right font-semibold">Reserved</th>
-                                <th className="py-3 text-right font-semibold">Available</th>
-                                <th className="px-4 py-3 font-semibold">Ambang Batas & Lead Time</th>
-                              </tr>
-                            </thead>
-                            <tbody>
+                          <HuntrTable className="w-full min-w-[850px] text-left text-sm">
+                            <HuntrTableHead className="bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
+                              <HuntrTableRow>
+                                <HuntrTableHeaderCell className="px-4 py-3 font-semibold">Item</HuntrTableHeaderCell>
+                                <HuntrTableHeaderCell className="py-3 font-semibold">Location</HuntrTableHeaderCell>
+                                <HuntrTableHeaderCell className="py-3 text-right font-semibold">On hand</HuntrTableHeaderCell>
+                                <HuntrTableHeaderCell className="py-3 text-right font-semibold">Reserved</HuntrTableHeaderCell>
+                                <HuntrTableHeaderCell className="py-3 text-right font-semibold">Available</HuntrTableHeaderCell>
+                                <HuntrTableHeaderCell className="px-4 py-3 font-semibold">Ambang Batas & Lead Time</HuntrTableHeaderCell>
+                              </HuntrTableRow>
+                            </HuntrTableHead>
+                            <HuntrTableBody>
                               {items.map((x: any) => {
                                 const available =
                                   toNumeric(x.on_hand) - toNumeric(x.allocated);
@@ -1564,11 +1509,11 @@ export default function WmsPage() {
                                     : toNumeric(x.lead_time_days || 0);
 
                                 return (
-                                  <tr
+                                  <HuntrTableRow
                                     key={x.id}
                                     className="border-t border-[var(--ui-border)] hover:bg-[var(--ui-bg-input)]/60 transition-colors"
                                   >
-                                    <td className="px-4 py-3 align-middle">
+                                    <HuntrTableCell className="px-4 py-3 align-middle">
                                       <p className="font-semibold text-[var(--ui-text-primary)]">
                                         {x.item_name}
                                       </p>
@@ -1585,25 +1530,25 @@ export default function WmsPage() {
                                           </span>
                                         )}
                                       </div>
-                                    </td>
-                                    <td className="py-3 align-middle">
+                                    </HuntrTableCell>
+                                    <HuntrTableCell className="py-3 align-middle">
                                       <p className="font-medium text-[var(--ui-text-primary)]">{x.warehouse_name}</p>
                                       <p className="mt-0.5 font-mono text-xs text-[var(--ui-text-muted)]">
                                         {x.bin_location || "No bin assigned"}
                                       </p>
-                                    </td>
-                                    <td className="py-3 text-right align-middle tabular-nums">
+                                    </HuntrTableCell>
+                                    <HuntrTableCell className="py-3 text-right align-middle tabular-nums">
                                       <span className="font-semibold text-[var(--ui-text-primary)]">
                                         {formatQuantity(x.on_hand)}
                                       </span>{" "}
                                       <span className="text-xs text-[var(--ui-text-muted)]">
                                         {x.uom || "unit"}
                                       </span>
-                                    </td>
-                                    <td className="py-3 text-right align-middle tabular-nums text-[var(--ui-text-secondary)]">
+                                    </HuntrTableCell>
+                                    <HuntrTableCell className="py-3 text-right align-middle tabular-nums text-[var(--ui-text-secondary)]">
                                       {formatQuantity(x.allocated)}
-                                    </td>
-                                    <td className="py-3 text-right align-middle tabular-nums">
+                                    </HuntrTableCell>
+                                    <HuntrTableCell className="py-3 text-right align-middle tabular-nums">
                                       <span
                                         className={
                                           belowReorder
@@ -1613,8 +1558,8 @@ export default function WmsPage() {
                                       >
                                         {formatQuantity(available)}
                                       </span>
-                                    </td>
-                                    <td className="px-4 py-3 align-middle">
+                                    </HuntrTableCell>
+                                    <HuntrTableCell className="px-4 py-3 align-middle">
                                       <div className="flex items-center justify-between gap-3">
                                         <div className="space-y-0.5">
                                           <div className="flex items-center gap-1.5 text-xs">
@@ -1635,7 +1580,7 @@ export default function WmsPage() {
                                           </div>
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
-                                          <button
+                                          <HuntrButton
                                             type="button"
                                             onClick={() => handleOpenReorderConfig(x)}
                                             className="inline-flex items-center gap-1 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-1 text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)] transition-colors"
@@ -1643,25 +1588,25 @@ export default function WmsPage() {
                                           >
                                             <SlidersHorizontal size={12} />
                                             Atur
-                                          </button>
+                                          </HuntrButton>
                                           {belowReorder && (
-                                            <button
+                                            <HuntrButton
                                               type="button"
                                               onClick={() => handleOpenReorderModal(x)}
                                               className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm hover:bg-amber-700 transition-colors"
                                             >
                                               <ShoppingCart size={12} />
                                               PO
-                                            </button>
+                                            </HuntrButton>
                                           )}
                                         </div>
                                       </div>
-                                    </td>
-                                  </tr>
+                                    </HuntrTableCell>
+                                  </HuntrTableRow>
                                 );
                               })}
-                            </tbody>
-                          </table>
+                            </HuntrTableBody>
+                          </HuntrTable>
                         </div>
                       </div>
                     );
@@ -1678,13 +1623,13 @@ export default function WmsPage() {
                       Terima barang masuk terlebih dahulu. Kuantitas yang diterima akan muncul di sini.
                     </p>
                   </div>
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => setTab("Receiving & Put Away")}
                     className="mt-1 rounded-lg border border-[var(--ui-border)] px-3 py-1.5 text-xs font-semibold text-[var(--ui-text-brand)] hover:bg-[var(--ui-bg-input)] transition-colors"
                   >
                     Ke halaman Receiving
-                  </button>
+                  </HuntrButton>
                 </div>
               )}
             </div>
@@ -1743,7 +1688,7 @@ export default function WmsPage() {
                           </strong>
                         </p>
                       </div>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => {
                           setPutawayForm((prev: any) => ({
@@ -1778,7 +1723,7 @@ export default function WmsPage() {
                         className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[var(--ui-text-brand)] px-2.5 py-1.5 text-xs font-bold !text-white hover:opacity-90 transition-opacity"
                       >
                         Put Away <ArrowRight size={12} />
-                      </button>
+                      </HuntrButton>
                     </div>
                   ))}
                 </div>
@@ -1917,7 +1862,7 @@ export default function WmsPage() {
                       <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                         Inspection notes
                       </div>
-                      <input
+                      <HuntrInput
                         className={input}
                         placeholder="Inspection notes"
                         value={receiveForm.inspection_notes}
@@ -1930,7 +1875,7 @@ export default function WmsPage() {
                       />
                     </div>
                   </div>
-                  <input
+                  <HuntrInput
                     required={!receiveForm.catalogue_id}
                     className={input}
                     placeholder="Item name (required for a new SKU)"
@@ -1954,7 +1899,7 @@ export default function WmsPage() {
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className="space-y-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
                     Received quantity
-                    <input
+                    <HuntrInput
                       required
                       type="number"
                       min="0.001"
@@ -1972,7 +1917,7 @@ export default function WmsPage() {
                   </label>
                   <label className="space-y-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
                     Reference
-                    <input
+                    <HuntrInput
                       className={input}
                       placeholder="PO or delivery note"
                       value={receiveForm.bin_location}
@@ -1987,7 +1932,7 @@ export default function WmsPage() {
                 </div>
                 <label className="block max-w-xs space-y-1 text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Rejected after inspection
-                  <input
+                  <HuntrInput
                     type="number"
                     min="0"
                     step="0.001"
@@ -2029,7 +1974,7 @@ export default function WmsPage() {
                           <span className="ml-auto shrink-0 tabular-nums text-[var(--ui-text-muted)]">
                             {formatQuantity(line.accepted_quantity)} accepted
                           </span>
-                          <button
+                          <HuntrButton
                             type="button"
                             onClick={() =>
                               setReceiveLines(
@@ -2039,7 +1984,7 @@ export default function WmsPage() {
                             className="shrink-0 text-[var(--ui-text-muted)] hover:text-red-500"
                           >
                             Remove
-                          </button>
+                          </HuntrButton>
                         </div>
                       ))}
                     </div>
@@ -2060,7 +2005,7 @@ export default function WmsPage() {
                   </div>
                 )}
                 <div className="flex items-center justify-between gap-3 border-t border-[var(--ui-border)] pt-3">
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => {
                       try {
@@ -2080,8 +2025,8 @@ export default function WmsPage() {
                     className="inline-flex items-center gap-2 rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
                   >
                     + Add receipt line
-                  </button>
-                  <button
+                  </HuntrButton>
+                  <HuntrButton
                     disabled={busy}
                     className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -2091,7 +2036,7 @@ export default function WmsPage() {
                     {busy
                       ? "Confirming receipt…"
                       : `Confirm receiving (${readyReceiveLineCount})`}
-                  </button>
+                  </HuntrButton>
                 </div>
               </form>
               <form
@@ -2246,7 +2191,7 @@ export default function WmsPage() {
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Units to move
                     </div>
-                    <input
+                    <HuntrInput
                       required
                       type="number"
                       min="0.001"
@@ -2277,13 +2222,13 @@ export default function WmsPage() {
                     onClick={() => openPicker("putaway_to_bin")}
                   />
                 </div>
-                <button
+                <HuntrButton
                   disabled={busy}
                   className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-sm font-semibold !text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {busy ? <Loader2 size={15} className="animate-spin" /> : null}
                   {busy ? "Confirming put away…" : "Confirm put away"}
-                </button>
+                </HuntrButton>
               </form>
             </div>
             <div className={card + " overflow-x-auto"}>
@@ -2297,7 +2242,7 @@ export default function WmsPage() {
                     <p className="text-xs text-[var(--ui-text-muted)]">Riwayat penerimaan barang masuk</p>
                   </div>
                 </div>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() =>
                     run(() =>
@@ -2311,30 +2256,30 @@ export default function WmsPage() {
                   className="rounded-lg border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] disabled:opacity-50 hover:bg-[var(--ui-bg-input)] transition-colors"
                 >
                   Import existing Goods Receipts
-                </button>
+                </HuntrButton>
               </div>
-              <table className="w-full min-w-[650px] text-left text-sm">
-                <thead className="text-xs text-[var(--ui-text-muted)]">
-                  <tr>
-                    <th className="py-2">Receipt</th>
-                    <th>Warehouse</th>
-                    <th>Lines</th>
-                    <th>Accepted</th>
-                    <th>Rejected</th>
-                    <th>Reference</th>
-                    <th className="text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <HuntrTable className="w-full min-w-[650px] text-left text-sm">
+                <HuntrTableHead className="text-xs text-[var(--ui-text-muted)]">
+                  <HuntrTableRow>
+                    <HuntrTableHeaderCell className="py-2">Receipt</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell>Warehouse</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell>Lines</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell>Accepted</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell>Rejected</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell>Reference</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="text-right">Action</HuntrTableHeaderCell>
+                  </HuntrTableRow>
+                </HuntrTableHead>
+                <HuntrTableBody>
                   {receipts.map((x: any) => (
-                    <tr
+                    <HuntrTableRow
                       key={x.id}
                       className="border-t border-[var(--ui-border)]"
                     >
-                      <td className="py-2">{x.receipt_number}</td>
-                      <td>{x.warehouse_name}</td>
-                      <td>{x.lines?.length || 0}</td>
-                      <td>
+                      <HuntrTableCell className="py-2">{x.receipt_number}</HuntrTableCell>
+                      <HuntrTableCell>{x.warehouse_name}</HuntrTableCell>
+                      <HuntrTableCell>{x.lines?.length || 0}</HuntrTableCell>
+                      <HuntrTableCell>
                         {formatQuantity(
                           (x.lines || []).reduce(
                             (sum: number, line: any) =>
@@ -2342,8 +2287,8 @@ export default function WmsPage() {
                             0,
                           ),
                         )}
-                      </td>
-                      <td>
+                      </HuntrTableCell>
+                      <HuntrTableCell>
                         {formatQuantity(
                           (x.lines || []).reduce(
                             (sum: number, line: any) =>
@@ -2351,31 +2296,31 @@ export default function WmsPage() {
                             0,
                           ),
                         )}
-                      </td>
-                      <td>{x.reference || "—"}</td>
-                      <td className="text-right">
-                        <button
+                      </HuntrTableCell>
+                      <HuntrTableCell>{x.reference || "—"}</HuntrTableCell>
+                      <HuntrTableCell className="text-right">
+                        <HuntrButton
                           type="button"
                           onClick={() => printGrn(x)}
                           className="inline-flex items-center gap-1 rounded-md border border-[var(--ui-border)] px-2 py-1 text-xs font-semibold hover:border-[var(--ui-text-brand)]"
                         >
                           <Printer size={13} /> Print GRN
-                        </button>
-                      </td>
-                    </tr>
+                        </HuntrButton>
+                      </HuntrTableCell>
+                    </HuntrTableRow>
                   ))}
                   {!receipts.length && (
-                    <tr>
-                      <td
+                    <HuntrTableRow>
+                      <HuntrTableCell
                         colSpan={7}
                         className="py-4 text-[var(--ui-text-muted)]"
                       >
                         No receiving activity recorded yet.
-                      </td>
-                    </tr>
+                      </HuntrTableCell>
+                    </HuntrTableRow>
                   )}
-                </tbody>
-              </table>
+                </HuntrTableBody>
+              </HuntrTable>
             </div>
           </div>
         )}
@@ -2464,7 +2409,7 @@ export default function WmsPage() {
                   <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                     Units to reserve
                   </div>
-                  <input
+                  <HuntrInput
                     required
                     type="number"
                     min="0.001"
@@ -2491,12 +2436,12 @@ export default function WmsPage() {
                         : `Stock insufficient: ${allocationAvailable} available, ${allocationRequested} requested.`}
                     </p>
                   )}
-                <button
+                <HuntrButton
                   disabled={!allocationSufficient}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] px-4 py-2.5 text-sm font-bold !text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <PackageCheck size={14} /> Alokasi Stok
-                </button>
+                </HuntrButton>
               </form>
               <div className={card + " space-y-3"}>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] pb-3">
@@ -2523,7 +2468,7 @@ export default function WmsPage() {
                     { id: "packed", label: "Siap Kirim", count: fulfillmentCounts.packed },
                     { id: "shipped", label: "Terkirim", count: fulfillmentCounts.shipped },
                   ].map((f) => (
-                    <button
+                    <HuntrButton
                       key={f.id}
                       type="button"
                       onClick={() => setFulfillmentFilter(f.id)}
@@ -2543,7 +2488,7 @@ export default function WmsPage() {
                       >
                         {f.count}
                       </span>
-                    </button>
+                    </HuntrButton>
                   ))}
                 </div>
 
@@ -2597,23 +2542,23 @@ export default function WmsPage() {
                           {/* Quick Actions */}
                           {o.status === "allocated" && (
                             <div className="flex items-center gap-1.5">
-                              <button
+                              <HuntrButton
                                 onClick={() => run(() => startWmsPicking(company.id, o.id))}
                                 className="inline-flex items-center gap-1 rounded-lg bg-[var(--ui-text-brand)] px-3 py-1.5 text-xs font-bold !text-white hover:opacity-90 shadow-sm"
                               >
                                 <Package size={12} /> Mulai Picking
-                              </button>
-                              <button
+                              </HuntrButton>
+                              <HuntrButton
                                 onClick={() => run(() => releaseWmsOrder(company.id, o.id))}
                                 className="rounded-lg border border-[var(--ui-border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] hover:text-red-500"
                                 title="Lepas Alokasi Stok"
                               >
                                 Release
-                              </button>
+                              </HuntrButton>
                             </div>
                           )}
                           {o.status === "picking" && (
-                            <button
+                            <HuntrButton
                               onClick={() =>
                                 run(() =>
                                   packWmsOrder(company.id, o.id, "Packed and checked"),
@@ -2622,7 +2567,7 @@ export default function WmsPage() {
                               className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 shadow-sm"
                             >
                               <PackageCheck size={12} /> Selesai Packing
-                            </button>
+                            </HuntrButton>
                           )}
                         </div>
 
@@ -2686,7 +2631,7 @@ export default function WmsPage() {
 
                         {o.status === "packed" && (
                           <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                            <input
+                            <HuntrInput
                               className={input}
                               placeholder="Kurir / Carrier (misal: JNE, GrabExpress)"
                               value={meta.carrier}
@@ -2700,7 +2645,7 @@ export default function WmsPage() {
                                 })
                               }
                             />
-                            <input
+                            <HuntrInput
                               className={input}
                               placeholder="No. Resi / Tracking number"
                               value={meta.tracking_number}
@@ -2714,12 +2659,12 @@ export default function WmsPage() {
                                 })
                               }
                             />
-                            <button
+                            <HuntrButton
                               onClick={() => run(() => shipWmsOrder(company.id, o.id, meta))}
                               className="inline-flex items-center gap-1 rounded-lg bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-bold !text-white hover:opacity-90 shadow-sm"
                             >
                               <Truck size={13} /> Kirim Sekarang
-                            </button>
+                            </HuntrButton>
                           </div>
                         )}
 
@@ -2870,7 +2815,7 @@ export default function WmsPage() {
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Jumlah Unit yang Dipindahkan
                     </div>
-                    <input
+                    <HuntrInput
                       required
                       type="number"
                       min="0.001"
@@ -2932,14 +2877,14 @@ export default function WmsPage() {
                 </div>
               </div>
 
-              <button
+              <HuntrButton
                 type="submit"
                 disabled={busy}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] px-4 py-3 text-sm font-bold !text-white transition-opacity hover:opacity-90 shadow-md disabled:opacity-50"
               >
                 {busy ? <Loader2 size={16} className="animate-spin" /> : <Truck size={16} />}
                 Eksekusi Transfer Stok
-              </button>
+              </HuntrButton>
             </form>
           </div>
         )}
@@ -2973,7 +2918,7 @@ export default function WmsPage() {
 
                 {/* Mode Selector Toggle */}
                 <div className="flex rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-0.5 text-xs font-semibold">
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => setAdjustMode("increase")}
                     className={`rounded-md px-3 py-1 transition-all ${
@@ -2983,8 +2928,8 @@ export default function WmsPage() {
                     }`}
                   >
                     + Penambahan (Surplus)
-                  </button>
-                  <button
+                  </HuntrButton>
+                  <HuntrButton
                     type="button"
                     onClick={() => setAdjustMode("decrease")}
                     className={`rounded-md px-3 py-1 transition-all ${
@@ -2994,7 +2939,7 @@ export default function WmsPage() {
                     }`}
                   >
                     - Pengurangan (Defisit/Rusak)
-                  </button>
+                  </HuntrButton>
                 </div>
               </div>
 
@@ -3071,7 +3016,7 @@ export default function WmsPage() {
                     <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Jumlah Selisih ({adjustMode === "increase" ? "+" : "-"})
                     </div>
-                    <input
+                    <HuntrInput
                       required
                       type="number"
                       min="0.001"
@@ -3098,7 +3043,7 @@ export default function WmsPage() {
                       Pilih alasan cepat di bawah atau ketik manual
                     </span>
                   </div>
-                  <input
+                  <HuntrInput
                     required
                     className={input}
                     placeholder="Contoh: Temuan Stock Opname Q4 atau Barang Rusak saat handling"
@@ -3117,19 +3062,19 @@ export default function WmsPage() {
                       "Sample / Demo Produk",
                       "Selisih Penerimaan Fisik",
                     ].map((chip) => (
-                      <button
+                      <HuntrButton
                         key={chip}
                         type="button"
                         onClick={() => setAdjustForm({ ...adjustForm, reason: chip })}
                         className="rounded-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2.5 py-1 text-[11px] text-[var(--ui-text-secondary)] hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)] transition-colors"
                       >
                         {chip}
-                      </button>
+                      </HuntrButton>
                     ))}
                   </div>
                 </div>
 
-                <button
+                <HuntrButton
                   type="submit"
                   disabled={busy}
                   className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold !text-white transition-opacity hover:opacity-90 shadow-md ${
@@ -3139,7 +3084,7 @@ export default function WmsPage() {
                   <Check size={15} />
                   Simpan Penyesuaian Stok ({adjustMode === "increase" ? "+" : "-"}
                   {adjustForm.quantity || 0})
-                </button>
+                </HuntrButton>
               </form>
             </div>
           </div>
@@ -3216,38 +3161,38 @@ export default function WmsPage() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[500px] text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-[var(--ui-border)] text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-                        <th className="py-2.5">Fasilitas Gudang</th>
-                        <th className="text-right">Varian SKU</th>
-                        <th className="text-right">Fisik (On-Hand)</th>
-                        <th className="text-right">Teralokasi</th>
-                        <th className="text-right">Ketersediaan</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--ui-border)]">
+                  <HuntrTable className="w-full min-w-[500px] text-left text-sm">
+                    <HuntrTableHead>
+                      <HuntrTableRow className="border-b border-[var(--ui-border)] text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                        <HuntrTableHeaderCell className="py-2.5">Fasilitas Gudang</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="text-right">Varian SKU</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="text-right">Fisik (On-Hand)</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="text-right">Teralokasi</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell className="text-right">Ketersediaan</HuntrTableHeaderCell>
+                      </HuntrTableRow>
+                    </HuntrTableHead>
+                    <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
                       {(report?.stock_by_warehouse || []).map((x: any) => {
                         const onHand = toNumeric(x.on_hand) || 0;
                         const allocated = toNumeric(x.allocated) || 0;
                         const available = Math.max(0, onHand - allocated);
                         const freePct = onHand > 0 ? Math.round((available / onHand) * 100) : 100;
                         return (
-                          <tr key={x.id} className="group hover:bg-[var(--ui-bg-input)]/40 transition-colors">
-                            <td className="py-3">
+                          <HuntrTableRow key={x.id} className="group hover:bg-[var(--ui-bg-input)]/40 transition-colors">
+                            <HuntrTableCell className="py-3">
                               <p className="font-semibold text-xs text-[var(--ui-text-primary)]">{x.name}</p>
                               <span className="font-mono text-[11px] text-[var(--ui-text-muted)]">{x.code}</span>
-                            </td>
-                            <td className="text-right font-medium text-xs tabular-nums text-[var(--ui-text-secondary)]">
+                            </HuntrTableCell>
+                            <HuntrTableCell className="text-right font-medium text-xs tabular-nums text-[var(--ui-text-secondary)]">
                               {x.sku_count}
-                            </td>
-                            <td className="text-right font-bold text-xs tabular-nums text-[var(--ui-text-primary)]">
+                            </HuntrTableCell>
+                            <HuntrTableCell className="text-right font-bold text-xs tabular-nums text-[var(--ui-text-primary)]">
                               {formatQuantity(onHand)}
-                            </td>
-                            <td className="text-right font-medium text-xs tabular-nums text-amber-500">
+                            </HuntrTableCell>
+                            <HuntrTableCell className="text-right font-medium text-xs tabular-nums text-amber-500">
                               {formatQuantity(allocated)}
-                            </td>
-                            <td className="text-right">
+                            </HuntrTableCell>
+                            <HuntrTableCell className="text-right">
                               <div className="flex flex-col items-end gap-1">
                                 <span className="font-bold text-xs tabular-nums text-emerald-500">
                                   {formatQuantity(available)}
@@ -3259,19 +3204,19 @@ export default function WmsPage() {
                                   />
                                 </div>
                               </div>
-                            </td>
-                          </tr>
+                            </HuntrTableCell>
+                          </HuntrTableRow>
                         );
                       })}
                       {!report?.stock_by_warehouse?.length && (
-                        <tr>
-                          <td colSpan={5} className="py-8 text-center text-xs text-[var(--ui-text-muted)]">
+                        <HuntrTableRow>
+                          <HuntrTableCell colSpan={5} className="py-8 text-center text-xs text-[var(--ui-text-muted)]">
                             Belum ada data stok per gudang tercatat.
-                          </td>
-                        </tr>
+                          </HuntrTableCell>
+                        </HuntrTableRow>
                       )}
-                    </tbody>
-                  </table>
+                    </HuntrTableBody>
+                  </HuntrTable>
                 </div>
               </div>
 
@@ -3430,14 +3375,14 @@ export default function WmsPage() {
                       </div>
 
                       <div className="flex shrink-0 items-center gap-2">
-                        <button
+                        <HuntrButton
                           type="button"
                           onClick={() => handleOpenReorderModal(x)}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--ui-text-brand)] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:opacity-95 transition-opacity"
                         >
                           <ShoppingCart size={14} />
                           Buat Purchase Order (PO)
-                        </button>
+                        </HuntrButton>
                       </div>
                     </div>
                   );
@@ -3552,13 +3497,13 @@ export default function WmsPage() {
                     Buat gudang terlebih dahulu di tab Warehouses, lalu kembali ke sini untuk mengatur rak.
                   </p>
                 </div>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setTab("Warehouses")}
                   className="rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-semibold !text-white"
                 >
                   Buka Tab Warehouses
-                </button>
+                </HuntrButton>
               </div>
             ) : (
               <RackManagement
@@ -4060,12 +4005,12 @@ export default function WmsPage() {
                   Pemesanan ulang otomatis untuk stok yang menipis
                 </p>
               </div>
-              <button
+              <HuntrButton
                 onClick={() => setReorderModalItem(null)}
                 className="ml-auto rounded-lg p-1.5 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] transition-colors"
               >
                 <X size={17} />
-              </button>
+              </HuntrButton>
             </div>
 
             <div className="space-y-2 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/50 p-4 text-xs">
@@ -4106,7 +4051,7 @@ export default function WmsPage() {
                   Jumlah Pesanan (Quantity)*
                 </label>
                 <div className="flex items-center gap-2">
-                  <input
+                  <HuntrInput
                     type="number"
                     step="0.001"
                     min="0.001"
@@ -4134,7 +4079,7 @@ export default function WmsPage() {
                 <label className="mb-1 block text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Nama Vendor / Supplier (Opsional)
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   className={input}
                   placeholder="Contoh: PT Sumber Pemasok Utama"
@@ -4149,7 +4094,7 @@ export default function WmsPage() {
                 <label className="mb-1 block text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Estimasi Tanggal Tiba (Expected Receiving Date)
                 </label>
-                <input
+                <HuntrInput
                   type="date"
                   className={input}
                   value={reorderForm.expected_receiving_date}
@@ -4170,7 +4115,7 @@ export default function WmsPage() {
                 <label className="mb-1 block text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Catatan Pemesanan (Opsional)
                 </label>
-                <textarea
+                <HuntrTextarea
                   rows={2}
                   className={input + " resize-none"}
                   placeholder="Catatan tambahan untuk pemesanan..."
@@ -4182,14 +4127,14 @@ export default function WmsPage() {
               </div>
 
               <div className="flex items-center justify-end gap-2.5 border-t border-[var(--ui-border)] pt-2">
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setReorderModalItem(null)}
                   className="rounded-md border border-[var(--ui-border)] px-4 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)]"
                 >
                   Batal
-                </button>
-                <button
+                </HuntrButton>
+                <HuntrButton
                   type="submit"
                   disabled={submittingReorder}
                   className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
@@ -4198,7 +4143,7 @@ export default function WmsPage() {
                     <Loader2 size={13} className="animate-spin" />
                   )}
                   Konfirmasi & Terbitkan PO
-                </button>
+                </HuntrButton>
               </div>
             </form>
           </div>
@@ -4217,20 +4162,20 @@ export default function WmsPage() {
                   <p className="text-xs text-[var(--ui-text-muted)] font-mono">{reorderConfigItem.sku} · {reorderConfigItem.item_name}</p>
                 </div>
               </div>
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setReorderConfigItem(null)}
                 className="rounded-lg p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)]"
               >
                 <X size={16} />
-              </button>
+              </HuntrButton>
             </div>
             <form onSubmit={handleSaveReorderConfig} className="space-y-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Batas Minimum Stok (Reorder Point)
                 </label>
-                <input
+                <HuntrInput
                   type="number"
                   min="0"
                   step="0.001"
@@ -4248,7 +4193,7 @@ export default function WmsPage() {
                 <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                   Estimasi Lead Time Pemasok (Hari)
                 </label>
-                <input
+                <HuntrInput
                   type="number"
                   min="0"
                   step="1"
@@ -4263,21 +4208,21 @@ export default function WmsPage() {
                 </p>
               </div>
               <div className="flex items-center justify-end gap-2 border-t border-[var(--ui-border)] pt-3">
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setReorderConfigItem(null)}
                   className="rounded-lg border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)]"
                 >
                   Batal
-                </button>
-                <button
+                </HuntrButton>
+                <HuntrButton
                   type="submit"
                   disabled={savingReorderConfig}
                   className="flex items-center gap-1.5 rounded-lg bg-[var(--ui-text-brand)] px-4 py-2 text-xs font-bold !text-white hover:opacity-90 disabled:opacity-50"
                 >
                   {savingReorderConfig ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                   Simpan Pengaturan
-                </button>
+                </HuntrButton>
               </div>
             </form>
           </div>

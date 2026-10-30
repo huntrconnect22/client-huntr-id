@@ -1,3 +1,5 @@
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { apiGet, apiPost } from "~/lib/api";
@@ -184,47 +186,47 @@ export default function Approvals() {
             <>
               {/* Desktop table */}
               <div className="hidden md:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">PR ID</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Title</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[130px]">Requester</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[70px]">Items</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">Date</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">File</th>
+                <HuntrTable className="w-full text-sm border-collapse">
+                  <HuntrTableHead>
+                    <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">PR ID</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Title</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[130px]">Requester</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[70px]">Items</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">Date</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">File</HuntrTableHeaderCell>
                       {canAct && (
-                        <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[220px]">Actions</th>
+                        <HuntrTableHeaderCell className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[220px]">Actions</HuntrTableHeaderCell>
                       )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--ui-border)]">
+                    </HuntrTableRow>
+                  </HuntrTableHead>
+                  <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
                     {requests.map((req) => (
-                      <tr key={req.id} className="hover:bg-[var(--ui-bg-input)] transition-colors">
-                        <td className="px-4 py-2.5 whitespace-nowrap">
+                      <HuntrTableRow key={req.id} className="hover:bg-[var(--ui-bg-input)] transition-colors">
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
                           <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
                             #{String(req.id ?? "").substring(0, 8).toUpperCase()}
                           </span>
-                        </td>
-                        <td className="px-4 py-2.5">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5">
                           <div className="font-semibold text-[var(--ui-text-primary)] text-sm line-clamp-1">{req.title}</div>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
                             <User size={12} className="text-[var(--ui-text-muted)]" />
                             {req.user?.name || "Unknown"}
                           </div>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
                             <Package size={12} className="text-[var(--ui-text-muted)]" />
                             {req.items?.length || 0}
                           </div>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap text-xs text-[var(--ui-text-muted)]">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap text-xs text-[var(--ui-text-muted)]">
                           {formatDate(req.created_at)}
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
                           {(req.document_path || req.document_url) ? (
                             <a
                               href={req.document_url || getAssetUrl(req.document_path)}
@@ -237,22 +239,22 @@ export default function Approvals() {
                           ) : (
                             <span className="text-xs text-[var(--ui-text-muted)]">—</span>
                           )}
-                        </td>
+                        </HuntrTableCell>
                         {canAct && (
-                          <td className="px-4 py-2.5">
+                          <HuntrTableCell className="px-4 py-2.5">
                             <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                              <button type="button" onClick={() => navigate(`/my-pr/${req.id}`)} className={btnSecondary}>
+                              <HuntrButton type="button" onClick={() => navigate(`/my-pr/${req.id}`)} className={btnSecondary}>
                                 <Package size={12} /> Details
-                              </button>
-                              <button
+                              </HuntrButton>
+                              <HuntrButton
                                 type="button"
                             onClick={() => setRejectingId(req.id)}
                                 disabled={processingId === req.id}
                                 className={btnReject}
                               >
                                 <XCircle size={12} /> Reject
-                              </button>
-                              <button
+                              </HuntrButton>
+                              <HuntrButton
                                 type="button"
                                 onClick={() => handleApprove(req.id)}
                                 disabled={processingId === req.id}
@@ -264,14 +266,14 @@ export default function Approvals() {
                                   <CheckCircle2 size={12} />
                                 )}
                                 Approve
-                              </button>
+                              </HuntrButton>
                             </div>
-                          </td>
+                          </HuntrTableCell>
                         )}
-                      </tr>
+                      </HuntrTableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </HuntrTableBody>
+                </HuntrTable>
               </div>
 
               {/* Mobile list */}
@@ -309,27 +311,27 @@ export default function Approvals() {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      <button type="button" onClick={() => navigate(`/my-pr/${req.id}`)} className={btnSecondary}>
+                      <HuntrButton type="button" onClick={() => navigate(`/my-pr/${req.id}`)} className={btnSecondary}>
                         Details
-                      </button>
+                      </HuntrButton>
                       {canAct && (
                         <>
-                          <button
+                          <HuntrButton
                             type="button"
                             onClick={() => setRejectingId(req.id)}
                             disabled={processingId === req.id}
                             className={btnReject}
                           >
                             Reject
-                          </button>
-                          <button
+                          </HuntrButton>
+                          <HuntrButton
                             type="button"
                             onClick={() => handleApprove(req.id)}
                             disabled={processingId === req.id}
                             className={btnApprove}
                           >
                             Approve
-                          </button>
+                          </HuntrButton>
                         </>
                       )}
                     </div>
@@ -358,61 +360,61 @@ export default function Approvals() {
           ) : (
             <>
               <div className="hidden md:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">Status</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">RFQ</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[140px]">Vendor</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Amount</th>
-                      <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Terms</th>
+                <HuntrTable className="w-full text-sm border-collapse">
+                  <HuntrTableHead>
+                    <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">Status</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">RFQ</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[140px]">Vendor</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Amount</HuntrTableHeaderCell>
+                      <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Terms</HuntrTableHeaderCell>
                       {canAct && (
-                        <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[240px]">Actions</th>
+                        <HuntrTableHeaderCell className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[240px]">Actions</HuntrTableHeaderCell>
                       )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--ui-border)]">
+                    </HuntrTableRow>
+                  </HuntrTableHead>
+                  <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
                     {awardedProposals.map((proposal) => (
-                      <tr key={proposal.id} className="hover:bg-[var(--ui-bg-input)] transition-colors">
-                        <td className="px-4 py-2.5 whitespace-nowrap">
+                      <HuntrTableRow key={proposal.id} className="hover:bg-[var(--ui-bg-input)] transition-colors">
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
                           <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
                             AWARDED
                           </span>
-                        </td>
-                        <td className="px-4 py-2.5">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5">
                           <div className="font-semibold text-[var(--ui-text-primary)] text-sm line-clamp-1">{proposal.rfq_title}</div>
                           <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">{formatDate(proposal.awarded_at)}</div>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
                             <Building2 size={12} className="text-[var(--ui-text-muted)]" />
                             {proposal.company_name}
                           </div>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap text-xs font-semibold text-[var(--ui-text-brand)]">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap text-xs font-semibold text-[var(--ui-text-brand)]">
                           IDR {Number(proposal.price_offer).toLocaleString("id-ID")}
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap text-xs text-[var(--ui-text-secondary)]">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap text-xs text-[var(--ui-text-secondary)]">
                           {proposal.delivery_days}d · {proposal.payment_term}
-                        </td>
+                        </HuntrTableCell>
                         {canAct && (
-                          <td className="px-4 py-2.5">
+                          <HuntrTableCell className="px-4 py-2.5">
                             <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                              <button
+                              <HuntrButton
                                 type="button"
                                 onClick={() => navigate(`/compare-review/${proposal.rfq_id}`)}
                                 className={btnSecondary}
                               >
                                 <ExternalLink size={12} /> Compare
-                              </button>
-                              <button
+                              </HuntrButton>
+                              <HuntrButton
                                 type="button"
                                 onClick={() => navigate(`/rfq/${proposal.rfq_id}`)}
                                 className={btnSecondary}
                               >
                                 <Package size={12} /> View PR
-                              </button>
-                              <button
+                              </HuntrButton>
+                              <HuntrButton
                                 type="button"
                                 onClick={() => handleApproveWinner(proposal.id)}
                                 disabled={processingId === proposal.id}
@@ -424,14 +426,14 @@ export default function Approvals() {
                                   <CheckCircle2 size={12} />
                                 )}
                                 Generate PO
-                              </button>
+                              </HuntrButton>
                             </div>
-                          </td>
+                          </HuntrTableCell>
                         )}
-                      </tr>
+                      </HuntrTableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </HuntrTableBody>
+                </HuntrTable>
               </div>
 
               <div className="md:hidden flex flex-col gap-2">
@@ -459,29 +461,29 @@ export default function Approvals() {
                       <span>{proposal.delivery_days}d · {proposal.payment_term}</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => navigate(`/compare-review/${proposal.rfq_id}`)}
                         className={btnSecondary}
                       >
                         Compare
-                      </button>
-                      <button
+                      </HuntrButton>
+                      <HuntrButton
                         type="button"
                         onClick={() => navigate(`/rfq/${proposal.rfq_id}`)}
                         className={btnSecondary}
                       >
                         View PR
-                      </button>
+                      </HuntrButton>
                       {canAct && (
-                        <button
+                        <HuntrButton
                           type="button"
                           onClick={() => handleApproveWinner(proposal.id)}
                           disabled={processingId === proposal.id}
                           className={btnPrimary}
                         >
                           Generate PO
-                        </button>
+                        </HuntrButton>
                       )}
                     </div>
                   </div>

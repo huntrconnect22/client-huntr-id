@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { ChevronRight, Trash2 } from "lucide-react";
 import { getAssetUrl } from "../../../lib/assets";
@@ -25,7 +28,7 @@ export default function CatalogueGridView({
       {items.map((item) => {
         const isSelected = selectedItemIds.includes(item.id);
         return (
-          <div
+          <HuntrSurface
             key={item.id}
             style={{
               padding: "16px",
@@ -40,7 +43,7 @@ export default function CatalogueGridView({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
+                <HuntrInput
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => onToggleSelectItem(item.id)}
@@ -107,7 +110,7 @@ export default function CatalogueGridView({
                 {t("catalogue.grid.uomLabel")} <strong style={{ color: "var(--ui-text-secondary)" }}>{item.uom}</strong>
               </span>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => onEditItem(item)}
                   style={{
@@ -123,9 +126,9 @@ export default function CatalogueGridView({
                   }}
                 >
                   {t("catalogue.grid.edit")} <ChevronRight size={13} />
-                </button>
+                </HuntrButton>
                 {onDeleteItem && (
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => onDeleteItem(item)}
                     style={{
@@ -146,11 +149,11 @@ export default function CatalogueGridView({
                     title={t("catalogue.grid.delete")}
                   >
                     <Trash2 size={13} /> {t("catalogue.grid.delete")}
-                  </button>
+                  </HuntrButton>
                 )}
               </div>
             </div>
-          </div>
+          </HuntrSurface>
         );
       })}
     </div>

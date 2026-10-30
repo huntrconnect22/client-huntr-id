@@ -1,11 +1,14 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect, Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import {
   AlertCircle,
   Check,
   Landmark,
   Loader2,
   Plus,
-  RefreshCw,
   WalletCards,
   X,
 } from "lucide-react";
@@ -27,11 +30,13 @@ import { useLanguage } from "../../context/LanguageContext";
 import { badge, button, card, date, input, money } from "./budget-utils";
 
 type ModalKind = "cycle" | "line" | "plan" | "link-rfq" | "link-po" | "actual" | null;
+type BudgetTab = "overview" | "allocations" | "plans";
 
 export function BudgetWorkspace({ company }: { company: { id: string; name?: string } }) {
   const { t, locale } = useLanguage();
+  const { search } = useLocation();
   const [data, setData] = useState<any>(null);
-  const [tab, setTab] = useState<"overview" | "allocations" | "plans">("overview");
+  const [tab, setTab] = useState<BudgetTab>("overview");
   const [modal, setModal] = useState<ModalKind>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +58,15 @@ export function BudgetWorkspace({ company }: { company: { id: string; name?: str
   useEffect(() => {
     reload();
   }, [company.id]);
+
+  useEffect(() => {
+    const tabByQuery: Record<string, BudgetTab> = {
+      allocations: "allocations",
+      plans: "plans",
+    };
+    const requestedTab = new URLSearchParams(search).get("tab");
+    setTab(requestedTab ? (tabByQuery[requestedTab] ?? "overview") : "overview");
+  }, [search]);
 
   const cycle = data?.cycle;
   const plans = data?.plans ?? [];
@@ -90,12 +104,6 @@ export function BudgetWorkspace({ company }: { company: { id: string; name?: str
   if (loading && !data) return <Loading t={t} />;
   if (error && !data) return <ErrorState message={error} onRetry={() => reload()} t={t} />;
 
-  const tabs: [key: "overview" | "allocations" | "plans", label: string][] = [
-    ["overview", t("budgeting.tabs.overview")],
-    ["allocations", t("budgeting.tabs.allocations")],
-    ["plans", t("budgeting.tabs.plans")],
-  ];
-
   return (
     <section className="space-y-5">
       <header className={`${card} border-l-4 border-l-[var(--ui-text-brand)] px-5 py-4`}>
@@ -115,50 +123,28 @@ export function BudgetWorkspace({ company }: { company: { id: string; name?: str
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => reload(cycle?.id)}
-              className="border border-[var(--ui-border)] p-2 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)]"
-              title={t("budgeting.refreshTooltip")}
+            <HuntrSelect
+              aria-label={t("budgeting.selectPeriod")}
+              className="max-w-[12rem] border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-2 py-2 text-sm"
+              value={cycle?.id ?? ""}
+              onChange={(e) => reload(e.target.value)}
             >
-              <RefreshCw size={16} />
-            </button>
-            <button
+              <option value="">{t("budgeting.selectPeriod")}</option>
+              {(data?.cycles ?? []).map((row: any) => (
+                <option key={row.id} value={row.id}>
+                  {row.name} · FY {row.fiscal_year}
+                </option>
+              ))}
+            </HuntrSelect>
+            <HuntrButton
               onClick={() => open("plan")}
               disabled={!cycle || cycle.status !== "active"}
               className={button}
             >
               <Plus size={16} />
               {t("budgeting.newPlanBtn")}
-            </button>
+            </HuntrButton>
           </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--ui-border)] pt-3">
-          {tabs.map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`px-3 py-1.5 text-sm font-semibold ${
-                tab === key
-                  ? "bg-[var(--ui-text-brand)] text-white"
-                  : "text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)]"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-          <select
-            aria-label={t("budgeting.selectPeriod")}
-            className="ml-auto border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-2 text-sm"
-            value={cycle?.id ?? ""}
-            onChange={(e) => reload(e.target.value)}
-          >
-            <option value="">{t("budgeting.selectPeriod")}</option>
-            {(data?.cycles ?? []).map((row: any) => (
-              <option key={row.id} value={row.id}>
-                {row.name} · FY {row.fiscal_year}
-              </option>
-            ))}
-          </select>
         </div>
       </header>
 
@@ -177,7 +163,7 @@ export function BudgetWorkspace({ company }: { company: { id: string; name?: str
               <span>
                 <b>{cycle.name}</b> {t("budgeting.cycleDraftWarning")}
               </span>
-              <button
+              <HuntrButton
                 onClick={() =>
                   action(
                     () => activateBudgetCycle(company.id, cycle.id),
@@ -187,7 +173,7 @@ export function BudgetWorkspace({ company }: { company: { id: string; name?: str
                 className="border border-amber-500/50 px-3 py-1.5 font-semibold"
               >
                 {t("budgeting.activateCycleBtn")}
-              </button>
+              </HuntrButton>
             </div>
           )}
           {tab === "overview" && (
@@ -283,12 +269,12 @@ function Overview({ currency, summary, lines, plans, onOpen, t, locale }: any) {
                 {t("budgeting.overview.allocationUsageDesc")}
               </p>
             </div>
-            <button
+            <HuntrButton
               onClick={() => onOpen("line")}
               className="text-sm font-semibold text-[var(--ui-text-brand)]"
             >
               {t("budgeting.overview.addAllocationBtn")}
-            </button>
+            </HuntrButton>
           </div>
           <div className="space-y-3">
             {lines.length ? (
@@ -341,12 +327,12 @@ function Overview({ currency, summary, lines, plans, onOpen, t, locale }: any) {
               {t("budgeting.overview.recentPlansDesc")}
             </p>
           </div>
-          <button
+          <HuntrButton
             onClick={() => onOpen("plan")}
             className="text-sm font-semibold text-[var(--ui-text-brand)]"
           >
             {t("budgeting.overview.createPlanBtn")}
-          </button>
+          </HuntrButton>
         </div>
         <PlanRows plans={plans.slice(0, 5)} currency={currency} t={t} locale={locale} />
       </div>
@@ -418,52 +404,52 @@ function Allocations({ currency, cycle, lines, onCreate, t, locale }: any) {
             {t("budgeting.allocations.subtitle")}
           </p>
         </div>
-        <button onClick={onCreate} className={button}>
+        <HuntrButton onClick={onCreate} className={button}>
           <Plus size={16} />
           {t("budgeting.allocations.addAllocationBtn")}
-        </button>
+        </HuntrButton>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="border-b border-[var(--ui-border)] text-xs uppercase tracking-wide text-[var(--ui-text-muted)]">
-            <tr>
-              <th className="px-4 py-3">{t("budgeting.allocations.thCode")}</th>
-              <th>{t("budgeting.allocations.thDepartment")}</th>
-              <th>{t("budgeting.allocations.thAllocated")}</th>
-              <th>{t("budgeting.allocations.thCommitted")}</th>
-              <th>{t("budgeting.allocations.thActual")}</th>
-              <th className="pr-4 text-right">{t("budgeting.allocations.thRemaining")}</th>
-            </tr>
-          </thead>
-          <tbody>
+        <HuntrTable className="w-full min-w-[760px] text-left text-sm">
+          <HuntrTableHead className="border-b border-[var(--ui-border)] text-xs uppercase tracking-wide text-[var(--ui-text-muted)]">
+            <HuntrTableRow>
+              <HuntrTableHeaderCell className="px-4 py-3">{t("budgeting.allocations.thCode")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell>{t("budgeting.allocations.thDepartment")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell>{t("budgeting.allocations.thAllocated")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell>{t("budgeting.allocations.thCommitted")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell>{t("budgeting.allocations.thActual")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell className="pr-4 text-right">{t("budgeting.allocations.thRemaining")}</HuntrTableHeaderCell>
+            </HuntrTableRow>
+          </HuntrTableHead>
+          <HuntrTableBody>
             {lines.length ? (
               lines.map((line: any) => (
-                <tr key={line.id} className="border-b border-[var(--ui-border)] last:border-0">
-                  <td className="px-4 py-3">
+                <HuntrTableRow key={line.id} className="border-b border-[var(--ui-border)] last:border-0">
+                  <HuntrTableCell className="px-4 py-3">
                     <div className="font-semibold text-[var(--ui-text-primary)]">{line.code}</div>
                     <div className="text-xs text-[var(--ui-text-muted)]">
                       {line.name}
                       {line.category ? ` · ${line.category}` : ""}
                     </div>
-                  </td>
-                  <td>{line.department || t("budgeting.allocations.allDepartments")}</td>
-                  <td>{money(line.allocated_amount, currency, locale)}</td>
-                  <td>{money(line.committed_amount, currency, locale)}</td>
-                  <td>{money(line.actual_amount, currency, locale)}</td>
-                  <td className="pr-4 text-right font-semibold">
+                  </HuntrTableCell>
+                  <HuntrTableCell>{line.department || t("budgeting.allocations.allDepartments")}</HuntrTableCell>
+                  <HuntrTableCell>{money(line.allocated_amount, currency, locale)}</HuntrTableCell>
+                  <HuntrTableCell>{money(line.committed_amount, currency, locale)}</HuntrTableCell>
+                  <HuntrTableCell>{money(line.actual_amount, currency, locale)}</HuntrTableCell>
+                  <HuntrTableCell className="pr-4 text-right font-semibold">
                     {money(line.available_amount, currency, locale)}
-                  </td>
-                </tr>
+                  </HuntrTableCell>
+                </HuntrTableRow>
               ))
             ) : (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-[var(--ui-text-muted)]">
+              <HuntrTableRow>
+                <HuntrTableCell colSpan={6} className="px-4 py-12 text-center text-[var(--ui-text-muted)]">
                   {t("budgeting.allocations.noBudgetLines")}
-                </td>
-              </tr>
+                </HuntrTableCell>
+              </HuntrTableRow>
             )}
-          </tbody>
-        </table>
+          </HuntrTableBody>
+        </HuntrTable>
       </div>
     </div>
   );
@@ -513,7 +499,7 @@ function Plans({ currency, plans, onOpen, onAction, companyId, t, locale }: any)
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {plan.status === "draft" || plan.status === "rejected" ? (
-                  <button
+                  <HuntrButton
                     onClick={() =>
                       onAction(
                         () => submitProcurementPlan(companyId, plan.id),
@@ -523,11 +509,11 @@ function Plans({ currency, plans, onOpen, onAction, companyId, t, locale }: any)
                     className="border border-[var(--ui-border)] px-2.5 py-1.5 text-xs font-semibold"
                   >
                     {t("budgeting.plans.submitApproval")}
-                  </button>
+                  </HuntrButton>
                 ) : null}
                 {plan.status === "submitted" ? (
                   <>
-                    <button
+                    <HuntrButton
                       onClick={() =>
                         onAction(
                           () => approveProcurementPlan(companyId, plan.id),
@@ -537,8 +523,8 @@ function Plans({ currency, plans, onOpen, onAction, companyId, t, locale }: any)
                       className="border border-emerald-500/40 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
                     >
                       {t("budgeting.plans.approve")}
-                    </button>
-                    <button
+                    </HuntrButton>
+                    <HuntrButton
                       onClick={() =>
                         onAction(
                           () => rejectProcurementPlan(companyId, plan.id),
@@ -548,29 +534,29 @@ function Plans({ currency, plans, onOpen, onAction, companyId, t, locale }: any)
                       className="border border-rose-500/40 px-2.5 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300"
                     >
                       {t("budgeting.plans.reject")}
-                    </button>
+                    </HuntrButton>
                   </>
                 ) : null}
                 {["approved", "in_progress"].includes(plan.status) ? (
                   <>
-                    <button
+                    <HuntrButton
                       onClick={() => onOpen("link-rfq", plan)}
                       className="border border-[var(--ui-border)] px-2.5 py-1.5 text-xs font-semibold"
                     >
                       {t("budgeting.plans.linkPr")}
-                    </button>
-                    <button
+                    </HuntrButton>
+                    <HuntrButton
                       onClick={() => onOpen("link-po", plan)}
                       className="border border-[var(--ui-border)] px-2.5 py-1.5 text-xs font-semibold"
                     >
                       {t("budgeting.plans.linkPo")}
-                    </button>
-                    <button
+                    </HuntrButton>
+                    <HuntrButton
                       onClick={() => onOpen("actual", plan)}
                       className="border border-[var(--ui-border)] px-2.5 py-1.5 text-xs font-semibold"
                     >
                       {t("budgeting.plans.recordActual")}
-                    </button>
+                    </HuntrButton>
                   </>
                 ) : null}
               </div>
@@ -618,10 +604,10 @@ function EmptyBudget({ onCreate, t }: any) {
       <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--ui-text-muted)]">
         {t("budgeting.empty.desc")}
       </p>
-      <button onClick={onCreate} className={`${button} mt-5`}>
+      <HuntrButton onClick={onCreate} className={`${button} mt-5`}>
         <Plus size={16} />
         {t("budgeting.empty.createCycleBtn")}
-      </button>
+      </HuntrButton>
     </div>
   );
 }
@@ -640,9 +626,9 @@ function ErrorState({ message, onRetry, t }: any) {
     <div className={`${card} px-6 py-14 text-center`}>
       <AlertCircle className="mx-auto text-rose-500" />
       <p className="mt-3 text-sm text-[var(--ui-text-muted)]">{message}</p>
-      <button onClick={onRetry} className={`${button} mt-4`}>
+      <HuntrButton onClick={onRetry} className={`${button} mt-4`}>
         {t("budgeting.tryAgain")}
-      </button>
+      </HuntrButton>
     </div>
   );
 }
@@ -758,15 +744,15 @@ function BudgetModal({
               {plan?.title || cycle?.name || t("budgeting.modals.modalSubtitleDefault")}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="p-1 text-[var(--ui-text-muted)]">
+          <HuntrButton type="button" onClick={onClose} className="p-1 text-[var(--ui-text-muted)]">
             <X size={18} />
-          </button>
+          </HuntrButton>
         </header>
         <div className="grid gap-3 p-5 sm:grid-cols-2">
           {isCycle && (
             <>
               <Field label={t("budgeting.modals.fields.cycleName")}>
-                <input
+                <HuntrInput
                   required
                   name="name"
                   className={input}
@@ -774,7 +760,7 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.fiscalYear")}>
-                <input
+                <HuntrInput
                   required
                   name="fiscal_year"
                   type="number"
@@ -783,7 +769,7 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.startsAt")}>
-                <input
+                <HuntrInput
                   required
                   name="starts_at"
                   type="date"
@@ -792,7 +778,7 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.endsAt")}>
-                <input
+                <HuntrInput
                   required
                   name="ends_at"
                   type="date"
@@ -801,7 +787,7 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.totalAmount")}>
-                <input
+                <HuntrInput
                   required
                   name="total_amount"
                   type="number"
@@ -811,17 +797,17 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.currency")}>
-                <select name="currency" defaultValue="IDR" className={input}>
+                <HuntrSelect name="currency" defaultValue="IDR" className={input}>
                   <option>IDR</option>
                   <option>USD</option>
-                </select>
+                </HuntrSelect>
               </Field>
             </>
           )}
           {isLine && (
             <>
               <Field label={t("budgeting.modals.fields.allocationCode")}>
-                <input
+                <HuntrInput
                   required
                   name="code"
                   className={input}
@@ -829,7 +815,7 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.allocationName")}>
-                <input
+                <HuntrInput
                   required
                   name="name"
                   className={input}
@@ -837,21 +823,21 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.department")}>
-                <input
+                <HuntrInput
                   name="department"
                   className={input}
                   placeholder={t("budgeting.modals.fields.departmentPlaceholder")}
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.category")}>
-                <input
+                <HuntrInput
                   name="category"
                   className={input}
                   placeholder={t("budgeting.modals.fields.categoryPlaceholder")}
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.allocatedAmount")}>
-                <input
+                <HuntrInput
                   required
                   name="allocated_amount"
                   type="number"
@@ -860,17 +846,17 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.currency")}>
-                <select name="currency" defaultValue={cycle?.currency || "IDR"} className={input}>
+                <HuntrSelect name="currency" defaultValue={cycle?.currency || "IDR"} className={input}>
                   <option>IDR</option>
                   <option>USD</option>
-                </select>
+                </HuntrSelect>
               </Field>
             </>
           )}
           {isPlan && (
             <>
               <Field label={t("budgeting.modals.fields.planTitle")}>
-                <input
+                <HuntrInput
                   required
                   name="title"
                   className={input}
@@ -878,31 +864,31 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.budgetAllocation")}>
-                <select name="budget_line_id" className={input}>
+                <HuntrSelect name="budget_line_id" className={input}>
                   <option value="">{t("budgeting.modals.fields.noSpecificAllocation")}</option>
                   {lines.map((line: any) => (
                     <option key={line.id} value={line.id}>
                       {line.code} · {line.name}
                     </option>
                   ))}
-                </select>
+                </HuntrSelect>
               </Field>
               <Field label={t("budgeting.modals.fields.department")}>
-                <input
+                <HuntrInput
                   name="department"
                   className={input}
                   placeholder={t("budgeting.modals.fields.departmentPlaceholder")}
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.category")}>
-                <input
+                <HuntrInput
                   name="category"
                   className={input}
                   placeholder={t("budgeting.modals.fields.categoryPlaceholder")}
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.plannedAmount")}>
-                <input
+                <HuntrInput
                   required
                   name="planned_amount"
                   type="number"
@@ -911,21 +897,21 @@ function BudgetModal({
                 />
               </Field>
               <Field label={t("budgeting.modals.fields.priority")}>
-                <select name="priority" className={input}>
+                <HuntrSelect name="priority" className={input}>
                   <option value="normal">{t("budgeting.modals.fields.priorityNormal")}</option>
                   <option value="high">{t("budgeting.modals.fields.priorityHigh")}</option>
                   <option value="critical">{t("budgeting.modals.fields.priorityCritical")}</option>
                   <option value="low">{t("budgeting.modals.fields.priorityLow")}</option>
-                </select>
+                </HuntrSelect>
               </Field>
               <Field label={t("budgeting.modals.fields.plannedStart")}>
-                <input name="planned_start_at" type="date" className={input} />
+                <HuntrInput name="planned_start_at" type="date" className={input} />
               </Field>
               <Field label={t("budgeting.modals.fields.plannedEnd")}>
-                <input name="planned_end_at" type="date" className={input} />
+                <HuntrInput name="planned_end_at" type="date" className={input} />
               </Field>
               <Field label={t("budgeting.modals.fields.description")}>
-                <textarea
+                <HuntrTextarea
                   name="description"
                   className={`${input} min-h-20 sm:col-span-2`}
                   placeholder={t("budgeting.modals.fields.descriptionPlaceholder")}
@@ -935,20 +921,20 @@ function BudgetModal({
           )}
           {kind === "link-rfq" && (
             <Field label={t("budgeting.modals.fields.prSelect")}>
-              <select required name="rfq_id" className={input}>
+              <HuntrSelect required name="rfq_id" className={input}>
                 <option value="">{t("budgeting.modals.fields.prSelectPlaceholder")}</option>
                 {rfqs.map((rfq: any) => (
                   <option key={rfq.id} value={rfq.id}>
                     {rfq.title} · {rfq.department || "Tanpa departemen"} · {rfq.status}
                   </option>
                 ))}
-              </select>
+              </HuntrSelect>
             </Field>
           )}
           {kind === "link-po" && (
             <>
               <Field label={t("budgeting.modals.fields.poSelect")}>
-                <select required name="purchase_order_id" className={input}>
+                <HuntrSelect required name="purchase_order_id" className={input}>
                   <option value="">{t("budgeting.modals.fields.poSelectPlaceholder")}</option>
                   {purchaseOrders.map((po: any) => (
                     <option key={po.id} value={po.id}>
@@ -957,10 +943,10 @@ function BudgetModal({
                       {po.status}
                     </option>
                   ))}
-                </select>
+                </HuntrSelect>
               </Field>
               <Field label={t("budgeting.modals.fields.committedAmount")}>
-                <input
+                <HuntrInput
                   name="amount"
                   type="number"
                   min="0"
@@ -972,7 +958,7 @@ function BudgetModal({
           )}
           {kind === "actual" && (
             <Field label={t("budgeting.modals.fields.actualAmount")}>
-              <input
+              <HuntrInput
                 name="amount"
                 type="number"
                 min="0"
@@ -983,21 +969,21 @@ function BudgetModal({
           )}
         </div>
         <footer className="flex justify-end gap-2 border-t border-[var(--ui-border)] px-5 py-3">
-          <button
+          <HuntrButton
             type="button"
             onClick={onClose}
             className="border border-[var(--ui-border)] px-3 py-2 text-sm font-semibold"
           >
             {t("budgeting.modals.cancelBtn")}
-          </button>
-          <button disabled={saving} className={button}>
+          </HuntrButton>
+          <HuntrButton disabled={saving} className={button}>
             {saving ? (
               <Loader2 className="animate-spin" size={16} />
             ) : (
               <Check size={16} />
             )}
             {saving ? t("budgeting.modals.savingBtn") : t("budgeting.modals.saveBtn")}
-          </button>
+          </HuntrButton>
         </footer>
       </form>
     </div>

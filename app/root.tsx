@@ -17,6 +17,7 @@ import { LanguageProvider } from "./context/LanguageContext";
 import { EventBusProvider } from "./shared/lib/EventBus";
 import WebSocketDebug from "~/shared/components/WebSocketDebug";
 import MaintenanceBanner from "~/shared/components/MaintenanceBanner";
+import LinearProgress from "@mui/material/LinearProgress";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -47,33 +48,18 @@ function CanonicalLink() {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  React.useEffect(() => {
-    try {
-      const t = localStorage.getItem('huntr_theme');
-      if (t) {
-        document.documentElement.setAttribute('data-theme', t);
-        document.documentElement.classList.toggle('dark', t === 'dark');
-      } else {
-        const sys = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', sys);
-        document.documentElement.classList.toggle('dark', sys === 'dark');
-      }
-    } catch (e) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
-
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
+        <style>{"@layer theme, base, mui, components, utilities;"}</style>
+        <meta name="emotion-insertion-point" content="" />
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <CanonicalLink />
         {/* Restore theme before first paint — fallback to system preference */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('huntr_theme');if(t){document.documentElement.setAttribute('data-theme',t);}else{var sys=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',sys);}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('huntr_theme');if(t!=='light'&&t!=='dark')t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`,
           }}
         />
         <Meta />
@@ -103,28 +89,8 @@ export default function App() {
   return (
     <>
       {isNavigating && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "3px",
-          background: "linear-gradient(90deg, #f97316 0%, #ff8c3a 50%, #f97316 100%)",
-          backgroundSize: "200% 100%",
-          animation: "loading-bar-pulse 1.2s infinite linear, loading-bar-progress 2.5s forwards",
-          zIndex: 9999,
-        }} />
+        <LinearProgress aria-label="Loading page" sx={{ position: "fixed", inset: "0 0 auto", height: 3, zIndex: 9999 }} />
       )}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes loading-bar-pulse {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 200% 50%; }
-        }
-        @keyframes loading-bar-progress {
-          0% { width: 0%; }
-          100% { width: 90%; }
-        }
-      `}} />
       <Outlet />
     </>
   );

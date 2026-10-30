@@ -1,4 +1,5 @@
 import React from "react";
+import Paper from "@mui/material/Paper";
 import { FileText, Building2, ClipboardList, FileCheck2, User, ShieldCheck, Sparkles, CheckCircle2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -27,10 +28,6 @@ export default function AuthLayout({
 
   return (
     <div className="min-h-screen flex w-full bg-[var(--ui-bg-page-grad)] relative overflow-x-hidden">
-      {/* Background ambient lighting blur effects */}
-      <div className="fixed top-[-10%] left-[-5%] w-[450px] h-[450px] rounded-full bg-orange-500/10 blur-[120px] pointer-events-none z-0" />
-      <div className="fixed bottom-[-10%] right-[35%] w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[100px] pointer-events-none z-0" />
-
       {/* Main Container */}
       <div className="relative z-10 flex-1 flex flex-col min-h-screen">
         {/* Top Header Navigation */}
@@ -52,9 +49,9 @@ export default function AuthLayout({
         <main className="flex-1 flex items-center justify-center px-4 py-6 md:px-8 sm:py-8">
           <div className="w-full max-w-[460px] mx-auto">
             {/* Card wrapper */}
-            <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl shadow-black/10 backdrop-blur-xl relative">
+            <Paper variant="outlined" sx={{ p: { xs: 3, sm: 4 }, position: "relative" }}>
               {children}
-            </div>
+            </Paper>
           </div>
         </main>
         

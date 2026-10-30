@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -44,7 +45,7 @@ export default function CataloguePagination({
         flexWrap: "wrap",
       }}
     >
-      <button
+      <HuntrButton
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         style={{
@@ -60,11 +61,11 @@ export default function CataloguePagination({
         }}
       >
         {t("catalogue.pagination.previous")}
-      </button>
+      </HuntrButton>
 
       {pages.map((page, index) =>
         typeof page === "number" ? (
-          <button
+          <HuntrButton
             key={page}
             onClick={() => onPageChange(page)}
             style={{
@@ -80,7 +81,7 @@ export default function CataloguePagination({
             }}
           >
             {page}
-          </button>
+          </HuntrButton>
         ) : (
           <span
             key={`ellipsis-${index}`}
@@ -91,7 +92,7 @@ export default function CataloguePagination({
         )
       )}
 
-      <button
+      <HuntrButton
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         style={{
@@ -107,7 +108,7 @@ export default function CataloguePagination({
         }}
       >
         {t("catalogue.pagination.next")}
-      </button>
+      </HuntrButton>
     </div>
   );
 }

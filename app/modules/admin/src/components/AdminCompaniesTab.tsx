@@ -1,3 +1,7 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useEffect, useState } from "react";
 import { AlertCircle, Building2, Eye, Loader2, Search, Settings, X } from "lucide-react";
 import { adminGetCompanies } from "../../lib/api";
@@ -59,7 +63,7 @@ export default function AdminCompaniesTab() {
       {/* Stat cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
         {STAT_CARDS.map((card) => (
-          <div
+          <HuntrSurface
             key={card.key}
             style={{
               background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
@@ -83,7 +87,7 @@ export default function AdminCompaniesTab() {
               </div>
               <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>{card.label}</div>
             </div>
-          </div>
+          </HuntrSurface>
         ))}
       </div>
 
@@ -98,22 +102,22 @@ export default function AdminCompaniesTab() {
           }}
         >
           <Search size={14} color="var(--ui-text-muted)" />
-          <input
+          <HuntrInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama, email, atau NPWP…"
             style={{ background: "none", border: "none", outline: "none", color: "var(--ui-text-primary)", width: "100%", fontSize: 13 }}
           />
           {search && (
-            <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 0, display: "flex" }}>
+            <HuntrButton onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ui-text-muted)", padding: 0, display: "flex" }}>
               <X size={13} />
-            </button>
+            </HuntrButton>
           )}
         </div>
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {(["all", "starter", "pending", "approved", "rejected"] as const).map((s) => (
-            <button
+            <HuntrButton
               key={s}
               onClick={() => setFilterStatus(s)}
               style={{
@@ -125,11 +129,11 @@ export default function AdminCompaniesTab() {
               }}
             >
               {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
+            </HuntrButton>
           ))}
         </div>
 
-        <button
+        <HuntrButton
           onClick={() => setShowGlobalSubscriptionModal(true)}
           style={{
             padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
@@ -143,7 +147,7 @@ export default function AdminCompaniesTab() {
         >
           <Settings size={13} />
           Hak & Skema Langganan Global
-        </button>
+        </HuntrButton>
       </div>
 
       {/* Error */}
@@ -160,46 +164,46 @@ export default function AdminCompaniesTab() {
       )}
 
       {/* Table */}
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+      <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
         {isLoading ? (
           <div style={{ padding: 56, display: "flex", justifyContent: "center" }}>
             <Loader2 className="animate-spin" size={28} style={{ color: "var(--ui-primary)" }} />
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={{ ...thStyle, width: 44 }}></th>
-                  <th style={thStyle}>COMPANY</th>
-                  <th style={thStyle}>TYPE</th>
-                  <th style={thStyle}>CONTACT</th>
-                  <th style={thStyle}>NPWP</th>
-                  <th style={thStyle}>LOCATION</th>
-                  <th style={thStyle}>STATUS</th>
-                  <th style={thStyle}>JOINED</th>
-                  <th style={{ ...thStyle, textAlign: "center", width: 80 }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
+            <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
+              <HuntrTableHead>
+                <HuntrTableRow>
+                  <HuntrTableHeaderCell style={{ ...thStyle, width: 44 }}></HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>COMPANY</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>TYPE</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>CONTACT</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>NPWP</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>LOCATION</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>STATUS</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>JOINED</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={{ ...thStyle, textAlign: "center", width: 80 }}>ACTION</HuntrTableHeaderCell>
+                </HuntrTableRow>
+              </HuntrTableHead>
+              <HuntrTableBody>
                 {companies.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} style={{ ...tdStyle, textAlign: "center", padding: "48px 20px", color: "var(--ui-text-muted)" }}>
+                  <HuntrTableRow>
+                    <HuntrTableCell colSpan={9} style={{ ...tdStyle, textAlign: "center", padding: "48px 20px", color: "var(--ui-text-muted)" }}>
                       No companies found
-                    </td>
-                  </tr>
+                    </HuntrTableCell>
+                  </HuntrTableRow>
                 ) : companies.map((company) => {
                   const sm = STATUS_META[company.status] ?? STATUS_META.pending;
                   const logoDoc = company.documents?.find((d) => d.type === "logo");
                   return (
-                    <tr
+                    <HuntrTableRow
                       key={company.id}
                       style={{ transition: "background 0.1s" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       {/* Logo */}
-                      <td style={{ ...tdStyle, padding: "10px 12px" }}>
+                      <HuntrTableCell style={{ ...tdStyle, padding: "10px 12px" }}>
                         {logoDoc ? (
                           <img
                             src={getImageUrl(logoDoc.url)}
@@ -217,20 +221,20 @@ export default function AdminCompaniesTab() {
                             <Building2 size={14} color="var(--ui-text-muted)" />
                           </div>
                         )}
-                      </td>
+                      </HuntrTableCell>
 
                       {/* Company name */}
-                      <td style={{ ...tdStyle, maxWidth: 200 }}>
+                      <HuntrTableCell style={{ ...tdStyle, maxWidth: 200 }}>
                         <div
                           style={{ fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 190 }}
                           title={company.name}
                         >
                           {company.name}
                         </div>
-                      </td>
+                      </HuntrTableCell>
 
                       {/* Type */}
-                      <td style={tdStyle}>
+                      <HuntrTableCell style={tdStyle}>
                         <span
                           style={{
                             background: "var(--ui-primary-muted)", color: "var(--ui-primary)",
@@ -239,30 +243,30 @@ export default function AdminCompaniesTab() {
                         >
                           {company.type}
                         </span>
-                      </td>
+                      </HuntrTableCell>
 
                       {/* Contact */}
-                      <td style={{ ...tdStyle, color: "var(--ui-text-muted)", fontSize: 12 }}>
+                      <HuntrTableCell style={{ ...tdStyle, color: "var(--ui-text-muted)", fontSize: 12 }}>
                         <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160 }}>
                           {company.email || "—"}
                         </div>
                         {company.phone && (
                           <div style={{ fontSize: 11, marginTop: 2, color: "var(--ui-text-muted)" }}>{company.phone}</div>
                         )}
-                      </td>
+                      </HuntrTableCell>
 
                       {/* NPWP */}
-                      <td style={{ ...tdStyle, fontFamily: "monospace", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>
+                      <HuntrTableCell style={{ ...tdStyle, fontFamily: "monospace", fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>
                         {company.formatted_tax_id || company.tax_id || "—"}
-                      </td>
+                      </HuntrTableCell>
 
                       {/* Location */}
-                      <td style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>
+                      <HuntrTableCell style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>
                         {[company.city, company.country].filter(Boolean).join(", ") || "—"}
-                      </td>
+                      </HuntrTableCell>
 
                       {/* Status */}
-                      <td style={tdStyle}>
+                      <HuntrTableCell style={tdStyle}>
                         <span
                           style={{
                             background: sm.bg, color: sm.color, border: `1px solid ${sm.border}`,
@@ -272,18 +276,18 @@ export default function AdminCompaniesTab() {
                         >
                           {sm.icon} {sm.label}
                         </span>
-                      </td>
+                      </HuntrTableCell>
 
                       {/* Joined */}
-                      <td style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>
+                      <HuntrTableCell style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)", whiteSpace: "nowrap" }}>
                         {company.created_at
                           ? new Date(company.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
                           : "—"}
-                      </td>
+                      </HuntrTableCell>
 
                       {/* Action */}
-                      <td style={{ ...tdStyle, textAlign: "center" }}>
-                        <button
+                      <HuntrTableCell style={{ ...tdStyle, textAlign: "center" }}>
+                        <HuntrButton
                           onClick={() => setViewCompany(company)}
                           style={{
                             padding: "5px 12px", borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: "pointer",
@@ -293,16 +297,16 @@ export default function AdminCompaniesTab() {
                           }}
                         >
                           <Eye size={12} /> View
-                        </button>
-                      </td>
-                    </tr>
+                        </HuntrButton>
+                      </HuntrTableCell>
+                    </HuntrTableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </HuntrTableBody>
+            </HuntrTable>
           </div>
         )}
-      </div>
+      </HuntrSurface>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -311,7 +315,7 @@ export default function AdminCompaniesTab() {
             Halaman {currentPage} dari {totalPages} · {total.toLocaleString()} perusahaan
           </div>
           <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-            <button
+            <HuntrButton
               onClick={() => fetchCompanies(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               style={{
@@ -320,13 +324,13 @@ export default function AdminCompaniesTab() {
                 background: currentPage === 1 ? "var(--ui-bg-input)" : "var(--ui-primary-muted)",
                 color: currentPage === 1 ? "var(--ui-text-muted)" : "var(--ui-primary)",
               }}
-            >← Prev</button>
+            >← Prev</HuntrButton>
 
             {buildPageList(currentPage, totalPages).map((p, i) =>
               p === "…" ? (
                 <span key={`d-${i}`} style={{ padding: "0 4px", color: "var(--ui-text-muted)", fontSize: 12 }}>…</span>
               ) : (
-                <button
+                <HuntrButton
                   key={p}
                   onClick={() => fetchCompanies(p as number)}
                   style={{
@@ -335,11 +339,11 @@ export default function AdminCompaniesTab() {
                     color: currentPage === p ? "#fff" : "var(--ui-text-muted)",
                     border: currentPage === p ? "none" : "1px solid var(--ui-border)",
                   }}
-                >{p}</button>
+                >{p}</HuntrButton>
               )
             )}
 
-            <button
+            <HuntrButton
               onClick={() => fetchCompanies(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               style={{
@@ -348,7 +352,7 @@ export default function AdminCompaniesTab() {
                 background: currentPage === totalPages ? "var(--ui-bg-input)" : "var(--ui-primary-muted)",
                 color: currentPage === totalPages ? "var(--ui-text-muted)" : "var(--ui-primary)",
               }}
-            >Next →</button>
+            >Next →</HuntrButton>
           </div>
         </div>
       )}

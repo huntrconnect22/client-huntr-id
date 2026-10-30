@@ -1,3 +1,4 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React from "react";
 
 /**
@@ -30,7 +31,7 @@ export const SlideSection = ({ title, subtitle, icon, children, accentColor }: a
 export const Field = ({ label, value, onChange, placeholder, type = "text" }: any) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[10px] md:text-[11px] font-bold text-[var(--ui-text-muted)] uppercase tracking-wider">{label}</label>
-    <input
+    <HuntrInput
       type={type}
       value={value}
       onChange={e => onChange(e.target.value)}

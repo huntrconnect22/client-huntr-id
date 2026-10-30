@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import DemoDisabledBanner from "~/components/DemoDisabledBanner";
@@ -191,7 +193,7 @@ export default function DebitNotesPage() {
 
         <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
           {["all", "draft", "issued", "acknowledged", "settled", "disputed", "cancelled"].map((status) => (
-            <button
+            <HuntrButton
               key={status}
               onClick={() => setFilterStatus(status)}
               style={{
@@ -202,7 +204,7 @@ export default function DebitNotesPage() {
               }}
             >
               {status === "all" ? "All" : status.replace("_", " ")}
-            </button>
+            </HuntrButton>
           ))}
         </div>
 
@@ -212,17 +214,17 @@ export default function DebitNotesPage() {
             <span style={{ fontSize: 14, fontWeight: 600 }}>Loading data...</span>
           </div>
         ) : filteredNotes.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 24, border: "1px dashed var(--ui-border-input)" }}>
+          <HuntrSurface style={{ textAlign: "center", padding: 60, background: "var(--ui-bg-card)", borderRadius: 24, border: "1px dashed var(--ui-border-input)" }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--ui-bg-input)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--ui-text-muted)" }}>
               <FileText size={32} />
             </div>
             <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)", margin: "0 0 8px" }}>No Debit Notes Found</h3>
             <p style={{ fontSize: 14, color: "var(--ui-text-muted)", margin: 0 }}>No debit notes match the current filter.</p>
-          </div>
+          </HuntrSurface>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {filteredNotes.map((note: DebitNote) => (
-              <div key={note.id} style={{
+              <HuntrSurface key={note.id} style={{
                 background: "var(--ui-bg-card)", borderRadius: 20, border: "1px solid var(--ui-border-input)",
                 overflow: "hidden", display: "flex", flexDirection: "column"
               }}>
@@ -277,7 +279,7 @@ export default function DebitNotesPage() {
                 </div>
                 
                 <div style={{ padding: 20, background: "var(--ui-bg-input)", display: "flex", justifyContent: "flex-end", gap: 12 }}>
-                  <button
+                  <HuntrButton
                     onClick={() => handleDownloadPdf(note.id)}
                     style={{
                       padding: "10px 16px", borderRadius: 10,
@@ -287,9 +289,9 @@ export default function DebitNotesPage() {
                     }}
                   >
                     <Download size={14} /> PDF
-                  </button>
+                  </HuntrButton>
                 </div>
-              </div>
+              </HuntrSurface>
             ))}
           </div>
         )}

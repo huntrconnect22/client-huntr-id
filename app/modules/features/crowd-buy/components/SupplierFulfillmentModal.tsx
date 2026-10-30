@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect, Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Truck, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -71,12 +73,12 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
               Fulfillment Pesanan
             </h3>
           </div>
-          <button
+          <HuntrButton
             onClick={onClose}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
-          </button>
+          </HuntrButton>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
@@ -108,7 +110,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Status Pemenuhan *
             </label>
-            <select
+            <HuntrSelect
               value={status}
               onChange={(e: any) => setStatus(e.target.value)}
               className="w-full text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
@@ -116,7 +118,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
               <option value="processing">Sedang Dipersiapkan / Packing (processing)</option>
               <option value="shipped">Sedang Dikirim (shipped)</option>
               <option value="delivered">Telah Diterima (delivered)</option>
-            </select>
+            </HuntrSelect>
           </div>
 
           {status === "shipped" && (
@@ -125,7 +127,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Kurir / Ekspedisi *
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   required
                   value={carrier}
@@ -139,7 +141,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Nomor Resi / Surat Jalan *
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   required
                   value={trackingNumber}
@@ -155,7 +157,7 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Catatan Pengiriman (Opsional)
             </label>
-            <textarea
+            <HuntrTextarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -165,20 +167,20 @@ export const SupplierFulfillmentModal: React.FC<SupplierFulfillmentModalProps> =
           </div>
 
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <button
+            <HuntrButton
               type="button"
               onClick={onClose}
               className="py-1.5 px-3.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
             >
               Batal
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="submit"
               disabled={loading}
               className="py-1.5 px-4 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-md transition-colors"
             >
               {loading ? "Menyimpan..." : "Update Status"}
-            </button>
+            </HuntrButton>
           </div>
         </form>
       </div>

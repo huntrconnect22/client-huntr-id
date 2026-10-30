@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { Building2, CheckCircle2, FileText, Table, TrendingUp, X, XCircle, Sparkles, Send } from "lucide-react";
 import { getAssetUrl } from "../../lib/assets";
@@ -65,7 +67,7 @@ export default function CompanyViewModal({
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div
+      <HuntrSurface
         style={{
           background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
           borderRadius: 16, width: "100%", maxWidth: 680,
@@ -75,7 +77,7 @@ export default function CompanyViewModal({
         }}
       >
         {/* Modal header */}
-        <div
+        <HuntrSurface
           style={{
             display: "flex", alignItems: "center", gap: 14,
             padding: "18px 20px", borderBottom: "1px solid var(--ui-border)",
@@ -128,7 +130,7 @@ export default function CompanyViewModal({
             </div>
           </div>
 
-          <button
+          <HuntrButton
             onClick={onClose}
             style={{
               flexShrink: 0, width: 32, height: 32, borderRadius: 8,
@@ -138,17 +140,17 @@ export default function CompanyViewModal({
             }}
           >
             <X size={15} />
-          </button>
-        </div>
+          </HuntrButton>
+        </HuntrSurface>
 
         {/* Tab Navigation */}
-        <div style={{
+        <HuntrSurface style={{
           display: "flex", gap: 4, padding: "12px 20px 0",
           borderBottom: "1px solid var(--ui-border)",
           background: "var(--ui-bg-card)", position: "sticky", top: 81, zIndex: 1,
         }}>
           {TABS.map(tab => (
-            <button
+            <HuntrButton
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               style={{
@@ -170,9 +172,9 @@ export default function CompanyViewModal({
                   padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 800,
                 }}>NEW</span>
               )}
-            </button>
+            </HuntrButton>
           ))}
-        </div>
+        </HuntrSurface>
 
         {/* Modal body */}
         <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -269,14 +271,14 @@ export default function CompanyViewModal({
 
         {/* Modal footer — audit actions for PENDING companies */}
         {company.status === "pending" && (
-          <div
+          <HuntrSurface
             style={{
               padding: "14px 20px", borderTop: "1px solid var(--ui-border)",
               display: "flex", gap: 10, position: "sticky", bottom: 0,
               background: "var(--ui-bg-card)", borderRadius: "0 0 16px 16px",
             }}
           >
-            <button
+            <HuntrButton
               onClick={() => onAudit("decline")}
               style={{
                 flex: 1, padding: "11px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer",
@@ -286,8 +288,8 @@ export default function CompanyViewModal({
               }}
             >
               <XCircle size={15} /> Decline
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               onClick={() => onAudit("approve")}
               style={{
                 flex: 2, padding: "11px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer",
@@ -297,20 +299,20 @@ export default function CompanyViewModal({
               }}
             >
               <CheckCircle2 size={15} /> Approve
-            </button>
-          </div>
+            </HuntrButton>
+          </HuntrSurface>
         )}
 
         {/* Modal footer — for STARTER companies (no docs yet): request docs or approve directly */}
         {company.status === "starter" && (
-          <div
+          <HuntrSurface
             style={{
               padding: "14px 20px", borderTop: "1px solid var(--ui-border)",
               display: "flex", gap: 10, position: "sticky", bottom: 0,
               background: "var(--ui-bg-card)", borderRadius: "0 0 16px 16px",
             }}
           >
-            <button
+            <HuntrButton
               onClick={() => onAudit("request_docs")}
               style={{
                 flex: 1, padding: "11px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer",
@@ -320,8 +322,8 @@ export default function CompanyViewModal({
               }}
             >
               <Send size={14} /> Minta Dokumen
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               onClick={() => onAudit("approve")}
               style={{
                 flex: 2, padding: "11px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer",
@@ -331,10 +333,10 @@ export default function CompanyViewModal({
               }}
             >
               <CheckCircle2 size={15} /> Approve Langsung
-            </button>
-          </div>
+            </HuntrButton>
+          </HuntrSurface>
         )}
-      </div>
+      </HuntrSurface>
     </div>
   );
 }

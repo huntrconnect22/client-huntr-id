@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import { ScrollText } from "lucide-react";
 import type { EnterpriseCatalog } from "../../../lib/api/subscription";
 import { SlideSection } from "./OnboardingUI";
@@ -72,13 +74,13 @@ export function TermsContent({
             {pricing.error && (
               <div role="alert" className="text-sm text-red-500">
                 Harga paket belum dapat dimuat.{" "}
-                <button
+                <HuntrButton
                   type="button"
                   onClick={pricing.retry}
                   className="font-semibold underline"
                 >
                   Coba lagi
-                </button>
+                </HuntrButton>
               </div>
             )}
             {pricing.catalog && (
@@ -170,7 +172,7 @@ export function TermsContent({
         <label
           className={`flex items-start gap-3 rounded-lg border p-4 ${ready ? "cursor-pointer border-[var(--ui-border-input)] bg-[var(--ui-bg-input)]" : "border-[var(--ui-border)] opacity-60"}`}
         >
-          <input
+          <HuntrInput
             type="checkbox"
             checked={accepted}
             disabled={!ready}

@@ -1,3 +1,6 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import {
@@ -122,23 +125,23 @@ export function SubscriptionMonitor() {
               keseluruhan.
             </p>
           </div>
-          <button
+          <HuntrButton
             className={button}
             onClick={() => setRevision((value) => value + 1)}
           >
             <RefreshCw size={14} className="inline mr-1" />
             Muat ulang
-          </button>
+          </HuntrButton>
         </div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          <input
+          <HuntrInput
             className={field}
             aria-label="Cari perusahaan atau referensi"
             placeholder="Cari perusahaan / referensi"
             value={filters.search}
             onChange={(e) => change("search", e.target.value)}
           />
-          <select
+          <HuntrSelect
             className={field}
             aria-label="Status pembayaran"
             value={filters.status}
@@ -150,8 +153,8 @@ export function SubscriptionMonitor() {
                 {text}
               </option>
             ))}
-          </select>
-          <select
+          </HuntrSelect>
+          <HuntrSelect
             className={field}
             aria-label="Jenis tagihan"
             value={filters.purchase_type}
@@ -161,10 +164,10 @@ export function SubscriptionMonitor() {
             <option value="plan">Paket</option>
             <option value="addon">Add-on (lama)</option>
             <option value="addons">Add-on</option>
-          </select>
+          </HuntrSelect>
           <label className="text-xs text-[var(--ui-text-muted)]">
             Dari
-            <input
+            <HuntrInput
               className={field}
               type="date"
               value={filters.from}
@@ -173,7 +176,7 @@ export function SubscriptionMonitor() {
           </label>
           <label className="text-xs text-[var(--ui-text-muted)]">
             Sampai
-            <input
+            <HuntrInput
               className={field}
               type="date"
               value={filters.to}
@@ -187,9 +190,9 @@ export function SubscriptionMonitor() {
           </p>
         )}
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-sm">
-            <thead className="border-b border-[var(--ui-border)] text-xs text-[var(--ui-text-muted)]">
-              <tr>
+          <HuntrTable className="w-full min-w-[820px] text-left text-sm">
+            <HuntrTableHead className="border-b border-[var(--ui-border)] text-xs text-[var(--ui-text-muted)]">
+              <HuntrTableRow>
                 {[
                   "Referensi / tanggal",
                   "Perusahaan",
@@ -199,23 +202,23 @@ export function SubscriptionMonitor() {
                   "Email",
                   "Aksi",
                 ].map((title) => (
-                  <th className="px-2 py-3 font-semibold" key={title}>
+                  <HuntrTableHeaderCell className="px-2 py-3 font-semibold" key={title}>
                     {title}
-                  </th>
+                  </HuntrTableHeaderCell>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
+              </HuntrTableRow>
+            </HuntrTableHead>
+            <HuntrTableBody>
               {data?.transactions.data.map((row) => (
-                <tr className="border-b border-[var(--ui-border)]" key={row.id}>
-                  <td className="px-2 py-3">
+                <HuntrTableRow className="border-b border-[var(--ui-border)]" key={row.id}>
+                  <HuntrTableCell className="px-2 py-3">
                     <div className="font-semibold">{row.order_id}</div>
                     <div className="text-xs text-[var(--ui-text-muted)]">
                       {dateTime(row.created_at)}
                     </div>
-                  </td>
-                  <td className="px-2 py-3">{row.company_name}</td>
-                  <td className="px-2 py-3 capitalize">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-2 py-3">{row.company_name}</HuntrTableCell>
+                  <HuntrTableCell className="px-2 py-3 capitalize">
                     {row.purchase_type === "addons"
                       ? "Add-on Enterprise"
                       : label(row.addon_key || row.enterprise_plan)}
@@ -236,37 +239,37 @@ export function SubscriptionMonitor() {
                         {addon.name} × {addon.quantity}
                       </div>
                     ))}
-                  </td>
-                  <td className="px-2 py-3 whitespace-nowrap font-semibold">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-2 py-3 whitespace-nowrap font-semibold">
                     {rupiah(row.amount)}
-                  </td>
-                  <td className="px-2 py-3">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-2 py-3">
                     <span
                       className={`inline-block px-2 py-1 text-xs rounded ${row.status === "paid" ? "bg-emerald-500/10 text-emerald-600" : row.status === "unknown" ? "bg-amber-500/10 text-amber-600" : "bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)]"}`}
                     >
                       {states[row.status] || row.status}
                     </span>
-                  </td>
-                  <td className="px-2 py-3 text-xs">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-2 py-3 text-xs">
                     {row.billing_email_sent_at ? "Terkirim" : "Belum terkirim"}
-                  </td>
-                  <td className="px-2 py-3">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-2 py-3">
                     {["pending", "unknown", "initiating"].includes(
                       row.status,
                     ) && (
-                      <button
+                      <HuntrButton
                         disabled={refreshing === row.id}
                         className={button}
                         onClick={() => refresh(row.id)}
                       >
                         Cek Midtrans
-                      </button>
+                      </HuntrButton>
                     )}
-                  </td>
-                </tr>
+                  </HuntrTableCell>
+                </HuntrTableRow>
               ))}
-            </tbody>
-          </table>
+            </HuntrTableBody>
+          </HuntrTable>
           {!loading && !data?.transactions.data.length && (
             <p className="py-8 text-center text-sm text-[var(--ui-text-muted)]">
               Tidak ada tagihan yang sesuai.
@@ -281,24 +284,24 @@ export function SubscriptionMonitor() {
         <div className="mt-4 flex items-center justify-between text-xs text-[var(--ui-text-muted)]">
           <span>{data?.transactions.total ?? 0} tagihan</span>
           <div className="flex items-center gap-2">
-            <button
+            <HuntrButton
               className={button}
               disabled={page <= 1 || loading}
               onClick={() => setPage((value) => value - 1)}
             >
               Sebelumnya
-            </button>
+            </HuntrButton>
             <span>
               {data?.transactions.current_page ?? 1} /{" "}
               {data?.transactions.last_page ?? 1}
             </span>
-            <button
+            <HuntrButton
               className={button}
               disabled={page >= (data?.transactions.last_page ?? 1) || loading}
               onClick={() => setPage((value) => value + 1)}
             >
               Berikutnya
-            </button>
+            </HuntrButton>
           </div>
         </div>
       </div>

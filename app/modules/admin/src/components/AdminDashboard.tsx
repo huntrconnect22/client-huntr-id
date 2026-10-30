@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useState, type ComponentType } from "react";
 import {
   Building2,
@@ -58,7 +59,7 @@ export default function AdminDashboard({
   const navigation = (
     <nav className="space-y-1" aria-label="Navigasi admin">
       {tabs.map(({ id, label, icon: Icon }) => (
-        <button
+        <HuntrButton
           key={id}
           onClick={() => {
             onTabChange(id);
@@ -69,7 +70,7 @@ export default function AdminDashboard({
         >
           <Icon size={17} />
           {label}
-        </button>
+        </HuntrButton>
       ))}
     </nav>
   );
@@ -98,13 +99,13 @@ export default function AdminDashboard({
               </div>
             </div>
           </div>
-          <button
+          <HuntrButton
             className="lg:hidden"
             aria-label="Tutup menu"
             onClick={() => setOpen(false)}
           >
             <X size={18} />
-          </button>
+          </HuntrButton>
         </div>
         {navigation}
         <div className="mt-auto border-t border-[var(--ui-border)] pt-4">
@@ -112,25 +113,25 @@ export default function AdminDashboard({
           <div className="truncate text-xs text-[var(--ui-text-muted)]">
             {admin.email}
           </div>
-          <button
+          <HuntrButton
             onClick={onLogout}
             className="mt-3 flex items-center gap-2 text-xs font-semibold text-[var(--ui-text-secondary)]"
           >
             <LogOut size={15} />
             Keluar
-          </button>
+          </HuntrButton>
         </div>
       </aside>
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--ui-border)] bg-[var(--ui-bg-header)] px-4 lg:px-7">
           <div className="flex items-center gap-3">
-            <button
+            <HuntrButton
               className="lg:hidden"
               aria-label="Buka menu"
               onClick={() => setOpen(true)}
             >
               <Menu size={20} />
-            </button>
+            </HuntrButton>
             <span className="text-sm font-semibold">
               {tabs.find((tab) => tab.id === activeTab)?.label}
             </span>

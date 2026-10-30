@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams, useNavigation } from "react-router";
 import { Search, Package, Loader2, ChevronDown, ShieldCheck, Truck, ChevronLeft, ChevronRight as ChevronRightIcon, Menu, X, CreditCard, Briefcase, Tag, TrendingUp, Utensils, Sparkles } from "lucide-react";
@@ -220,19 +222,19 @@ export function GuestMarketplaceView() {
                 padding: "3px 8px",
               }}
             />
-            <button
+            <HuntrButton
               onClick={() => setMobileMenuOpen(v => !v)}
               className="text-white hover:text-[#f97316] transition-colors p-1"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </HuntrButton>
           </div>
         </div>
 
         {/* Search Bar - Full width on mobile, centered on desktop */}
         <div className="w-full md:flex-1 md:max-w-[600px] flex items-stretch bg-white rounded overflow-hidden shadow-[0_0_0_2px_#f97316] h-[38px] md:h-[40px]">
-          <input
+          <HuntrInput
             type="text"
             placeholder={t("guestMarketplace.searchPlaceholder")}
             value={localSearch}
@@ -240,14 +242,14 @@ export function GuestMarketplaceView() {
             style={s.searchInput}
             className="flex-1 border-none outline-none px-4 text-sm bg-transparent text-[#111] h-full"
           />
-          <button
+          <HuntrButton
             onClick={() => fetchItems(1)}
             style={s.searchBtn}
             className="bg-[#f97316] border-none cursor-pointer px-5 flex items-center gap-2 text-white text-xs md:text-sm font-bold flex-shrink-0"
           >
             <Search size={15} />
             <span className="hidden sm:inline">{t("guestMarketplace.searchBtn")}</span>
-          </button>
+          </HuntrButton>
         </div>
 
         {/* Desktop Navigation Links */}
@@ -386,7 +388,7 @@ export function GuestMarketplaceView() {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
           <div className="flex overflow-x-auto scrollbar-none border border-[#e5e5e5] rounded bg-white">
             {CATEGORIES.map(cat => (
-              <button
+              <HuntrButton
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 style={{
@@ -402,7 +404,7 @@ export function GuestMarketplaceView() {
                     <span>{t("guestMarketplace.allCategory")}</span>
                   </>
                 ) : cat}
-              </button>
+              </HuntrButton>
             ))}
           </div>
         </div>
@@ -435,13 +437,13 @@ export function GuestMarketplaceView() {
                   </span>
                 </div>
                 {!aiLoading && (
-                  <button
+                  <HuntrButton
                     onClick={() => { setAiResult(null); }}
                     style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", padding: "2px 4px", borderRadius: 4, lineHeight: 1 }}
                     aria-label="Tutup panel AI"
                   >
                     <X size={16} />
-                  </button>
+                  </HuntrButton>
                 )}
               </div>
 
@@ -464,7 +466,7 @@ export function GuestMarketplaceView() {
                   {/* Detected category + keywords */}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
                     {aiResult.category && (
-                      <button
+                      <HuntrButton
                         onClick={() => {
                           const matched = ["Hardware","Software","Furniture","Office Supplies","Services",
                             "Spareparts","Electronics","Mechanical","Chemicals","Construction",
@@ -480,7 +482,7 @@ export function GuestMarketplaceView() {
                         }}
                       >
                         # {aiResult.category}
-                      </button>
+                      </HuntrButton>
                     )}
                     {aiResult.keywords?.slice(0, 4).map((kw) => (
                       <span
@@ -601,7 +603,7 @@ export function GuestMarketplaceView() {
             if (totalPages > 1) pages.push(totalPages);
 
             const pgBtn = (label: React.ReactNode, page: number, disabled?: boolean, active?: boolean): React.ReactNode => (
-              <button
+              <HuntrButton
                 key={`pg-${page}-${label}`}
                 onClick={() => handlePage(page)}
                 disabled={disabled}
@@ -615,7 +617,7 @@ export function GuestMarketplaceView() {
                 }}
               >
                 {label}
-              </button>
+              </HuntrButton>
             );
 
             return (

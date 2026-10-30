@@ -1,5 +1,23 @@
 import { apiGet, apiPost } from "~/shared/services/http/client";
 
+export type HuntrAssistResponse = {
+  success: boolean;
+  response_id?: string | null;
+  answer?: string;
+  sources?: { title: string; url: string }[];
+  model?: string | null;
+  provider?: "perplexity" | "openai" | "huntr_platform";
+  fallback?: boolean;
+  fallback_reason?: string;
+  data?: Record<string, unknown>;
+};
+
+/** Web-grounded answer from Huntr Assist. The provider key stays on the API server. */
+export const askHuntrAssist = (query: string, options?: {
+  company_id?: string;
+  previous_response_id?: string;
+}) => apiPost<HuntrAssistResponse>("/api/ai/huntr-assist", { query, ...options });
+
 /**
  * AI API
  *

@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React from "react";
 import { Briefcase, Sparkles, Clock } from "lucide-react";
 import { SERVICE_PROJECT_TYPES } from "../constants";
@@ -62,7 +64,7 @@ export function CheckoutServiceDetails({
             const isSelected = projectType === type.id;
             const Icon = type.icon;
             return (
-              <button
+              <HuntrButton
                 key={type.id}
                 type="button"
                 onClick={() => setProjectType(type.id)}
@@ -93,14 +95,14 @@ export function CheckoutServiceDetails({
                 <span className="text-[9px] text-[var(--ui-text-muted)] mt-1.5 line-clamp-2">
                   {type.desc}
                 </span>
-              </button>
+              </HuntrButton>
             );
           })}
         </div>
 
         {projectType === "Lainnya" && (
           <div className="mt-2">
-            <input
+            <HuntrInput
               type="text"
               placeholder="Tuliskan jenis proyek spesifik (misal: Jasa Survei Topografi, Sertifikasi ISO)..."
               value={customProjectType}
@@ -134,7 +136,7 @@ export function CheckoutServiceDetails({
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
             Tanggal Mulai Pengerjaan *
-            <input
+            <HuntrInput
               type="date"
               value={serviceStartDate}
               onChange={(e) => setServiceStartDate(e.target.value)}
@@ -143,7 +145,7 @@ export function CheckoutServiceDetails({
           </label>
           <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
             Target Selesai Pengerjaan (Deadline) *
-            <input
+            <HuntrInput
               type="date"
               min={serviceStartDate || undefined}
               value={serviceEndDate}
@@ -155,7 +157,7 @@ export function CheckoutServiceDetails({
 
         <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
           Pola Waktu Kerja / Jam Kerja (Opsional)
-          <input
+          <HuntrInput
             type="text"
             value={serviceWorkingSchedule}
             onChange={(e) => setServiceWorkingSchedule(e.target.value)}
@@ -169,7 +171,7 @@ export function CheckoutServiceDetails({
       <div className="pt-2 border-t border-[var(--ui-border)]/60">
         <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
           Kriteria Penerimaan & Deliverables (Syarat BAST) *
-          <textarea
+          <HuntrTextarea
             value={acceptanceCriteria}
             onChange={(e) => setAcceptanceCriteria(e.target.value)}
             placeholder="Contoh: 1. Laporan progres mingguan, 2. Dokumentasi serah terima / BAST ditandatangani PM, 3. Garansi pengerjaan minimal 30 hari kalender, 4. Uji fungsi (UAT) lolos 100%."

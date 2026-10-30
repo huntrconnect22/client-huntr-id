@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React from "react";
 import { Plus, Wand2, Loader2, Search, LayoutGrid, List } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -28,7 +30,7 @@ export default function CatalogueHeader({
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <button
+        <HuntrButton
           onClick={onAddNew}
           style={{
             padding: "9px 18px",
@@ -48,10 +50,10 @@ export default function CatalogueHeader({
           onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = "1")}
         >
           <Plus size={16} /> {t("catalogue.addNewItem")}
-        </button>
+        </HuntrButton>
 
         {/* ChatGPT AI Batch Update Button */}
-        <button
+        <HuntrButton
           onClick={onBatchAiUpdate}
           disabled={aiBatchUpdating || selectedCount === 0}
           style={{
@@ -79,7 +81,7 @@ export default function CatalogueHeader({
           {selectedCount > 0
             ? t("catalogue.selectedCount", { count: selectedCount })
             : `(${t("catalogue.selectProductPrompt")})`}
-        </button>
+        </HuntrButton>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, maxWidth: 560 }}>
@@ -89,7 +91,7 @@ export default function CatalogueHeader({
             color="var(--ui-text-muted)"
             style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}
           />
-          <input
+          <HuntrInput
             type="text"
             placeholder={t("catalogue.searchPlaceholder")}
             value={localSearch}
@@ -116,7 +118,7 @@ export default function CatalogueHeader({
             border: "1px solid var(--ui-border-input)",
           }}
         >
-          <button
+          <HuntrButton
             onClick={() => setViewMode("grid")}
             style={{
               padding: "6px 8px",
@@ -127,8 +129,8 @@ export default function CatalogueHeader({
             }}
           >
             <LayoutGrid size={16} color={viewMode === "grid" ? "var(--ui-text-primary)" : "var(--ui-text-muted)"} />
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             onClick={() => setViewMode("list")}
             style={{
               padding: "6px 8px",
@@ -139,7 +141,7 @@ export default function CatalogueHeader({
             }}
           >
             <List size={16} color={viewMode === "list" ? "var(--ui-text-primary)" : "var(--ui-text-muted)"} />
-          </button>
+          </HuntrButton>
         </div>
       </div>
     </div>

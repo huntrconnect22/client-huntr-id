@@ -1,3 +1,4 @@
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { Search, SlidersHorizontal, Store } from "lucide-react";
@@ -91,14 +92,14 @@ export default function AppMarket() {
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-stretch">
             <label className="flex items-center gap-2 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 focus-within:ring-2 focus-within:ring-[var(--ui-text-brand)]/30">
               <Search size={17} className="text-[var(--ui-text-muted)]" />
-              <input
+              <HuntrInput
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Cari aplikasi…"
                 className="w-full bg-transparent py-2.5 text-sm outline-none md:w-60"
               />
             </label>
-            <select
+            <HuntrSelect
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--ui-text-brand)]/30"
@@ -107,13 +108,13 @@ export default function AppMarket() {
               {CATEGORIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
-            </select>
+            </HuntrSelect>
             <label className="flex items-center gap-2 rounded-xl border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-sm">
               <SlidersHorizontal
                 size={16}
                 className="text-[var(--ui-text-muted)]"
               />
-              <select
+              <HuntrSelect
                 value={filter}
                 onChange={(e) =>
                   setFilter(e.target.value as (typeof FILTERS)[number])
@@ -123,7 +124,7 @@ export default function AppMarket() {
                 {FILTERS.map((f) => (
                   <option key={f}>{f}</option>
                 ))}
-              </select>
+              </HuntrSelect>
             </label>
           </div>
         </section>

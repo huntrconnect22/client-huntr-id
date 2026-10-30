@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { Monitor, Smartphone, Clock, Trash2 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -55,12 +56,12 @@ export function AccountSessionsTab() {
             {t("settings.sessions.subtitle")}
           </p>
         </div>
-        <button
+        <HuntrButton
           onClick={fetchSessions}
           className="px-4 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm font-semibold text-orange-400 hover:border-orange-500/40 transition-all"
         >
           {t("settings.sessions.refresh")}
-        </button>
+        </HuntrButton>
       </div>
 
       <div className="space-y-2.5">
@@ -113,13 +114,13 @@ export function AccountSessionsTab() {
                     </div>
                   </div>
                   {!session.is_current_device && (
-                    <button
+                    <HuntrButton
                       onClick={() => handleLogoutSession(session.id)}
                       className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all flex-shrink-0"
                       title={t("settings.sessions.terminateConfirmBtn")}
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </HuntrButton>
                   )}
                 </div>
               );

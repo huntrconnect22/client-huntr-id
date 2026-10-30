@@ -1,3 +1,5 @@
+import { Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useRef, useEffect } from "react";
 import { MapPin, Loader2 } from "lucide-react";
 import { FormLabel } from "./OnboardingUI";
@@ -139,7 +141,7 @@ export const AddressAutocomplete = ({ value, onChange }: AddressAutocompleteProp
       </FormLabel>
       
       <div className="relative">
-        <textarea
+        <HuntrTextarea
           ref={inputRef}
           value={value}
           onChange={handleInputChange}
@@ -162,7 +164,7 @@ export const AddressAutocomplete = ({ value, onChange }: AddressAutocompleteProp
           >
             <div className="max-h-64 overflow-y-auto">
               {suggestions.map((suggestion, index) => (
-                <button
+                <HuntrButton
                   key={index}
                   onClick={() => handleSelectSuggestion(suggestion)}
                   className="w-full text-left px-4 py-3 hover:bg-[var(--ui-bg-input)] border-b border-[var(--ui-border-subtle)] last:border-b-0 transition-colors"
@@ -178,7 +180,7 @@ export const AddressAutocomplete = ({ value, onChange }: AddressAutocompleteProp
                       </div>
                     </div>
                   </div>
-                </button>
+                </HuntrButton>
               ))}
             </div>
           </div>

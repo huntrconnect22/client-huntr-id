@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import {
   Shield,
@@ -47,7 +48,7 @@ export function AccountSidebarNav({ activeTab, onSelectTab, companyType }: Accou
         const active = activeTab === tab.id;
         const Icon = tab.icon;
         return (
-          <button
+          <HuntrButton
             key={tab.id}
             onClick={() => onSelectTab(tab.id)}
             style={active ? { color: "white" } : undefined}
@@ -81,7 +82,7 @@ export function AccountSidebarNav({ activeTab, onSelectTab, companyType }: Accou
                 ›
               </span>
             </div>
-          </button>
+          </HuntrButton>
         );
       })}
     </div>

@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { useLocation } from "react-router";
@@ -81,7 +82,7 @@ export default function AccountSettings() {
       <div className="w-full space-y-6">
         {/* Mobile Back Button when inside a tab */}
         {isMobile && mobileSelectedTab && (
-          <button
+          <HuntrButton
             type="button"
             onClick={() => {
               setError(null);
@@ -91,7 +92,7 @@ export default function AccountSettings() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors"
           >
             <ArrowLeft size={14} /> {t("settings.backToMenu")}
-          </button>
+          </HuntrButton>
         )}
 
         {/* Feedback messages */}

@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { ShieldX, AlertCircle, Camera } from "lucide-react";
 
@@ -38,7 +39,7 @@ export function VerifyErrorState({ error, onScanAgain }: Props) {
         </span>
       </div>
 
-      <button
+      <HuntrButton
         onClick={onScanAgain}
         style={{
           display: "inline-flex", alignItems: "center", gap: 8,
@@ -48,7 +49,7 @@ export function VerifyErrorState({ error, onScanAgain }: Props) {
         }}
       >
         <Camera size={15} /> Scan Again
-      </button>
+      </HuntrButton>
     </div>
   );
 }

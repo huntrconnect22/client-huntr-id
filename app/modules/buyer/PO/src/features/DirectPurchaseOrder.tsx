@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect, Textarea as HuntrTextarea, Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, FileText, Loader2, Package, Printer } from "lucide-react";
@@ -109,20 +111,20 @@ export default function DirectPurchaseOrder() {
             again from it.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
+            <HuntrButton
               type="button"
               onClick={() => void openAuthenticatedDocument(`/api/orders/${createdPo.id}/print`)}
               className="inline-flex items-center gap-2 bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
             >
               <Printer size={15} /> Print PO
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="button"
               onClick={() => navigate("/orders")}
               className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-4 py-2 text-sm font-semibold"
             >
               View purchase orders
-            </button>
+            </HuntrButton>
           </div>
         </div>
       </Layout>
@@ -135,13 +137,13 @@ export default function DirectPurchaseOrder() {
       subtitle="Create an urgent PO from an approved direct PR."
     >
       <div className="max-w-3xl space-y-4">
-        <button
+        <HuntrButton
           type="button"
           onClick={() => navigate("/orders")}
           className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--ui-text-secondary)]"
         >
           <ArrowLeft size={14} /> Purchase orders
-        </button>
+        </HuntrButton>
         <form
           onSubmit={submit}
           className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 space-y-4"
@@ -154,7 +156,7 @@ export default function DirectPurchaseOrder() {
           </div>
           <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
             Approved direct PR
-            <select
+            <HuntrSelect
               required
               value={rfqId}
               onChange={(event) => setRfqId(event.target.value)}
@@ -167,7 +169,7 @@ export default function DirectPurchaseOrder() {
                   {String(request.id).slice(0, 8).toUpperCase()}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           </label>
           {selectedRequest && (
             <div className="border-l-2 border-orange-500 bg-orange-500/5 px-3 py-2 text-xs text-[var(--ui-text-secondary)]">
@@ -208,7 +210,7 @@ export default function DirectPurchaseOrder() {
           </div>
           <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
             Vendor address
-            <textarea
+            <HuntrTextarea
               value={form.vendor_address}
               onChange={(event) =>
                 setForm({ ...form, vendor_address: event.target.value })
@@ -223,13 +225,13 @@ export default function DirectPurchaseOrder() {
             </p>
           )}
           <div className="flex justify-end border-t border-[var(--ui-border)] pt-3">
-            <button
+            <HuntrButton
               disabled={saving || !rfqId}
               className="inline-flex items-center gap-2 bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
             >
               {saving && <Loader2 size={15} className="animate-spin" />} Create
               PO
-            </button>
+            </HuntrButton>
           </div>
         </form>
       </div>
@@ -253,7 +255,7 @@ function Field({
   return (
     <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
       {label}
-      <input
+      <HuntrInput
         type={type}
         required={required}
         value={value}

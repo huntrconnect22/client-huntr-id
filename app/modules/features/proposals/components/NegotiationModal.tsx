@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
 import Swal from "sweetalert2";
@@ -80,13 +83,13 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: { proposal: a
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: 20 }}>
-      <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
+      <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
         <div style={{ padding: "24px 32px", borderBottom: "1px solid var(--ui-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "var(--ui-text-primary)" }}>Negotiation Request</h3>
             <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 600 }}>Proposal by {proposal.company?.name}</p>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer" }}><X size={24} /></button>
+          <HuntrButton onClick={onClose} style={{ background: "none", border: "none", color: "var(--ui-text-muted)", cursor: "pointer" }}><X size={24} /></HuntrButton>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: 32, display: "flex", flexDirection: "column", gap: 24 }}>
@@ -102,7 +105,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: { proposal: a
                   <div style={{ width: 140 }}>
                     <div style={{ position: "relative" }}>
                       <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 10, fontWeight: 800, color: "var(--ui-text-muted)" }}>Rp</span>
-                      <input 
+                      <HuntrInput
                         type="number"
                         value={it.negotiated_price}
                         onChange={(e) => handleItemPriceChange(it.proposal_item_id, e.target.value)}
@@ -118,7 +121,7 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: { proposal: a
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <div>
               <label style={{ fontSize: 10, fontWeight: 900, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>Payment Scheme</label>
-              <select 
+              <HuntrSelect
                 value={paymentScheme}
                 onChange={e => setPaymentScheme(e.target.value)}
                 style={{ width: "100%", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: 12, fontSize: 14, color: "var(--ui-text-primary)", fontWeight: 700, appearance: "auto" }}
@@ -128,11 +131,11 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: { proposal: a
                 <option value="30 days">Net 30 Days</option>
                 <option value="60 days">Net 60 Days</option>
                 <option value="COD">Cash on Delivery (COD)</option>
-              </select>
+              </HuntrSelect>
             </div>
             <div>
               <label style={{ fontSize: 10, fontWeight: 900, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>Delivery Info</label>
-              <select 
+              <HuntrSelect
                 value={deliveryTerms}
                 onChange={e => setDeliveryTerms(e.target.value)}
                 style={{ width: "100%", background: "var(--ui-bg-input)", border: "1px solid var(--ui-border-input)", borderRadius: 12, padding: 12, fontSize: 14, color: "var(--ui-text-primary)", fontWeight: 700, appearance: "auto" }}
@@ -142,13 +145,13 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: { proposal: a
                 <option value="14">14 Days</option>
                 <option value="30">30 Days</option>
                 <option value="60">60 Days</option>
-              </select>
+              </HuntrSelect>
             </div>
           </div>
 
           <div>
             <label style={{ fontSize: 10, fontWeight: 900, color: "#f97316", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>Negotiation Notes</label>
-            <textarea 
+            <HuntrTextarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Tell vendor why you are negotiating..."
@@ -158,16 +161,16 @@ export function NegotiationModal({ proposal, onClose, onSuccess }: { proposal: a
         </div>
 
         <div style={{ padding: 32, borderTop: "1px solid var(--ui-border)", display: "flex", gap: 16 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: 16, borderRadius: 16, border: "1px solid var(--ui-border-input)", background: "none", fontSize: 14, fontWeight: 700, color: "var(--ui-text-secondary)", cursor: "pointer" }}>Cancel</button>
-          <button 
+          <HuntrButton onClick={onClose} style={{ flex: 1, padding: 16, borderRadius: 16, border: "1px solid var(--ui-border-input)", background: "none", fontSize: 14, fontWeight: 700, color: "var(--ui-text-secondary)", cursor: "pointer" }}>Cancel</HuntrButton>
+          <HuntrButton
             onClick={handleSubmit}
             disabled={loading}
             style={{ flex: 2, padding: 16, borderRadius: 16, background: "var(--huntr-gradient)", border: "none", color: "#fff", fontSize: 14, fontWeight: 900, cursor: "pointer", boxShadow: "0 10px 20px rgba(249,115,22,0.2)", opacity: loading ? 0.5 : 1 }}
           >
             {loading ? <Loader2 className="animate-spin" style={{ margin: "0 auto" }} /> : "Submit Negotiation"}
-          </button>
+          </HuntrButton>
         </div>
-      </div>
+      </HuntrSurface>
     </div>
   );
 }

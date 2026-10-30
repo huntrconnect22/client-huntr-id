@@ -1,3 +1,5 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Loader2, ArrowLeft, Key, MessageSquare, ShieldCheck, CheckCircle2 } from "lucide-react";
@@ -84,7 +86,7 @@ export default function ForgotPassword() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="whatsapp-input">{t("forgotPassword.whatsappLabel")}</label>
             <div className="auth-input-wrap">
-              <input
+              <HuntrInput
                 id="whatsapp-input"
                 value={whatsapp}
                 onChange={e => setWhatsapp(e.target.value)}
@@ -101,17 +103,17 @@ export default function ForgotPassword() {
 
           {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
 
-          <button type="submit" disabled={loading || !whatsapp} className="auth-btn auth-btn--primary">
+          <HuntrButton type="submit" disabled={loading || !whatsapp} className="auth-btn auth-btn--primary">
             {loading ? <Loader2 size={18} className="animate-spin" /> : t("forgotPassword.sendOtp")}
-          </button>
+          </HuntrButton>
         </form>
       )}
 
       {step === "otp" && (
         <form onSubmit={handleVerifyOtp} className="auth-form">
-          <button type="button" onClick={() => setStep("whatsapp")} style={{ background: "none", border: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--ui-text-muted)", marginBottom: 24, cursor: "pointer", padding: 0 }}>
+          <HuntrButton type="button" onClick={() => setStep("whatsapp")} style={{ background: "none", border: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--ui-text-muted)", marginBottom: 24, cursor: "pointer", padding: 0 }}>
             <ArrowLeft size={16} /> {t("forgotPassword.back")}
-          </button>
+          </HuntrButton>
           <div className="auth-form__header">
             <h1 className="auth-heading">{t("forgotPassword.headingStep2")}</h1>
             <p className="auth-subheading">{t("forgotPassword.subheadingStep2").replace("{number}", whatsapp)}</p>
@@ -120,7 +122,7 @@ export default function ForgotPassword() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="otp-input">{t("forgotPassword.verificationCodeLabel")}</label>
             <div className="auth-input-wrap">
-              <input
+              <HuntrInput
                 id="otp-input"
                 value={otp}
                 onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -138,9 +140,9 @@ export default function ForgotPassword() {
 
           {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
 
-          <button type="submit" disabled={loading || otp.length !== 6} className="auth-btn auth-btn--primary">
+          <HuntrButton type="submit" disabled={loading || otp.length !== 6} className="auth-btn auth-btn--primary">
             {loading ? <Loader2 size={18} className="animate-spin" /> : t("forgotPassword.verifyCode")}
-          </button>
+          </HuntrButton>
         </form>
       )}
 
@@ -154,7 +156,7 @@ export default function ForgotPassword() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="new-password">{t("forgotPassword.newPasswordLabel")}</label>
             <div className="auth-input-wrap">
-              <input
+              <HuntrInput
                 id="new-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -173,7 +175,7 @@ export default function ForgotPassword() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="confirm-password">{t("forgotPassword.confirmPasswordLabel")}</label>
             <div className="auth-input-wrap">
-              <input
+              <HuntrInput
                 id="confirm-password"
                 value={passwordConfirmation}
                 onChange={e => setPasswordConfirmation(e.target.value)}
@@ -191,9 +193,9 @@ export default function ForgotPassword() {
 
           {error && <div className="auth-alert auth-alert--error">⚠ {error}</div>}
 
-          <button type="submit" disabled={loading || !password || !passwordConfirmation} className="auth-btn auth-btn--primary">
+          <HuntrButton type="submit" disabled={loading || !password || !passwordConfirmation} className="auth-btn auth-btn--primary">
             {loading ? <Loader2 size={18} className="animate-spin" /> : t("forgotPassword.resetPasswordBtn")}
-          </button>
+          </HuntrButton>
         </form>
       )}
 
@@ -206,9 +208,9 @@ export default function ForgotPassword() {
           </div>
           <h1 className="auth-heading" style={{ marginBottom: 12 }}>{t("forgotPassword.successTitle")}</h1>
           <p className="auth-subheading" style={{ marginBottom: 32 }}>{t("forgotPassword.successSubtitle")}</p>
-          <button onClick={() => navigate("/login")} className="auth-btn auth-btn--primary">
+          <HuntrButton onClick={() => navigate("/login")} className="auth-btn auth-btn--primary">
             {t("forgotPassword.goToLogin")}
-          </button>
+          </HuntrButton>
         </div>
       )}
     </AuthLayout>

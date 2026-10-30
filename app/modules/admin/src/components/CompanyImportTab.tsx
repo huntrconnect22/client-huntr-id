@@ -1,3 +1,5 @@
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useEffect, useState } from "react";
 import { AlertCircle, ChevronLeft, ChevronRight, FileSpreadsheet, Loader2 } from "lucide-react";
 import { adminGetCompanyImports } from "../../lib/api";
@@ -112,34 +114,34 @@ export default function ImportDataTab({ companyId, companyType }: { companyId: s
         <>
           <div style={{ overflow: "hidden", border: "1px solid var(--ui-border)", borderRadius: 10 }}>
             <div style={{ overflowX: "auto", maxHeight: 360 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                <thead style={{ background: "var(--ui-bg-inset)", position: "sticky", top: 0 }}>
-                  <tr>
+              <HuntrTable style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <HuntrTableHead style={{ background: "var(--ui-bg-inset)", position: "sticky", top: 0 }}>
+                  <HuntrTableRow>
                     {isBuyer ? (
                       <>
-                        <th style={{ ...thStyle, fontSize: 10 }}>PO Number</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Vendor</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Tanggal</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Department</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Currency</th>
-                        <th style={{ ...thStyle, fontSize: 10, textAlign: "right" }}>Total</th>
-                        <th style={{ ...thStyle, fontSize: 10, textAlign: "center" }}>Items</th>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>PO Number</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Vendor</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Tanggal</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Department</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Currency</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10, textAlign: "right" }}>Total</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10, textAlign: "center" }}>Items</HuntrTableHeaderCell>
                       </>
                     ) : (
                       <>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Item Code</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Nama Produk</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Kategori</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Brand</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>UOM</th>
-                        <th style={{ ...thStyle, fontSize: 10 }}>Spesifikasi</th>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Item Code</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Nama Produk</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Kategori</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Brand</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>UOM</HuntrTableHeaderCell>
+                        <HuntrTableHeaderCell style={{ ...thStyle, fontSize: 10 }}>Spesifikasi</HuntrTableHeaderCell>
                       </>
                     )}
-                  </tr>
-                </thead>
-                <tbody>
+                  </HuntrTableRow>
+                </HuntrTableHead>
+                <HuntrTableBody>
                   {rows.map((row: any, idx: number) => (
-                    <tr
+                    <HuntrTableRow
                       key={row.id ?? idx}
                       style={{ transition: "background 0.1s" }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ui-bg-card-hover)")}
@@ -147,45 +149,45 @@ export default function ImportDataTab({ companyId, companyType }: { companyId: s
                     >
                       {isBuyer ? (
                         <>
-                          <td style={{ ...tdStyle, fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: "var(--ui-primary)" }}>{row.po_number || "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.vendor_name || "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12, whiteSpace: "nowrap", color: "var(--ui-text-muted)" }}>{row.order_date ? new Date(row.order_date).toLocaleDateString("id-ID") : "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)" }}>{row.department || "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12 }}>{row.currency || "IDR"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12, textAlign: "right", fontWeight: 700, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: "var(--ui-primary)" }}>{row.po_number || "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.vendor_name || "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, whiteSpace: "nowrap", color: "var(--ui-text-muted)" }}>{row.order_date ? new Date(row.order_date).toLocaleDateString("id-ID") : "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)" }}>{row.department || "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12 }}>{row.currency || "IDR"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, textAlign: "right", fontWeight: 700, color: "var(--ui-text-primary)", whiteSpace: "nowrap" }}>
                             {row.total_amount ? Number(row.total_amount).toLocaleString("id-ID") : "—"}
-                          </td>
-                          <td style={{ ...tdStyle, fontSize: 12, textAlign: "center" }}>
+                          </HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, textAlign: "center" }}>
                             <span style={{
                               background: "rgba(59,130,246,0.1)", color: "#3b82f6",
                               padding: "2px 8px", borderRadius: 6, fontWeight: 700,
                             }}>
                               {(row.historical_items ?? row.historical_items_count ?? row.items_count ?? 0)}
                             </span>
-                          </td>
+                          </HuntrTableCell>
                         </>
                       ) : (
                         <>
-                          <td style={{ ...tdStyle, fontSize: 12, fontFamily: "monospace", color: "var(--ui-primary)" }}>{row.item_code || "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>{row.name || "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12 }}>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, fontFamily: "monospace", color: "var(--ui-primary)" }}>{row.item_code || "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>{row.name || "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12 }}>
                             {row.category ? (
                               <span style={{ background: "rgba(139,92,246,0.1)", color: "#8b5cf6", padding: "2px 8px", borderRadius: 6, fontWeight: 600, fontSize: 11 }}>
                                 {row.category}
                               </span>
                             ) : "—"}
-                          </td>
-                          <td style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)" }}>{row.brand || "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12 }}>{row.uom || "—"}</td>
-                          <td style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          </HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)" }}>{row.brand || "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12 }}>{row.uom || "—"}</HuntrTableCell>
+                          <HuntrTableCell style={{ ...tdStyle, fontSize: 12, color: "var(--ui-text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {row.specifications || "—"}
-                          </td>
+                          </HuntrTableCell>
                         </>
                       )}
-                    </tr>
+                    </HuntrTableRow>
                   ))}
-                </tbody>
-              </table>
+                </HuntrTableBody>
+              </HuntrTable>
             </div>
 
             {/* Pagination */}
@@ -197,7 +199,7 @@ export default function ImportDataTab({ companyId, companyType }: { companyId: s
               }}>
                 <span>Halaman {currentPage} dari {totalPages}</span>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button
+                  <HuntrButton
                     disabled={currentPage <= 1}
                     onClick={() => load(currentPage - 1)}
                     style={{
@@ -209,8 +211,8 @@ export default function ImportDataTab({ companyId, companyType }: { companyId: s
                     }}
                   >
                     <ChevronLeft size={12} /> Prev
-                  </button>
-                  <button
+                  </HuntrButton>
+                  <HuntrButton
                     disabled={currentPage >= totalPages}
                     onClick={() => load(currentPage + 1)}
                     style={{
@@ -222,7 +224,7 @@ export default function ImportDataTab({ companyId, companyType }: { companyId: s
                     }}
                   >
                     Next <ChevronRight size={12} />
-                  </button>
+                  </HuntrButton>
                 </div>
               </div>
             )}

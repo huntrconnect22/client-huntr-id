@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect, useRef } from "react";
 import {
   X,
@@ -133,7 +135,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
+      <HuntrSurface
         style={{
           backgroundColor: "var(--ui-bg-card)",
           border: "1px solid var(--ui-border)",
@@ -148,7 +150,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
         }}
       >
         {/* ── Header ── */}
-        <div
+        <HuntrSurface
           style={{
             display: "flex",
             alignItems: "center",
@@ -200,7 +202,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
               </div>
             </div>
           </div>
-          <button
+          <HuntrButton
             onClick={onClose}
             style={{
               width: "30px",
@@ -225,8 +227,8 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
             }}
           >
             <X size={15} />
-          </button>
-        </div>
+          </HuntrButton>
+        </HuntrSurface>
 
         {/* ── Body ── */}
         <div style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -296,7 +298,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                   {paymentMethods.map((m) => (
-                    <button
+                    <HuntrButton
                       key={m.id}
                       onClick={() => !loading && handleSelectMethod(m.id)}
                       disabled={loading}
@@ -325,7 +327,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                         (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--ui-bg-input)";
                       }}
                     >
-                      <div
+                      <HuntrSurface
                         style={{
                           width: "32px",
                           height: "32px",
@@ -340,7 +342,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                         }}
                       >
                         <Building2 size={14} />
-                      </div>
+                      </HuntrSurface>
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div
@@ -365,7 +367,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                       </div>
 
                       <ChevronRight size={14} color="var(--ui-text-muted)" style={{ flexShrink: 0 }} />
-                    </button>
+                    </HuntrButton>
                   ))}
                 </div>
               </div>
@@ -548,7 +550,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                       >
                         {paymentData.payment_info.va_number || paymentData.payment_info.bill_key}
                       </div>
-                      <button
+                      <HuntrButton
                         onClick={() =>
                           copyToClipboard(
                             paymentData.payment_info.va_number || paymentData.payment_info.bill_key
@@ -574,7 +576,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                       >
                         <Copy size={11} />
                         {copied ? "Tersalin!" : "Salin"}
-                      </button>
+                      </HuntrButton>
                     </div>
 
                     {/* Biller Code (Mandiri) */}
@@ -637,7 +639,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
               )}
 
               {/* Action Button */}
-              <button
+              <HuntrButton
                 onClick={isSuccess ? onSuccess : checkStatus}
                 disabled={checking}
                 style={{
@@ -679,11 +681,11 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                     Konfirmasi Pembayaran
                   </>
                 )}
-              </button>
+              </HuntrButton>
             </div>
           )}
         </div>
-      </div>
+      </HuntrSurface>
 
       <style>{`
         @keyframes spin {

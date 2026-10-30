@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import {
   ShieldCheck, Building, Calendar, Hash, Truck, ScanLine, FileText,
@@ -46,7 +47,7 @@ export function VerifyResult({ result, onScanAnother }: Props) {
             : "This document is authentic but not all signatures are complete yet."}
         </div>
 
-        <button
+        <HuntrButton
           onClick={onScanAnother}
           style={{
             marginTop: 18, display: "inline-flex", alignItems: "center", gap: 8,
@@ -56,7 +57,7 @@ export function VerifyResult({ result, onScanAnother }: Props) {
           }}
         >
           <ScanLine size={13} /> Scan Another Document
-        </button>
+        </HuntrButton>
       </div>
 
       {/* Document Info */}

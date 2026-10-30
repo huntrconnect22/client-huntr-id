@@ -1,3 +1,5 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import {
@@ -149,7 +151,7 @@ export function AccountSecurityTab({
                 {t("settings.security.currentPassword")}
               </label>
               <div className="sm:w-2/3">
-                <input
+                <HuntrInput
                   type="password"
                   placeholder={t("settings.security.currentPasswordPlaceholder")}
                   value={passwordForm.current_password}
@@ -166,7 +168,7 @@ export function AccountSecurityTab({
                 {t("settings.security.newPassword")}
               </label>
               <div className="sm:w-2/3 relative">
-                <input
+                <HuntrInput
                   type={showPw ? "text" : "password"}
                   placeholder={t("settings.security.newPasswordPlaceholder")}
                   value={passwordForm.password}
@@ -174,13 +176,13 @@ export function AccountSecurityTab({
                   required
                   className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50 pr-10"
                 />
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setShowPw(!showPw)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
                 >
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+                </HuntrButton>
               </div>
             </div>
 
@@ -190,7 +192,7 @@ export function AccountSecurityTab({
                 {t("settings.security.confirmPassword")}
               </label>
               <div className="sm:w-2/3 relative">
-                <input
+                <HuntrInput
                   type={showConfirmPw ? "text" : "password"}
                   placeholder={t("settings.security.confirmPasswordPlaceholder")}
                   value={passwordForm.password_confirmation}
@@ -198,26 +200,26 @@ export function AccountSecurityTab({
                   required
                   className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50 pr-10"
                 />
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setShowConfirmPw(!showConfirmPw)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
                 >
                   {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+                </HuntrButton>
               </div>
             </div>
 
             {/* Save Button Row */}
             <div className="p-3.5 px-5 bg-[var(--ui-bg-card)] border-t border-[var(--ui-border)] flex justify-end">
-              <button
+              <HuntrButton
                 type="submit"
                 disabled={loading}
                 style={{ color: 'white' }}
                 className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all shadow-sm flex items-center gap-2"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.security.updatePasswordBtn")}
-              </button>
+              </HuntrButton>
             </div>
           </form>
         </div>
@@ -239,14 +241,14 @@ export function AccountSecurityTab({
                   {t("settings.security.twoFactorOffDesc")}
                 </p>
               </div>
-              <button
+              <HuntrButton
                 onClick={handleEnable2FA}
                 disabled={loading}
                 style={{ color: 'white' }}
                 className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex-shrink-0"
               >
                 {t("settings.security.enable2FABtn")}
-              </button>
+              </HuntrButton>
             </div>
           )}
 
@@ -260,7 +262,7 @@ export function AccountSecurityTab({
                 <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                   {t("settings.security.enterCodeLabel")}
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   value={twoFactorCode}
                   onChange={(e) => setTwoFactorCode(e.target.value)}
@@ -269,12 +271,12 @@ export function AccountSecurityTab({
                 />
               </div>
               <div className="flex gap-2">
-                <button onClick={handleConfirm2FA} disabled={loading} style={{ color: 'white' }} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all">
+                <HuntrButton onClick={handleConfirm2FA} disabled={loading} style={{ color: 'white' }} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all">
                   {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.security.confirmBtn")}
-                </button>
-                <button onClick={() => { setConfirming2FA(false); setQrCode(null); }} className="px-5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] transition-all">
+                </HuntrButton>
+                <HuntrButton onClick={() => { setConfirming2FA(false); setQrCode(null); }} className="px-5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] transition-all">
                   {t("settings.security.cancelBtn")}
-                </button>
+                </HuntrButton>
               </div>
             </div>
           )}
@@ -286,9 +288,9 @@ export function AccountSecurityTab({
                   <CheckCircle2 size={18} />
                   <span className="font-semibold text-sm">{t("settings.security.twoFactorActive")}</span>
                 </div>
-                <button onClick={handleDisable2FA} disabled={loading} className="px-5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm hover:bg-red-500/20 transition-all">
+                <HuntrButton onClick={handleDisable2FA} disabled={loading} className="px-5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm hover:bg-red-500/20 transition-all">
                   {t("settings.security.disableBtn")}
-                </button>
+                </HuntrButton>
               </div>
               {recoveryCodes.length > 0 && (
                 <div className="p-3.5 rounded-md bg-black/30">

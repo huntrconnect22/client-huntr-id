@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import {
   X, Sparkles, Loader2, CheckCircle2, XCircle,
@@ -256,7 +258,7 @@ function ProductCard({
 
         {/* Add to Cart */}
         {catalogue && (
-          <button
+          <HuntrButton
             onClick={() => onAddToCart(catalogue)}
             style={{
               width: "100%",
@@ -281,7 +283,7 @@ function ProductCard({
           >
             <ShoppingCart size={13} />
             {t("marketplace.aiCompareModal.addToCart")}
-          </button>
+          </HuntrButton>
         )}
       </div>
     </div>
@@ -344,7 +346,7 @@ export default function AiCompareModal({ catalogueIds, onClose, onAddToCart }: A
       `}</style>
 
       <div className="ai-compare-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-        <div
+        <HuntrSurface
           className="ai-compare-modal"
           style={{
             background: "var(--ui-bg-card)",
@@ -389,7 +391,7 @@ export default function AiCompareModal({ catalogueIds, onClose, onAddToCart }: A
                 </p>
               </div>
             </div>
-            <button
+            <HuntrButton
               onClick={onClose}
               style={{
                 width: 34, height: 34, borderRadius: 10,
@@ -399,7 +401,7 @@ export default function AiCompareModal({ catalogueIds, onClose, onAddToCart }: A
               }}
             >
               <X size={16} />
-            </button>
+            </HuntrButton>
           </div>
 
           {/* Content */}
@@ -564,7 +566,7 @@ export default function AiCompareModal({ catalogueIds, onClose, onAddToCart }: A
               </div>
             )}
           </div>
-        </div>
+        </HuntrSurface>
       </div>
     </>
   );

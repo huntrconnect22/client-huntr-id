@@ -1,3 +1,7 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 import { Users, X, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -72,7 +76,7 @@ export default function AdminAdminsTab() {
         >
           Admins Management
         </div>
-        <button
+        <HuntrButton
           onClick={() => setShowAddModal(true)}
           style={{
             padding: "8px 16px",
@@ -90,7 +94,7 @@ export default function AdminAdminsTab() {
           }}
         >
           <Users size={15} /> Add New Admin
-        </button>
+        </HuntrButton>
       </div>
 
       {/* Table */}
@@ -103,7 +107,7 @@ export default function AdminAdminsTab() {
           />
         </div>
       ) : (
-        <div
+        <HuntrSurface
           style={{
             background: "var(--ui-bg-card)",
             border: "1px solid var(--ui-border)",
@@ -111,15 +115,15 @@ export default function AdminAdminsTab() {
             overflow: "hidden",
           }}
         >
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr
+          <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
+            <HuntrTableHead>
+              <HuntrTableRow
                 style={{
                   background: "var(--ui-bg-inset)",
                   borderBottom: "1px solid var(--ui-border)",
                 }}
               >
-                <th
+                <HuntrTableHeaderCell
                   style={{
                     padding: "11px 20px",
                     textAlign: "left",
@@ -130,8 +134,8 @@ export default function AdminAdminsTab() {
                   }}
                 >
                   NAME
-                </th>
-                <th
+                </HuntrTableHeaderCell>
+                <HuntrTableHeaderCell
                   style={{
                     padding: "11px 20px",
                     textAlign: "left",
@@ -142,16 +146,16 @@ export default function AdminAdminsTab() {
                   }}
                 >
                   EMAIL
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </HuntrTableHeaderCell>
+              </HuntrTableRow>
+            </HuntrTableHead>
+            <HuntrTableBody>
               {admins.map((adm) => (
-                <tr
+                <HuntrTableRow
                   key={adm.id}
                   style={{ borderBottom: "1px solid var(--ui-border)" }}
                 >
-                  <td
+                  <HuntrTableCell
                     style={{
                       padding: "14px 20px",
                       fontWeight: 700,
@@ -160,8 +164,8 @@ export default function AdminAdminsTab() {
                     }}
                   >
                     {adm.name}
-                  </td>
-                  <td
+                  </HuntrTableCell>
+                  <HuntrTableCell
                     style={{
                       padding: "14px 20px",
                       color: "var(--ui-text-muted)",
@@ -169,12 +173,12 @@ export default function AdminAdminsTab() {
                     }}
                   >
                     {adm.email}
-                  </td>
-                </tr>
+                  </HuntrTableCell>
+                </HuntrTableRow>
               ))}
               {admins.length === 0 && (
-                <tr>
-                  <td
+                <HuntrTableRow>
+                  <HuntrTableCell
                     colSpan={2}
                     style={{
                       padding: "40px 20px",
@@ -184,12 +188,12 @@ export default function AdminAdminsTab() {
                     }}
                   >
                     No admins found
-                  </td>
-                </tr>
+                  </HuntrTableCell>
+                </HuntrTableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </HuntrTableBody>
+          </HuntrTable>
+        </HuntrSurface>
       )}
 
       {/* Add Admin bottom-sheet modal */}
@@ -208,7 +212,7 @@ export default function AdminAdminsTab() {
             if (e.target === e.currentTarget) setShowAddModal(false);
           }}
         >
-          <div
+          <HuntrSurface
             style={{
               background: "var(--ui-bg-card)",
               padding: "20px 20px 28px",
@@ -238,7 +242,7 @@ export default function AdminAdminsTab() {
               >
                 Add New Admin
               </div>
-              <button
+              <HuntrButton
                 onClick={() => setShowAddModal(false)}
                 style={{
                   background: "var(--ui-bg-input)",
@@ -252,7 +256,7 @@ export default function AdminAdminsTab() {
                 }}
               >
                 <X size={16} />
-              </button>
+              </HuntrButton>
             </div>
 
             <form
@@ -261,7 +265,7 @@ export default function AdminAdminsTab() {
             >
               <div>
                 <label style={lbl}>Full Name</label>
-                <input
+                <HuntrInput
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -270,7 +274,7 @@ export default function AdminAdminsTab() {
               </div>
               <div>
                 <label style={lbl}>Email Address</label>
-                <input
+                <HuntrInput
                   type="email"
                   required
                   value={email}
@@ -280,7 +284,7 @@ export default function AdminAdminsTab() {
               </div>
               <div>
                 <label style={lbl}>Password</label>
-                <input
+                <HuntrInput
                   type="password"
                   required
                   value={password}
@@ -290,7 +294,7 @@ export default function AdminAdminsTab() {
                 />
               </div>
               <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   style={{
@@ -306,8 +310,8 @@ export default function AdminAdminsTab() {
                   }}
                 >
                   Cancel
-                </button>
-                <button
+                </HuntrButton>
+                <HuntrButton
                   type="submit"
                   disabled={isSubmitting}
                   style={{
@@ -326,10 +330,10 @@ export default function AdminAdminsTab() {
                   }}
                 >
                   {isSubmitting ? "Creating…" : "Create Admin"}
-                </button>
+                </HuntrButton>
               </div>
             </form>
-          </div>
+          </HuntrSurface>
         </div>
       )}
     </div>

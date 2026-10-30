@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
 import { 
   Building2, MapPin, LogIn, AlertCircle, Loader2, CheckCircle2, 
   Sparkles, ShieldCheck, ShoppingBag, Store, ChevronRight, Phone, Mail, Globe, ArrowRight,
@@ -57,7 +59,7 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {/* Buyer Card */}
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => updateField("type", "buyer")}
                   className={`
@@ -98,10 +100,10 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
                       Kelola Vendor
                     </span>
                   </div>
-                </button>
+                </HuntrButton>
 
                 {/* Vendor Card */}
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => updateField("type", "vendor")}
                   className={`
@@ -142,7 +144,7 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
                       Ikut Tender
                     </span>
                   </div>
-                </button>
+                </HuntrButton>
               </div>
             )}
           </div>
@@ -156,14 +158,14 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
               </span>
             </div>
             <div className="flex gap-2">
-              <input
+              <HuntrInput
                 type="text"
                 placeholder="Contoh: 01.234.567.8-901.000 (Boleh dilewati)"
                 value={formData.tax_id}
                 onChange={e => updateField("tax_id", e.target.value)}
                 className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-sm transition-all focus:border-orange-500/50"
               />
-              <button
+              <HuntrButton
                 type="button"
                 onClick={handleVerifyNpwp}
                 disabled={isVerifyingNpwp || !formData.tax_id}
@@ -182,7 +184,7 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
                 ) : (
                   "Cek NPWP"
                 )}
-              </button>
+              </HuntrButton>
             </div>
             <p className="text-[11px] text-[var(--ui-text-muted)]">
               💡 <strong>Opsional:</strong> Masukkan NPWP jika ingin mengisi nama perusahaan secara otomatis. Boleh dilewati jika belum memegang nomor NPWP.
@@ -248,7 +250,7 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
           <div className="flex flex-col gap-1.5">
             <FormLabel>Jenis Industri *</FormLabel>
             <div className="relative">
-              <select
+              <HuntrSelect
                 value={formData.industry_type}
                 onChange={e => updateField("industry_type", e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-sm appearance-none transition-all focus:border-orange-500/50"
@@ -263,7 +265,7 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
                 <option value="Finance" className="bg-[var(--ui-bg-page)]">Finansial & Perbankan</option>
                 <option value="Services" className="bg-[var(--ui-bg-page)]">Jasa Profesional & Konsultan</option>
                 <option value="Other" className="bg-[var(--ui-bg-page)]">Lainnya</option>
-              </select>
+              </HuntrSelect>
               <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]">
                 <ChevronRight size={16} className="rotate-90" />
               </div>
@@ -440,13 +442,13 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
                   {pricing?.error && (
                     <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center justify-between">
                       <span>Harga paket belum dapat dimuat saat ini.</span>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={pricing.retry}
                         className="font-semibold underline hover:text-red-300"
                       >
                         Coba lagi
-                      </button>
+                      </HuntrButton>
                     </div>
                   )}
 
@@ -541,7 +543,7 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
           {/* Terms Agreement Checkbox */}
           <div className="p-4 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)]">
             <label className="flex items-start gap-3 cursor-pointer select-none">
-              <input
+              <HuntrInput
                 type="checkbox"
                 checked={termsAccepted}
                 onChange={e => setTermsAccepted(e.target.checked)}
@@ -581,7 +583,7 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
             {companies && companies.length > 0 && (
               <div className="w-full flex flex-col gap-2 mt-2">
                 {companies.map((c: any) => (
-                  <button 
+                  <HuntrButton
                     key={c.id} 
                     onClick={() => setSelectedCompany(c)} 
                     className={`
@@ -605,17 +607,17 @@ export const SlideContent = ({ vm, pricing, handleLoginAsCompany }: any) => {
                         <CheckCircle2 size={12} className="text-white" />
                       </div>
                     )}
-                  </button>
+                  </HuntrButton>
                 ))}
               </div>
             )}
 
-            <button 
+            <HuntrButton
               onClick={handleLoginAsCompany} 
               className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white font-bold text-sm transition-all shadow-lg shadow-orange-500/25 mt-3 flex items-center justify-center gap-2"
             >
               Masuk ke Workspace Sekarang <ArrowRight size={16} />
-            </button>
+            </HuntrButton>
           </div>
         </SlideSection>
       );

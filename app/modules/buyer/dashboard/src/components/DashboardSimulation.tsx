@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useState } from "react";
 import Layout from "../Layout";
 import { CheckCircle, FileText, Clock, TrendingUp, ArrowRight, Play, RefreshCw, Database, ShieldAlert } from "lucide-react";
@@ -120,13 +123,13 @@ export function DashboardSimulation({ user, activeCompany }: { user: any, active
         
         {/* Left column: Active Procurement & Step Simulator */}
         <section className="lg:col-span-2 flex flex-col gap-6">
-          <div className="glass-panel p-6 flex flex-col justify-between relative overflow-hidden" style={{ minHeight: 400 }}>
+          <HuntrSurface className="glass-panel p-6 flex flex-col justify-between relative overflow-hidden" style={{ minHeight: 400 }}>
             <div className="absolute top-0 right-0 w-64 h-64 bg-orange-600/5 rounded-full blur-3xl -z-10" />
             <div>
               <div className="flex justify-between items-center mb-4">
                 <span className="text-xs font-semibold uppercase tracking-widest text-orange-400">Step {activeStep} of 9</span>
                 <div className="flex items-center gap-2">
-                  <button 
+                  <HuntrButton
                     onClick={handleDownloadSimulationState}
                     style={{
                       background: "rgba(249,115,22,0.1)",
@@ -140,7 +143,7 @@ export function DashboardSimulation({ user, activeCompany }: { user: any, active
                     }}
                   >
                     Download State Excel
-                  </button>
+                  </HuntrButton>
                   <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                     {activeStep === 9 ? "Workflow Completed" : "Simulation In Progress"}
@@ -282,31 +285,31 @@ export function DashboardSimulation({ user, activeCompany }: { user: any, active
             {/* Interactive Control Panel */}
             <div className="flex gap-4">
               {activeStep < 9 ? (
-                <button
+                <HuntrButton
                   onClick={advanceStep}
                   className="flex-1 py-3 px-6 rounded-xl font-semibold bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-600/20 hover:shadow-orange-600/40 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer border-none flex items-center justify-center gap-2"
                 >
                   <Play size={16} /> Advance to Next Action
-                </button>
+                </HuntrButton>
               ) : (
-                <button
+                <HuntrButton
                   onClick={resetWorkflow}
                   className="flex-1 py-3 px-6 rounded-xl font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/15 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <RefreshCw size={16} /> Restart Simulation
-                </button>
+                </HuntrButton>
               )}
             </div>
-          </div>
+          </HuntrSurface>
 
           {/* Historical catalog reference */}
-          <div className="glass-panel p-6">
+          <HuntrSurface className="glass-panel p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold flex items-center gap-2 m-0">
                 <span className="w-2 h-2 rounded-full bg-amber-500" />
                 Department Reference Catalogues
               </h3>
-              <button 
+              <HuntrButton
                 onClick={handleDownloadCatalogues}
                 style={{
                   background: "rgba(251,191,36,0.1)",
@@ -320,38 +323,38 @@ export function DashboardSimulation({ user, activeCompany }: { user: any, active
                 }}
               >
                 Download Catalogues Excel
-              </button>
+              </HuntrButton>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-white/10 text-gray-400">
-                    <th className="py-2.5">Code</th>
-                    <th className="py-2.5">Name</th>
-                    <th className="py-2.5">Category</th>
-                    <th className="py-2.5">UOM</th>
-                    <th className="py-2.5 text-right">Unit Price</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <HuntrTable className="w-full text-left text-xs">
+                <HuntrTableHead>
+                  <HuntrTableRow className="border-b border-white/10 text-gray-400">
+                    <HuntrTableHeaderCell className="py-2.5">Code</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="py-2.5">Name</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="py-2.5">Category</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="py-2.5">UOM</HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="py-2.5 text-right">Unit Price</HuntrTableHeaderCell>
+                  </HuntrTableRow>
+                </HuntrTableHead>
+                <HuntrTableBody>
                   {INITIAL_CATALOGUE.map(item => (
-                    <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="py-3 font-semibold text-orange-400">{item.item_code}</td>
-                      <td className="py-3 text-white font-medium">{item.name}</td>
-                      <td className="py-3 text-gray-400">{item.category}</td>
-                      <td className="py-3 text-gray-400">{item.uom}</td>
-                      <td className="py-3 text-right text-white">Rp {item.price.toLocaleString("id-ID")}</td>
-                    </tr>
+                    <HuntrTableRow key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <HuntrTableCell className="py-3 font-semibold text-orange-400">{item.item_code}</HuntrTableCell>
+                      <HuntrTableCell className="py-3 text-white font-medium">{item.name}</HuntrTableCell>
+                      <HuntrTableCell className="py-3 text-gray-400">{item.category}</HuntrTableCell>
+                      <HuntrTableCell className="py-3 text-gray-400">{item.uom}</HuntrTableCell>
+                      <HuntrTableCell className="py-3 text-right text-white">Rp {item.price.toLocaleString("id-ID")}</HuntrTableCell>
+                    </HuntrTableRow>
                   ))}
-                </tbody>
-              </table>
+                </HuntrTableBody>
+              </HuntrTable>
             </div>
-          </div>
+          </HuntrSurface>
         </section>
 
         {/* Right column: Notification Log & SAW weight configurations */}
         <section className="flex flex-col gap-6">
-          <div className="glass-panel p-6">
+          <HuntrSurface className="glass-panel p-6">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-orange-400">
               <Database size={18} /> System Event Log
             </h3>
@@ -366,9 +369,9 @@ export function DashboardSimulation({ user, activeCompany }: { user: any, active
                 </div>
               ))}
             </div>
-          </div>
+          </HuntrSurface>
 
-          <div className="glass-panel p-6">
+          <HuntrSurface className="glass-panel p-6">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-400">
               <ShieldAlert size={18} /> Security & Audits
             </h3>
@@ -392,7 +395,7 @@ export function DashboardSimulation({ user, activeCompany }: { user: any, active
                 </div>
               </div>
             </div>
-          </div>
+          </HuntrSurface>
         </section>
       </main>
     </Layout>

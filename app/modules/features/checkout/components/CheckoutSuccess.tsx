@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import Layout from "../../../components/Layout";
 import { CheckCircle2 } from "lucide-react";
@@ -38,12 +39,12 @@ export function CheckoutSuccess({
           </strong>{" "}
           is now waiting for manager approval. You will be redirected shortly.
         </p>
-        <button
+        <HuntrButton
           onClick={onGoToRequests}
           className="mt-2 px-4 py-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-primary)] hover:border-orange-400/50 transition-all cursor-pointer"
         >
           Go to My Requests
-        </button>
+        </HuntrButton>
       </div>
     </Layout>
   );

@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import {
   BarChart3,
@@ -132,20 +133,20 @@ export function CrmInsights({
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-[var(--ui-border)]">
-            <button
+            <HuntrButton
               onClick={() => onCompose("target")}
               className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-xs font-semibold text-[var(--ui-text-primary)] transition-all hover:border-orange-500/50 hover:text-orange-500"
             >
               <Target size={13} />
               <span>Atur Target Penjualan</span>
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               onClick={() => onCompose("rate")}
               className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] px-3 text-xs font-semibold text-[var(--ui-text-primary)] transition-all hover:border-orange-500/50 hover:text-orange-500"
             >
               <DollarSign size={13} />
               <span>Tambah Kurs Mata Uang</span>
-            </button>
+            </HuntrButton>
           </div>
         </Panel>
 

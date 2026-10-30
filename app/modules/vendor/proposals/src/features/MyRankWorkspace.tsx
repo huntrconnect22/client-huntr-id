@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import Layout from "~/components/Layout";
@@ -215,7 +216,7 @@ export default function MyRank() {
 
                     {/* Award Button - Buyer only */}
                     {isBuyer && !item.is_winner && item.winner_status !== 'awarded' && (
-                      <button
+                      <HuntrButton
                         onClick={() => handleAwardWinner(item.proposal_id, item.rfq_id)}
                         disabled={awardingProposal === item.proposal_id}
                         style={{ color: 'white' }}
@@ -230,7 +231,7 @@ export default function MyRank() {
                             <Award size={12} /> Award
                           </>
                         )}
-                      </button>
+                      </HuntrButton>
                     )}
 
                     {item.winner_status === 'awarded' && (

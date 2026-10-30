@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useState } from "react";
 import {
   Trophy, MessageSquare, Award, Loader2, Sparkles, FileText, Info, Users, UserCheck, CheckCircle2, PackageCheck,
@@ -68,21 +70,21 @@ export function ProposalRankings({
           </h2>
         </div>
         {canApproveOrAward && (
-          <button type="button" onClick={onAIRank} disabled={aiRankLoading} className={btnAi}>
+          <HuntrButton type="button" onClick={onAIRank} disabled={aiRankLoading} className={btnAi}>
             {aiRankLoading ? (
               <Loader2 size={11} className="animate-spin" />
             ) : (
               <Sparkles size={11} />
             )}
             {showAiPanel ? t("rfqDetail.proposals.aiRefresh") : t("rfqDetail.proposals.aiAnalysis")}
-          </button>
+          </HuntrButton>
         )}
       </div>
 
       {/* Scheme Selector Tab (Only when awarding is possible) */}
       {canApproveOrAward && !isRfqAlreadyAwarded && (
         <div className="mb-3 p-1 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center gap-1">
-          <button
+          <HuntrButton
             type="button"
             onClick={() => setAwardModeTab("single")}
             className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
@@ -93,8 +95,8 @@ export function ProposalRankings({
           >
             <Award size={13} />
             <span>Pemenang Tunggal (1 Vendor)</span>
-          </button>
-          <button
+          </HuntrButton>
+          <HuntrButton
             type="button"
             onClick={() => {
               setAwardModeTab("multi");
@@ -112,7 +114,7 @@ export function ProposalRankings({
             <span className="text-[10px] bg-orange-500/20 text-orange-500 px-1.5 py-0.2 rounded font-extrabold">
               Baru
             </span>
-          </button>
+          </HuntrButton>
         </div>
       )}
 
@@ -140,14 +142,14 @@ export function ProposalRankings({
               Hanya item-item yang di-checklist untuk masing-masing vendor yang akan diterbitkan ke Purchase Order (PO).
             </div>
           </div>
-          <button
+          <HuntrButton
             type="button"
             onClick={() => setShowMultiModal(true)}
             disabled={isProcessing}
             className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2 shrink-0"
           >
             <PackageCheck size={14} /> Atur Pemenang & Checklist Item
-          </button>
+          </HuntrButton>
         </div>
       )}
 
@@ -164,10 +166,10 @@ export function ProposalRankings({
             </div>
           </div>
           <div className="flex gap-1.5 flex-shrink-0">
-            <button type="button" onClick={() => onNegotiate(topRank.proposal)} className={btnSecondary}>
+            <HuntrButton type="button" onClick={() => onNegotiate(topRank.proposal)} className={btnSecondary}>
               <MessageSquare size={11} /> {t("rfqDetail.proposals.negotiate")}
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="button"
               onClick={() => onAward(topRank.proposal.id, topRank.proposal.rfq?.id || topRank.proposal.rfq_id)}
               disabled={awardingProposal === topRank.proposal.id || isProcessing}
@@ -179,29 +181,29 @@ export function ProposalRankings({
                 <Award size={11} />
               )}
               {t("rfqDetail.proposals.award")}
-            </button>
+            </HuntrButton>
           </div>
         </div>
       )}
 
       {/* Proposals Table */}
       <div className="rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)] huntr-table-scroll">
-        <table className="w-full text-sm border-collapse min-w-[640px]">
-          <thead>
-            <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-12">#</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{t("rfqDetail.proposals.tableVendor")}</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[140px]">{t("rfqDetail.proposals.tableOffer")}</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">{t("rfqDetail.proposals.tableDel")}</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">{t("rfqDetail.proposals.tableWarr")}</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">{t("rfqDetail.proposals.tableStatus")}</th>
-              <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[50px]">{t("rfqDetail.proposals.tableDoc")}</th>
+        <HuntrTable className="w-full text-sm border-collapse min-w-[640px]">
+          <HuntrTableHead>
+            <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+              <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-12">#</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{t("rfqDetail.proposals.tableVendor")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[140px]">{t("rfqDetail.proposals.tableOffer")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">{t("rfqDetail.proposals.tableDel")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[60px]">{t("rfqDetail.proposals.tableWarr")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">{t("rfqDetail.proposals.tableStatus")}</HuntrTableHeaderCell>
+              <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[50px]">{t("rfqDetail.proposals.tableDoc")}</HuntrTableHeaderCell>
               {canApproveOrAward && !isRfqAlreadyAwarded && (
-                <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[140px]">{t("rfqDetail.proposals.tableActions")}</th>
+                <HuntrTableHeaderCell className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[140px]">{t("rfqDetail.proposals.tableActions")}</HuntrTableHeaderCell>
               )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--ui-border)]">
+            </HuntrTableRow>
+          </HuntrTableHead>
+          <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
             {rankings.map((rankData) => {
               const p = rankData.proposal;
               const isWinner = rankData.is_winner || p.winner_status === "awarded" || p.winner_status === "approved";
@@ -213,13 +215,13 @@ export function ProposalRankings({
               const displayAmount = p.awarded_amount ? Number(p.awarded_amount) : Number(p.price_offer);
 
               return (
-                <tr
+                <HuntrTableRow
                   key={p.id}
                   className={`hover:bg-[var(--ui-bg-input)] transition-colors ${
                     isWinner ? "bg-emerald-500/5" : rankData.rank === 1 ? "bg-orange-500/5" : ""
                   }`}
                 >
-                  <td className="px-3 py-2 whitespace-nowrap">
+                  <HuntrTableCell className="px-3 py-2 whitespace-nowrap">
                     {isWinner ? (
                       <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
                         {t("rfqDetail.proposals.winBadge")}
@@ -227,8 +229,8 @@ export function ProposalRankings({
                     ) : (
                       <span className="text-xs font-bold text-[var(--ui-text-muted)]">#{rankData.rank}</span>
                     )}
-                  </td>
-                  <td className="px-3 py-2">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-3 py-2">
                     <div className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
                       {p.company?.name || "Vendor"}
                     </div>
@@ -255,8 +257,8 @@ export function ProposalRankings({
                         {t("rfqDetail.proposals.winRate", { rate: rankData.vendor_stats.win_rate })}
                       </div>
                     )}
-                  </td>
-                  <td className="px-3 py-2 text-xs font-bold text-[var(--ui-text-brand)] whitespace-nowrap">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-3 py-2 text-xs font-bold text-[var(--ui-text-brand)] whitespace-nowrap">
                     <div>Rp {displayAmount.toLocaleString("id-ID")}</div>
                     <div className="text-[10px] text-[var(--ui-text-muted)] font-normal">
                       Untuk {(p.items || []).length} barang
@@ -266,10 +268,10 @@ export function ProposalRankings({
                         Nilai Penawaran: Rp {Number(p.price_offer).toLocaleString("id-ID")}
                       </div>
                     )}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{t("rfqDetail.proposals.deliveryDays", { n: p.delivery_days })}</td>
-                  <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{t("rfqDetail.proposals.warrantyMonths", { n: p.warranty_months })}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{t("rfqDetail.proposals.deliveryDays", { n: p.delivery_days })}</HuntrTableCell>
+                  <HuntrTableCell className="px-3 py-2 text-xs text-[var(--ui-text-secondary)]">{t("rfqDetail.proposals.warrantyMonths", { n: p.warranty_months })}</HuntrTableCell>
+                  <HuntrTableCell className="px-3 py-2 whitespace-nowrap">
                     {isWinner ? (
                       <span className="text-[10px] font-semibold text-emerald-500">{t("rfqDetail.proposals.statusAwarded")}</span>
                     ) : p.winner_status === "rejected" ? (
@@ -277,8 +279,8 @@ export function ProposalRankings({
                     ) : (
                       <span className="text-[10px] text-[var(--ui-text-muted)]">{t("rfqDetail.proposals.statusActive")}</span>
                     )}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
+                  </HuntrTableCell>
+                  <HuntrTableCell className="px-3 py-2 whitespace-nowrap">
                     {(p.document_path || p.document_url) ? (
                       <a
                         href={p.document_url || getAssetUrl(p.document_path)}
@@ -291,15 +293,15 @@ export function ProposalRankings({
                     ) : (
                       <span className="text-[11px] text-[var(--ui-text-muted)]">—</span>
                     )}
-                  </td>
+                  </HuntrTableCell>
                   {canApproveOrAward && !isRfqAlreadyAwarded && (
-                    <td className="px-3 py-2">
+                    <HuntrTableCell className="px-3 py-2">
                       {!isWinner && (
                         <div className="flex items-center justify-end gap-1.5">
-                          <button type="button" onClick={() => onNegotiate(p)} className={btnSecondary}>
+                          <HuntrButton type="button" onClick={() => onNegotiate(p)} className={btnSecondary}>
                             <MessageSquare size={11} />
-                          </button>
-                          <button
+                          </HuntrButton>
+                          <HuntrButton
                             type="button"
                             onClick={() => onAward(p.id, rfqId)}
                             disabled={awardingProposal === p.id || isProcessing}
@@ -311,16 +313,16 @@ export function ProposalRankings({
                             ) : (
                               <Award size={11} />
                             )}
-                          </button>
+                          </HuntrButton>
                         </div>
                       )}
-                    </td>
+                    </HuntrTableCell>
                   )}
-                </tr>
+                </HuntrTableRow>
               );
             })}
-          </tbody>
-        </table>
+          </HuntrTableBody>
+        </HuntrTable>
       </div>
 
       {/* Multi-Vendor Awarding Modal */}

@@ -1,4 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
 import React from "react";
+import MuiSkeleton from "@mui/material/Skeleton";
 
 interface SkeletonProps {
   width?: string | number;
@@ -16,8 +18,10 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   className,
 }) => {
   return (
-    <div
-      className={`skeleton ${className || ""}`}
+    <MuiSkeleton
+      variant="rectangular"
+      animation="wave"
+      className={className}
       style={{
         width,
         height,
@@ -48,7 +52,7 @@ export const SkeletonText: React.FC<{ lines?: number; lastLineWidth?: string }> 
 
 export const SkeletonCard: React.FC<{ rows?: number }> = ({ rows = 4 }) => {
   return (
-    <div
+    <HuntrSurface
       style={{
         background: "var(--ui-bg-card)",
         border: "1px solid var(--ui-border)",
@@ -75,7 +79,7 @@ export const SkeletonCard: React.FC<{ rows?: number }> = ({ rows = 4 }) => {
           </div>
         </div>
       ))}
-    </div>
+    </HuntrSurface>
   );
 };
 
@@ -84,7 +88,7 @@ export const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = ({
   columns = 4,
 }) => {
   return (
-    <div
+    <HuntrSurface
       style={{
         background: "var(--ui-bg-card)",
         border: "1px solid var(--ui-border)",
@@ -126,7 +130,7 @@ export const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = ({
           ))}
         </div>
       ))}
-    </div>
+    </HuntrSurface>
   );
 };
 
@@ -134,7 +138,7 @@ export const SkeletonList: React.FC<{ items?: number }> = ({ items = 5 }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {Array.from({ length: items }).map((_, i) => (
-        <div
+        <HuntrSurface
           key={i}
           style={{
             background: "var(--ui-bg-card)",
@@ -153,7 +157,7 @@ export const SkeletonList: React.FC<{ items?: number }> = ({ items = 5 }) => {
             <Skeleton width="50%" height={14} />
           </div>
           <Skeleton width={100} height={36} borderRadius={12} />
-        </div>
+        </HuntrSurface>
       ))}
     </div>
   );
@@ -172,7 +176,7 @@ export const SkeletonGrid: React.FC<{ items?: number; columns?: number }> = ({
       }}
     >
       {Array.from({ length: items }).map((_, i) => (
-        <div
+        <HuntrSurface
           key={i}
           style={{
             background: "var(--ui-bg-card)",
@@ -191,7 +195,7 @@ export const SkeletonGrid: React.FC<{ items?: number; columns?: number }> = ({
             <Skeleton width={80} height={32} borderRadius={10} />
             <Skeleton width={80} height={32} borderRadius={10} />
           </div>
-        </div>
+        </HuntrSurface>
       ))}
     </div>
   );

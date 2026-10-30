@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Loader2,
@@ -300,15 +302,15 @@ export function AccountProfileTab({
                   {initials}
                 </div>
               )}
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
                 className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                 title="Ganti foto"
               >
                 <Camera size={20} className="text-white" />
-              </button>
-              <input
+              </HuntrButton>
+              <HuntrInput
                 ref={photoInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -324,15 +326,15 @@ export function AccountProfileTab({
                 Format JPG, PNG, atau WebP (Maks 5 MB).
               </p>
               <div className="flex items-center gap-3 mt-2">
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
                   className="text-xs font-semibold text-orange-500 hover:underline cursor-pointer"
                 >
                   Pilih Foto Baru
-                </button>
+                </HuntrButton>
                 {photoPreview && (
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => {
                       setPhotoPreview(null);
@@ -341,7 +343,7 @@ export function AccountProfileTab({
                     className="text-xs text-red-400 hover:underline cursor-pointer"
                   >
                     Reset
-                  </button>
+                  </HuntrButton>
                 )}
               </div>
             </div>
@@ -373,7 +375,7 @@ export function AccountProfileTab({
 
           {/* Full Name */}
           <FieldRow label="Nama Lengkap" icon={User}>
-            <input
+            <HuntrInput
               type="text"
               required
               value={form.name}
@@ -393,7 +395,7 @@ export function AccountProfileTab({
           </div>
 
           <FieldRow label="Email" icon={Mail}>
-            <input
+            <HuntrInput
               type="email"
               value={form.email}
               onChange={(e) => setF("email", e.target.value)}
@@ -406,7 +408,7 @@ export function AccountProfileTab({
           </FieldRow>
 
           <FieldRow label="NIK (KTP)" icon={CreditCard}>
-            <input
+            <HuntrInput
               type="text"
               maxLength={16}
               value={form.nik}
@@ -420,7 +422,7 @@ export function AccountProfileTab({
           </FieldRow>
 
           <FieldRow label="NPWP (Opsional)" icon={Hash}>
-            <input
+            <HuntrInput
               type="text"
               maxLength={25}
               value={form.npwp}
@@ -434,7 +436,7 @@ export function AccountProfileTab({
           </FieldRow>
 
           <FieldRow label="No. Telepon" icon={Phone}>
-            <input
+            <HuntrInput
               type="tel"
               value={form.phone}
               onChange={(e) => setF("phone", e.target.value)}
@@ -454,14 +456,14 @@ export function AccountProfileTab({
 
           <FieldRow label="Tempat & Tanggal Lahir" icon={CalendarDays}>
             <div className="flex flex-col sm:flex-row gap-2">
-              <input
+              <HuntrInput
                 type="text"
                 value={form.birth_place}
                 onChange={(e) => setF("birth_place", e.target.value)}
                 placeholder="Tempat lahir (contoh: Jakarta)"
                 className={`${FIELD_CLASS} flex-1`}
               />
-              <input
+              <HuntrInput
                 type="date"
                 value={form.birth_date}
                 onChange={(e) => setF("birth_date", e.target.value)}
@@ -480,7 +482,7 @@ export function AccountProfileTab({
           </div>
 
           <FieldRow label="Negara" icon={Globe}>
-            <input
+            <HuntrInput
               type="text"
               value={form.country}
               onChange={(e) => setF("country", e.target.value)}
@@ -501,7 +503,7 @@ export function AccountProfileTab({
                 <label className="text-[11px] font-medium text-[var(--ui-text-muted)] block mb-1">
                   Provinsi
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   value={form.province}
                   onChange={(e) => setF("province", e.target.value)}
@@ -513,7 +515,7 @@ export function AccountProfileTab({
                 <label className="text-[11px] font-medium text-[var(--ui-text-muted)] block mb-1">
                   Kabupaten / Kota
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   value={form.city}
                   onChange={(e) => setF("city", e.target.value)}
@@ -525,7 +527,7 @@ export function AccountProfileTab({
                 <label className="text-[11px] font-medium text-[var(--ui-text-muted)] block mb-1">
                   Kecamatan
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   value={form.district}
                   onChange={(e) => setF("district", e.target.value)}
@@ -537,7 +539,7 @@ export function AccountProfileTab({
                 <label className="text-[11px] font-medium text-[var(--ui-text-muted)] block mb-1">
                   Kode Pos
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   maxLength={5}
                   value={form.postal_code}
@@ -550,7 +552,7 @@ export function AccountProfileTab({
           </div>
 
           <FieldRow label="Alamat Lengkap" icon={Home}>
-            <textarea
+            <HuntrTextarea
               rows={3}
               value={form.full_address}
               onChange={(e) => setF("full_address", e.target.value)}
@@ -562,7 +564,7 @@ export function AccountProfileTab({
 
         {/* ── Save Action ──────────────────────────────────── */}
         <div className="flex items-center justify-end gap-3 pt-2">
-          <button
+          <HuntrButton
             type="submit"
             disabled={saving}
             style={{ color: "white" }}
@@ -574,7 +576,7 @@ export function AccountProfileTab({
               <Save size={15} />
             )}
             {saving ? "Menyimpan..." : "Simpan Profil"}
-          </button>
+          </HuntrButton>
         </div>
       </form>
 
@@ -595,7 +597,7 @@ export function AccountProfileTab({
                 </div>
               </div>
               <div className="sm:w-2/3 flex gap-2">
-                <input
+                <HuntrInput
                   type="tel"
                   placeholder={t("settings.profile.whatsappPlaceholder")}
                   value={newWhatsapp}
@@ -608,7 +610,7 @@ export function AccountProfileTab({
                   className="flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none disabled:opacity-50"
                 />
                 {!otpSent && (
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={handleSendOtp}
                     disabled={loading || newWhatsapp === user?.whatsapp}
@@ -616,7 +618,7 @@ export function AccountProfileTab({
                     className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm disabled:opacity-50 transition-all flex-shrink-0 cursor-pointer"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.profile.verifyBtn")}
-                  </button>
+                  </HuntrButton>
                 )}
               </div>
             </div>
@@ -626,7 +628,7 @@ export function AccountProfileTab({
                 <label className="text-xs font-semibold text-orange-400 flex items-center gap-2">
                   <MessageSquareCode size={16} /> {t("settings.profile.enterOtpLabel")}
                 </label>
-                <input
+                <HuntrInput
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -638,12 +640,12 @@ export function AccountProfileTab({
                 />
                 {debugOtp && <div className="text-xs text-emerald-400 font-semibold">Debug OTP: {debugOtp}</div>}
                 <div className="flex items-center gap-3">
-                  <button type="submit" disabled={loading} style={{ color: "white" }} className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 font-semibold text-sm cursor-pointer">
+                  <HuntrButton type="submit" disabled={loading} style={{ color: "white" }} className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 font-semibold text-sm cursor-pointer">
                     {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.profile.confirmUpdateBtn")}
-                  </button>
-                  <button type="button" onClick={() => setOtpSent(false)} className="text-sm text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:underline font-semibold cursor-pointer">
+                  </HuntrButton>
+                  <HuntrButton type="button" onClick={() => setOtpSent(false)} className="text-sm text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:underline font-semibold cursor-pointer">
                     {t("settings.profile.cancelBtn")}
-                  </button>
+                  </HuntrButton>
                   {resendCooldown > 0 && (
                     <span className="text-xs text-[var(--ui-text-muted)]">Kirim ulang dalam {resendCooldown}d</span>
                   )}

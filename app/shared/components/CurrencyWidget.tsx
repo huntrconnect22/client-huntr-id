@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Select as HuntrSelect } from "~/shared/ui/Fields";
 import React, { useEffect, useMemo, useState } from "react";
 import { Banknote, RefreshCw, TrendingUp } from "lucide-react";
 import { fetchLatestCurrencyRates } from "../lib/api/currency";
@@ -68,7 +71,7 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
   }, [rates, baseCurrency]);
 
   return (
-    <div
+    <HuntrSurface
       style={{
         margin: embedded ? 0 : "0 10px 14px",
         padding: 16,
@@ -89,7 +92,7 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)" }}>Latest FX from currencyapi.com</div>
           </div>
         </div>
-        <button
+        <HuntrButton
           type="button"
           onClick={() => setRefreshTick((value) => value + 1)}
           style={{
@@ -107,14 +110,14 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
           aria-label="Refresh currency rates"
         >
           <RefreshCw size={14} />
-        </button>
+        </HuntrButton>
       </div>
 
       <div style={{ marginBottom: 10 }}>
         <label style={{ display: "block", fontSize: 10, fontWeight: 800, color: "var(--ui-text-muted)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>
           Base currency
         </label>
-        <select
+        <HuntrSelect
           value={baseCurrency}
           onChange={(e) => setBaseCurrency(e.target.value)}
           style={{
@@ -131,7 +134,7 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
           {BASE_OPTIONS.map((item) => (
             <option key={item} value={item}>{item}</option>
           ))}
-        </select>
+        </HuntrSelect>
       </div>
 
       {loading && (
@@ -168,13 +171,13 @@ export default function CurrencyWidget({ embedded = false }: { embedded?: boolea
           </div>
         </div>
       )}
-    </div>
+    </HuntrSurface>
   );
 }
 
 function RateItem({ code, value, baseCurrency }: { code: string; value: number; baseCurrency: string }) {
   return (
-    <div
+    <HuntrSurface
       style={{
         padding: 10,
         borderRadius: 12,
@@ -188,6 +191,6 @@ function RateItem({ code, value, baseCurrency }: { code: string; value: number; 
       <div style={{ fontSize: 13, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4 }}>
         {value.toFixed(4)}
       </div>
-    </div>
+    </HuntrSurface>
   );
 }

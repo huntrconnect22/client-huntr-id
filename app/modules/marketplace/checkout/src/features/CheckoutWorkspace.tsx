@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import Layout from "~/components/Layout";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -102,12 +103,12 @@ export default function Checkout() {
         )}
 
         {/* Back Link */}
-        <button
+        <HuntrButton
           onClick={() => navigate(`${getCompanyPrefix()}/marketplace`)}
           className="flex items-center gap-1 text-xs font-semibold text-orange-500 hover:underline cursor-pointer"
         >
           <ArrowLeft size={14} /> Back to Marketplace
-        </button>
+        </HuntrButton>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Main Content Area (Items + PR Form) */}

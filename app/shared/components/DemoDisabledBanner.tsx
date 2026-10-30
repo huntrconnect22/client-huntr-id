@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { AlertTriangle, Lock } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -22,7 +24,7 @@ export const DemoDisabledBanner: React.FC<DemoDisabledBannerProps> = ({
 
   return (
     <div style={{ width: "100%", padding: "40px 24px" }}>
-      <div
+      <HuntrSurface
         style={{
           maxWidth: 640,
           margin: "0 auto",
@@ -115,7 +117,7 @@ export const DemoDisabledBanner: React.FC<DemoDisabledBannerProps> = ({
 
         {showBackButton && (
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-            <button
+            <HuntrButton
               type="button"
               onClick={() => navigate(-1)}
               style={{
@@ -130,8 +132,8 @@ export const DemoDisabledBanner: React.FC<DemoDisabledBannerProps> = ({
               }}
             >
               Kembali
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               type="button"
               onClick={() => navigate("/")}
               style={{
@@ -147,10 +149,10 @@ export const DemoDisabledBanner: React.FC<DemoDisabledBannerProps> = ({
               }}
             >
               Ke Dashboard
-            </button>
+            </HuntrButton>
           </div>
         )}
-      </div>
+      </HuntrSurface>
     </div>
   );
 };

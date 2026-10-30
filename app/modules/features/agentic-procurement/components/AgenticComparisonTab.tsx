@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import {
   Sparkles, CheckCircle2, Check, Award, BarChart2,
@@ -155,7 +156,7 @@ export default function AgenticComparisonTab({
             {t("agentic.comparison.viewModeLabel")}
           </span>
           {viewButtons.map((btn) => (
-            <button
+            <HuntrButton
               key={btn.key}
               type="button"
               onClick={() => setViewMode(btn.key)}
@@ -167,7 +168,7 @@ export default function AgenticComparisonTab({
             >
               {btn.icon}
               {btn.label}
-            </button>
+            </HuntrButton>
           ))}
         </div>
       )}
@@ -335,7 +336,7 @@ export default function AgenticComparisonTab({
                       {/* Sumber web Brave */}
                       {webSources.length > 0 && (
                         <div>
-                          <button
+                          <HuntrButton
                             type="button"
                             onClick={() =>
                               setExpandedSources((prev) => ({ ...prev, [idx]: !showSrc }))
@@ -345,7 +346,7 @@ export default function AgenticComparisonTab({
                             <Globe size={10} />
                             {showSrc ? t("agentic.comparison.hideSources") : t("agentic.comparison.showSources")}{" "}
                             {t("agentic.comparison.sourcesCount", { count: webSources.length })}
-                          </button>
+                          </HuntrButton>
                           {showSrc && (
                             <div className="mt-1.5 flex flex-col gap-1.5">
                               {webSources.map((src: any, sIdx: number) => (
@@ -401,14 +402,14 @@ export default function AgenticComparisonTab({
                             <CheckCircle2 size={10} /> {t("agentic.comparison.selected")}
                           </span>
                       ) : (
-                          <button
+                          <HuntrButton
                             type="button"
                             onClick={() => handleSelect(item)}
                             className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] hover:border-blue-500/50 hover:bg-blue-500/8 text-[var(--ui-text-muted)] hover:text-blue-400 text-[10px] font-semibold transition-colors cursor-pointer"
                           >
                             <MousePointerClick size={10} />
                             {t("agentic.comparison.pickButton")}
-                          </button>
+                          </HuntrButton>
                       )}
                     </div>
                   </div>

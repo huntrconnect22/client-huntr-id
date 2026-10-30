@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { AppThemeProvider } from "~/shared/theme/AppThemeProvider";
 
 type Theme = "dark" | "light";
 
@@ -33,8 +34,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setIsClient(true);
-    const savedTheme = localStorage.getItem("huntr_theme") as Theme | null;
-    setManual(savedTheme || null);
+    try {
+      const savedTheme = localStorage.getItem("huntr_theme");
+      setManual(savedTheme === "dark" || savedTheme === "light" ? savedTheme : null);
+    } catch { /* Theme switching also works when browser storage is unavailable. */ }
     setSystemTheme(getSystemTheme());
     
     // Listen for OS theme changes
@@ -51,14 +54,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Apply to <html> and persist
   useEffect(() => {
+    if (!isClient) return;
     document.documentElement.setAttribute("data-theme", theme);
     document.documentElement.classList.toggle("dark", theme === "dark");
-    if (manual) {
-      localStorage.setItem("huntr_theme", manual);
-    } else {
-      localStorage.removeItem("huntr_theme");
-    }
-  }, [theme, manual]);
+    try {
+      if (manual) localStorage.setItem("huntr_theme", manual);
+      else localStorage.removeItem("huntr_theme");
+    } catch { /* Keep the active theme even without persistent storage. */ }
+  }, [theme, manual, isClient]);
 
   const toggleTheme = () => {
     setManual((prev) => {
@@ -79,7 +82,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setThemeMode, isDark: theme === "dark", isAuto, resetToAuto }}>
-      {children}
+      <AppThemeProvider mode={theme}>{children}</AppThemeProvider>
     </ThemeContext.Provider>
   );
 }

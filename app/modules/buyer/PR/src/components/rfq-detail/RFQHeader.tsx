@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { ArrowLeft, Share2, Copy, Check, ExternalLink, Tag } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -38,9 +39,9 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <button type="button" onClick={() => navigate(-1)} className={btnGhost}>
+      <HuntrButton type="button" onClick={() => navigate(-1)} className={btnGhost}>
         <ArrowLeft size={14} /> {t("rfqDetail.header.back")}
-      </button>
+      </HuntrButton>
       {rfq && (
         <div className="flex items-center gap-1.5 ml-auto flex-wrap">
           <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
@@ -76,7 +77,7 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
 
           {/* Share Button */}
           <div className="relative">
-            <button
+            <HuntrButton
               type="button"
               onClick={() => setShowShareMenu((p) => !p)}
               className={`${btnGhost} ${copied ? "border-emerald-500/40 text-emerald-400" : "hover:border-orange-500/30"}`}
@@ -87,7 +88,7 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
               ) : (
                 <><Share2 size={13} /><span>{t("rfqDetail.header.shareTender")}</span></>
               )}
-            </button>
+            </HuntrButton>
 
             {showShareMenu && (
               <>
@@ -104,22 +105,22 @@ export function RFQHeader({ rfq, isTenderExpired, onRefresh }: RFQHeaderProps) {
                   <div className="px-2 py-1 text-[11px] text-[var(--ui-text-muted)] bg-[var(--ui-bg-input)] rounded-md font-mono break-all">
                     {tenderUrl}
                   </div>
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={handleCopyLink}
                     className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-orange-500/10 hover:text-orange-400 text-[var(--ui-text-secondary)] text-xs font-semibold transition-all text-left cursor-pointer"
                   >
                     <Copy size={13} />
                     {t("rfqDetail.header.copyLink")}
-                  </button>
-                  <button
+                  </HuntrButton>
+                  <HuntrButton
                     type="button"
                     onClick={handleOpenPublicPage}
                     className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] text-xs font-semibold transition-all text-left cursor-pointer"
                   >
                     <ExternalLink size={13} />
                     {t("rfqDetail.header.openPublicPage")}
-                  </button>
+                  </HuntrButton>
                   <div className="px-2 pt-1 pb-0.5 border-t border-[var(--ui-border)] mt-1 text-[10px] text-[var(--ui-text-muted)]">
                     {t("rfqDetail.header.shareNote")}
                   </div>

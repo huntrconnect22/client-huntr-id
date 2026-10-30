@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2, AlertCircle, Camera, QrCode, RefreshCw, X } from "lucide-react";
 
@@ -131,7 +132,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             </div>
           </div>
         </div>
-        <button
+        <HuntrButton
           onClick={() => { stopScanner(); onClose(); }}
           style={{
             width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
@@ -140,7 +141,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
           }}
         >
           <X size={18} color="rgba(255,255,255,0.6)" />
-        </button>
+        </HuntrButton>
       </div>
 
       {/* Scanner Area */}
@@ -187,7 +188,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             <p style={{ margin: 0, fontSize: 13, color: "#fca5a5", fontWeight: 500, lineHeight: 1.5 }}>
               {scannerError}
             </p>
-            <button
+            <HuntrButton
               onClick={() => startCamera(activeCamera || undefined)}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
@@ -197,7 +198,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
               }}
             >
               <RefreshCw size={13} /> Try Again
-            </button>
+            </HuntrButton>
           </div>
         )}
 
@@ -213,7 +214,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
         {cameras.length > 1 && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", maxWidth: 320 }}>
             {cameras.map((cam) => (
-              <button
+              <HuntrButton
                 key={cam.id}
                 onClick={() => switchCamera(cam.id)}
                 style={{
@@ -225,7 +226,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
               >
                 <Camera size={10} style={{ display: "inline", marginRight: 4 }} />
                 {cam.label || `Camera ${cameras.indexOf(cam) + 1}`}
-              </button>
+              </HuntrButton>
             ))}
           </div>
         )}

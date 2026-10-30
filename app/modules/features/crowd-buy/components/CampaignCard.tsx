@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Link } from "react-router";
 import { Clock, ShieldCheck, TrendingUp, Users, ArrowRight, Layers, Share2, Sparkles, Gavel, Calendar } from "lucide-react";
@@ -89,7 +90,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
 
         {/* Share Quick Button */}
         {onShareClick && (
-          <button
+          <HuntrButton
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -99,7 +100,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
             className="absolute top-2.5 right-2.5 w-7 h-7 rounded bg-white/95 dark:bg-slate-900/95 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:text-orange-500 hover:border-orange-500 transition-colors"
           >
             <Share2 className="w-3.5 h-3.5" />
-          </button>
+          </HuntrButton>
         )}
 
         {/* Remaining Time Badge */}
@@ -201,13 +202,13 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
             </span>
           ) : (
             onJoinClick && (campaign.is_active || isBidding) && (
-              <button
+              <HuntrButton
                 onClick={() => onJoinClick(campaign)}
                 className="flex-1 py-1.5 px-3 text-center text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-md transition-colors flex items-center justify-center gap-1 cursor-pointer"
               >
                 <span>{isBidding ? "Ikut Pool" : isAutoDemand ? "Ikut Komitmen" : "Gabung"}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              </HuntrButton>
             )
           )}
         </div>

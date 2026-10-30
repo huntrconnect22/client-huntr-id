@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Sparkles, Loader2, X, Image as ImageIcon } from "lucide-react";
 import { PRODUCT_CATEGORIES, type CatalogueFormData } from "../types";
@@ -22,7 +25,7 @@ interface CatalogueModalFormProps {
 const Field = ({ label, value, onChange, placeholder, required }: any) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
     <label style={{ fontSize: 12, fontWeight: 600, color: "var(--ui-text-secondary)" }}>{label}</label>
-    <input
+    <HuntrInput
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -94,7 +97,7 @@ export default function CatalogueModalForm({
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
+      <HuntrSurface
         style={{
           width: "100%",
           maxWidth: 640,
@@ -126,7 +129,7 @@ export default function CatalogueModalForm({
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* ChatGPT AI Autofill Trigger */}
-            <button
+            <HuntrButton
               type="button"
               onClick={onAiAutofill}
               disabled={aiAutofilling}
@@ -139,9 +142,9 @@ export default function CatalogueModalForm({
             >
               {aiAutofilling ? <Loader2 className="animate-spin" size={13} /> : <Sparkles size={13} />}
               <span>{aiAutofilling ? t("catalogue.modal.aiAnalyzing") : t("catalogue.modal.aiAutofillBtn")}</span>
-            </button>
+            </HuntrButton>
 
-            <button
+            <HuntrButton
               type="button"
               onClick={onClose}
               style={{
@@ -166,7 +169,7 @@ export default function CatalogueModalForm({
               }}
             >
               <X size={15} />
-            </button>
+            </HuntrButton>
           </div>
         </div>
 
@@ -196,7 +199,7 @@ export default function CatalogueModalForm({
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={lbl}>{t("catalogue.modal.category")}</label>
-            <select
+            <HuntrSelect
               value={formData.category}
               onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
               style={inputStyle}
@@ -207,7 +210,7 @@ export default function CatalogueModalForm({
                   {cat}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           </div>
 
           <Field
@@ -225,7 +228,7 @@ export default function CatalogueModalForm({
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={lbl}>{t("catalogue.modal.uom")}</label>
-            <select
+            <HuntrSelect
               value={formData.uom}
               onChange={(e) => setFormData((prev) => ({ ...prev, uom: e.target.value }))}
               style={inputStyle}
@@ -236,13 +239,13 @@ export default function CatalogueModalForm({
                   {uom}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           </div>
 
           <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
             <label style={lbl}>{t("catalogue.modal.productImage")}</label>
             <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full">
-              <input
+              <HuntrInput
                 type="file"
                 accept="image/*"
                 onChange={(e) => setProductImage(e.target.files?.[0] || null)}
@@ -255,7 +258,7 @@ export default function CatalogueModalForm({
                   minWidth: 0,
                 }}
               />
-              <button
+              <HuntrButton
                 type="button"
                 disabled={aiImageSearching || !formData.name.trim()}
                 onClick={onAiImageSearch}
@@ -264,7 +267,7 @@ export default function CatalogueModalForm({
               >
                 {aiImageSearching ? <Loader2 size={13} className="animate-spin" /> : <ImageIcon size={13} />}
                 <span>{aiImageSearching ? t("catalogue.modal.generatingPhoto") : t("catalogue.modal.generateAiPhoto")}</span>
-              </button>
+              </HuntrButton>
             </div>
             {productImage && (
               <div className="mt-2 flex items-center gap-2.5 p-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] min-w-0 max-w-full">
@@ -276,20 +279,20 @@ export default function CatalogueModalForm({
                 <span className="text-xs text-[var(--ui-text-secondary)] truncate flex-1 font-medium">
                   {productImage.name}
                 </span>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setProductImage(null)}
                   className="text-xs text-red-500 hover:text-red-600 font-semibold px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 border-none cursor-pointer flex-shrink-0"
                 >
                   {t("catalogue.modal.removePhoto")}
-                </button>
+                </HuntrButton>
               </div>
             )}
           </div>
 
           <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={lbl}>{t("catalogue.modal.specifications")}</label>
-            <textarea
+            <HuntrTextarea
               value={formData.specifications}
               onChange={(e) => setFormData((prev) => ({ ...prev, specifications: e.target.value }))}
               placeholder={t("catalogue.modal.specificationsPlaceholder")}
@@ -304,7 +307,7 @@ export default function CatalogueModalForm({
             />
           </div>
           <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", gap: 10, paddingTop: 4 }}>
-            <button
+            <HuntrButton
               type="button"
               onClick={onClose}
               style={{
@@ -319,13 +322,13 @@ export default function CatalogueModalForm({
               }}
             >
               {t("catalogue.modal.cancel")}
-            </button>
-            <button type="submit" disabled={loading} style={primaryBtn}>
+            </HuntrButton>
+            <HuntrButton type="submit" disabled={loading} style={primaryBtn}>
               {loading ? <Loader2 className="animate-spin" size={16} /> : t("catalogue.modal.save")}
-            </button>
+            </HuntrButton>
           </div>
         </form>
-      </div>
+      </HuntrSurface>
     </div>
   );
 }

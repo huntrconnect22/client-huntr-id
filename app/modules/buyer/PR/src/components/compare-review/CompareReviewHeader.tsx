@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -17,7 +18,7 @@ export const CompareReviewHeader: React.FC<CompareReviewHeaderProps> = ({
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
-      <button
+      <HuntrButton
         onClick={() => navigate(backUrl)}
         style={{
           width: 40,
@@ -34,7 +35,7 @@ export const CompareReviewHeader: React.FC<CompareReviewHeaderProps> = ({
         aria-label="Back to Approvals"
       >
         <ArrowLeft size={20} />
-      </button>
+      </HuntrButton>
 
       <div style={{ flex: 1 }}>
         <div
@@ -61,7 +62,7 @@ export const CompareReviewHeader: React.FC<CompareReviewHeaderProps> = ({
         </h1>
       </div>
 
-      <button
+      <HuntrButton
         onClick={onRefresh}
         style={{
           padding: "10px 16px",
@@ -78,7 +79,7 @@ export const CompareReviewHeader: React.FC<CompareReviewHeaderProps> = ({
         }}
       >
         <RefreshCw size={14} /> Refresh
-      </button>
+      </HuntrButton>
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Bot, Send, Loader2 } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -66,7 +68,7 @@ export default function AgenticChatTab({
       </div>
 
       <div className="flex items-center gap-2 border-t border-[var(--ui-border)] pt-2">
-        <input
+        <HuntrInput
           type="text"
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
@@ -77,14 +79,14 @@ export default function AgenticChatTab({
           disabled={isChatSending}
           className="flex-1 px-3 py-2 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500 transition-all"
         />
-        <button
+        <HuntrButton
           onClick={onSendMessage}
           disabled={isChatSending || !chatInput.trim()}
           className="px-3 py-2 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1"
         >
           <Send size={13} />
           <span>{t("agentic.chat.send")}</span>
-        </button>
+        </HuntrButton>
       </div>
     </div>
   );

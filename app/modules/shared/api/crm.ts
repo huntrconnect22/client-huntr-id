@@ -133,6 +133,8 @@ export const createCrmQuote = (
   companyId: string,
   data: Record<string, unknown>,
 ) => apiPost<any>("/api/crm/quotes", { company_id: companyId, ...data });
+export const getCrmQuoteApprovers = (companyId: string) =>
+  apiGet<any>(`/api/crm/quotes/approvers?${companyQuery(companyId)}`);
 export const requestCrmQuoteApproval = (
   companyId: string,
   quoteId: string,

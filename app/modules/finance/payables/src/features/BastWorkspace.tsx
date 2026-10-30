@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import DemoDisabledBanner from "~/components/DemoDisabledBanner";
@@ -145,7 +147,7 @@ export default function BastPage() {
         )}
 
         {/* Header Card */}
-        <div style={{
+        <HuntrSurface style={{
           background: "var(--ui-bg-card)",
           borderRadius: 8,
           border: "1px solid var(--ui-border)",
@@ -172,11 +174,11 @@ export default function BastPage() {
               Official handover documents with multi-party signatures
             </div>
           </div>
-        </div>
+        </HuntrSurface>
 
         {/* Content */}
         {loading ? (
-          <div style={{
+          <HuntrSurface style={{
             display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "center", padding: "60px 0",
             background: "var(--ui-bg-card)", borderRadius: 8, border: "1px solid var(--ui-border)",
@@ -184,9 +186,9 @@ export default function BastPage() {
           }}>
             <Loader2 size={24} className="animate-spin" color="var(--huntr-orange)" />
             <span style={{ fontSize: 13, fontWeight: 600 }}>Loading data...</span>
-          </div>
+          </HuntrSurface>
         ) : basts.length === 0 ? (
-          <div style={{
+          <HuntrSurface style={{
             textAlign: "center", padding: "60px 0",
             background: "var(--ui-bg-card)", borderRadius: 8,
             border: "1px dashed var(--ui-border)",
@@ -206,12 +208,12 @@ export default function BastPage() {
             <p style={{ fontSize: 13, color: "var(--ui-text-muted)", margin: 0 }}>
               No handover documents found yet.
             </p>
-          </div>
+          </HuntrSurface>
         ) : isMobile ? (
           /* ── Mobile: stacked cards ── */
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {basts.map((bast) => (
-              <div
+              <HuntrSurface
                 key={bast.id}
                 style={{
                   background: "var(--ui-bg-card)",
@@ -241,7 +243,7 @@ export default function BastPage() {
 
                 {/* Full-width action button */}
                 <div style={{ borderTop: "1px solid var(--ui-border)", padding: "10px 14px" }}>
-                  <button
+                  <HuntrButton
                     onClick={() => handleViewDetails(bast.id)}
                     style={{
                       width: "100%",
@@ -261,14 +263,14 @@ export default function BastPage() {
                   >
                     <FileText size={14} />
                     View PDF
-                  </button>
+                  </HuntrButton>
                 </div>
-              </div>
+              </HuntrSurface>
             ))}
           </div>
         ) : (
           /* ── Desktop: table ── */
-          <div style={{
+          <HuntrSurface style={{
             overflow: "hidden", borderRadius: 8,
             background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)",
           }}>
@@ -327,7 +329,7 @@ export default function BastPage() {
                 </div>
 
                 <div style={{ textAlign: "right" }}>
-                  <button
+                  <HuntrButton
                     onClick={() => handleViewDetails(bast.id)}
                     style={{
                       padding: "6px 12px", borderRadius: 6,
@@ -343,11 +345,11 @@ export default function BastPage() {
                   >
                     <FileText size={13} />
                     View PDF
-                  </button>
+                  </HuntrButton>
                 </div>
               </div>
             ))}
-          </div>
+          </HuntrSurface>
         )}
       </div>
     </Layout>

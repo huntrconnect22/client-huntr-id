@@ -1,3 +1,7 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React, { useEffect, useState } from "react";
 import { Search, Loader2, X, Package, Pencil, Trash2 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -37,7 +41,7 @@ function SheetModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
+      <HuntrSurface
         style={{
           background: "var(--ui-bg-card)",
           borderRadius: 12,
@@ -68,7 +72,7 @@ function SheetModal({
           >
             {title}
           </div>
-          <button
+          <HuntrButton
             onClick={onClose}
             type="button"
             style={{
@@ -94,12 +98,12 @@ function SheetModal({
             }}
           >
             <X size={15} />
-          </button>
+          </HuntrButton>
         </div>
         <div style={{ padding: 18 }}>
           {children}
         </div>
-      </div>
+      </HuntrSurface>
     </div>
   );
 }
@@ -226,7 +230,7 @@ export default function AdminCatalogueTab() {
         {item && (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={fieldLabelStyle}>Item Code</label>
-            <input
+            <HuntrInput
               name="item_code"
               defaultValue={item?.item_code || ""}
               placeholder="e.g. HTR-123456"
@@ -237,7 +241,7 @@ export default function AdminCatalogueTab() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={fieldLabelStyle}>Product Name *</label>
-          <input
+          <HuntrInput
             name="name"
             required
             defaultValue={item?.name || ""}
@@ -249,27 +253,27 @@ export default function AdminCatalogueTab() {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={fieldLabelStyle}>Category</label>
           {item ? (
-            <input
+            <HuntrInput
               name="category"
               defaultValue={item?.category || ""}
               placeholder="Select or enter category..."
               style={fieldStyle}
             />
           ) : (
-            <select name="category" style={{ ...fieldStyle, cursor: "pointer" }}>
+            <HuntrSelect name="category" style={{ ...fieldStyle, cursor: "pointer" }}>
               <option value="">Select Category…</option>
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={fieldLabelStyle}>Brand (Optional)</label>
-          <input
+          <HuntrInput
             name="brand"
             placeholder="e.g. Bosch, Siemens"
             defaultValue={item?.brand || ""}
@@ -280,14 +284,14 @@ export default function AdminCatalogueTab() {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={fieldLabelStyle}>UOM *</label>
           {item ? (
-            <input
+            <HuntrInput
               name="uom"
               required
               defaultValue={item?.uom || "Pc"}
               style={fieldStyle}
             />
           ) : (
-            <select
+            <HuntrSelect
               name="uom"
               required
               defaultValue="Pc"
@@ -298,13 +302,13 @@ export default function AdminCatalogueTab() {
                   {u}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
           )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={fieldLabelStyle}>Keywords / Tags</label>
-          <input
+          <HuntrInput
             name="keywords"
             placeholder="e.g. pump, hydraulic, industrial"
             defaultValue={
@@ -329,7 +333,7 @@ export default function AdminCatalogueTab() {
           <label style={fieldLabelStyle}>
             {item ? "Replace Image (Optional)" : "Product Image (Optional)"}
           </label>
-          <input
+          <HuntrInput
             name="image"
             type="file"
             accept="image/*"
@@ -346,7 +350,7 @@ export default function AdminCatalogueTab() {
           }}
         >
           <label style={fieldLabelStyle}>Specifications (Optional)</label>
-          <textarea
+          <HuntrTextarea
             name="specifications"
             placeholder="Detailed description..."
             rows={4}
@@ -394,7 +398,7 @@ export default function AdminCatalogueTab() {
             {total.toLocaleString()} produk total
           </div>
         </div>
-        <button
+        <HuntrButton
           onClick={() => setShowAddModal(true)}
           style={{
             padding: "8px 16px",
@@ -409,7 +413,7 @@ export default function AdminCatalogueTab() {
           }}
         >
           Add Product
-        </button>
+        </HuntrButton>
       </div>
 
       {/* Toolbar */}
@@ -435,7 +439,7 @@ export default function AdminCatalogueTab() {
           }}
         >
           <Search size={14} color="var(--ui-text-muted)" />
-          <input
+          <HuntrInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari katalog…"
@@ -449,7 +453,7 @@ export default function AdminCatalogueTab() {
             }}
           />
           {search && (
-            <button
+            <HuntrButton
               onClick={() => setSearch("")}
               style={{
                 background: "none",
@@ -461,7 +465,7 @@ export default function AdminCatalogueTab() {
               }}
             >
               <X size={13} />
-            </button>
+            </HuntrButton>
           )}
         </div>
 
@@ -476,7 +480,7 @@ export default function AdminCatalogueTab() {
             Tampilkan
           </span>
           {[10, 20, 30, 50].map((n) => (
-            <button
+            <HuntrButton
               key={n}
               onClick={() => setPerPage(n)}
               style={{
@@ -496,7 +500,7 @@ export default function AdminCatalogueTab() {
               }}
             >
               {n}
-            </button>
+            </HuntrButton>
           ))}
         </div>
       </div>
@@ -524,7 +528,7 @@ export default function AdminCatalogueTab() {
             {selectedIds.length} produk terpilih
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button
+            <HuntrButton
               onClick={() => setSelectedIds([])}
               style={{
                 padding: "5px 12px",
@@ -538,8 +542,8 @@ export default function AdminCatalogueTab() {
               }}
             >
               Batal
-            </button>
-            <button
+            </HuntrButton>
+            <HuntrButton
               onClick={async () => {
                 const result = await Swal.fire({
                   icon: "question",
@@ -588,13 +592,13 @@ export default function AdminCatalogueTab() {
               }}
             >
               <Trash2 size={12} /> Hapus Terpilih
-            </button>
+            </HuntrButton>
           </div>
         </div>
       )}
 
       {/* Table */}
-      <div
+      <HuntrSurface
         style={{
           background: "var(--ui-bg-card)",
           border: "1px solid var(--ui-border)",
@@ -612,39 +616,39 @@ export default function AdminCatalogueTab() {
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th
+            <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
+              <HuntrTableHead>
+                <HuntrTableRow>
+                  <HuntrTableHeaderCell
                     style={{
                       ...thStyle,
                       width: 40,
                       textAlign: "center",
                     }}
                   >
-                    <input
+                    <HuntrInput
                       type="checkbox"
                       checked={allPageSelected}
                       onChange={toggleSelectAll}
                       style={{ cursor: "pointer", accentColor: "var(--ui-primary)" }}
                     />
-                  </th>
-                  <th style={{ ...thStyle, width: 52 }}>IMG</th>
-                  <th style={thStyle}>NAMA PRODUK</th>
-                  <th style={thStyle}>ITEM CODE</th>
-                  <th style={thStyle}>KATEGORI</th>
-                  <th style={thStyle}>VENDOR</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>HARGA</th>
-                  <th style={thStyle}>UOM</th>
-                  <th style={{ ...thStyle, textAlign: "center", width: 110 }}>
+                  </HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={{ ...thStyle, width: 52 }}>IMG</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>NAMA PRODUK</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>ITEM CODE</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>KATEGORI</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>VENDOR</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={{ ...thStyle, textAlign: "right" }}>HARGA</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={thStyle}>UOM</HuntrTableHeaderCell>
+                  <HuntrTableHeaderCell style={{ ...thStyle, textAlign: "center", width: 110 }}>
                     AKSI
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </HuntrTableHeaderCell>
+                </HuntrTableRow>
+              </HuntrTableHead>
+              <HuntrTableBody>
                 {catalogues.length === 0 ? (
-                  <tr>
-                    <td
+                  <HuntrTableRow>
+                    <HuntrTableCell
                       colSpan={9}
                       style={{
                         ...tdStyle,
@@ -654,13 +658,13 @@ export default function AdminCatalogueTab() {
                       }}
                     >
                       Tidak ada produk ditemukan
-                    </td>
-                  </tr>
+                    </HuntrTableCell>
+                  </HuntrTableRow>
                 ) : (
                   catalogues.map((item) => {
                     const isSelected = selectedIds.includes(String(item.id));
                     return (
-                      <tr
+                      <HuntrTableRow
                         key={item.id}
                         style={{
                           background: isSelected
@@ -669,10 +673,10 @@ export default function AdminCatalogueTab() {
                           transition: "background 0.1s",
                         }}
                       >
-                        <td
+                        <HuntrTableCell
                           style={{ ...tdStyle, textAlign: "center" }}
                         >
-                          <input
+                          <HuntrInput
                             type="checkbox"
                             checked={isSelected}
                             onChange={() =>
@@ -689,8 +693,8 @@ export default function AdminCatalogueTab() {
                               accentColor: "var(--ui-primary)",
                             }}
                           />
-                        </td>
-                        <td style={{ ...tdStyle, padding: "8px 10px" }}>
+                        </HuntrTableCell>
+                        <HuntrTableCell style={{ ...tdStyle, padding: "8px 10px" }}>
                           <div
                             style={{
                               width: 38,
@@ -715,8 +719,8 @@ export default function AdminCatalogueTab() {
                               />
                             )}
                           </div>
-                        </td>
-                        <td style={{ ...tdStyle, maxWidth: 220 }}>
+                        </HuntrTableCell>
+                        <HuntrTableCell style={{ ...tdStyle, maxWidth: 220 }}>
                           <div
                             style={{
                               fontWeight: 700,
@@ -728,8 +732,8 @@ export default function AdminCatalogueTab() {
                           >
                             {item.name}
                           </div>
-                        </td>
-                        <td
+                        </HuntrTableCell>
+                        <HuntrTableCell
                           style={{
                             ...tdStyle,
                             color: "var(--ui-text-muted)",
@@ -738,8 +742,8 @@ export default function AdminCatalogueTab() {
                           }}
                         >
                           {item.item_code || "—"}
-                        </td>
-                        <td style={tdStyle}>
+                        </HuntrTableCell>
+                        <HuntrTableCell style={tdStyle}>
                           {item.category ? (
                             <span
                               style={{
@@ -756,8 +760,8 @@ export default function AdminCatalogueTab() {
                           ) : (
                             "—"
                           )}
-                        </td>
-                        <td
+                        </HuntrTableCell>
+                        <HuntrTableCell
                           style={{
                             ...tdStyle,
                             color: "var(--ui-text-muted)",
@@ -774,8 +778,8 @@ export default function AdminCatalogueTab() {
                               Global
                             </span>
                           )}
-                        </td>
-                        <td
+                        </HuntrTableCell>
+                        <HuntrTableCell
                           style={{
                             ...tdStyle,
                             textAlign: "right",
@@ -785,8 +789,8 @@ export default function AdminCatalogueTab() {
                           }}
                         >
                           Rp {item.price?.toLocaleString() ?? "—"}
-                        </td>
-                        <td
+                        </HuntrTableCell>
+                        <HuntrTableCell
                           style={{
                             ...tdStyle,
                             fontSize: 12,
@@ -794,8 +798,8 @@ export default function AdminCatalogueTab() {
                           }}
                         >
                           {item.uom}
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: "center" }}>
+                        </HuntrTableCell>
+                        <HuntrTableCell style={{ ...tdStyle, textAlign: "center" }}>
                           <div
                             style={{
                               display: "flex",
@@ -803,7 +807,7 @@ export default function AdminCatalogueTab() {
                               justifyContent: "center",
                             }}
                           >
-                            <button
+                            <HuntrButton
                               onClick={() => setEditingItem(item)}
                               style={{
                                 padding: "5px 10px",
@@ -820,8 +824,8 @@ export default function AdminCatalogueTab() {
                               }}
                             >
                               <Pencil size={11} /> Edit
-                            </button>
-                            <button
+                            </HuntrButton>
+                            <HuntrButton
                               onClick={async () => {
                                 const result = await Swal.fire({
                                   icon: "question",
@@ -858,18 +862,18 @@ export default function AdminCatalogueTab() {
                               }}
                             >
                               <Trash2 size={11} /> Del
-                            </button>
+                            </HuntrButton>
                           </div>
-                        </td>
-                      </tr>
+                        </HuntrTableCell>
+                      </HuntrTableRow>
                     );
                   })
                 )}
-              </tbody>
-            </table>
+              </HuntrTableBody>
+            </HuntrTable>
           </div>
         )}
-      </div>
+      </HuntrSurface>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -887,7 +891,7 @@ export default function AdminCatalogueTab() {
             {total.toLocaleString()} produk
           </div>
           <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-            <button
+            <HuntrButton
               onClick={() =>
                 fetchCatalogues(Math.max(1, currentPage - 1))
               }
@@ -910,7 +914,7 @@ export default function AdminCatalogueTab() {
               }}
             >
               ← Prev
-            </button>
+            </HuntrButton>
             {buildPageList(currentPage, totalPages).map((p, i) =>
               p === "…" ? (
                 <span
@@ -924,7 +928,7 @@ export default function AdminCatalogueTab() {
                   …
                 </span>
               ) : (
-                <button
+                <HuntrButton
                   key={p}
                   onClick={() => fetchCatalogues(p as number)}
                   style={{
@@ -947,10 +951,10 @@ export default function AdminCatalogueTab() {
                   }}
                 >
                   {p}
-                </button>
+                </HuntrButton>
               )
             )}
-            <button
+            <HuntrButton
               onClick={() =>
                 fetchCatalogues(Math.min(totalPages, currentPage + 1))
               }
@@ -974,7 +978,7 @@ export default function AdminCatalogueTab() {
               }}
             >
               Next →
-            </button>
+            </HuntrButton>
           </div>
         </div>
       )}
@@ -988,7 +992,7 @@ export default function AdminCatalogueTab() {
           >
             {renderFormFields()}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--ui-border)" }}>
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setShowAddModal(false)}
                 style={{
@@ -1003,8 +1007,8 @@ export default function AdminCatalogueTab() {
                 }}
               >
                 Cancel
-              </button>
-              <button
+              </HuntrButton>
+              <HuntrButton
                 type="submit"
                 style={{
                   padding: "9px 18px",
@@ -1018,7 +1022,7 @@ export default function AdminCatalogueTab() {
                 }}
               >
                 Add Product
-              </button>
+              </HuntrButton>
             </div>
           </form>
         </SheetModal>
@@ -1036,7 +1040,7 @@ export default function AdminCatalogueTab() {
           >
             {renderFormFields(editingItem)}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--ui-border)" }}>
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setEditingItem(null)}
                 style={{
@@ -1051,8 +1055,8 @@ export default function AdminCatalogueTab() {
                 }}
               >
                 Cancel
-              </button>
-              <button
+              </HuntrButton>
+              <HuntrButton
                 type="submit"
                 style={{
                   padding: "9px 18px",
@@ -1066,7 +1070,7 @@ export default function AdminCatalogueTab() {
                 }}
               >
                 Save Changes
-              </button>
+              </HuntrButton>
             </div>
           </form>
         </SheetModal>

@@ -1,3 +1,4 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
 import React from "react";
 import { Package } from "lucide-react";
 import { getAssetUrl } from "~/lib/assets";
@@ -8,7 +9,7 @@ interface CompareRequestedItemsProps {
 
 export const CompareRequestedItems: React.FC<CompareRequestedItemsProps> = ({ items = [] }) => {
   return (
-    <div
+    <HuntrSurface
       style={{
         padding: 20,
         borderRadius: 16,
@@ -148,6 +149,6 @@ export const CompareRequestedItems: React.FC<CompareRequestedItemsProps> = ({ it
           );
         })}
       </div>
-    </div>
+    </HuntrSurface>
   );
 };

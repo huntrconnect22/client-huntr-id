@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useState } from "react";
 import { SubscriptionMonitor } from "./enterprise/SubscriptionMonitor";
 import { PricingSettings } from "./enterprise/PricingSettings";
@@ -22,14 +23,14 @@ export default function AdminSubscriptionTab() {
           ["monitor", "Monitoring"],
           ["pricing", "Konfigurasi paket"],
         ].map(([key, title]) => (
-          <button
+          <HuntrButton
             key={key}
             type="button"
             onClick={() => setSection(key as "monitor" | "pricing")}
             className={`border-b-2 px-1 pb-3 text-sm font-semibold ${section === key ? "border-orange-500 text-orange-500" : "border-transparent text-[var(--ui-text-muted)]"}`}
           >
             {title}
-          </button>
+          </HuntrButton>
         ))}
       </nav>
       {section === "monitor" ? <SubscriptionMonitor /> : <PricingSettings />}

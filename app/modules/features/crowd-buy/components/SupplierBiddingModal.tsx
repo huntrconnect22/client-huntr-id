@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Gavel, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
@@ -71,12 +73,12 @@ export const SupplierBiddingModal: React.FC<SupplierBiddingModalProps> = ({
               </p>
             </div>
           </div>
-          <button
+          <HuntrButton
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
-          </button>
+          </HuntrButton>
         </div>
 
         {/* Form Body */}
@@ -105,7 +107,7 @@ export const SupplierBiddingModal: React.FC<SupplierBiddingModalProps> = ({
             </label>
             <div className="relative">
               <span className="absolute left-3 top-2 text-xs text-slate-400 font-medium">Rp</span>
-              <input
+              <HuntrInput
                 type="number"
                 min="1"
                 required
@@ -121,7 +123,7 @@ export const SupplierBiddingModal: React.FC<SupplierBiddingModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 MOQ Penawaran ({campaign.unit})
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 min="1"
                 value={minOrderQty}
@@ -134,7 +136,7 @@ export const SupplierBiddingModal: React.FC<SupplierBiddingModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Lead Time (Hari)
               </label>
-              <input
+              <HuntrInput
                 type="number"
                 min="1"
                 value={leadTimeDays}
@@ -148,7 +150,7 @@ export const SupplierBiddingModal: React.FC<SupplierBiddingModalProps> = ({
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Catatan Penawaran / Spesifikasi Material
             </label>
-            <textarea
+            <HuntrTextarea
               rows={3}
               placeholder="Jelaskan spesifikasi material, kapasitas produksi, atau benefit penawaran Anda..."
               value={notes}
@@ -158,22 +160,22 @@ export const SupplierBiddingModal: React.FC<SupplierBiddingModalProps> = ({
           </div>
 
           <div className="flex items-center justify-end gap-2.5 pt-2">
-            <button
+            <HuntrButton
               type="button"
               onClick={onClose}
               className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Batal
-            </button>
+            </HuntrButton>
 
-            <button
+            <HuntrButton
               type="submit"
               disabled={isSubmitting}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-semibold text-xs transition-colors disabled:opacity-50"
             >
               {isSubmitting ? "Mengirimkan..." : "Kirim Penawaran"}
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </HuntrButton>
           </div>
         </form>
       </div>

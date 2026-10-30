@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { Bot, Loader2, CheckCircle2, AlertCircle, Globe, ChevronDown, ChevronUp, ExternalLink, Tag } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -94,7 +95,7 @@ export default function AgenticWorkflowSteps({
 
                 {/* Tombol expand sumber — hanya di step web_search */}
                 {isWebSearch && isDone && webSearchSources.length > 0 && (
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => setShowSources((v) => !v)}
                     className="mt-0.5 text-[9px] font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-0.5 transition-colors"
@@ -102,7 +103,7 @@ export default function AgenticWorkflowSteps({
                     <Globe size={9} />
                     {t("agentic.workflow.urlsVisited", { count: webSearchSources.length })}
                     {showSources ? <ChevronUp size={9} /> : <ChevronDown size={9} />}
-                  </button>
+                  </HuntrButton>
                 )}
               </div>
             );
@@ -122,13 +123,13 @@ export default function AgenticWorkflowSteps({
                 {t("agentic.workflow.urlCount", { count: webSearchSources.length })}
               </span>
             </span>
-            <button
+            <HuntrButton
               type="button"
               onClick={() => setShowSources(false)}
               className="text-[9px] text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] transition-colors"
             >
               {t("agentic.workflow.close")}
-            </button>
+            </HuntrButton>
           </div>
 
           {/* Brand recommendations */}

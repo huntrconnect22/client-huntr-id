@@ -1,4 +1,6 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import Swal from "sweetalert2";
 import {
   BarChart3,
@@ -8,7 +10,6 @@ import {
   Headphones,
   Mail,
   Plus,
-  RefreshCw,
   Sparkles,
   Target,
   UsersRound,
@@ -26,6 +27,7 @@ import { CrmInsights } from "./components/CrmInsights";
 import { CrmComposer } from "./components/CrmComposer";
 import {
   convertCrmLead,
+  decideCrmQuoteApproval,
   disconnectCrmWhatsAppSession,
   getCrmActivities,
   getCrmCampaigns,
@@ -38,6 +40,7 @@ import {
   getCrmForecast,
   getCrmIntegrations,
   getCrmKnowledge,
+  getCrmQuoteApprovers,
   getCrmLeads,
   getCrmQuotes,
   getCrmReports,
@@ -53,28 +56,40 @@ import {
   updateCrmLead,
 } from "~/lib/api/crm";
 
-const tabs: { key: Tab; label: string; icon: any; countKey?: string }[] = [
-  { key: "overview", label: "Overview", icon: BarChart3 },
-  { key: "leads", label: "Leads", icon: Target, countKey: "leads" },
-  { key: "pipeline", label: "Pipeline", icon: ContactRound, countKey: "deals" },
-  { key: "customers", label: "Customer 360", icon: UsersRound, countKey: "customers" },
-  { key: "tasks", label: "Tasks", icon: ClipboardList, countKey: "activities" },
-  { key: "helpdesk", label: "Helpdesk & Chat", icon: Headphones, countKey: "tickets" },
-  { key: "cpq", label: "CPQ & Quotes", icon: FileText, countKey: "quotes" },
-  { key: "automation", label: "Automation", icon: Zap, countKey: "workflows" },
-  { key: "insights", label: "Insights AI", icon: Sparkles },
-];
-
 export function CrmWorkspace({
   company,
 }: {
   company: { id: string; name?: string };
 }) {
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("overview");
   const [data, setData] = useState<Record<string, any>>({});
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [composer, setComposer] = useState<ComposerKind | null>(null);
+
+  const selectTab = useCallback(
+    (nextTab: Tab) => {
+      navigate(nextTab === "overview" ? pathname : `${pathname}?tab=${nextTab}`);
+    },
+    [navigate, pathname],
+  );
+
+  useEffect(() => {
+    const tabByQuery: Record<string, Tab> = {
+      leads: "leads",
+      pipeline: "pipeline",
+      customers: "customers",
+      tasks: "tasks",
+      helpdesk: "helpdesk",
+      cpq: "cpq",
+      automation: "automation",
+      insights: "insights",
+    };
+    const requestedTab = new URLSearchParams(search).get("tab");
+    setTab(requestedTab ? (tabByQuery[requestedTab] ?? "overview") : "overview");
+  }, [search]);
 
   const refresh = useCallback(async () => {
     setBusy(true);
@@ -162,15 +177,18 @@ export function CrmWorkspace({
     }
   }, [company.id]);
 
+  const whatsAppIntegration = (data.integrations ?? []).find(
+    (item: RecordRow) => item.provider === "whatsapp_web",
+  ) as RecordRow | undefined;
+  const hasWhatsAppIntegration = Boolean(whatsAppIntegration);
+  const whatsAppStatus = whatsAppIntegration?.status;
+
   useEffect(() => {
-    const whatsApp = (data.integrations ?? []).find(
-      (item: RecordRow) => item.provider === "whatsapp_web",
-    );
     if (
       tab !== "automation" ||
-      !whatsApp ||
+      !hasWhatsAppIntegration ||
       ["connected", "auth_failed", "error", "disconnected"].includes(
-        whatsApp.status,
+        whatsAppStatus,
       )
     ) {
       return;
@@ -180,14 +198,28 @@ export function CrmWorkspace({
       try {
         const { session } = await getCrmWhatsAppSession(company.id);
         if (!active || !session) return;
-        setData((previous) => ({
-          ...previous,
-          integrations: (previous.integrations ?? []).map((item: RecordRow) =>
-            item.provider === "whatsapp_web"
-              ? { ...item, status: session.status, settings: session }
-              : item,
-          ),
-        }));
+        setData((previous) => {
+          const currentIntegration = (previous.integrations ?? []).find(
+            (item: RecordRow) => item.provider === "whatsapp_web",
+          ) as RecordRow | undefined;
+          const currentSettings = currentIntegration?.settings ?? {};
+          const sessionIsUnchanged =
+            currentIntegration?.status === session.status &&
+            currentSettings.qr === session.qr &&
+            currentSettings.phone_number === session.phone_number &&
+            currentSettings.error === session.error;
+
+          if (sessionIsUnchanged) return previous;
+
+          return {
+            ...previous,
+            integrations: (previous.integrations ?? []).map((item: RecordRow) =>
+              item.provider === "whatsapp_web"
+                ? { ...item, status: session.status, settings: session }
+                : item,
+            ),
+          };
+        });
       } catch {
         // The initial connection remains visible; the next manual refresh shows server errors.
       }
@@ -198,7 +230,7 @@ export function CrmWorkspace({
       active = false;
       window.clearInterval(timer);
     };
-  }, [company.id, data.integrations, tab]);
+  }, [company.id, hasWhatsAppIntegration, tab, whatsAppStatus]);
 
   const current = useMemo(
     () => ({
@@ -313,11 +345,79 @@ export function CrmWorkspace({
 
   const requestQuoteApproval = async (row: RecordRow) => {
     try {
-      await requestCrmQuoteApproval(company.id, row.id);
+      const response = await getCrmQuoteApprovers(company.id);
+      const approvers = Array.isArray(response?.approvers) ? response.approvers : [];
+
+      if (approvers.length === 0) {
+        await Swal.fire({
+          icon: "info",
+          title: "Belum ada approver quote",
+          text: "Minta admin workspace memberikan izin “Approve CRM quotes” kepada anggota tim yang akan menyetujui quotation.",
+        });
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: "Ajukan approval quote",
+        text: `Pilih anggota tim yang akan menyetujui ${row.number || "quotation ini"}.`,
+        input: "select",
+        inputOptions: Object.fromEntries(
+          approvers.map((approver: RecordRow) => [
+            approver.id,
+            approver.email
+              ? `${approver.name || "Tanpa nama"} — ${approver.email}`
+              : approver.name || "Tanpa nama",
+          ]),
+        ),
+        inputPlaceholder: "Pilih approver",
+        showCancelButton: true,
+        confirmButtonText: "Assign & ajukan",
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#f97316",
+        inputValidator: (value) =>
+          value ? undefined : "Pilih approver terlebih dahulu.",
+      });
+      if (!result.isConfirmed || !result.value) return;
+
+      await requestCrmQuoteApproval(company.id, row.id, {
+        approver_id: result.value,
+      });
       await refresh();
       Swal.fire({
         icon: "success",
         title: "Approval diajukan",
+        text: "Approver telah ditugaskan untuk meninjau quote ini.",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+    } catch (e: any) {
+      Swal.fire({ icon: "error", title: "Gagal", text: e.message });
+    }
+  };
+
+  const decideQuoteApproval = async (row: RecordRow) => {
+    const result = await Swal.fire({
+      icon: "question",
+      title: "Tinjau quote",
+      text: `Setujui atau tolak ${row.number || "quotation ini"}.`,
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "Setujui",
+      denyButtonText: "Tolak",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#16a34a",
+      denyButtonColor: "#dc2626",
+    });
+    if (!result.isConfirmed && !result.isDenied) return;
+
+    try {
+      await decideCrmQuoteApproval(company.id, row.id, row.pending_approval_id, {
+        decision: result.isConfirmed ? "approved" : "rejected",
+      });
+      await refresh();
+      Swal.fire({
+        icon: "success",
+        title: result.isConfirmed ? "Quote disetujui" : "Quote ditolak",
         timer: 1200,
         showConfirmButton: false,
       });
@@ -377,7 +477,7 @@ export function CrmWorkspace({
 
   return (
     <div className="space-y-5">
-      {/* ── Top Hero & Workspace Navigation ─────────────────────────── */}
+      {/* ── CRM workspace header ───────────────────────────────────── */}
       <section className={`${card} overflow-hidden`}>
         <div className="border-b border-[var(--ui-border)] bg-gradient-to-r from-orange-500/10 via-transparent to-amber-500/5 p-4 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -423,18 +523,18 @@ export function CrmWorkspace({
               </div>
 
               {/* Connect Email (Height h-9) */}
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setComposer("email")}
                 className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] px-3.5 text-xs font-semibold text-[var(--ui-text-primary)] transition-all hover:border-orange-500/50 hover:text-orange-500"
               >
                 <Mail size={14} className="text-orange-500" />
                 <span>Connect Email</span>
-              </button>
+              </HuntrButton>
 
               {/* Contextual Action Button (Height h-9) */}
               {createMap[tab] && (
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setComposer(createMap[tab] ?? "lead")}
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-orange-500 px-3.5 text-xs font-bold text-white shadow-sm shadow-orange-500/20 transition-all hover:bg-orange-600"
@@ -449,58 +549,10 @@ export function CrmWorkspace({
                     {tab === "cpq" && "Buat Quote"}
                     {tab === "automation" && "Buat Workflow"}
                   </span>
-                </button>
+                </HuntrButton>
               )}
-
-              {/* Refresh Button (Height h-9 w-9) */}
-              <button
-                type="button"
-                onClick={refresh}
-                disabled={busy}
-                title="Refresh data CRM"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] text-[var(--ui-text-muted)] transition-all hover:border-orange-500/50 hover:text-orange-500 disabled:opacity-50"
-              >
-                <RefreshCw size={14} className={busy ? "animate-spin text-orange-500" : ""} />
-              </button>
             </div>
           </div>
-        </div>
-
-        {/* ── Segmented Navigation Tabs ──────────────────────────────── */}
-        <div className="flex gap-1.5 overflow-x-auto p-2 scrollbar-none">
-          {tabs.map(({ key, label, icon: Icon, countKey }) => {
-            const isActive = tab === key;
-            const count =
-              countKey && (current as Record<string, any>)[countKey]
-                ? (current as Record<string, any>)[countKey].length
-                : null;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTab(key)}
-                className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-xs font-semibold transition-all ${
-                  isActive
-                    ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
-                    : "text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)]"
-                }`}
-              >
-                <Icon size={15} />
-                <span>{label}</span>
-                {count != null && count > 0 && (
-                  <span
-                    className={`ml-0.5 rounded-md px-1.5 py-0.2 text-[10px] font-bold ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)]"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
         </div>
       </section>
 
@@ -518,12 +570,13 @@ export function CrmWorkspace({
           onCompleteTask={markTask}
           onCompose={setComposer}
           onRequestQuoteApproval={requestQuoteApproval}
+          onDecideQuoteApproval={decideQuoteApproval}
           onScheduleLeadFollowUp={scheduleLeadFollowUp}
           onDisconnectWhatsApp={disconnectWhatsApp}
           onSyncEmailInbox={syncEmailInbox}
           onRefreshInbox={refreshInbox}
           onOpenAutomation={() => {
-            setTab("automation");
+            selectTab("automation");
             void refresh();
           }}
         />
@@ -558,6 +611,7 @@ function CrmTabContent({
   onCompleteTask,
   onCompose,
   onRequestQuoteApproval,
+  onDecideQuoteApproval,
   onScheduleLeadFollowUp,
   onDisconnectWhatsApp,
   onSyncEmailInbox,
@@ -573,6 +627,7 @@ function CrmTabContent({
   onCompleteTask: (row: RecordRow) => void;
   onCompose: (kind: ComposerKind) => void;
   onRequestQuoteApproval: (row: RecordRow) => void;
+  onDecideQuoteApproval: (row: RecordRow) => void;
   onScheduleLeadFollowUp: (row: RecordRow) => void;
   onDisconnectWhatsApp: () => void;
   onSyncEmailInbox: () => void;
@@ -701,8 +756,9 @@ function CrmTabContent({
         "discount_amount",
         "total_amount",
       ],
-      action: onRequestQuoteApproval,
-      actionLabel: "Ajukan approval",
+      action: (row) => row.pending_approval_id ? onDecideQuoteApproval(row) : onRequestQuoteApproval(row),
+      actionLabel: (row) => row.pending_approval_id ? "Tinjau approval" : "Ajukan approval",
+      canAction: (row) => Boolean(row.pending_approval_id) || ["draft", "rejected"].includes(String(row.status)),
     },
   };
 

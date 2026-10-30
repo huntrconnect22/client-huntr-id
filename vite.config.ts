@@ -7,6 +7,8 @@ export default defineConfig(({ mode }) => {
   const backendUrl = env.VITE_API_URL || "http://localhost:8000";
 
   return {
+    // Isolate this version of Vite's prebundle from the prior React cache.
+    cacheDir: "node_modules/.vite-huntr",
     plugins: [tailwindcss(), reactRouter()],
     resolve: {
       tsconfigPaths: true,
@@ -21,6 +23,9 @@ export default defineConfig(({ mode }) => {
         "sweetalert2",
         "recharts",
         "xlsx",
+        "@emotion/react",
+        "@emotion/styled",
+        "@mui/material",
       ],
     },
     server: {

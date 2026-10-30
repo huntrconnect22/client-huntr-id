@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useCallback, useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { AlertTriangle, Headphones, MessageSquare, Send } from "lucide-react";
@@ -170,7 +172,7 @@ export function CrmHelpdesk({
                 conversations.map((item) => {
                   const isCurrent = selectedId === item.id;
                   return (
-                    <button
+                    <HuntrButton
                       key={item.id}
                       type="button"
                       onClick={() => setSelectedId(item.id)}
@@ -201,7 +203,7 @@ export function CrmHelpdesk({
                           {item.channel}
                         </span>
                       </div>
-                    </button>
+                    </HuntrButton>
                   );
                 })
               ) : (
@@ -244,13 +246,13 @@ export function CrmHelpdesk({
                       <AlertTriangle size={15} className="shrink-0" />
                       <span>WhatsApp belum siap untuk mengirim pesan.</span>
                     </div>
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={onOpenAutomation}
                       className="shrink-0 font-semibold underline underline-offset-2"
                     >
                       Buka Automation
-                    </button>
+                    </HuntrButton>
                   </div>
                 )}
 
@@ -316,7 +318,7 @@ export function CrmHelpdesk({
                 {/* Reply Composer */}
                 <div className="border-t border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-3 shrink-0">
                   <div className="flex gap-2">
-                    <textarea
+                    <HuntrTextarea
                       value={reply}
                       onChange={(event) => setReply(event.target.value)}
                       placeholder={
@@ -328,7 +330,7 @@ export function CrmHelpdesk({
                       disabled={needsWhatsAppConnection}
                       className={`${input} resize-none`}
                     />
-                    <button
+                    <HuntrButton
                       type="button"
                       disabled={
                         sending ||
@@ -344,7 +346,7 @@ export function CrmHelpdesk({
                         className={sending ? "animate-pulse" : ""}
                       />
                       <span>{sending ? "Kirim…" : "Kirim"}</span>
-                    </button>
+                    </HuntrButton>
                   </div>
                 </div>
               </>

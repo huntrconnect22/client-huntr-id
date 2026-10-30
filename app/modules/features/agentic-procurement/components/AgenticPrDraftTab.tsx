@@ -1,3 +1,6 @@
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useRef } from "react";
 import {
   Building,
@@ -282,33 +285,33 @@ export default function AgenticPrDraftTab({
             </span>
 
             <div className="hidden sm:block overflow-x-auto rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-[var(--ui-bg-input)] border-b border-[var(--ui-border)] text-[var(--ui-text-muted)] font-semibold">
-                    <th className="px-3 py-2">
+              <HuntrTable className="w-full text-left text-xs border-collapse">
+                <HuntrTableHead>
+                  <HuntrTableRow className="bg-[var(--ui-bg-input)] border-b border-[var(--ui-border)] text-[var(--ui-text-muted)] font-semibold">
+                    <HuntrTableHeaderCell className="px-3 py-2">
                       {t("agentic.prDraft.tableHeaders.itemSpec")}
-                    </th>
-                    <th className="px-3 py-2">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-3 py-2">
                       {t("agentic.prDraft.tableHeaders.brand")}
-                    </th>
-                    <th className="px-3 py-2 text-center">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-3 py-2 text-center">
                       {t("agentic.prDraft.tableHeaders.qty")}
-                    </th>
-                    <th className="px-3 py-2 text-right">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-3 py-2 text-right">
                       {t("agentic.prDraft.tableHeaders.unitPrice")}
-                    </th>
-                    <th className="px-3 py-2 text-right">
+                    </HuntrTableHeaderCell>
+                    <HuntrTableHeaderCell className="px-3 py-2 text-right">
                       {t("agentic.prDraft.tableHeaders.subtotal")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--ui-border)]">
+                    </HuntrTableHeaderCell>
+                  </HuntrTableRow>
+                </HuntrTableHead>
+                <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
                   {!prDraft.suggested_items?.length && (
-                    <tr>
-                      <td colSpan={5} className="px-3 py-8 text-center text-[var(--ui-text-muted)]">
+                    <HuntrTableRow>
+                      <HuntrTableCell colSpan={5} className="px-3 py-8 text-center text-[var(--ui-text-muted)]">
                         Belum ada item dengan referensi harga yang dapat dimasukkan ke draft PR.
-                      </td>
-                    </tr>
+                      </HuntrTableCell>
+                    </HuntrTableRow>
                   )}
                   {prDraft.suggested_items?.map((item: any, idx: number) => {
                     const price = item.estimated_price || 0;
@@ -330,11 +333,11 @@ export default function AgenticPrDraftTab({
                       .slice(0, 10);
 
                     return (
-                      <tr
+                      <HuntrTableRow
                         key={idx}
                         className="hover:bg-[var(--ui-bg-input)]/50 transition-colors"
                       >
-                        <td className="px-3 py-2.5 max-w-xs">
+                        <HuntrTableCell className="px-3 py-2.5 max-w-xs">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="font-semibold text-[var(--ui-text-primary)]">
                               {item.name}
@@ -394,9 +397,9 @@ export default function AgenticPrDraftTab({
                               )}
                             </div>
                           )}
-                        </td>
+                        </HuntrTableCell>
 
-                        <td className="px-3 py-2.5 min-w-[100px]">
+                        <HuntrTableCell className="px-3 py-2.5 min-w-[100px]">
                           {brand ? (
                             <span className="flex items-center gap-1 text-[11px] font-medium text-[var(--ui-text-secondary)]">
                               <Tag
@@ -410,11 +413,11 @@ export default function AgenticPrDraftTab({
                               —
                             </span>
                           )}
-                        </td>
+                        </HuntrTableCell>
 
-                        <td className="px-3 py-2.5 text-center font-medium text-[var(--ui-text-primary)] whitespace-nowrap">
+                        <HuntrTableCell className="px-3 py-2.5 text-center font-medium text-[var(--ui-text-primary)] whitespace-nowrap">
                           <div className="inline-flex items-center justify-center gap-1.5">
-                            <input
+                            <HuntrInput
                               type="number"
                               min={1}
                               step={1}
@@ -436,8 +439,8 @@ export default function AgenticPrDraftTab({
                               {item.uom || t("agentic.itemGenericUom")}
                             </span>
                           </div>
-                        </td>
-                        <td className="px-3 py-2.5 text-right font-mono text-[var(--ui-text-secondary)] whitespace-nowrap">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-3 py-2.5 text-right font-mono text-[var(--ui-text-secondary)] whitespace-nowrap">
                           {price > 0 ? (
                             formatRupiah(price)
                           ) : (
@@ -445,8 +448,8 @@ export default function AgenticPrDraftTab({
                               {t("agentic.prDraft.statusBadge.rfqRequired")}
                             </span>
                           )}
-                        </td>
-                        <td className="px-3 py-2.5 text-right font-mono font-bold text-orange-400 whitespace-nowrap">
+                        </HuntrTableCell>
+                        <HuntrTableCell className="px-3 py-2.5 text-right font-mono font-bold text-orange-400 whitespace-nowrap">
                           {price > 0 ? (
                             formatRupiah(subtotal)
                           ) : (
@@ -454,17 +457,17 @@ export default function AgenticPrDraftTab({
                               {t("agentic.prDraft.statusBadge.rfqRequired")}
                             </span>
                           )}
-                        </td>
-                      </tr>
+                        </HuntrTableCell>
+                      </HuntrTableRow>
                     );
                   })}
-                </tbody>
+                </HuntrTableBody>
                 <tfoot>
-                  <tr className="bg-[var(--ui-bg-input)] font-bold text-[var(--ui-text-primary)]">
-                    <td colSpan={4} className="px-3 py-2 text-right">
+                  <HuntrTableRow className="bg-[var(--ui-bg-input)] font-bold text-[var(--ui-text-primary)]">
+                    <HuntrTableCell colSpan={4} className="px-3 py-2 text-right">
                       {t("agentic.prDraft.totalBudget")}:
-                    </td>
-                    <td className="px-3 py-2 text-right font-mono text-xs text-orange-400">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="px-3 py-2 text-right font-mono text-xs text-orange-400">
                       {totalBudget > 0 ? (
                         formatRupiah(totalBudget)
                       ) : (
@@ -472,10 +475,10 @@ export default function AgenticPrDraftTab({
                           {t("agentic.prDraft.needVendorOffer")}
                         </span>
                       )}
-                    </td>
-                  </tr>
+                    </HuntrTableCell>
+                  </HuntrTableRow>
                 </tfoot>
-              </table>
+              </HuntrTable>
             </div>
 
             {/* Mobile Cards */}
@@ -509,7 +512,7 @@ export default function AgenticPrDraftTab({
                         {item.name}
                       </div>
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 flex-shrink-0">
-                        <input
+                        <HuntrInput
                           type="number"
                           min={1}
                           step={1}
@@ -613,7 +616,7 @@ export default function AgenticPrDraftTab({
             {t("agentic.prDraft.deptLabel")}
           </span>
           <div className="relative">
-            <select
+            <HuntrSelect
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
               className="w-full appearance-none bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded-md px-3 py-2 text-xs text-[var(--ui-text-primary)] pr-7 focus:outline-none focus:border-orange-400 transition-colors cursor-pointer"
@@ -623,7 +626,7 @@ export default function AgenticPrDraftTab({
                   {d}
                 </option>
               ))}
-            </select>
+            </HuntrSelect>
             <ChevronDown
               size={12}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] pointer-events-none"
@@ -639,7 +642,7 @@ export default function AgenticPrDraftTab({
           </span>
           <div className="grid grid-cols-4 gap-1.5">
             {TENDER_DAYS.map((d) => (
-              <button
+              <HuntrButton
                 key={d}
                 type="button"
                 onClick={() => setTenderDays(d)}
@@ -651,7 +654,7 @@ export default function AgenticPrDraftTab({
                 }
               >
                 {t("agentic.prDraft.tenderDayShorthand", { days: d })}
-              </button>
+              </HuntrButton>
             ))}
           </div>
           <p className="text-[10px] text-[var(--ui-text-muted)]">
@@ -699,7 +702,7 @@ export default function AgenticPrDraftTab({
                 current: attachments.length,
               })}
             </p>
-            <input
+            <HuntrInput
               ref={fileInputRef}
               type="file"
               multiple
@@ -725,7 +728,7 @@ export default function AgenticPrDraftTab({
                   <span className="text-[var(--ui-text-muted)] flex-shrink-0">
                     {formatFileSize(f.size)}
                   </span>
-                  <button
+                  <HuntrButton
                     type="button"
                     onClick={() => removeFile(i)}
                     className="text-[var(--ui-text-muted)] hover:text-red-400 transition-colors flex-shrink-0 cursor-pointer"
@@ -734,7 +737,7 @@ export default function AgenticPrDraftTab({
                     <span className="sr-only">
                       {t("agentic.prDraft.removeFile")}
                     </span>
-                  </button>
+                  </HuntrButton>
                 </div>
               ))}
             </div>
@@ -776,7 +779,7 @@ export default function AgenticPrDraftTab({
                 <label className="text-[var(--ui-text-muted)]">
                   Receiving warehouse
                 </label>
-                <select
+                <HuntrSelect
                   value={warehouseId}
                   onChange={(event) => setWarehouseId(event.target.value)}
                   className="w-full rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1.5 text-xs text-[var(--ui-text-primary)]"
@@ -789,7 +792,7 @@ export default function AgenticPrDraftTab({
                         {warehouse.name} · {warehouse.code}
                       </option>
                     ))}
-                </select>
+                </HuntrSelect>
                 <span className="text-[10px] text-[var(--ui-text-muted)]">
                   Goods Receipt will be recorded in this warehouse.
                 </span>
@@ -842,7 +845,7 @@ export default function AgenticPrDraftTab({
               </span>
             </div>
           </div>
-          <button
+          <HuntrButton
             onClick={() =>
               onCreatePr({ department, tenderDays, attachments, warehouseId })
             }
@@ -860,7 +863,7 @@ export default function AgenticPrDraftTab({
                 <span>{t("agentic.prDraft.actions.createNow")}</span>
               </>
             )}
-          </button>
+          </HuntrButton>
         </div>
       </div>
     </div>

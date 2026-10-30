@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { type SignatureMeta, buildSignatureQrPayload } from "../types";
@@ -77,7 +78,7 @@ export const SignatureButtons = ({
           />
         </div>
       ) : (
-        <button
+        <HuntrButton
           onClick={() => onSign(docType, docId, role)}
           disabled={processingId === docId || !isYourParty || !isManager}
           style={{
@@ -95,7 +96,7 @@ export const SignatureButtons = ({
           }}
         >
           {processingId === docId ? <Loader2 size={14} className="animate-spin" /> : (isYourParty && isManager ? "Sign" : "-")}
-        </button>
+        </HuntrButton>
       )}
     </div>
   );

@@ -1,3 +1,5 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useRef, useState, useEffect } from "react";
 import { Languages } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
@@ -10,9 +12,11 @@ import { LOCALE_LABELS, type Locale } from "~/modules/shared/i18n";
 export function LanguageSwitcher({
   buttonStyle,
   className,
+  compact = false,
 }: {
   buttonStyle?: React.CSSProperties;
   className?: string;
+  compact?: boolean;
 } = {}) {
   const { locale, setLocale } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -38,7 +42,7 @@ export function LanguageSwitcher({
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button
+      <HuntrButton
         type="button"
         id="language-switcher-btn"
         aria-haspopup="listbox"
@@ -65,12 +69,12 @@ export function LanguageSwitcher({
           ...buttonStyle,
         }}
       >
-        <Languages size={14} />
-        <span style={{ textTransform: "uppercase" }}>{locale}</span>
-      </button>
+        <Languages size={compact ? 20 : 14} />
+        {!compact && <span style={{ textTransform: "uppercase" }}>{locale}</span>}
+      </HuntrButton>
 
       {open && (
-        <div
+        <HuntrSurface
           role="listbox"
           aria-label="Select language"
           style={{
@@ -91,7 +95,7 @@ export function LanguageSwitcher({
         >
           {(Object.entries(LOCALE_LABELS) as [Locale, string][]).map(
             ([code, label]) => (
-              <button
+              <HuntrButton
                 key={code}
                 role="option"
                 aria-selected={locale === code}
@@ -138,10 +142,10 @@ export function LanguageSwitcher({
                     }}
                   />
                 )}
-              </button>
+              </HuntrButton>
             )
           )}
-        </div>
+        </HuntrSurface>
       )}
     </div>
   );

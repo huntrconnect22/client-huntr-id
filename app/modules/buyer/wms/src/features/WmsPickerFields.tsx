@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import { ChevronRight, Search, Warehouse } from "lucide-react";
 import type { PickerItem } from "../components/GenericPickerModal";
 import type { StockPickerItem } from "../components/StockPickerModal";
@@ -26,7 +28,7 @@ export function PickerBrowseButton({
   return (
     <div className="space-y-1">
       <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">{label}</div>
-      <button type="button" className={browseButtonClass} onClick={onClick}>
+      <HuntrButton type="button" className={browseButtonClass} onClick={onClick}>
         {selected ? (
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
@@ -56,7 +58,7 @@ export function PickerBrowseButton({
         ) : (
           <div className="flex items-center justify-between gap-2 text-[var(--ui-text-muted)]"><span>{placeholder}</span><Search size={15} /></div>
         )}
-      </button>
+      </HuntrButton>
       {selected && (
         <div className="mt-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/50 px-3 py-2">
           {"sku" in selected ? (
@@ -96,8 +98,8 @@ export function CatalogueSkuInput({
     <div className="space-y-1">
       <div className="text-xs font-semibold text-[var(--ui-text-secondary)]">{label}</div>
       <div className="flex gap-2">
-        <input className={`${inputClass} min-w-0 flex-1`} placeholder={placeholder} value={value} onChange={(event) => onValueChange(event.target.value)} />
-        <button type="button" onClick={onBrowse} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)]/40"><Search size={15} className="text-[var(--ui-text-muted)]" />Browse</button>
+        <HuntrInput className={`${inputClass} min-w-0 flex-1`} placeholder={placeholder} value={value} onChange={(event) => onValueChange(event.target.value)} />
+        <HuntrButton type="button" onClick={onBrowse} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm font-semibold text-[var(--ui-text-primary)] transition-colors hover:border-[var(--ui-text-brand)]/40"><Search size={15} className="text-[var(--ui-text-muted)]" />Browse</HuntrButton>
       </div>
       {helperText && <p className="text-[11px] text-[var(--ui-text-muted)]">{helperText}</p>}
     </div>

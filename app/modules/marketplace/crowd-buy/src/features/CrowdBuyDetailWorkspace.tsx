@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
@@ -184,12 +185,12 @@ export default function CrowdBuyDetailPage() {
                     {campaign.code}
                   </span>
                 </div>
-                <button
+                <HuntrButton
                   onClick={handleShare}
                   className="px-2.5 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60 font-semibold rounded-md transition-colors flex items-center gap-1.5 text-xs"
                 >
                   <Share2 className="w-3.5 h-3.5" /> Undang / Bagikan
-                </button>
+                </HuntrButton>
               </div>
 
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
@@ -358,13 +359,13 @@ export default function CrowdBuyDetailPage() {
                     Penawaran Supplier Terdaftar ({campaign.bids?.length || 0})
                   </h3>
                   {isVendorView && campaign.status === "bidding" && (
-                    <button
+                    <HuntrButton
                       onClick={() => setIsBiddingModalOpen(true)}
                       className="py-1 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-md shadow-xs transition-colors flex items-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Ajukan Penawaran</span>
-                    </button>
+                    </HuntrButton>
                   )}
                 </div>
 
@@ -410,12 +411,12 @@ export default function CrowdBuyDetailPage() {
                         </div>
 
                         {campaign.status === "bidding" && bid.status === "pending" && (
-                          <button
+                          <HuntrButton
                             onClick={() => handleAcceptBid(bid.id)}
                             className="py-1 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold text-xs transition-colors shrink-0 self-start sm:self-auto"
                           >
                             Terima Penawaran
-                          </button>
+                          </HuntrButton>
                         )}
                       </div>
                     ))}
@@ -475,33 +476,33 @@ export default function CrowdBuyDetailPage() {
 
               if (campaign.is_active) {
                 return (
-                  <button
+                  <HuntrButton
                     onClick={() => setIsOrderModalOpen(true)}
                     className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
                   >
                     <span>{isAutoDemand ? "Ikut Komitmen Pengadaan Bulanan" : "Gabung Crowd Buy Sekarang"}</span>
-                  </button>
+                  </HuntrButton>
                 );
               }
 
               if (campaign.status === "bidding") {
                 return (
                   <div className="space-y-2">
-                    <button
+                    <HuntrButton
                       onClick={() => setIsOrderModalOpen(true)}
                       className="w-full py-2.5 px-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
                     >
                       <span>Ikut Gabung Pool Kebutuhan</span>
-                    </button>
+                    </HuntrButton>
 
                     {isVendorView && (
-                      <button
+                      <HuntrButton
                         onClick={() => setIsBiddingModalOpen(true)}
                         className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-md font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
                       >
                         <Gavel className="w-3.5 h-3.5" />
                         <span>Ajukan Penawaran Supplier</span>
-                      </button>
+                      </HuntrButton>
                     )}
                   </div>
                 );
@@ -514,13 +515,13 @@ export default function CrowdBuyDetailPage() {
               );
             })()}
 
-            <button
+            <HuntrButton
               onClick={handleShare}
               className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-md font-medium text-xs transition-colors flex items-center justify-center gap-1.5"
             >
               <Share2 className="w-3.5 h-3.5 text-orange-500" />
               <span>Undang Rekan Buyer (Share Link)</span>
-            </button>
+            </HuntrButton>
 
             <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 space-y-1">
               <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold">

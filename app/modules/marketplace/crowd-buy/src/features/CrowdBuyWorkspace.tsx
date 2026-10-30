@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
@@ -246,13 +248,13 @@ export default function CrowdBuyPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <button
+            <HuntrButton
               onClick={() => setIsBuyerModalOpen(true)}
               className="py-2 px-3.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Mulai Inisiasi Group Buy</span>
-            </button>
+            </HuntrButton>
           </div>
         </div>
       </div>
@@ -260,7 +262,7 @@ export default function CrowdBuyPage() {
       {/* Navigation Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-slate-800 gap-2">
         <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
-          <button
+          <HuntrButton
             onClick={() => setActiveTab("catalog")}
             className={`py-2.5 px-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === "catalog"
@@ -270,9 +272,9 @@ export default function CrowdBuyPage() {
           >
             <Package className="w-4 h-4" />
             <span>Katalog Campaign</span>
-          </button>
+          </HuntrButton>
 
-          <button
+          <HuntrButton
             onClick={() => setActiveTab("initiatives")}
             className={`py-2.5 px-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === "initiatives"
@@ -287,9 +289,9 @@ export default function CrowdBuyPage() {
                 {myInitiatives.length}
               </span>
             )}
-          </button>
+          </HuntrButton>
 
-          <button
+          <HuntrButton
             onClick={() => setActiveTab("my-orders")}
             className={`py-2.5 px-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === "my-orders"
@@ -304,10 +306,10 @@ export default function CrowdBuyPage() {
                 {myOrders.length}
               </span>
             )}
-          </button>
+          </HuntrButton>
 
           {isVendorView && (
-            <button
+            <HuntrButton
               onClick={() => setActiveTab("supplier")}
               className={`py-2.5 px-3 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
                 activeTab === "supplier"
@@ -317,13 +319,13 @@ export default function CrowdBuyPage() {
             >
               <Building2 className="w-4 h-4" />
               <span>Kelola Campaign (Supplier)</span>
-            </button>
+            </HuntrButton>
           )}
         </div>
 
         <div className="flex items-center gap-2 pb-2 sm:pb-0">
           {activeTab === "supplier" && (
-            <button
+            <HuntrButton
               onClick={() => {
                 setEditingCampaign(null);
                 setIsSupplierModalOpen(true);
@@ -332,7 +334,7 @@ export default function CrowdBuyPage() {
             >
               <Plus className="w-4 h-4" />
               <span>Buat Promo Supplier</span>
-            </button>
+            </HuntrButton>
           )}
         </div>
       </div>
@@ -345,7 +347,7 @@ export default function CrowdBuyPage() {
             {/* Search */}
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
+              <HuntrInput
                 type="text"
                 placeholder="Cari produk / bahan baku..."
                 value={searchQuery}
@@ -357,7 +359,7 @@ export default function CrowdBuyPage() {
 
             {/* Category Select & Sort */}
             <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-              <select
+              <HuntrSelect
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="text-xs py-1.5 px-3 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500"
@@ -366,9 +368,9 @@ export default function CrowdBuyPage() {
                 {categories.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
-              </select>
+              </HuntrSelect>
 
-              <select
+              <HuntrSelect
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="text-xs py-1.5 px-3 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-orange-500"
@@ -378,7 +380,7 @@ export default function CrowdBuyPage() {
                 <option value="price_low_high">Harga Terendah</option>
                 <option value="price_high_low">Harga Tertinggi</option>
                 <option value="newest">Terbaru</option>
-              </select>
+              </HuntrSelect>
             </div>
           </div>
 
@@ -391,7 +393,7 @@ export default function CrowdBuyPage() {
               { id: "buyer_catalog", label: "Group Buy Buyer" },
               { id: "collective_rfq", label: "Collective RFQ (Lelang)" },
             ].map((t) => (
-              <button
+              <HuntrButton
                 key={t.id}
                 onClick={() => setCampaignTypeFilter(t.id)}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 ${
@@ -401,7 +403,7 @@ export default function CrowdBuyPage() {
                 }`}
               >
                 {t.label}
-              </button>
+              </HuntrButton>
             ))}
           </div>
 
@@ -487,13 +489,13 @@ export default function CrowdBuyPage() {
               </p>
             </div>
 
-            <button
+            <HuntrButton
               onClick={() => setIsBuyerModalOpen(true)}
               className="py-1.5 px-3 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Inisiasi Kebutuhan Baru</span>
-            </button>
+            </HuntrButton>
           </div>
 
           {loadingInitiatives ? (
@@ -510,12 +512,12 @@ export default function CrowdBuyPage() {
               <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                 Anda bisa memulai Group Buying dari produk katalog supplier yang sudah ada, atau membuat Collective RFQ untuk spesifikasi barang custom dan mengundang rekan usaha lain.
               </p>
-              <button
+              <HuntrButton
                 onClick={() => setIsBuyerModalOpen(true)}
                 className="mt-1 py-1.5 px-3.5 text-xs font-semibold text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors"
               >
                 Mulai Inisiasi Sekarang
-              </button>
+              </HuntrButton>
             </div>
           ) : (
             <div className="space-y-3">
@@ -553,13 +555,13 @@ export default function CrowdBuyPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <button
+                        <HuntrButton
                           onClick={() => setSelectedCampaignForShare(camp)}
                           className="py-1 px-2.5 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors"
                         >
                           <Share2 className="w-3.5 h-3.5" />
                           <span>Undang Buyer Lain</span>
-                        </button>
+                        </HuntrButton>
 
                         <Link
                           to={companySlug ? `/${companySlug}/crowd-buy/${camp.id}` : `/crowd-buy/p/${camp.id}`}
@@ -663,12 +665,12 @@ export default function CrowdBuyPage() {
                                 </div>
 
                                 {camp.status === "bidding" && bid.status === "pending" && (
-                                  <button
+                                  <HuntrButton
                                     onClick={() => handleAcceptBid(camp.id, bid.id)}
                                     className="py-1 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold text-xs transition-all shrink-0 self-start sm:self-auto"
                                   >
                                     Terima Penawaran Ini
-                                  </button>
+                                  </HuntrButton>
                                 )}
                               </div>
                             ))}
@@ -699,12 +701,12 @@ export default function CrowdBuyPage() {
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 Temukan bahan baku grosir yang Anda butuhkan dan gabung campaign sekarang.
               </p>
-              <button
+              <HuntrButton
                 onClick={() => setActiveTab("catalog")}
                 className="mt-1 py-1.5 px-3.5 text-xs font-semibold text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors"
               >
                 Jelajahi Campaign
-              </button>
+              </HuntrButton>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -751,13 +753,13 @@ export default function CrowdBuyPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0">
                     {ord.status === "pending_payment" && (
-                      <button
+                      <HuntrButton
                         onClick={() => handleSimulatePayment(ord.id)}
                         className="py-1.5 px-3 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors flex items-center gap-1.5"
                       >
                         <CreditCard className="w-3.5 h-3.5" />
                         <span>Bayar Sekarang (Simulasi)</span>
-                      </button>
+                      </HuntrButton>
                     )}
                   </div>
                 </div>
@@ -778,12 +780,12 @@ export default function CrowdBuyPage() {
             ) : supplierCampaigns.length === 0 ? (
               <div className="py-10 text-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-6 space-y-2">
                 <p className="text-xs text-slate-500">Anda belum memiliki campaign Crowd Buy.</p>
-                <button
+                <HuntrButton
                   onClick={() => setIsSupplierModalOpen(true)}
                   className="py-1.5 px-3.5 text-xs font-semibold text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-colors"
                 >
                   Buat Campaign Pertama Anda
-                </button>
+                </HuntrButton>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -811,7 +813,7 @@ export default function CrowdBuyPage() {
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                       {camp.status === "draft" && (
                         <>
-                          <button
+                          <HuntrButton
                             onClick={() => {
                               setEditingCampaign(camp);
                               setIsSupplierModalOpen(true);
@@ -819,13 +821,13 @@ export default function CrowdBuyPage() {
                             className="flex-1 py-1 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-md transition-colors"
                           >
                             Edit
-                          </button>
-                          <button
+                          </HuntrButton>
+                          <HuntrButton
                             onClick={() => handleSubmitForReview(camp.id)}
                             className="flex-1 py-1 px-3 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-md transition-colors"
                           >
                             Ajukan Review
-                          </button>
+                          </HuntrButton>
                         </>
                       )}
                       {camp.status === "pending_review" && (
@@ -870,13 +872,13 @@ export default function CrowdBuyPage() {
                       </p>
                     </div>
 
-                    <button
+                    <HuntrButton
                       onClick={() => setFulfillingOrder(ord)}
                       className="py-1 px-3 bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors"
                     >
                       <Truck className="w-3.5 h-3.5" />
                       <span>Update Pengiriman</span>
-                    </button>
+                    </HuntrButton>
                   </div>
                 ))}
               </div>

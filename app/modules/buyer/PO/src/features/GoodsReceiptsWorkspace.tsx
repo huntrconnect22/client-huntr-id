@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import { createReceipt, getOrders } from "~/lib/api";
@@ -122,12 +125,12 @@ export default function Receipts() {
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
 
           {/* Back */}
-          <button
+          <HuntrButton
             onClick={() => { setSelectedPo(null); setConfirmed(null); setError(null); }}
             style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "var(--ui-text-secondary)", cursor: "pointer", fontSize: 14, fontWeight: 600, padding: 0 }}
           >
             <ArrowLeft size={18} /> Back to list
-          </button>
+          </HuntrButton>
 
           {/* Success state */}
           {confirmed ? (
@@ -141,17 +144,17 @@ export default function Receipts() {
                   Vendor has been notified. They will issue the final invoice shortly.
                 </p>
               </div>
-              <button
+              <HuntrButton
                 onClick={() => navigate("/orders")}
                 style={{ padding: "12px 32px", borderRadius: 14, background: "linear-gradient(135deg,#f97316,#f59e0b)", color: "#fff", border: "none", fontWeight: 800, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 12px rgba(249,115,22,0.25)" }}
               >
                 View All Orders
-              </button>
+              </HuntrButton>
             </div>
           ) : (
             <>
               {/* Delivery Info */}
-              <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, padding: 20, display: "flex", gap: 16, alignItems: "center" }}>
+              <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, padding: 20, display: "flex", gap: 16, alignItems: "center" }}>
                 <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Truck size={22} color="#3b82f6" />
                 </div>
@@ -172,7 +175,7 @@ export default function Receipts() {
                     </div>
                   </div>
                 )}
-              </div>
+              </HuntrSurface>
 
               {/* Date restriction warning */}
               {!allowed && (
@@ -182,7 +185,7 @@ export default function Receipts() {
               )}
 
               {/* Items to receive */}
-              <div style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, overflow: "hidden" }}>
+              <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, overflow: "hidden" }}>
                 <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--ui-border-input)", display: "flex", alignItems: "center", gap: 10 }}>
                   <ShoppingBag size={18} color="#f59e0b" />
                   <span style={{ fontSize: 14, fontWeight: 800, color: "var(--ui-text-primary)" }}>Received Items</span>
@@ -216,7 +219,7 @@ export default function Receipts() {
                             <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
                               <div style={{ flex: 1 }}>
                                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 6 }}>Accepted Qty</label>
-                                <input
+                                <HuntrInput
                                   type="number"
                                   min="0"
                                   max={item.qty}
@@ -233,7 +236,7 @@ export default function Receipts() {
                               </div>
                               <div style={{ flex: 1 }}>
                                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 6 }}>Rejected Qty</label>
-                                <input
+                                <HuntrInput
                                   type="number"
                                   min="0"
                                   max={item.qty}
@@ -251,7 +254,7 @@ export default function Receipts() {
                             </div>
                             <div>
                               <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 6 }}>Condition / Notes</label>
-                              <input
+                              <HuntrInput
                                 type="text"
                                 placeholder="E.g., Good, Box damaged, Missing parts"
                                 value={idata.condition ?? "Good"}
@@ -271,7 +274,7 @@ export default function Receipts() {
                                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#f87171", textTransform: "uppercase", marginBottom: 6 }}>
                                   ⚠ Rejection Reason <span style={{ color: "#f87171" }}>*</span>
                                 </label>
-                                <textarea
+                                <HuntrTextarea
                                   rows={2}
                                   placeholder="Explain why these items are being rejected (e.g., wrong spec, damaged, expired)"
                                   value={idata.rejection_reason ?? ""}
@@ -300,7 +303,7 @@ export default function Receipts() {
                     );
                   })}
                 </div>
-              </div>
+              </HuntrSurface>
 
               {/* Error */}
               {error && (
@@ -310,7 +313,7 @@ export default function Receipts() {
               )}
 
               {/* Confirm button */}
-              <button
+              <HuntrButton
                 onClick={handleConfirm}
                 disabled={!allowed || confirming}
                 style={{
@@ -328,7 +331,7 @@ export default function Receipts() {
                   ? <><Loader2 size={20} className="animate-spin" /> Processing...</>
                   : <><CheckCircle2 size={20} /> Confirm Goods Received</>
                 }
-              </button>
+              </HuntrButton>
               <p style={{ textAlign: "center", margin: 0, fontSize: 12, color: "var(--ui-text-muted)" }}>
                 By clicking the button above, you confirm that all goods above have been received in good condition.
               </p>
@@ -374,7 +377,7 @@ export default function Receipts() {
               const allowed = isGrAllowed(po.expected_receiving_date);
               const do_ = po.delivery_orders?.[0];
               return (
-                <div
+                <HuntrSurface
                   key={po.id}
                   onClick={() => allowed && setSelectedPo(po)}
                   style={{
@@ -403,7 +406,7 @@ export default function Receipts() {
                     </div>
                   </div>
                   {allowed && <ChevronRight size={20} color="var(--ui-text-muted)" />}
-                </div>
+                </HuntrSurface>
               );
             })}
           </div>

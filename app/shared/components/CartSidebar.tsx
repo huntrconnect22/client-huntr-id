@@ -1,3 +1,4 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { useNavigate } from "react-router";
 import Swal from "sweetalert2";
@@ -104,7 +105,7 @@ export default function CartSidebar({
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {cart.length > 0 && (
-            <button
+            <HuntrButton
               type="button"
               onClick={handleClear}
               title={t("marketplace.cartSidebar.clear")}
@@ -113,10 +114,10 @@ export default function CartSidebar({
               }`}
             >
               {t("marketplace.cartSidebar.clear")}
-            </button>
+            </HuntrButton>
           )}
           {onClose && (
-            <button
+            <HuntrButton
               type="button"
               onClick={onClose}
               title={t("marketplace.cartSidebar.close")}
@@ -126,7 +127,7 @@ export default function CartSidebar({
               }`}
             >
               <X size={mobile ? 20 : 15} />
-            </button>
+            </HuntrButton>
           )}
         </div>
       </div>
@@ -153,7 +154,7 @@ export default function CartSidebar({
                   mobile ? "gap-3 px-4 py-4" : "gap-2.5 px-3 py-3"
                 }`}
               >
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => handleRemove(item)}
                   aria-label={`Remove ${item.name}`}
@@ -164,7 +165,7 @@ export default function CartSidebar({
                   }`}
                 >
                   <Trash2 size={mobile ? 18 : 12} strokeWidth={1.75} />
-                </button>
+                </HuntrButton>
 
                 {/* Thumbnail */}
                 <div className={`rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex items-center justify-center flex-shrink-0 overflow-hidden ${
@@ -205,7 +206,7 @@ export default function CartSidebar({
                     <div className={`flex items-center rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-page)] overflow-hidden ${
                       mobile ? "shadow-sm" : "rounded-md"
                     }`}>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => handleQty(item.id, -1)}
                         className={`flex items-center justify-center text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-inset)] hover:text-orange-500 active:bg-[var(--ui-bg-inset)] transition-all touch-manipulation ${
@@ -213,13 +214,13 @@ export default function CartSidebar({
                         }`}
                       >
                         <Minus size={mobile ? 18 : 10} />
-                      </button>
+                      </HuntrButton>
                       <span className={`text-center font-bold text-[var(--ui-text-primary)] tabular-nums border-x border-[var(--ui-border)] ${
                         mobile ? "min-w-[44px] py-2 text-base" : "min-w-[24px] py-0.5 text-xs"
                       }`}>
                         {item.qty}
                       </span>
-                      <button
+                      <HuntrButton
                         type="button"
                         onClick={() => handleQty(item.id, 1)}
                         className={`flex items-center justify-center text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-inset)] hover:text-orange-500 active:bg-[var(--ui-bg-inset)] transition-all touch-manipulation ${
@@ -227,7 +228,7 @@ export default function CartSidebar({
                         }`}
                       >
                         <Plus size={mobile ? 18 : 10} />
-                      </button>
+                      </HuntrButton>
                     </div>
                   </div>
                 </div>
@@ -252,7 +253,7 @@ export default function CartSidebar({
             }`}>
               {t("marketplace.cartSidebar.vendorQuoteNotice")}
             </p>
-            <button
+            <HuntrButton
               type="button"
               onClick={handleCheckout}
               style={{ color: "white" }}
@@ -263,7 +264,7 @@ export default function CartSidebar({
               <CheckCircle2 size={mobile ? 18 : 13} />
               {t("marketplace.cartSidebar.createPrBtn")}
               <ArrowRight size={mobile ? 16 : 11} />
-            </button>
+            </HuntrButton>
             {cart.length >= 3 && (
               <div className={`flex items-start gap-2 text-purple-500 ${mobile ? "text-xs" : "text-[10px]"}`}>
                 <Sparkles size={mobile ? 12 : 9} className="flex-shrink-0 mt-0.5" />

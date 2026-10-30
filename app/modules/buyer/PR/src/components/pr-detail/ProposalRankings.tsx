@@ -1,3 +1,5 @@
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { Trophy, Building2, Package, MessageSquare, Loader2, FileText } from "lucide-react";
 import { getAssetUrl } from "~/lib/assets";
@@ -38,30 +40,30 @@ export function ProposalRankings({
 
   return (
     <div className="rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-12">#</th>
-            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Vendor</th>
-            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">Offer</th>
-            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">Delivery</th>
-            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">Payment</th>
-            <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[70px]">Doc</th>
+      <HuntrTable className="w-full text-sm border-collapse">
+        <HuntrTableHead>
+          <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+            <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-12">#</HuntrTableHeaderCell>
+            <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Vendor</HuntrTableHeaderCell>
+            <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">Offer</HuntrTableHeaderCell>
+            <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[90px]">Delivery</HuntrTableHeaderCell>
+            <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">Payment</HuntrTableHeaderCell>
+            <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[70px]">Doc</HuntrTableHeaderCell>
             {(onAwardWinner || onOpenNegotiation) && (
-              <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[140px]">Actions</th>
+              <HuntrTableHeaderCell className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] min-w-[140px]">Actions</HuntrTableHeaderCell>
             )}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[var(--ui-border)]">
+          </HuntrTableRow>
+        </HuntrTableHead>
+        <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
           {allRows.map((rankData) => {
             const proposal = rankData.proposal;
             const isWinner = rankData.is_winner;
             return (
-              <tr
+              <HuntrTableRow
                 key={proposal.id}
                 className={`hover:bg-[var(--ui-bg-input)] transition-colors ${isWinner ? "bg-emerald-500/5" : ""}`}
               >
-                <td className="px-3 py-2 whitespace-nowrap">
+                <HuntrTableCell className="px-3 py-2 whitespace-nowrap">
                   {isWinner ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
                       <Trophy size={10} /> Win
@@ -69,25 +71,25 @@ export function ProposalRankings({
                   ) : (
                     <span className="text-xs font-bold text-[var(--ui-text-muted)]">#{rankData.rank}</span>
                   )}
-                </td>
-                <td className="px-3 py-2">
+                </HuntrTableCell>
+                <HuntrTableCell className="px-3 py-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <Building2 size={13} className="text-[var(--ui-text-muted)] shrink-0" />
                     <span className="text-xs font-semibold text-[var(--ui-text-primary)] truncate">
                       {proposal.company?.name || "Vendor"}
                     </span>
                   </div>
-                </td>
-                <td className="px-3 py-2 whitespace-nowrap text-xs font-bold text-[var(--ui-text-brand)]">
+                </HuntrTableCell>
+                <HuntrTableCell className="px-3 py-2 whitespace-nowrap text-xs font-bold text-[var(--ui-text-brand)]">
                   Rp {Number(proposal.price_offer).toLocaleString("id-ID")}
-                </td>
-                <td className="px-3 py-2 whitespace-nowrap text-xs text-[var(--ui-text-secondary)]">
+                </HuntrTableCell>
+                <HuntrTableCell className="px-3 py-2 whitespace-nowrap text-xs text-[var(--ui-text-secondary)]">
                   {proposal.delivery_days}d
-                </td>
-                <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] truncate max-w-[100px]">
+                </HuntrTableCell>
+                <HuntrTableCell className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] truncate max-w-[100px]">
                   {proposal.payment_term}
-                </td>
-                <td className="px-3 py-2 whitespace-nowrap">
+                </HuntrTableCell>
+                <HuntrTableCell className="px-3 py-2 whitespace-nowrap">
                   {(proposal.document_path || proposal.document_url) ? (
                     <a
                       href={proposal.document_url || getAssetUrl(proposal.document_path)}
@@ -100,17 +102,17 @@ export function ProposalRankings({
                   ) : (
                     <span className="text-[11px] text-[var(--ui-text-muted)]">—</span>
                   )}
-                </td>
+                </HuntrTableCell>
                 {(onAwardWinner || onOpenNegotiation) && (
-                  <td className="px-3 py-2">
+                  <HuntrTableCell className="px-3 py-2">
                     <div className="flex items-center justify-end gap-1.5 flex-wrap">
                       {onOpenNegotiation && !isWinner && (
-                        <button type="button" onClick={() => onOpenNegotiation(proposal)} className={btnSecondary}>
+                        <HuntrButton type="button" onClick={() => onOpenNegotiation(proposal)} className={btnSecondary}>
                           <MessageSquare size={11} /> Negotiate
-                        </button>
+                        </HuntrButton>
                       )}
                       {onAwardWinner && !isWinner && (
-                        <button
+                        <HuntrButton
                           type="button"
                           onClick={() => onAwardWinner(proposal.id, requestId)}
                           disabled={awardingProposal === proposal.id}
@@ -122,16 +124,16 @@ export function ProposalRankings({
                             <Trophy size={11} />
                           )}
                           Award
-                        </button>
+                        </HuntrButton>
                       )}
                     </div>
-                  </td>
+                  </HuntrTableCell>
                 )}
-              </tr>
+              </HuntrTableRow>
             );
           })}
-        </tbody>
-      </table>
+        </HuntrTableBody>
+      </HuntrTable>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
 import React from "react";
 import {
   Trophy,
@@ -32,7 +33,7 @@ export const VendorRankingCard: React.FC<VendorRankingCardProps> = ({
     rankData.proposal_id === recommendedWinnerId;
 
   return (
-    <div
+    <HuntrSurface
       style={{
         background: "var(--ui-bg-card)",
         border: isWinner ? "2px solid #22c55e" : "1px solid var(--ui-border)",
@@ -388,6 +389,6 @@ export const VendorRankingCard: React.FC<VendorRankingCardProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </HuntrSurface>
   );
 };

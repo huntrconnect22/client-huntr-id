@@ -1,3 +1,5 @@
+import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Eye, EyeOff, MessageSquareCode, ArrowLeft, User, Phone, Mail, Lock, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
@@ -214,7 +216,7 @@ export default function Register() {
               {t("register.nameLabel")}
             </label>
             <div className="relative">
-              <input
+              <HuntrInput
                 id="register-name"
                 value={form.name}
                 onChange={e => set("name", e.target.value)}
@@ -234,7 +236,7 @@ export default function Register() {
               {t("register.whatsappLabel")}
             </label>
             <div className="relative">
-              <input
+              <HuntrInput
                 id="register-whatsapp"
                 value={form.whatsapp}
                 onChange={e => set("whatsapp", e.target.value)}
@@ -248,13 +250,13 @@ export default function Register() {
               />
               <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
               {otpSent && (
-                <button
+                <HuntrButton
                   type="button"
                   onClick={() => setOtpSent(false)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-orange-500 hover:underline px-2 py-1"
                 >
                   {t("register.changeBtn")}
-                </button>
+                </HuntrButton>
               )}
             </div>
           </div>
@@ -264,7 +266,7 @@ export default function Register() {
               {t("register.emailLabel")}
             </label>
             <div className="relative">
-              <input
+              <HuntrInput
                 id="register-email"
                 value={form.email}
                 onChange={e => set("email", e.target.value)}
@@ -284,7 +286,7 @@ export default function Register() {
               {t("register.passwordLabel")}
             </label>
             <div className="relative">
-              <input
+              <HuntrInput
                 id="register-password"
                 value={form.password}
                 onChange={e => set("password", e.target.value)}
@@ -296,7 +298,7 @@ export default function Register() {
                 className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
               />
               <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-              <button
+              <HuntrButton
                 type="button"
                 onClick={() => setShowPw(p => !p)}
                 disabled={otpSent}
@@ -304,7 +306,7 @@ export default function Register() {
                 aria-label={showPw ? "Hide password" : "Show password"}
               >
                 {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              </HuntrButton>
             </div>
           </div>
 
@@ -322,7 +324,7 @@ export default function Register() {
                 )}
               </div>
               
-              <input
+              <HuntrInput
                 id="register-otp"
                 value={otp}
                 onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -339,7 +341,7 @@ export default function Register() {
                 <span className="text-[11px] text-[var(--ui-text-muted)]">
                   {t("register.checkWhatsapp")}
                 </span>
-                <button
+                <HuntrButton
                   type="button"
                   onClick={handleSendOtp}
                   disabled={loading || sendingOtp || resendCooldown > 0}
@@ -350,7 +352,7 @@ export default function Register() {
                     : sendingOtp
                       ? t("register.sending")
                       : t("register.resendOtp")}
-                </button>
+                </HuntrButton>
               </div>
             </div>
           )}
@@ -372,7 +374,7 @@ export default function Register() {
 
         {/* Action Button */}
         {!otpSent ? (
-          <button
+          <HuntrButton
             type="button"
             onClick={handleSendOtp}
             disabled={loading || sendingOtp}
@@ -385,9 +387,9 @@ export default function Register() {
             ) : (
               t("register.sendOtpBtn")
             )}
-          </button>
+          </HuntrButton>
         ) : (
-          <button
+          <HuntrButton
             type="button"
             onClick={handleSubmit}
             disabled={loading}
@@ -400,7 +402,7 @@ export default function Register() {
             ) : (
               t("register.verifyBtn")
             )}
-          </button>
+          </HuntrButton>
         )}
 
         {/* Footer Link */}

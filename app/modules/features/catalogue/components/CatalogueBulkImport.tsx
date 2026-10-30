@@ -1,3 +1,6 @@
+import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React from "react";
 import { Download, UploadCloud } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -47,7 +50,7 @@ export default function CatalogueBulkImport({
   const { t } = useLanguage();
 
   return (
-    <div
+    <HuntrSurface
       style={{
         padding: "16px 18px",
         borderRadius: 8,
@@ -73,7 +76,7 @@ export default function CatalogueBulkImport({
           </p>
         </div>
         <form onSubmit={onSubmit} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <button
+          <HuntrButton
             type="button"
             onClick={downloadTemplate}
             style={{
@@ -91,8 +94,8 @@ export default function CatalogueBulkImport({
             }}
           >
             <Download size={15} /> {t("catalogue.importCard.downloadTemplate")}
-          </button>
-          <input
+          </HuntrButton>
+          <HuntrInput
             type="file"
             accept=".csv,.xlsx,.xls"
             id="csv-upload"
@@ -116,7 +119,7 @@ export default function CatalogueBulkImport({
           >
             <UploadCloud size={15} /> {file ? file.name : t("catalogue.importCard.selectFile")}
           </label>
-          <button
+          <HuntrButton
             type="submit"
             disabled={loading || !file}
             style={{
@@ -125,7 +128,7 @@ export default function CatalogueBulkImport({
             }}
           >
             {loading ? t("catalogue.importCard.processing") : t("catalogue.importCard.importBtn")}
-          </button>
+          </HuntrButton>
         </form>
       </div>
       {result && (
@@ -145,7 +148,7 @@ export default function CatalogueBulkImport({
           </pre>
         </div>
       )}
-    </div>
+    </HuntrSurface>
   );
 }
 

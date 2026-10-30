@@ -1,3 +1,4 @@
+import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import React from "react";
 import { Link } from "react-router";
 import { Package } from "lucide-react";
@@ -28,17 +29,17 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
         </div>
       ) : (
         <div className="rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)] huntr-table-scroll">
-          <table className="w-full text-sm border-collapse min-w-[520px]">
-            <thead>
-              <tr className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-8">#</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{rfq.procurement_type === "services" ? "Pekerjaan / Layanan Jasa" : t("rfqDetail.items.product")}</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">{rfq.procurement_type === "services" ? "Volume" : t("rfqDetail.items.qty")}</th>
-                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">{rfq.procurement_type === "services" ? "Target Selesai" : t("rfqDetail.items.required")}</th>
-                <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">{rfq.procurement_type === "services" ? "Pagu Budget" : "Est. Price"}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--ui-border)]">
+          <HuntrTable className="w-full text-sm border-collapse min-w-[520px]">
+            <HuntrTableHead>
+              <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-8">#</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{rfq.procurement_type === "services" ? "Pekerjaan / Layanan Jasa" : t("rfqDetail.items.product")}</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[80px]">{rfq.procurement_type === "services" ? "Volume" : t("rfqDetail.items.qty")}</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[110px]">{rfq.procurement_type === "services" ? "Target Selesai" : t("rfqDetail.items.required")}</HuntrTableHeaderCell>
+                <HuntrTableHeaderCell className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">{rfq.procurement_type === "services" ? "Pagu Budget" : "Est. Price"}</HuntrTableHeaderCell>
+              </HuntrTableRow>
+            </HuntrTableHead>
+            <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
               {items.map((item: any, index: number) => {
                 const cat = item.catalogue;
                 const catalogueId = item.catalogue_id || cat?.id;
@@ -47,9 +48,9 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
                 const name = cat?.name || item.item_name || item.name || t("rfqDetail.items.unknownItem");
 
                 return (
-                  <tr key={item.id ?? index} className="hover:bg-[var(--ui-bg-input)] transition-colors">
-                    <td className="px-3 py-2 text-xs text-[var(--ui-text-muted)]">{index + 1}</td>
-                    <td className="px-3 py-2">
+                  <HuntrTableRow key={item.id ?? index} className="hover:bg-[var(--ui-bg-input)] transition-colors">
+                    <HuntrTableCell className="px-3 py-2 text-xs text-[var(--ui-text-muted)]">{index + 1}</HuntrTableCell>
+                    <HuntrTableCell className="px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-8 h-8 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex items-center justify-center shrink-0 overflow-hidden">
                           {isServiceItem ? (
@@ -88,21 +89,21 @@ export function RFQItemsTable({ rfq }: RFQItemsTableProps) {
                           </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] whitespace-nowrap">
                       {item.qty} {item.uom || cat?.uom || (isServiceItem ? "paket" : "pcs")}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="px-3 py-2 text-xs text-[var(--ui-text-secondary)] whitespace-nowrap">
                       {item.expected_date || "—"}
-                    </td>
-                    <td className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] text-right tabular-nums whitespace-nowrap">
+                    </HuntrTableCell>
+                    <HuntrTableCell className="px-3 py-2 text-xs font-semibold text-[var(--ui-text-primary)] text-right tabular-nums whitespace-nowrap">
                       {item.estimated_price ? `IDR ${Number(item.estimated_price).toLocaleString()}` : "—"}
-                    </td>
-                  </tr>
+                    </HuntrTableCell>
+                  </HuntrTableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </HuntrTableBody>
+          </HuntrTable>
         </div>
       )}
     </section>

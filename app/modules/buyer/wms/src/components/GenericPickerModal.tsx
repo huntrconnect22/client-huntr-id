@@ -1,3 +1,5 @@
+import { Button as HuntrButton } from "~/shared/ui/Button";
+import { Input as HuntrInput } from "~/shared/ui/Fields";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Package, Search, X } from "lucide-react";
 
@@ -106,14 +108,14 @@ export function GenericPickerModal({
               </p>
             )}
           </div>
-          <button
+          <HuntrButton
             type="button"
             onClick={onClose}
             className="shrink-0 rounded-md p-1.5 text-[var(--ui-text-muted)] transition-colors hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)]"
             aria-label="Close"
           >
             <X size={16} />
-          </button>
+          </HuntrButton>
         </div>
         <div className="border-b border-[var(--ui-border)] px-5 py-3">
           <label className="relative block">
@@ -121,7 +123,7 @@ export function GenericPickerModal({
               size={14}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
             />
-            <input
+            <HuntrInput
               autoFocus
               type="text"
               value={query}
@@ -150,7 +152,7 @@ export function GenericPickerModal({
                 const isSelected = selectedId === item.id;
                 return (
                   <li key={item.id}>
-                    <button
+                    <HuntrButton
                       type="button"
                       onClick={() => onSelect(item)}
                       className={
@@ -221,7 +223,7 @@ export function GenericPickerModal({
                           ))}
                         </div>
                       )}
-                    </button>
+                    </HuntrButton>
                   </li>
                 );
               })}
