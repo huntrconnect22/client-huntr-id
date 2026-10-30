@@ -19,9 +19,8 @@ const tokenStyles = {
 export function AppThemeProvider({ mode, children }: { mode: "light" | "dark"; children: ReactNode }) {
   const theme = useMemo(() => themes[mode], [mode]);
   return (
-    <StyledEngineProvider enableCssLayer>
+    <StyledEngineProvider>
       <ThemeProvider theme={theme}>
-        <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
         <CssBaseline />
         <GlobalStyles styles={tokenStyles} />
         {children}
