@@ -238,12 +238,12 @@ export function AppDrawer({ navItems, pathname, pendingCounts, unreadCount = 0, 
           </Box>
         )}
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, overflowX: "auto", pb: 1, mb: 1.5, scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}>
-          <ButtonBase type="button" onClick={() => setSectionFilter("all")} sx={{ flex: "0 0 auto", minHeight: 30, px: 1.25, borderRadius: 1, bgcolor: sectionFilter === "all" ? "text.primary" : "transparent", color: sectionFilter === "all" ? "background.default" : "text.secondary", fontSize: 12, fontWeight: 750 }}>Semua</ButtonBase>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, overflowX: "auto", p: 0.75, mb: 1.5, border: 1, borderColor: "divider", borderRadius: 1.5, bgcolor: "background.paper", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}>
+          <ButtonBase type="button" onClick={() => setSectionFilter("all")} sx={{ flex: "0 0 auto", minHeight: 32, px: 1.25, borderRadius: 1, bgcolor: sectionFilter === "all" ? "primary.main" : "transparent", color: sectionFilter === "all" ? "primary.contrastText" : "text.secondary", fontSize: 12, fontWeight: 750 }}>Semua</ButtonBase>
           {sections.map((section) => (
-            <ButtonBase key={section} type="button" onClick={() => setSectionFilter(section)} sx={{ flex: "0 0 auto", minHeight: 30, px: 1.25, borderRadius: 1, bgcolor: sectionFilter === section ? "primary.light" : "transparent", color: sectionFilter === section ? "primary.dark" : "text.secondary", fontSize: 12, fontWeight: 750 }}>{sectionLabels[section] ?? section}</ButtonBase>
+            <ButtonBase key={section} type="button" onClick={() => setSectionFilter(section)} sx={{ flex: "0 0 auto", minHeight: 32, px: 1.25, borderRadius: 1, bgcolor: sectionFilter === section ? "primary.light" : "transparent", color: sectionFilter === section ? "primary.dark" : "text.secondary", fontSize: 12, fontWeight: 750 }}>{sectionLabels[section] ?? section}</ButtonBase>
           ))}
-          <Box aria-hidden="true" sx={{ width: 1, height: 18, bgcolor: "divider", mx: 0.25, flexShrink: 0 }} />
+          <Box aria-hidden="true" sx={{ flex: "0 0 1px", width: 1, height: 18, bgcolor: "divider", mx: 0.25 }} />
           <ButtonBase type="button" onClick={() => setInitialFilter("all")} aria-label="Tampilkan semua huruf" sx={{ flex: "0 0 auto", minWidth: 30, height: 30, borderRadius: 1, bgcolor: initialFilter === "all" ? "action.selected" : "transparent", fontSize: 11, fontWeight: 800 }}>#</ButtonBase>
           {initials.map((initial) => (
             <ButtonBase key={initial} type="button" onClick={() => setInitialFilter(initial)} aria-pressed={initialFilter === initial} sx={{ flex: "0 0 auto", minWidth: 30, height: 30, borderRadius: 1, bgcolor: initialFilter === initial ? "action.selected" : "transparent", color: initialFilter === initial ? "primary.main" : "text.secondary", fontSize: 11, fontWeight: 800 }}>{initial}</ButtonBase>
@@ -269,20 +269,22 @@ export function AppDrawer({ navItems, pathname, pendingCounts, unreadCount = 0, 
           {(query || sectionFilter !== "all" || initialFilter !== "all") && <ButtonBase type="button" onClick={() => { setQuery(""); setSectionFilter("all"); setInitialFilter("all"); setAssist(null); setAssistError(""); }} sx={{ color: "primary.main", fontSize: 12, fontWeight: 750 }}>Reset filter</ButtonBase>}
         </Box>
         {visibleItems.length > 0 ? (
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 148px), 1fr))", gap: { xs: 1, sm: 1.5 }, pb: 3 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 210px), 1fr))", gap: { xs: 1, sm: 1.25 }, pb: 4 }}>
             {visibleItems.map(({ to, label, labelKey, Icon, exact, badge, section }) => {
               const active = pathname === to || (!exact && to !== "/" && pathname.startsWith(`${to}/`));
               const tone = getAppIconTone(section, to);
               return (
                 <CardActionArea key={to} component={Link} to={to} onClick={onNavigate} aria-current={active ? "page" : undefined}
-                  sx={{ minHeight: { xs: 142, sm: 158 }, p: { xs: 1.5, sm: 2 }, display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "space-between", borderRadius: 1.5, border: 1, borderColor: active ? tone.main : "divider", bgcolor: active ? tone.surface : "background.paper", color: "text.primary", transition: "transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease", "&:hover": { borderColor: tone.main, transform: "translateY(-2px)", boxShadow: `0 6px 16px ${tone.surface}` }, "&.Mui-focusVisible": { outline: `2px solid ${tone.main}`, outlineOffset: 2 } }}>
-                  <Box sx={{ width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                  sx={{ minHeight: { xs: 100, sm: 108 }, p: 1.5, display: "grid", gridTemplateColumns: "48px minmax(0, 1fr)", alignItems: "center", gap: 1.25, borderRadius: 1.5, border: 1, borderColor: active ? tone.main : "divider", bgcolor: active ? tone.surface : "background.paper", color: "text.primary", transition: "transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease", "&:hover": { borderColor: tone.main, transform: "translateY(-2px)", boxShadow: `0 6px 16px ${tone.surface}` }, "&.Mui-focusVisible": { outline: `2px solid ${tone.main}`, outlineOffset: 2 } }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Badge badgeContent={badge ? pendingCounts[badge] ?? 0 : 0} color="primary" max={99}>
                       <Box aria-hidden="true" sx={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 1.5, bgcolor: tone.surface, border: `1px solid ${tone.border}`, color: tone.main }}><Icon size={24} strokeWidth={1.8} /></Box>
                     </Badge>
-                    <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.625rem", fontWeight: 750, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "right" }}>{sectionLabels[section] ?? section}</Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ maxWidth: "100%", fontWeight: 750, lineHeight: 1.25 }}>{labelKey ? t(labelKey) : label}</Typography>
+                  <Box sx={{ minWidth: 0, display: "grid", gap: 0.35, textAlign: "left" }}>
+                    <Typography noWrap variant="caption" sx={{ color: "text.secondary", fontSize: "0.625rem", fontWeight: 750, letterSpacing: "0.06em", textTransform: "uppercase" }}>{sectionLabels[section] ?? section}</Typography>
+                    <Typography variant="body2" sx={{ maxWidth: "100%", fontWeight: 800, lineHeight: 1.25 }}>{labelKey ? t(labelKey) : label}</Typography>
+                  </Box>
                 </CardActionArea>
               );
             })}
