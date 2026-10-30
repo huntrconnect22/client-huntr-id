@@ -1,9 +1,11 @@
-FROM node:20-alpine AS dependencies
+# Docker Hub's CDN is not always reachable from the production VPS. These are
+# the official Docker Library images mirrored by Amazon ECR Public.
+FROM public.ecr.aws/docker/library/node:20-alpine AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS build
+FROM public.ecr.aws/docker/library/node:20-alpine AS build
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . ./
@@ -34,7 +36,7 @@ ENV VITE_API_URL=$VITE_API_URL \
 
 RUN npm run build
 
-FROM node:20-alpine AS runtime
+FROM public.ecr.aws/docker/library/node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \

@@ -28,9 +28,9 @@ services:
       - "3000"
 
   web:
-    # Keep this aligned with the API gateway image. It is normally already
-    # cached on the server, avoiding an unnecessary Docker Hub pull at deploy.
-    image: nginx:alpine
+    # Official NGINX image mirrored by Amazon ECR Public. This avoids the
+    # Docker Hub/CloudFront route that the production VPS cannot currently use.
+    image: public.ecr.aws/docker/library/nginx:alpine
     container_name: huntr_frontend_web
     restart: unless-stopped
     depends_on:
