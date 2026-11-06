@@ -9,7 +9,7 @@ import {
   BarChart, Bar, AreaChart, Area, CartesianGrid, XAxis, YAxis
 } from "recharts";
 import { 
-  Activity, AlertTriangle, Clock, DollarSign, TrendingDown, PieChart, LineChart, ArrowDownCircle, ClipboardList, ChevronLeft, ChevronRight
+  Activity, AlertTriangle, Clock, DollarSign, TrendingDown, PieChart, BarChart3, LineChart, ArrowDownCircle, ClipboardList, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 const chartTooltipStyle = (accent?: string) => ({
@@ -176,6 +176,11 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
 
   const COLORS = ['#fb923c', '#fbbf24', '#f87171', '#60a5fa', '#34d399', '#a78bfa'];
 
+  const sortedSpendData = React.useMemo(() => {
+    const valid = realSpendData.filter((item) => item.value > 0);
+    return (valid.length > 0 ? valid : realSpendData).slice().sort((a, b) => b.value - a.value);
+  }, [realSpendData]);
+
   const cycleTimeData = [
     { month: 'Jan', close: 3.1 },
     { month: 'Feb', close: 2.8 },
@@ -297,7 +302,7 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
         <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0 }}>
             <h2 style={{ margin: 0, fontSize: isMobile ? 14 : 16, fontWeight: 800, display: "flex", alignItems: "center", gap: 8, color: "#fb923c" }}>
-              <PieChart size={18} /> {t("dashboard.buyer.spendAnalysisTitle")}
+              <BarChart3 size={18} /> {t("dashboard.buyer.spendAnalysisTitle")}
             </h2>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <HuntrButton
@@ -374,23 +379,53 @@ export function BuyerDashboard({ user, activeCompany }: { user: any, activeCompa
               </div>
             ) : isMobile ? (
               <DepartmentSpendMobileList
-                data={realSpendData}
+                data={sortedSpendData}
                 colors={COLORS}
                 formatCurrency={formatCurrency}
                 total={totalRealSpend}
               />
             ) : (
-              <div style={{ height: isMobile ? 260 : 300, width: "100%" }}>
+              <div style={{ height: Math.max(260, Math.min(380, sortedSpendData.length * 44 + 60)), width: "100%" }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <Pie data={realSpendData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                      {realSpendData.map((entry, index) => (
-                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <BarChart
+                    layout="vertical"
+                    data={sortedSpendData}
+                    margin={{ top: 10, right: 30, left: 16, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--ui-chart-grid)" horizontal={false} vertical={true} />
+                    <XAxis
+                      type="number"
+                      stroke="var(--ui-chart-axis)"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(val) => formatCurrency(val)}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      stroke="var(--ui-chart-axis)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      width={140}
+                    />
+                    <Tooltip
+                      formatter={(value) => [formatCurrency(Number(value ?? 0)), t("dashboard.buyer.spendPerDept")]}
+                      {...chartTooltipStyle("1px solid rgba(249,115,22,0.35)")}
+                      cursor={{ fill: "var(--ui-primary-muted)" }}
+                    />
+                    <Bar
+                      dataKey="value"
+                      name={t("dashboard.buyer.spendPerDept")}
+                      radius={[0, 6, 6, 0]}
+                      maxBarSize={26}
+                    >
+                      {sortedSpendData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} {...chartTooltipStyle()} />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 12, color: "var(--ui-chart-legend)" }} />
-                  </RechartsPieChart>
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             )}

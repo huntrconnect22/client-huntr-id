@@ -2,7 +2,7 @@ import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React from "react";
 import {
-  ArrowRight, MapPin, ShieldCheck, User, Sparkles, Loader2, AlertTriangle, CheckCircle2,
+  ArrowRight, MapPin, ShieldCheck, User, Sparkles, Loader2, AlertTriangle, CheckCircle2, ExternalLink,
 } from "lucide-react";
 import { useLanguage } from "~/context/LanguageContext";
 
@@ -123,6 +123,16 @@ export function RFQSidebar({
               {inviting ? t("rfqDetail.sidebar.sending") : t("rfqDetail.sidebar.inviteBtn")}
             </HuntrButton>
           </form>
+          <div className="mt-2.5 pt-2 border-t border-[var(--ui-border)] flex items-center justify-between">
+            <a
+              href={`/tender/${rfq.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] font-semibold text-orange-500 hover:underline flex items-center gap-1"
+            >
+              <ExternalLink size={11} /> Lihat preview halaman publik tender
+            </a>
+          </div>
         </div>
       )}
 
