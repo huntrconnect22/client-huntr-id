@@ -278,11 +278,15 @@ export default function TenderPublicPage() {
                           <HuntrTableCell className="px-3 py-2.5 text-gray-500">{idx + 1}</HuntrTableCell>
                           <HuntrTableCell className="px-3 py-2.5">
                             <div className="font-semibold text-white">
-                              {item.catalogue?.name ?? item.name ?? "Item"}
+                              {item.catalogue?.name || item.item_name || item.name || "Item"}
                             </div>
-                            {item.catalogue?.brand && (
+                            {item.catalogue?.brand ? (
                               <div className="text-[10px] text-gray-500">{item.catalogue.brand}</div>
-                            )}
+                            ) : item.sku ? (
+                              <div className="text-[10px] text-gray-500 font-mono">SKU: {item.sku}</div>
+                            ) : item.line_type === "service" ? (
+                              <div className="text-[10px] text-orange-400 font-medium">Jasa / Layanan</div>
+                            ) : null}
                           </HuntrTableCell>
                           <HuntrTableCell className="px-3 py-2.5 text-center font-mono font-bold text-orange-300">
                             {item.qty}
@@ -292,7 +296,7 @@ export default function TenderPublicPage() {
                           </HuntrTableCell>
                           <HuntrTableCell className="px-3 py-2.5 text-gray-400 max-w-[200px]">
                             <span className="line-clamp-2">
-                              {item.specifications ?? item.catalogue?.specifications ?? "-"}
+                              {item.specifications ?? item.service_scope ?? item.catalogue?.specifications ?? "-"}
                             </span>
                           </HuntrTableCell>
                         </HuntrTableRow>

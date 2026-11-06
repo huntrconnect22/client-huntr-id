@@ -103,7 +103,7 @@ export const CompareRequestedItems: React.FC<CompareRequestedItemsProps> = ({ it
                       marginBottom: 2,
                     }}
                   >
-                    {catalogue?.name || "Unknown Item"}
+                    {catalogue?.name || item.item_name || item.name || "Item"}
                   </div>
                   <div
                     style={{
@@ -112,9 +112,9 @@ export const CompareRequestedItems: React.FC<CompareRequestedItemsProps> = ({ it
                       marginBottom: 4,
                     }}
                   >
-                    Qty: {item.qty} {catalogue?.uom || "pcs"}
+                    Qty: {item.qty} {catalogue?.uom || item.uom || "pcs"}
                   </div>
-                  {catalogue?.specifications && (
+                  {(catalogue?.specifications || item.specifications || item.service_scope) && (
                     <div
                       style={{
                         fontSize: 11,
@@ -127,7 +127,7 @@ export const CompareRequestedItems: React.FC<CompareRequestedItemsProps> = ({ it
                         overflow: "hidden",
                       }}
                     >
-                      {catalogue.specifications}
+                      {catalogue?.specifications || item.specifications || item.service_scope}
                     </div>
                   )}
                 </div>

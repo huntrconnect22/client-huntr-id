@@ -69,7 +69,7 @@ export function CheckoutItemsTable({
           </div>
         )}
         <div className="flex items-center gap-2">
-          {procurementMode === "direct" && procurementType !== "services" && (
+          {procurementType !== "services" && (
             <HuntrButton
               type="button"
               onClick={onAddManualItem}
