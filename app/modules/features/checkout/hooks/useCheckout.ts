@@ -359,6 +359,14 @@ export function useCheckout() {
     );
   }, []);
 
+  const removeItem = useCallback((id: string) => {
+    setCart((items) => {
+      const newCart = items.filter((item) => item.id !== id);
+      localStorage.setItem("huntr_cart", JSON.stringify(newCart));
+      return newCart;
+    });
+  }, []);
+
   const handleWarehouseChange = useCallback(
     (nextWarehouseId: string) => {
       if (!nextWarehouseId) {
@@ -569,6 +577,7 @@ export function useCheckout() {
     addManualItem,
     addServiceLine,
     updateManualItem,
+    removeItem,
     handleSubmitPR,
   };
 }

@@ -1,7 +1,7 @@
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React from "react";
-import { Briefcase, Sparkles, Clock } from "lucide-react";
+import { Briefcase, Sparkles, Clock, CheckCircle2 } from "lucide-react";
 import { SERVICE_PROJECT_TYPES } from "../constants";
 import type { DurationCalculation } from "../types";
 
@@ -37,65 +37,75 @@ export function CheckoutServiceDetails({
   durationCalculation,
 }: CheckoutServiceDetailsProps) {
   return (
-    <div className="space-y-4 border-l-2 border-orange-500 bg-orange-500/5 p-4 rounded-r-xl">
-      <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-orange-500/20">
-        <div>
-          <p className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5">
-            <Briefcase size={14} className="text-orange-500" />
-            Detail Pengadaan Jasa & Spesifikasi Proyek
-          </p>
-          <p className="mt-0.5 text-[10px] text-[var(--ui-text-muted)]">
-            Pengadaan jasa dinilai dari pagu budget, waktu pengerjaan, dan deliverables BAST.
-          </p>
+    <div className="space-y-5 rounded-2xl border border-orange-500/25 bg-orange-500/[0.02] p-5">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-orange-500/20">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-orange-500/15 text-orange-500 flex items-center justify-center shrink-0">
+            <Briefcase size={16} />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[var(--ui-text-primary)]">
+              Detail Pengadaan Jasa & Spesifikasi Proyek
+            </p>
+            <p className="text-xs text-[var(--ui-text-muted)]">
+              Pengadaan jasa dinilai dari pagu budget, target waktu penyelesaian, dan serah terima BAST.
+            </p>
+          </div>
         </div>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-500/20 text-orange-400">
+        <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20">
           Penerimaan via BAST
         </span>
       </div>
 
-      {/* 1. Jenis Proyek */}
-      <div className="space-y-2">
-        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1">
-          <Sparkles size={11} className="text-orange-400" />
-          Jenis Proyek / Kategori Jasa *
+      {/* 1. Kategori Jasa / Jenis Proyek */}
+      <div className="space-y-2.5">
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
+          <Sparkles size={13} className="text-orange-500" />
+          Kategori Layanan / Tipe Kontrak Jasa <span className="text-red-500">*</span>
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
           {SERVICE_PROJECT_TYPES.map((type) => {
             const isSelected = projectType === type.id;
             const Icon = type.icon;
             return (
-              <HuntrButton
+              <button
                 key={type.id}
                 type="button"
                 onClick={() => setProjectType(type.id)}
-                className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                className={`relative p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
-                    ? "border-orange-500 bg-orange-500/10 shadow-sm"
-                    : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] hover:border-orange-400/40"
+                    ? "border-orange-500 bg-orange-500/10 shadow-sm ring-2 ring-orange-500/20"
+                    : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] hover:border-orange-500/40"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-6 h-6 rounded flex items-center justify-center shrink-0 transition-colors ${
-                      isSelected
-                        ? "bg-orange-500 text-white"
-                        : "bg-orange-500/10 text-orange-500"
-                    }`}
-                  >
-                    <Icon size={13} />
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected
+                          ? "bg-orange-500 text-white shadow-sm"
+                          : "bg-orange-500/10 text-orange-500"
+                      }`}
+                    >
+                      <Icon size={14} />
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 size={16} className="text-orange-500" />
+                    )}
                   </div>
                   <span
-                    className={`text-xs font-bold leading-tight ${
+                    className={`text-xs font-bold block ${
                       isSelected ? "text-orange-500" : "text-[var(--ui-text-primary)]"
                     }`}
                   >
                     {type.label}
                   </span>
                 </div>
-                <span className="text-[9px] text-[var(--ui-text-muted)] mt-1.5 line-clamp-2">
+                <span className="text-[11px] text-[var(--ui-text-muted)] mt-2 leading-tight">
                   {type.desc}
                 </span>
-              </HuntrButton>
+              </button>
             );
           })}
         </div>
@@ -104,28 +114,28 @@ export function CheckoutServiceDetails({
           <div className="mt-2">
             <HuntrInput
               type="text"
-              placeholder="Tuliskan jenis proyek spesifik (misal: Jasa Survei Topografi, Sertifikasi ISO)..."
+              placeholder="Tuliskan kategori jasa spesifik (misal: Jasa Uji Laboratorium, Audit ISO, Pemetaan Topografi)..."
               value={customProjectType}
               onChange={(e) => setCustomProjectType(e.target.value)}
-              className="w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-orange-500/50 text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500"
+              className="w-full p-3 rounded-xl bg-[var(--ui-bg-input)] border border-orange-500 text-xs text-[var(--ui-text-primary)] outline-none focus:ring-2 focus:ring-orange-500/20"
             />
           </div>
         )}
       </div>
 
-      {/* 2. Waktu Pengerjaan */}
-      <div className="space-y-2 pt-2 border-t border-[var(--ui-border)]/60">
-        <div className="flex items-center justify-between">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1">
-            <Clock size={11} className="text-orange-400" />
-            Waktu & Jadwal Pengerjaan *
+      {/* 2. Jadwal & Waktu Pengerjaan */}
+      <div className="space-y-3 pt-3 border-t border-[var(--ui-border)]/60">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
+            <Clock size={13} className="text-orange-500" />
+            Jadwal Pelaksanaan & Batas Waktu <span className="text-red-500">*</span>
           </label>
           {durationCalculation && (
             <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+              className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                 durationCalculation.error
-                  ? "bg-red-500/10 text-red-400"
-                  : "bg-emerald-500/10 text-emerald-400"
+                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                  : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
               }`}
             >
               {durationCalculation.error || `⏱️ Durasi: ${durationCalculation.text}`}
@@ -133,55 +143,59 @@ export function CheckoutServiceDetails({
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
-            Tanggal Mulai Pengerjaan *
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="text-xs font-semibold text-[var(--ui-text-secondary)] mb-1.5 block">
+              Tanggal Mulai Pengerjaan <span className="text-red-500">*</span>
+            </label>
             <HuntrInput
               type="date"
               value={serviceStartDate}
               onChange={(e) => setServiceStartDate(e.target.value)}
-              className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+              className="w-full p-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
             />
-          </label>
-          <label className="text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
-            Target Selesai Pengerjaan (Deadline) *
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[var(--ui-text-secondary)] mb-1.5 block">
+              Target Selesai (Deadline) <span className="text-red-500">*</span>
+            </label>
             <HuntrInput
               type="date"
               min={serviceStartDate || undefined}
               value={serviceEndDate}
               onChange={(e) => setServiceEndDate(e.target.value)}
-              className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+              className="w-full p-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
             />
-          </label>
+          </div>
         </div>
 
-        <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
-          Pola Waktu Kerja / Jam Kerja (Opsional)
+        <div>
+          <label className="text-xs font-semibold text-[var(--ui-text-secondary)] mb-1.5 block">
+            Jadwal Kerja / Jam Kerja Layanan (Opsional)
+          </label>
           <HuntrInput
             type="text"
             value={serviceWorkingSchedule}
             onChange={(e) => setServiceWorkingSchedule(e.target.value)}
-            placeholder="misal: Hari Kerja Senin - Jumat (08:00 - 17:00 WIB), atau Shift 24 Jam Non-stop"
-            className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
+            placeholder="Contoh: Senin - Jumat (08:00 - 17:00 WIB), atau Siaga 24 Jam Non-stop"
+            className="w-full p-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
           />
-        </label>
+        </div>
       </div>
 
-      {/* 3. Acceptance Criteria & SLA */}
-      <div className="pt-2 border-t border-[var(--ui-border)]/60">
-        <label className="block text-[10px] font-bold uppercase text-[var(--ui-text-muted)]">
-          Kriteria Penerimaan & Deliverables (Syarat BAST) *
-          <HuntrTextarea
-            value={acceptanceCriteria}
-            onChange={(e) => setAcceptanceCriteria(e.target.value)}
-            placeholder="Contoh: 1. Laporan progres mingguan, 2. Dokumentasi serah terima / BAST ditandatangani PM, 3. Garansi pengerjaan minimal 30 hari kalender, 4. Uji fungsi (UAT) lolos 100%."
-            rows={3}
-            className="mt-1 w-full p-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-400/60"
-          />
+      {/* 3. Acceptance Criteria & Syarat BAST */}
+      <div className="pt-3 border-t border-[var(--ui-border)]/60">
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1.5 block">
+          Kriteria Penerimaan & Deliverables (Syarat BAST) <span className="text-red-500">*</span>
         </label>
+        <HuntrTextarea
+          value={acceptanceCriteria}
+          onChange={(e) => setAcceptanceCriteria(e.target.value)}
+          placeholder="Jelaskan deliverable yang wajib dipenuhi vendor sebelum BAST diterbitkan:&#10;1. Laporan akhir dan dokumentasi pengerjaan lengkap&#10;2. Pengujian fungsi (UAT) dinyatakan lolos 100%&#10;3. Garansi layanan minimal 30 hari kalender"
+          rows={3}
+          className="w-full p-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 resize-y"
+        />
       </div>
     </div>
   );
 }
-
-
