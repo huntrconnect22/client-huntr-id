@@ -11,7 +11,7 @@ import {
   Sparkles, GitCompare, ChevronLeft, ChevronRight, ChevronDown, ArrowRight,
   LayoutGrid, Wrench, Monitor, Sofa, Paperclip, Handshake,
   Settings2, Zap, Building2, FlaskConical, HardHat, PenLine,
-  Coffee, BoxIcon, Megaphone, Bookmark, type LucideIcon
+  Coffee, BoxIcon, Megaphone, Bookmark, X, Filter, type LucideIcon
 } from "lucide-react";
 import { useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { getAssetUrl } from "~/lib/assets";
@@ -168,8 +168,6 @@ export default function Marketplace() {
     if (companySession) {
       const comp = JSON.parse(companySession);
       setActiveCompany(comp);
-      // Marketplace is accessible from buyer workspaces.
-      // Vendors who want to shop should switch to their buyer workspace.
       if (comp.type === "vendor") navigate("/");
     }
   }, []);
@@ -294,149 +292,210 @@ export default function Marketplace() {
     setCompareIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : prev.length >= 4 ? prev : [...prev, id]);
   };
 
-  /** Add item directly — no qty modal */
+  /** Add item directly */
   const handleAddToCart = (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
     const updated = addItemToCartLib(item, 1);
     setCart(updated);
     if (isMobile) {
-      // On mobile: only show a toast — don't open the cart panel
       setCartToast({ visible: true, message: t("marketplace.item.toastAdded", { name: item.name ?? "Item" }) });
     } else {
       window.dispatchEvent(new CustomEvent("huntr-open-cart"));
     }
-    // Flash animation on button
     if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
     setAddedId(item.id);
     addedTimerRef.current = setTimeout(() => setAddedId(null), 1200);
   };
 
-  const PRIMARY_COUNT = 8;
+  const PRIMARY_COUNT = 9;
   const primaryCats = CATEGORY_CONFIG.slice(0, PRIMARY_COUNT);
   const overflowCats = CATEGORY_CONFIG.slice(PRIMARY_COUNT);
   const activeInOverflow = overflowCats.some(c => c.label === activeCategory);
 
   return (
     <Layout title={t("marketplace.title")} subtitle={t("marketplace.subtitle")}>
-      {/* ── Product area — padding-right when cart is open to avoid overlap on desktop only ── */}
       <div
-        className="w-full space-y-6 transition-all duration-300"
+        className="w-full space-y-6 transition-all duration-300 pb-12"
         style={{ paddingRight: cartPanelOpen && !isMobile ? 296 : 0 }}
       >
-        {/* Agentic Procurement Quick Launch Banner (Only visible when feature is enabled in Settings) */}
+        {/* Agentic Procurement Quick Launch Banner */}
         {isAgenticEnabled && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-2.5 rounded-xl sm:rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30">
-            <div className="flex items-start sm:items-center gap-2.5">
-              <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-lg sm:rounded-md bg-orange-500 text-white flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 sm:mt-0">
-                <Sparkles size={14} />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0">
+                <Sparkles size={18} />
               </div>
               <div>
-                <div className="text-xs font-bold text-[var(--ui-text-primary)] flex items-center gap-1.5 flex-wrap">
+                <div className="text-sm font-bold text-[var(--ui-text-primary)] flex items-center gap-2">
                   <span>{t("marketplace.agenticBanner.title")}</span>
-                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">{t("marketplace.agenticBanner.badge")}</span>
+                  <span className="text-[10px] uppercase px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500 font-bold border border-orange-500/20">
+                    {t("marketplace.agenticBanner.badge")}
+                  </span>
                 </div>
-                <p className="text-[11px] text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
+                <p className="text-xs text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
                   {t("marketplace.agenticBanner.description")}
                 </p>
               </div>
             </div>
             <HuntrButton
               onClick={() => navigate(`${getCompanyPrefix()}/agentic-procurement`)}
-              className="w-full sm:w-auto justify-center px-3 py-2 sm:py-1 rounded-lg sm:rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-orange-500/20"
             >
               <span>{t("marketplace.agenticBanner.button")}</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={14} />
             </HuntrButton>
           </div>
         )}
 
-        {/* Search */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 overflow-hidden rounded-xl bg-[var(--ui-bg-input)] ring-1 ring-[var(--ui-border-input)] transition-shadow focus-within:ring-2 focus-within:ring-orange-500/25">
-            {aiMode
-              ? <Sparkles size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-purple-500" />
-              : <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-            }
+        {/* Search & Filter Header Container */}
+        <div className="space-y-3.5">
+          {/* Search Bar */}
+          <div className="relative overflow-hidden rounded-2xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-xs transition-all focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20">
+            {aiMode ? (
+              <Sparkles size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-purple-500" />
+            ) : (
+              <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+            )}
             <HuntrInput
               type="text"
               placeholder={t("marketplace.searchPlaceholder")}
               data-field-chrome="none"
               value={localSearch}
               onChange={e => setLocalSearch(e.target.value)}
-              className="w-full bg-transparent text-[var(--ui-text-primary)] text-sm outline-none"
-              style={{ minHeight: 52, paddingLeft: 48, paddingRight: aiMode ? 104 : 18 }}
+              className="w-full bg-transparent text-[var(--ui-text-primary)] text-sm outline-none placeholder:text-[var(--ui-text-muted)]"
+              style={{ minHeight: 50, paddingLeft: 46, paddingRight: localSearch ? 78 : (aiMode ? 104 : 20) }}
             />
+            {localSearch && (
+              <button
+                type="button"
+                onClick={() => setLocalSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--ui-bg-input)] hover:bg-[var(--ui-border)] text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] flex items-center justify-center transition-colors cursor-pointer"
+                title="Hapus pencarian"
+              >
+                <X size={13} />
+              </button>
+            )}
             {aiMode && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded">
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
                 {t("marketplace.aiModeBadge")}
               </span>
             )}
           </div>
 
-        </div>
-
-        {/* Categories — single row, overflow into "More" */}
-        <div className="relative" ref={categoryDropdownRef}>
-          <div className="flex gap-1.5 items-center overflow-hidden" style={{ flexWrap: "nowrap" }}>
-            {primaryCats.map(({ key, label, Icon }) => {
-              const isActive = activeCategory === label;
-              return (
-                <HuntrButton
-                  key={label}
-                  onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
-                  style={isActive ? { color: "white" } : {}}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${isActive
-                      ? "bg-orange-500 border-orange-500 shadow-sm shadow-orange-500/30"
-                      : "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
+          {/* Categories Filter Pills with Horizontal Scroll & More Dropdown */}
+          <div className="flex items-center gap-2" ref={categoryDropdownRef}>
+            <div className="flex-1 overflow-x-auto no-scrollbar py-1 flex items-center gap-2">
+              {primaryCats.map(({ key, label, Icon }) => {
+                const isActive = activeCategory === label;
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
+                      isActive
+                        ? "bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-500/25"
+                        : "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30"
                     }`}
+                  >
+                    <Icon size={13} strokeWidth={2} />
+                    <span>{t(`marketplace.categories.${key}` as any)}</span>
+                  </button>
+                );
+              })}
+
+              {/* More Categories Dropdown Pill */}
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryDropdown(p => !p)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
+                    activeInOverflow
+                      ? "bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-500/25"
+                      : showCategoryDropdown
+                        ? "bg-[var(--ui-bg-input)] border-orange-500/40 text-[var(--ui-text-primary)]"
+                        : "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30"
+                  }`}
                 >
-                  <Icon size={12} strokeWidth={2} /> {t(`marketplace.categories.${key}` as any)}
-                </HuntrButton>
-              );
-            })}
-            <HuntrButton
-              onClick={() => setShowCategoryDropdown(p => !p)}
-              style={activeInOverflow ? { color: "white" } : {}}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${activeInOverflow
-                  ? "bg-orange-500 border-orange-500 shadow-sm shadow-orange-500/30"
-                  : showCategoryDropdown
-                    ? "bg-[var(--ui-bg-input)] border-orange-400/50 text-orange-500"
-                    : "bg-[var(--ui-bg-card)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
-                }`}
-            >
-              {activeInOverflow ? (
-                <>
-                  {(() => { const c = overflowCats.find(c => c.label === activeCategory)!; return <c.Icon size={12} strokeWidth={2} />; })()}
-                  {t(`marketplace.categories.${overflowCats.find(c => c.label === activeCategory)?.key ?? "other"}` as any)}
-                </>
-              ) : (
-                <>{t("marketplace.categories.more")} <ChevronDown size={11} className={`transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} /></>
-              )}
-            </HuntrButton>
-          </div>
-          {showCategoryDropdown && (
-            <div className="absolute left-0 top-full mt-2 z-50 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-xl shadow-xl p-3 min-w-[320px]">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--ui-text-muted)] mb-2.5 px-1">{t("marketplace.categories.moreCategories")}</p>
-              <div className="grid grid-cols-4 gap-1.5">
-                {overflowCats.map(({ key, label, Icon }) => {
-                  const isActive = activeCategory === label;
-                  return (
-                    <HuntrButton
-                      key={label}
-                      onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
-                      style={isActive ? { color: "white" } : {}}
-                      className={`flex flex-col items-center gap-1 px-2 pt-2.5 pb-2 rounded-lg text-[9px] font-bold uppercase tracking-wide transition-all border ${isActive
-                          ? "bg-orange-500 border-orange-500 shadow-sm"
-                          : "bg-[var(--ui-bg-input)] border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500"
-                        }`}
-                    >
-                      <Icon size={14} strokeWidth={1.75} /> {t(`marketplace.categories.${key}` as any)}
-                    </HuntrButton>
-                  );
-                })}
+                  {activeInOverflow ? (
+                    <>
+                      {(() => { const c = overflowCats.find(c => c.label === activeCategory)!; return <c.Icon size={13} strokeWidth={2} />; })()}
+                      <span>{t(`marketplace.categories.${overflowCats.find(c => c.label === activeCategory)?.key ?? "other"}` as any)}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Filter size={13} />
+                      <span>{t("marketplace.categories.more")}</span>
+                      <ChevronDown size={12} className={`transition-transform duration-200 ${showCategoryDropdown ? "rotate-180" : ""}`} />
+                    </>
+                  )}
+                </button>
+
+                {showCategoryDropdown && (
+                  <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-2 z-50 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-2xl shadow-xl p-3.5 min-w-[320px]">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-2.5 px-1">
+                      {t("marketplace.categories.moreCategories")}
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {overflowCats.map(({ key, label, Icon }) => {
+                        const isActive = activeCategory === label;
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => { handleCategoryChange(label); setShowCategoryDropdown(false); }}
+                            className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium transition-all text-left cursor-pointer border ${
+                              isActive
+                                ? "bg-orange-500 text-white border-orange-500 font-bold"
+                                : "bg-[var(--ui-bg-input)] border-transparent text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] hover:border-[var(--ui-border)]"
+                            }`}
+                          >
+                            <Icon size={14} className="shrink-0" />
+                            <span className="truncate">{t(`marketplace.categories.${key}` as any)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Active Filter Status & Count */}
+          <div className="flex items-center justify-between text-xs text-[var(--ui-text-muted)] px-1">
+            <div className="flex items-center gap-2">
+              <span>
+                {loading ? "Memuat katalog..." : `Menampilkan ${items.length} produk katalog`}
+              </span>
+              {activeCategory !== "All" && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-[11px] font-semibold">
+                  {activeCategory}
+                  <button
+                    type="button"
+                    onClick={() => handleCategoryChange("All")}
+                    className="hover:text-red-500 ml-0.5 cursor-pointer"
+                    title="Hapus filter kategori"
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              )}
+            </div>
+
+            {(activeCategory !== "All" || searchTerm) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocalSearch("");
+                  handleCategoryChange("All");
+                }}
+                className="text-xs font-semibold text-orange-500 hover:underline cursor-pointer"
+              >
+                Reset Filter
+              </button>
+            )}
+          </div>
         </div>
 
         {/* AI Insight */}
@@ -455,28 +514,30 @@ export default function Marketplace() {
           />
         )}
 
-        {/* Compare bar */}
+        {/* Compare floating / docked bar */}
         {compareIds.length >= 2 && (
-          <div className="flex items-center justify-between p-3.5 px-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5">
+          <div className="flex items-center justify-between p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 shadow-xs">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--ui-text-primary)]">
-              <GitCompare size={16} className="text-indigo-500" />
+              <GitCompare size={18} className="text-indigo-500" />
               <span><strong className="text-indigo-500">{t("marketplace.compareBar.itemsSelected", { count: compareIds.length })}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <HuntrButton onClick={() => setCompareIds([])} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-muted)]">{t("marketplace.compareBar.reset")}</HuntrButton>
-              <HuntrButton onClick={() => setShowCompareModal(true)} style={{ color: "white" }} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-bold shadow-sm">
-                <Sparkles size={13} /> {t("marketplace.compareBar.compareWithAi")}
+              <HuntrButton onClick={() => setCompareIds([])} className="px-3 py-1.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]">
+                {t("marketplace.compareBar.reset")}
+              </HuntrButton>
+              <HuntrButton onClick={() => setShowCompareModal(true)} className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold shadow-sm hover:opacity-95">
+                <Sparkles size={14} /> {t("marketplace.compareBar.compareWithAi")}
               </HuntrButton>
             </div>
           </div>
         )}
 
-        {/* Product grid */}
+        {/* Product Grid */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
             {aiMode ? (
               <>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center animate-pulse">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center animate-pulse shadow-md">
                   <Sparkles size={22} className="text-white" />
                 </div>
                 <div className="text-center">
@@ -485,16 +546,30 @@ export default function Marketplace() {
                 </div>
               </>
             ) : (
-              <Loader2 size={28} className="animate-spin text-orange-500" />
+              <Loader2 size={32} className="animate-spin text-orange-500" />
             )}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-[var(--ui-border)] bg-[var(--ui-bg-input)] gap-3">
-            <Package size={32} className="text-[var(--ui-text-muted)] opacity-25" />
-            <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">{t("marketplace.empty")}</p>
+          <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-[var(--ui-border)] bg-[var(--ui-bg-card)] gap-3 text-center p-6">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--ui-bg-input)] flex items-center justify-center text-[var(--ui-text-muted)]">
+              <Package size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[var(--ui-text-primary)]">{t("marketplace.empty")}</p>
+              <p className="text-xs text-[var(--ui-text-muted)] mt-1 max-w-sm">
+                Coba ubah kata kunci pencarian atau pilih kategori lain untuk menemukan produk yang diinginkan.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setLocalSearch(""); handleCategoryChange("All"); }}
+              className="mt-2 text-xs font-bold text-orange-500 hover:underline cursor-pointer"
+            >
+              Tampilkan Semua Produk
+            </button>
           </div>
         ) : (
-          <div className={`grid gap-4 sm:gap-5 ${cartPanelOpen ? "grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"}`}>
+          <div className={`grid gap-5 ${cartPanelOpen ? "grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"}`}>
             {items.map(item => {
               const isSelected = compareIds.includes(item.id);
               const justAdded = addedId === item.id;
@@ -503,11 +578,18 @@ export default function Marketplace() {
                 <div
                   key={item.id}
                   onClick={() => navigate(`${getCompanyPrefix()}/marketplace/${item.id}`)}
-                  className={`group overflow-hidden rounded-xl border bg-[var(--ui-bg-card)] flex flex-col transition-all cursor-pointer hover:border-orange-400/50 hover:shadow-md ${isSelected ? "border-indigo-500/60 ring-2 ring-indigo-500/20" : "border-[var(--ui-border)]"
-                    }`}
+                  className={`group rounded-2xl border bg-[var(--ui-bg-card)] flex flex-col transition-all duration-200 cursor-pointer hover:border-orange-500/40 hover:shadow-lg overflow-hidden ${
+                    isSelected ? "border-indigo-500/70 ring-2 ring-indigo-500/25 shadow-md" : "border-[var(--ui-border)]"
+                  }`}
                 >
-                  {/* Image */}
-                  <div className="relative h-40 sm:h-44 bg-[var(--ui-bg-input)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {/* Image Container with Floating Badges */}
+                  <div className="relative h-44 sm:h-48 bg-[var(--ui-bg-input)] flex items-center justify-center p-4 overflow-hidden border-b border-[var(--ui-border)]/50">
+                    {/* Floating Category Tag (Clean & Subtle, Replaces Orange Caption) */}
+                    <span className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-lg bg-[var(--ui-bg-card)]/90 backdrop-blur-md border border-[var(--ui-border)] text-[10px] font-semibold text-[var(--ui-text-secondary)] shadow-xs">
+                      {item.category || "Umum"}
+                    </span>
+
+                    {/* Image Preview */}
                     {(item.image_url || item.image_path) ? (
                       <img
                         src={getAssetUrl(item.image_url || item.image_path)}
@@ -516,75 +598,96 @@ export default function Marketplace() {
                         onError={e => { (e.target as HTMLElement).style.display = "none"; }}
                       />
                     ) : (
-                      <Package size={28} className="text-[var(--ui-text-muted)] opacity-20" />
+                      <Package size={32} className="text-[var(--ui-text-muted)] opacity-25" />
                     )}
-                    {/* In-cart indicator */}
+
+                    {/* In-Cart Status Badge */}
                     {inCart && !justAdded && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
-                        <CheckCircle2 size={11} className="text-white" />
+                      <div className="absolute top-3 right-3 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                        <CheckCircle2 size={11} />
+                        <span>Di PR</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Content */}
-                  <div className="p-4 flex flex-col gap-2 flex-1">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-orange-500 truncate">
-                      {item.category || "General"}
-                    </div>
-                    <h3 className="text-xs sm:text-sm font-semibold text-[var(--ui-text-primary)] line-clamp-2 leading-snug flex-1">
-                      {item.name}
-                    </h3>
-                    {item.brand && (
-                      <p className="text-[10px] text-[var(--ui-text-muted)] truncate">
-                        <span className="font-medium">{t("marketplace.item.brand")}</span> {item.brand}
+                  {/* Card Content */}
+                  <div className="p-4 flex flex-col flex-1 justify-between gap-2">
+                    {/* Top Info Section */}
+                    <div className="space-y-1">
+                      {/* Brand / Vendor Label (Fixed h-4 so title position never shifts) */}
+                      <p className="text-[11px] font-medium text-[var(--ui-text-muted)] truncate h-4 leading-4">
+                        {item.brand || "\u00A0"}
                       </p>
-                    )}
-                    {item.price > 0 && (
-                      <div className="text-xs font-bold text-orange-500">
-                        Rp {Number(item.price).toLocaleString("id-ID")}
-                      </div>
-                    )}
-                    {item.ai_score !== undefined && (
-                      <div className="pt-1 border-t border-[var(--ui-border)]">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded">
-                          <Sparkles size={10} /> {t("marketplace.item.match", { score: item.ai_score })}
-                        </span>
-                        {item.ai_explanation && (
-                          <p className="text-[10px] text-[var(--ui-text-muted)] italic line-clamp-2 mt-0.5">{item.ai_explanation}</p>
-                        )}
-                      </div>
-                    )}
 
-                    {/* Add to cart — 1 click, no modal */}
-                    <div className="mt-auto flex items-center gap-2 pt-2">
-                      <HuntrButton
-                        type="button"
-                        aria-label={t("marketplace.item.addToCart")}
-                        onClick={e => handleAddToCart(item, e)}
-                        style={{ color: "white" }}
-                        className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${justAdded
-                            ? "bg-emerald-500"
-                            : inCart
-                              ? "bg-orange-600 hover:bg-orange-700"
-                              : "bg-orange-500 hover:bg-orange-600"
-                          }`}
+                      {/* Item Title (Fixed 2-line height h-10 so 1-line or 2-line titles are identical) */}
+                      <h3
+                        title={item.name}
+                        className="text-sm font-bold text-[var(--ui-text-primary)] line-clamp-2 leading-snug h-10 group-hover:text-orange-500 transition-colors"
                       >
-                        {justAdded ? (
-                          <><CheckCircle2 size={13} /> {t("marketplace.item.added")}</>
-                        ) : inCart ? (
-                          <><Plus size={13} /> {t("marketplace.item.addMore")}</>
+                        {item.name}
+                      </h3>
+
+                      {/* AI Score (if available) */}
+                      {item.ai_score !== undefined && (
+                        <div className="pt-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+                            <Sparkles size={10} /> {t("marketplace.item.match", { score: item.ai_score })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Section: Fixed-Height Price Bar + Fixed-Position Action Buttons */}
+                    <div className="mt-auto pt-2 space-y-2.5">
+                      {/* Price Bar (Fixed h-8 with border-t: preserves identical row height even if price is missing) */}
+                      <div className="h-8 border-t border-[var(--ui-border)]/50 flex items-center">
+                        {item.price > 0 ? (
+                          <span className="text-base sm:text-lg font-black text-[var(--ui-text-primary)] tabular-nums block">
+                            Rp {Number(item.price).toLocaleString("id-ID")}
+                          </span>
                         ) : (
-                          <><ShoppingCart size={13} /> {t("marketplace.item.addToCart")}</>
+                          <span className="text-xs text-[var(--ui-text-muted)] select-none block">
+                            &nbsp;
+                          </span>
                         )}
-                      </HuntrButton>
-                      <button
-                        type="button"
-                        aria-label={isSelected ? "Remove from comparison" : "Compare"}
-                        onClick={e => { e.stopPropagation(); toggleCompare(item.id); }}
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] hover:border-indigo-500 hover:text-indigo-500"}`}
-                      >
-                        {isSelected ? <CheckCircle2 size={15} /> : <GitCompare size={15} />}
-                      </button>
+                      </div>
+
+                      {/* Actions: Add to Cart & Compare (Fixed at the bottom of the card) */}
+                      <div className="flex items-center gap-2">
+                        <HuntrButton
+                          type="button"
+                          aria-label={t("marketplace.item.addToCart")}
+                          onClick={e => handleAddToCart(item, e)}
+                          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+                            justAdded
+                              ? "bg-emerald-500 text-white"
+                              : inCart
+                                ? "bg-orange-600 hover:bg-orange-700 text-white"
+                                : "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20"
+                          } cursor-pointer active:scale-[0.98]`}
+                        >
+                          {justAdded ? (
+                            <><CheckCircle2 size={14} /> {t("marketplace.item.added")}</>
+                          ) : inCart ? (
+                            <><Plus size={14} /> {t("marketplace.item.addMore")}</>
+                          ) : (
+                            <><ShoppingCart size={14} /> {t("marketplace.item.addToCart")}</>
+                          )}
+                        </HuntrButton>
+                        <button
+                          type="button"
+                          aria-label={isSelected ? "Remove from comparison" : "Compare"}
+                          title={isSelected ? "Hapus dari perbandingan" : "Bandingkan spesifikasi"}
+                          onClick={e => { e.stopPropagation(); toggleCompare(item.id); }}
+                          className={`w-9 h-9 shrink-0 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                            isSelected
+                              ? "border-indigo-600 bg-indigo-600 text-white shadow-xs"
+                              : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] hover:border-indigo-400 hover:text-indigo-500"
+                          }`}
+                        >
+                          {isSelected ? <CheckCircle2 size={15} /> : <GitCompare size={15} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -595,21 +698,37 @@ export default function Marketplace() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-1.5 pt-4">
-            <HuntrButton onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed">
-              <ChevronLeft size={14} />
+          <div className="flex items-center justify-center gap-2 pt-6">
+            <HuntrButton
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3.5 py-2 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft size={15} />
             </HuntrButton>
             {getPaginationPages(totalPages, currentPage).map((page, idx) =>
               typeof page === "string" ? (
-                <span key={`el-${idx}`} className="px-1 text-xs text-[var(--ui-text-muted)]">…</span>
+                <span key={`el-${idx}`} className="px-1 text-xs text-[var(--ui-text-muted)] font-medium">…</span>
               ) : (
-                <HuntrButton key={`p-${page}`} onClick={() => handlePageChange(page)} style={currentPage === page ? { color: "white" } : {}} className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${currentPage === page ? "bg-orange-500" : "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-primary)]"}`}>
+                <button
+                  key={`p-${page}`}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    currentPage === page
+                      ? "bg-orange-500 text-white shadow-sm shadow-orange-500/25"
+                      : "border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)]"
+                  }`}
+                >
                   {page}
-                </HuntrButton>
+                </button>
               )
             )}
-            <HuntrButton onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed">
-              <ChevronRight size={14} />
+            <HuntrButton
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3.5 py-2 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-xs font-semibold text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight size={15} />
             </HuntrButton>
           </div>
         )}
@@ -633,6 +752,5 @@ export default function Marketplace() {
         duration={2500}
       />
     </Layout>
-
   );
 }
