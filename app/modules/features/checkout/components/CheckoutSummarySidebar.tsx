@@ -1,10 +1,20 @@
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import type { ProcurementType } from "../types";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  FileCheck,
+  Zap,
+  Layers,
+  ArrowRight,
+} from "lucide-react";
+import type { ProcurementType, ProcurementMode } from "../types";
 
 interface CheckoutSummarySidebarProps {
   procurementType: ProcurementType;
+  procurementMode?: ProcurementMode;
   cartTotal: number;
   cartLength: number;
   error: string | null;
@@ -16,6 +26,7 @@ interface CheckoutSummarySidebarProps {
 
 export function CheckoutSummarySidebar({
   procurementType,
+  procurementMode = "direct",
   cartTotal,
   cartLength,
   error,
@@ -24,86 +35,144 @@ export function CheckoutSummarySidebar({
   revisionRfqId,
   onSubmit,
 }: CheckoutSummarySidebarProps) {
-  return (
-    <div className="space-y-3">
-      <div className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] p-4 space-y-3 sticky top-4">
-        <h4 className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)] pb-2 border-b border-[var(--ui-border)] flex items-center justify-between">
-          <span>
-            {procurementType === "services"
-              ? "Ringkasan Budget Jasa"
-              : "Order Summary"}
-          </span>
-          {procurementType === "services" && (
-            <span className="text-[10px] font-semibold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded">
-              Layanan Proyek
-            </span>
-          )}
-        </h4>
+  const isServices = procurementType === "services";
+  const isTender = procurementMode === "tender";
 
-        <div className="space-y-2 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[var(--ui-text-muted)]">
-              {procurementType === "services"
-                ? "Pagu Alokasi Budget"
-                : "Subtotal"}
+  return (
+    <div className="space-y-4">
+      <div className="sticky top-6 rounded-2xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 shadow-sm space-y-5 transition-colors">
+        {/* Header */}
+        <div className="pb-4 border-b border-[var(--ui-border)]">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-bold text-[var(--ui-text-primary)] tracking-tight">
+              {isServices ? "Ringkasan Anggaran Jasa" : "Ringkasan Pengadaan"}
+            </h4>
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                isTender
+                  ? "bg-purple-500/10 text-purple-500 border border-purple-500/20"
+                  : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+              }`}
+            >
+              {isTender ? (
+                <>
+                  <Layers size={11} /> Jalur Tender
+                </>
+              ) : (
+                <>
+                  <Zap size={11} /> Pembelian Langsung
+                </>
+              )}
+            </span>
+          </div>
+          <p className="text-xs text-[var(--ui-text-muted)] mt-1">
+            {isServices
+              ? "Estimasi pagu anggaran dan batas atas penawaran vendor"
+              : `Total pengadaan untuk ${cartLength} item terpilih`}
+          </p>
+        </div>
+
+        {/* Pricing Breakdown */}
+        <div className="space-y-3 text-xs">
+          <div className="flex items-center justify-between text-[var(--ui-text-secondary)]">
+            <span>
+              {isServices ? "Pagu Alokasi Budget" : `Total Item (${cartLength})`}
             </span>
             <span className="font-semibold text-[var(--ui-text-primary)] tabular-nums">
               IDR {cartTotal.toLocaleString()}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[var(--ui-text-muted)]">Tax (0%)</span>
-            <span className="font-semibold text-[var(--ui-text-primary)]">
+
+          <div className="flex items-center justify-between text-[var(--ui-text-secondary)]">
+            <span className="flex items-center gap-1">
+              Estimasi PPN & Pajak
+              <span className="text-[10px] text-[var(--ui-text-muted)]">(Exclude)</span>
+            </span>
+            <span className="font-semibold text-[var(--ui-text-muted)] tabular-nums">
               IDR 0
             </span>
           </div>
-          {procurementType === "services" && (
-            <div className="text-[10px] text-[var(--ui-text-muted)] bg-orange-500/5 border border-orange-500/20 p-2 rounded-lg">
-              💡 <b>Pagu Budget:</b> Menjadi batas atas (Owner Estimate / HPS)
-              bagi vendor dalam mengajukan penawaran tender.
+
+          <div className="flex items-center justify-between text-[var(--ui-text-secondary)]">
+            <span>Estimasi Ongkos Kirim / Delivery</span>
+            <span className="text-[11px] font-medium text-emerald-500">
+              {isTender ? "Ditentukan Vendor" : "Sesuai Lokasi"}
+            </span>
+          </div>
+
+          {isServices && (
+            <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 text-[11px] text-[var(--ui-text-secondary)] leading-relaxed">
+              <span className="font-bold text-orange-500">💡 Info Pagu Budget:</span>{" "}
+              Total ini berfungsi sebagai batas atas pagu (Owner Estimate / HPS) saat proses evaluasi penawaran vendor.
             </div>
           )}
-          <div className="pt-2 border-t border-[var(--ui-border)] flex items-center justify-between">
-            <span className="font-bold text-[var(--ui-text-primary)] uppercase">
-              {procurementType === "services"
-                ? "Total Pagu Anggaran"
-                : "Total"}
-            </span>
-            <span className="text-sm font-bold text-orange-500 tabular-nums">
-              IDR {cartTotal.toLocaleString()}
-            </span>
+
+          {isTender && !isServices && (
+            <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20 text-[11px] text-[var(--ui-text-secondary)] leading-relaxed">
+              <span className="font-bold text-purple-400">⚖️ Mode Tender Terbuka:</span>{" "}
+              Vendor akan bersaing mengajukan penawaran harga terbaik di bawah atau sesuai spesifikasi Anda.
+            </div>
+          )}
+
+          {/* Grand Total */}
+          <div className="pt-3 border-t border-[var(--ui-border)]">
+            <div className="flex items-baseline justify-between">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                  {isServices ? "Total Pagu Anggaran" : "Total Estimasi"}
+                </span>
+                <p className="text-[10px] text-[var(--ui-text-muted)]">
+                  Mata Uang: IDR (Rupiah)
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-black text-orange-500 tabular-nums tracking-tight">
+                  IDR {cartTotal.toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Error Alert */}
         {error && (
-          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold flex items-center gap-2">
-            <AlertCircle size={14} className="shrink-0" /> {error}
+          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-500 text-xs font-semibold flex items-start gap-2.5">
+            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+            <div className="leading-snug">{error}</div>
           </div>
         )}
 
+        {/* Submit Action Button */}
         <HuntrButton
           onClick={onSubmit}
           disabled={loading || revisionLoading || !!error || cartLength === 0}
-          style={{ color: "white" }}
-          className="w-full py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full py-3.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-orange-500/20 hover:shadow-orange-500/30 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none cursor-pointer"
         >
           {loading ? (
-            <Loader2 size={16} className="animate-spin" />
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              <span>Memproses Pengajuan...</span>
+            </>
           ) : (
             <>
-              {revisionRfqId ? "Submit revised PR" : "Submit Request"}{" "}
-              <CheckCircle2 size={16} />
+              <span>{revisionRfqId ? "Kirim Revisi PR" : "Ajukan Purchase Request"}</span>
+              {revisionRfqId ? <CheckCircle2 size={18} /> : <ArrowRight size={18} />}
             </>
           )}
         </HuntrButton>
 
-        <p className="text-[10px] text-[var(--ui-text-muted)] text-center leading-relaxed">
-          By submitting, this request will be sent to your manager for approval
-          before being published.
-        </p>
+        {/* Trust Badges & Notice */}
+        <div className="pt-2 border-t border-[var(--ui-border)]/60 space-y-2">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--ui-text-muted)]">
+            <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+            <span>Alur approval berjenjang otomatis sesuai SOP</span>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-[var(--ui-text-muted)]">
+            <FileCheck size={14} className="text-blue-500 shrink-0" />
+            <span>Audit trail lengkap & nomor PR resmi terintegrasi</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-
