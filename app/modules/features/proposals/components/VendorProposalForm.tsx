@@ -140,7 +140,7 @@ export function VendorProposalForm({
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-[var(--ui-text-primary)]">{item.catalogue?.name}</p>
+                          <p className="font-semibold text-[var(--ui-text-primary)]">{item.catalogue?.name || item.item_name || "—"}</p>
                           {isParticipating ? (
                             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-500">
                               Ditawarkan
@@ -152,8 +152,12 @@ export function VendorProposalForm({
                           )}
                         </div>
                         <p className="text-[10px] text-[var(--ui-text-muted)] font-mono mt-0.5 flex items-center gap-2 flex-wrap">
-                          <span>{item.catalogue?.item_code}</span>
-                          <span>·</span>
+                          {item.catalogue?.item_code ? (
+                            <span>{item.catalogue.item_code}</span>
+                          ) : item.uom ? (
+                            <span>{item.uom}</span>
+                          ) : null}
+                          {(item.catalogue?.item_code || item.uom) && <span>·</span>}
                           <span className="font-bold text-orange-500">{rfqItem?.qty} Units Requested</span>
                           {rfqItem?.estimated_price > 0 && (
                             <>

@@ -248,7 +248,7 @@ export default function MyPurchaseRequisitionDetail() {
                 Create direct PO
               </HuntrButton>
             )}
-          {request.status === "active" && (
+          {(request.status === "active" || request.status === "approved") && (
             <HuntrButton
               type="button"
               onClick={() => navigate(`/rfq/${request.id}`)}
@@ -585,7 +585,7 @@ export default function MyPurchaseRequisitionDetail() {
             </section>
 
             {/* Proposals */}
-            {request.status === "active" && (
+            {(request.status === "active" || request.status === "approved") && (
               <section>
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart3 size={14} className="text-orange-500" />

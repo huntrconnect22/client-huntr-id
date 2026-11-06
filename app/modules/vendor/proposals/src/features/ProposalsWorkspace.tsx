@@ -215,7 +215,11 @@ export default function Proposals() {
         items: rfq.items?.map((item: any) => ({
           rfq_item_id: item.id,
           price_offer: "",
-          catalogue: item.catalogue
+          catalogue: item.catalogue,
+          // Fallback for manual (non-catalogue) items
+          item_name: item.item_name || item.name || null,
+          uom: item.uom || item.catalogue?.uom || null,
+          line_type: item.line_type || "goods",
         })) || []
       }));
     }
