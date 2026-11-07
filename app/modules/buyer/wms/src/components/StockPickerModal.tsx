@@ -1,7 +1,6 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Input as HuntrInput } from "~/shared/ui/Fields";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Boxes, Check, MapPin, PackageCheck, Search, Warehouse, X } from "lucide-react";
+import { getAssetUrl } from "~/lib/assets";
 
 export interface StockPickerItem {
   id: string | number;
@@ -148,13 +147,14 @@ export function StockPickerModal({
         ]),
         bins: new Set<string>([it.bin_location || "—"]),
         extraMeta: it.extraMeta,
-        imageUrl: it.image_url || it.image_path || null,
+        imageUrl: it.image_url || it.image_path ? getAssetUrl(it.image_url || it.image_path) : null,
       }));
     }
     type GroupAcc = Omit<DisplayGroup, "available">;
     const grouped = new Map<string, GroupAcc>();
     for (const it of pool) {
       const key = it.sku;
+      const rawImg = it.image_url || it.image_path;
       const cur: GroupAcc = grouped.get(key) ?? {
         key,
         title: it.item_name,
@@ -167,7 +167,7 @@ export function StockPickerModal({
         warehouses: new Set<string>(),
         bins: new Set<string>(),
         extraMeta: it.extraMeta,
-        imageUrl: it.image_url || it.image_path || null,
+        imageUrl: rawImg ? getAssetUrl(rawImg) : null,
       };
       cur.rows.push(it);
       cur.on_hand += it._num;
@@ -214,32 +214,39 @@ export function StockPickerModal({
               </p>
             )}
           </div>
-          <HuntrButton
+          <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-md p-1.5 text-[var(--ui-text-muted)] transition-colors hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)]"
+            className="shrink-0 rounded-md p-1.5 text-[var(--ui-text-muted)] transition-colors hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)] cursor-pointer"
             aria-label="Close"
           >
             <X size={16} />
-          </HuntrButton>
+          </button>
         </div>
 
-        <div className="border-b border-[var(--ui-border)] px-5 py-4 sm:px-6">
-          <label className="relative block overflow-hidden rounded-lg bg-[var(--ui-bg-input)] ring-1 ring-[var(--ui-border-input)] focus-within:ring-2 focus-within:ring-[var(--ui-text-brand)]/25">
+        <div className="border-b border-[var(--ui-border)] px-5 py-3 sm:px-6">
+          <label className="relative flex items-center rounded-lg bg-[var(--ui-bg-input)] ring-1 ring-[var(--ui-border-input)] focus-within:ring-2 focus-within:ring-[var(--ui-text-brand)]/30">
             <Search
               size={14}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
+              className="pointer-events-none ml-3 shrink-0 text-[var(--ui-text-muted)]"
             />
-            <HuntrInput
+            <input
               autoFocus
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
-              className="w-full bg-transparent text-sm text-[var(--ui-text-primary)] placeholder:text-[var(--ui-text-muted)] focus:outline-none"
-              data-field-chrome="none"
-              style={{ minHeight: 46, paddingLeft: 38, paddingRight: 12 }}
+              className="min-w-0 flex-1 bg-transparent py-2.5 pl-2.5 pr-3 text-sm text-[var(--ui-text-primary)] placeholder:text-[var(--ui-text-muted)] focus:outline-none border-0 shadow-none"
             />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="mr-2 shrink-0 rounded p-0.5 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] cursor-pointer"
+              >
+                <X size={13} />
+              </button>
+            )}
           </label>
         </div>
 
@@ -268,206 +275,223 @@ export function StockPickerModal({
               )}
             </div>
           ) : (
-            <ul className="space-y-2.5">
-              {display.map((group) => {
-                const isSelected = selectedSku === group.sku;
-                const lowStock = group.available > 0 && group.available <= 5;
-                return (
-                  <li key={group.key}>
-                    <HuntrButton
-                      type="button"
-                      onClick={() => {
-                        const row = aggregateBySku
-                          ? // when aggregating: pick the row with most available
-                            [...group.rows].sort(
-                                (a: any, b: any) =>
-                                  toNum(b.on_hand) -
-                                  toNum(b.allocated) -
-                                  (toNum(a.on_hand) - toNum(a.allocated)),
-                              )[0]
-                          : group.rows[0];
-                        onSelect(row);
-                      }}
-                      className={
-                        "group relative block w-full !justify-start rounded-lg border p-4 text-left transition-all duration-150 " +
-                        (isSelected
-                          ? "border-[var(--ui-text-brand)]/60 bg-[var(--ui-text-brand)]/5 shadow-[0_0_0_1px_var(--ui-text-brand)]/20"
-                          : "border-[var(--ui-border)] bg-[var(--ui-bg-card)] hover:border-[var(--ui-text-brand)]/40 hover:bg-[var(--ui-bg-card-hover)]")
-                      }
-                    >
-                      <div className="grid gap-3 sm:grid-cols-[52px_minmax(0,1fr)_238px] sm:items-start">
-                        <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                          {group.imageUrl ? <img src={group.imageUrl} alt="" className="block h-full w-full object-cover object-center" /> : <Boxes size={20} className="text-[var(--ui-text-muted)]" />}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <p className="truncate text-sm font-bold text-[var(--ui-text-primary)]">
-                              {group.title}
-                            </p>
-                            <span className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--ui-text-brand)]">
-                              {group.sku}
-                            </span>
-                            {group.uom && (
-                              <span className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--ui-text-muted)]">
-                                {group.uom}
-                              </span>
-                            )}
-                            {group.catalogue_id && (
-                              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--ui-primary-border)] bg-[var(--ui-primary-muted)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--ui-text-brand)]">
-                                · linked
-                              </span>
-                            )}
-                            {lowStock && (
-                              <span className="rounded-md border border-orange-400/40 bg-orange-400/10 px-1.5 py-0.5 text-[10px] font-bold text-orange-500">
-                                Low stock
-                              </span>
-                            )}
-                            {group.available <= 0 && !hideUnavailable && (
-                              <span className="rounded-md border border-[var(--ui-border-error)] bg-[var(--ui-bg-error)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--ui-text-error)]">
-                                Sold out
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="relative flex w-full flex-row items-end justify-between gap-3 sm:w-auto sm:flex-col sm:items-end sm:justify-start sm:gap-1">
-                          {isSelected && (
-                            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[var(--ui-text-brand)] text-white shadow-sm">
-                              <Check size={14} />
-                            </span>
-                          )}
-                          <div className="grid flex-1 grid-cols-3 gap-2 text-center text-[10px] sm:w-[238px] sm:flex-none">
-                            <div className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1">
-                              <div className="font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
-                                On hand
-                              </div>
-                              <div className="mt-0.5 text-sm font-bold tabular-nums text-[var(--ui-text-primary)]">
-                                {fmtQty(group.on_hand)}
-                              </div>
-                            </div>
-                            <div className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1">
-                              <div className="font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
-                                Alloc
-                              </div>
-                              <div className="mt-0.5 text-sm font-bold tabular-nums text-[var(--ui-text-secondary)]">
-                                {fmtQty(group.allocated)}
-                              </div>
-                            </div>
-                            <div
-                              className={
-                                "rounded-md border px-2 py-1 " +
-                                (group.available > 0
-                                  ? group.available <= 5
-                                    ? "border-orange-400/40 bg-orange-400/10"
-                                    : "border-[var(--ui-border-success)] bg-[var(--ui-bg-success)]"
-                                  : "border-[var(--ui-border-error)] bg-[var(--ui-bg-error)]")
-                              }
-                            >
-                              <div className="font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
-                                Available
-                              </div>
-                              <div
-                                className={
-                                  "mt-0.5 text-sm font-bold tabular-nums " +
-                                  (group.available > 0
-                                    ? group.available <= 5
-                                      ? "text-orange-500"
-                                      : "text-[var(--ui-text-success)]"
-                                    : "text-[var(--ui-text-error)]")
-                                }
-                              >
-                                {fmtQty(group.available)}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+            <div className="overflow-x-auto rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] shadow-sm">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="sticky top-0 z-10 border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                  <tr>
+                    <th className="w-10 px-3 py-2.5 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                      <span className="sr-only">Pilih</span>
+                    </th>
+                    <th className="px-3.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                      Barang & SKU
+                    </th>
+                    <th className="px-3.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                      Gudang & Lokasi Bin
+                    </th>
+                    <th className="px-3.5 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] whitespace-nowrap">
+                      On Hand
+                    </th>
+                    <th className="px-3.5 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] whitespace-nowrap">
+                      Alokasi
+                    </th>
+                    <th className="px-3.5 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] whitespace-nowrap">
+                      Tersedia
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--ui-border)]">
+                  {display.map((group) => {
+                    const isSelected = selectedSku === group.sku;
+                    const lowStock = group.available > 0 && group.available <= 5;
+                    const hasMultiBins = group.rows.length > 1 && aggregateBySku;
 
-                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-[var(--ui-border)] pt-2.5 text-[11px] text-[var(--ui-text-muted)]">
-                        <span className="inline-flex items-center gap-1"><Warehouse size={12} />{group.warehouses.size === 1 ? Array.from(group.warehouses)[0] : `${group.warehouses.size} warehouses`}</span>
-                        <span className="inline-flex items-center gap-1"><MapPin size={12} />{group.bins.size === 1 ? Array.from(group.bins)[0] : `${group.bins.size} bin locations`}</span>
-                      </div>
+                    return (
+                      <Fragment key={group.key}>
+                        {/* Main SKU row */}
+                        <tr
+                          onClick={() => {
+                            const row = aggregateBySku
+                              ? [...group.rows].sort(
+                                  (a: any, b: any) =>
+                                    toNum(b.on_hand) -
+                                    toNum(b.allocated) -
+                                    (toNum(a.on_hand) - toNum(a.allocated)),
+                                )[0]
+                              : group.rows[0];
+                            onSelect(row);
+                          }}
+                          className={
+                            "cursor-pointer transition-colors " +
+                            (isSelected
+                              ? "bg-[var(--ui-text-brand)]/10 font-semibold"
+                              : "hover:bg-[var(--ui-bg-input)]/70")
+                          }
+                        >
+                          {/* Radio selection */}
+                          <td className="w-10 px-3 py-3 text-center align-middle">
+                            <span className="inline-flex items-center justify-center">
+                              {isSelected ? (
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ui-text-brand)] text-white shadow-sm">
+                                  <Check size={10} strokeWidth={3} />
+                                </span>
+                              ) : (
+                                <span className="block h-4 w-4 rounded-full border-2 border-[var(--ui-border)]" />
+                              )}
+                            </span>
+                          </td>
 
-                      {group.rows.length > 1 && aggregateBySku && (
-                        <div className="mt-3 space-y-1.5 border-t border-[var(--ui-border)] pt-3">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-                            Bin breakdown — tap row to select specific bin
-                          </p>
-                          <ul className="space-y-1">
-                            {group.rows.map((row: StockPickerItem, i: number) => (
-                              <li key={`${row.id}-${i}`}>
-                                <HuntrButton
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSelect(row);
-                                  }}
-                                  className="flex w-full items-center justify-between rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)]/60 px-3 py-2 text-[11px] transition-colors hover:border-[var(--ui-text-brand)]/40 hover:text-[var(--ui-text-brand)]"
+                          {/* Barang & SKU */}
+                          <td className="px-3.5 py-3 align-middle">
+                            <div className="flex items-center gap-2.5">
+                              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                                {group.imageUrl ? (
+                                  <img
+                                    src={group.imageUrl}
+                                    alt={group.title}
+                                    className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                      const fallback = e.currentTarget.parentElement?.querySelector(".img-fallback") as HTMLElement | null;
+                                      if (fallback) fallback.style.display = "flex";
+                                    }}
+                                  />
+                                ) : null}
+                                <span
+                                  className="img-fallback flex items-center justify-center text-[var(--ui-text-muted)]"
+                                  style={{ display: group.imageUrl ? "none" : "flex" }}
                                 >
-                                  <span className="flex items-center gap-2 text-[var(--ui-text-secondary)]">
-                                    <MapPin size={12} />
-                                    <span className="font-mono font-semibold">
-                                      {row.bin_location || "—"}
-                                    </span>
-                                    {row.warehouse_name && (
-                                      <span className="text-[var(--ui-text-muted)]">
-                                        · {row.warehouse_name}
-                                      </span>
-                                    )}
-                                    {row.bin_id && (
-                                      <span className="text-[var(--ui-text-muted)]">
-                                        · bin id{" "}
-                                        <span className="font-mono">
-                                          {String(row.bin_id).slice(0, 8)}
-                                        </span>
-                                      </span>
-                                    )}
+                                  <Boxes size={16} />
+                                </span>
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="text-sm font-semibold text-[var(--ui-text-primary)]">
+                                    {group.title}
                                   </span>
-                                  <span
-                                    className={
-                                      "tabular-nums font-semibold " +
-                                      (toNum(row.on_hand) - toNum(row.allocated) > 0
-                                        ? "text-[var(--ui-text-success)]"
-                                        : "text-[var(--ui-text-error)]")
-                                    }
-                                  >
-                                    {fmtQty(
-                                      toNum(row.on_hand) - toNum(row.allocated),
-                                    )}{" "}
-                                    <span className="text-[var(--ui-text-muted)]">
-                                      / {fmtQty(row.on_hand)}
-                                    </span>
+                                  <span className="shrink-0 rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--ui-text-brand)]">
+                                    {group.sku}
                                   </span>
-                                </HuntrButton>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                                  {group.uom && (
+                                    <span className="shrink-0 rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--ui-text-muted)]">
+                                      {group.uom}
+                                    </span>
+                                  )}
+                                  {group.catalogue_id && (
+                                    <span className="shrink-0 rounded border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--ui-text-brand)]">
+                                      linked
+                                    </span>
+                                  )}
+                                  {lowStock && (
+                                    <span className="shrink-0 rounded border border-orange-400/40 bg-orange-400/10 px-1.5 py-0.5 text-[9px] font-bold text-orange-500">
+                                      Low stock
+                                    </span>
+                                  )}
+                                  {group.available <= 0 && !hideUnavailable && (
+                                    <span className="shrink-0 rounded border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-[9px] font-bold text-red-500">
+                                      Habis
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
 
-                      {group.extraMeta && group.extraMeta.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--ui-border)] pt-3 text-[11px]">
-                          {group.extraMeta.map((m, i) => (
-                            <span
-                              key={`${m.label}-${i}`}
-                              className="rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1"
+                          {/* Gudang & Lokasi Bin */}
+                          <td className="px-3.5 py-3 text-xs text-[var(--ui-text-muted)] align-middle">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1">
+                                <Warehouse size={11} />
+                                {group.warehouses.size === 1
+                                  ? Array.from(group.warehouses)[0]
+                                  : `${group.warehouses.size} gudang`}
+                              </span>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <MapPin size={11} />
+                                {group.bins.size === 1
+                                  ? Array.from(group.bins)[0]
+                                  : `${group.bins.size} bin`}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* On Hand */}
+                          <td className="px-3.5 py-3 text-right text-xs font-semibold tabular-nums text-[var(--ui-text-primary)] align-middle">
+                            {fmtQty(group.on_hand)}
+                          </td>
+
+                          {/* Alokasi */}
+                          <td className="px-3.5 py-3 text-right text-xs tabular-nums text-[var(--ui-text-secondary)] align-middle">
+                            {fmtQty(group.allocated)}
+                          </td>
+
+                          {/* Tersedia */}
+                          <td className={
+                            "px-3.5 py-3 text-right text-xs font-bold tabular-nums align-middle " +
+                            (group.available > 0
+                              ? group.available <= 5
+                                ? "text-orange-500"
+                                : "text-emerald-500"
+                              : "text-red-500")
+                          }>
+                            {fmtQty(group.available)}
+                          </td>
+                        </tr>
+
+                        {/* Multi-bin sub-rows if any */}
+                        {hasMultiBins && group.rows.map((row: StockPickerItem, i: number) => {
+                          const rowAvail = toNum(row.on_hand) - toNum(row.allocated);
+                          return (
+                            <tr
+                              key={`${row.id}-${i}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelect(row);
+                              }}
+                              className="cursor-pointer bg-[var(--ui-bg-input)]/25 hover:bg-[var(--ui-bg-input)] transition-colors border-b border-[var(--ui-border)]/40 text-[11px]"
                             >
-                              <span className="mr-1 font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
-                                {m.label}:
-                              </span>
-                              <span className="font-semibold">
-                                {m.value}
-                              </span>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </HuntrButton>
-                  </li>
-                );
-              })}
-            </ul>
+                              <td className="text-center py-2 px-2 text-[var(--ui-text-muted)]">
+                                └─
+                              </td>
+                              <td className="px-3.5 py-2 text-[var(--ui-text-muted)] pl-8">
+                                <span className="font-mono font-medium text-[var(--ui-text-secondary)]">
+                                  Bin: {row.bin_location || "—"}
+                                </span>
+                              </td>
+                              <td className="px-3.5 py-2 text-xs text-[var(--ui-text-muted)]">
+                                {row.warehouse_name || "—"}
+                              </td>
+                              <td className="px-3.5 py-2 text-right tabular-nums text-[var(--ui-text-muted)]">
+                                {fmtQty(row.on_hand)}
+                              </td>
+                              <td className="px-3.5 py-2 text-right tabular-nums text-[var(--ui-text-muted)]">
+                                {fmtQty(row.allocated)}
+                              </td>
+                              <td className={
+                                "px-3.5 py-2 text-right tabular-nums font-semibold " +
+                                (rowAvail > 0 ? "text-emerald-500" : "text-red-500")
+                              }>
+                                {fmtQty(rowAvail)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
+
+        {/* ── Footer count ── */}
+        {display.length > 0 && (
+          <div className="border-t border-[var(--ui-border)] px-5 py-2 text-[11px] text-[var(--ui-text-muted)]">
+            {display.length} SKU{display.length !== 1 ? "s" : ""}
+            {query && ` cocok dengan "${query}"`}
+          </div>
+        )}
       </div>
     </div>
   );
