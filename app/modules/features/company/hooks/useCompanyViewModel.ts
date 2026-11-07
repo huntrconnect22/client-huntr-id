@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { 
   getMyCompanies, updateCompany, uploadCompanyLogo, verifyNpwp,
   inviteUser, getTeamMembers, getCsrfCookie,
@@ -15,6 +15,7 @@ interface CompanyCapacity {
 
 export const useCompanyViewModel = () => {
   const navigate = useNavigate();
+  const { companySlug } = useParams<{ companySlug?: string }>();
   const getInitialTab = () => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -52,7 +53,13 @@ export const useCompanyViewModel = () => {
   const [companies, setCompanies] = useState<any[]>([]);
   const [companyCapacity, setCompanyCapacity] = useState<CompanyCapacity | null>(null);
   const [selectedWorkspace, setSelectedWorkspace] = useState<any>(null);
-  const [showCompanyWorkspace, setShowCompanyWorkspace] = useState(false);
+  const [showCompanyWorkspace, setShowCompanyWorkspace] = useState(() => {
+    if (typeof window !== "undefined") {
+      const activeComp = localStorage.getItem("active_company");
+      if (activeComp) return true;
+    }
+    return false;
+  });
   const [companyListLoading, setCompanyListLoading] = useState(true);
 
   // Edit state
@@ -118,11 +125,26 @@ export const useCompanyViewModel = () => {
       const list = data.companies || [];
       setCompanies(list);
       setCompanyCapacity(data.company_capacity ?? null);
-      if (activeId) {
+      if (companySlug) {
+        const current = list.find((c: any) => c.slug === companySlug || String(c.id) === companySlug);
+        if (current) {
+          setSelectedWorkspace(current);
+          syncActiveCompany(current);
+          setShowCompanyWorkspace(true);
+        } else if (activeId) {
+          const fallback = list.find((c: any) => c.id === activeId);
+          if (fallback) {
+            setSelectedWorkspace(fallback);
+            syncActiveCompany(fallback);
+            setShowCompanyWorkspace(true);
+          }
+        }
+      } else if (activeId) {
         const current = list.find((c: any) => c.id === activeId);
         if (current) {
           setSelectedWorkspace(current);
           syncActiveCompany(current);
+          setShowCompanyWorkspace(true);
         }
       }
     } catch (err) {
