@@ -1,6 +1,7 @@
 import { Input as HuntrInput } from "~/shared/ui/Fields";
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { stripHtml } from "~/shared/ui/RichTextEditor";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { apiGet } from "~/lib/api";
@@ -107,6 +108,7 @@ export default function MyPurchaseRequisitions() {
   const filtered = requests.filter(
     (r) =>
       r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      stripHtml(r.description).toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(r.id ?? "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase()),
@@ -230,7 +232,7 @@ export default function MyPurchaseRequisitions() {
                           </div>
                           {req.description && (
                             <div className="text-xs text-[var(--ui-text-muted)] truncate max-w-[360px] mt-0.5">
-                              {req.description}
+                              {stripHtml(req.description)}
                             </div>
                           )}
                         </HuntrTableCell>
