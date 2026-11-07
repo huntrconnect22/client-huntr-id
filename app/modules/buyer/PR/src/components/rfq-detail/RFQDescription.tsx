@@ -2,6 +2,7 @@ import React from "react";
 import { User, Building2, FileText, CheckCircle2, Briefcase, Clock, MapPin } from "lucide-react";
 import { getAssetUrl } from "~/lib/assets";
 import { useLanguage } from "~/context/LanguageContext";
+import { RenderRichText } from "~/shared/ui/RichTextEditor";
 
 interface RFQDescriptionProps {
   rfq: any;
@@ -106,7 +107,10 @@ export function RFQDescription({ rfq, successMessage }: RFQDescriptionProps) {
           <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
             {t("rfqDetail.description.requirements")}
           </div>
-          <p className="text-sm text-[var(--ui-text-secondary)] leading-relaxed">{rfq.description}</p>
+          <RenderRichText
+            content={rfq.description}
+            className="text-sm text-[var(--ui-text-secondary)]"
+          />
         </div>
       )}
 

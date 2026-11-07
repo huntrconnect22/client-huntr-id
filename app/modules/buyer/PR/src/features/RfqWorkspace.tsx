@@ -1,6 +1,7 @@
 import { Surface as HuntrSurface } from "~/shared/ui/Surface";
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Select as HuntrSelect, Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { RichTextEditor } from "~/shared/ui/RichTextEditor";
 import React, { useState, useEffect } from "react";
 import Layout from "~/components/Layout";
 import { createRfq, apiGet, apiPost } from "~/lib/api";
@@ -512,14 +513,12 @@ export default function Rfq() {
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={lbl}>Justification / Description</label>
-                <HuntrTextarea
+                <label style={lbl}>Latar Belakang & Justifikasi Kebutuhan</label>
+                <RichTextEditor
                   value={form.description}
-                  onChange={(e) => setF("description", e.target.value)}
-                  required
-                  rows={3}
-                  placeholder="Jelaskan kebutuhan pengadaan ini..."
-                  style={{ ...inputStyle, resize: "none" }}
+                  onChange={(val) => setF("description", val)}
+                  placeholder="Jelaskan kebutuhan dan latar belakang pengadaan ini..."
+                  minHeight={140}
                 />
               </div>
 

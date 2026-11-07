@@ -1,5 +1,6 @@
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import { RenderRichText } from "~/shared/ui/RichTextEditor";
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import Layout from "~/components/Layout";
@@ -322,11 +323,12 @@ export default function MyPurchaseRequisitionDetail() {
         {request.description && (
           <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-2.5">
             <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
-              Description
+              Description / Justifikasi
             </div>
-            <p className="text-sm text-[var(--ui-text-primary)] leading-relaxed">
-              {request.description}
-            </p>
+            <RenderRichText
+              content={request.description}
+              className="text-sm text-[var(--ui-text-primary)]"
+            />
           </div>
         )}
 

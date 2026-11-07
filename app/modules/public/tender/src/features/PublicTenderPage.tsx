@@ -1,6 +1,7 @@
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
 import { Input as HuntrInput } from "~/shared/ui/Fields";
+import { RenderRichText } from "~/shared/ui/RichTextEditor";
 import React, { useEffect, useState } from "react";
 // Public, unauthenticated tender experience.
 import { useParams, Link, useNavigate } from "react-router";
@@ -261,9 +262,10 @@ export default function TenderPublicPage() {
                   <FileText size={13} />
                   Deskripsi Kebutuhan
                 </div>
-                <p className="text-sm text-[var(--ui-text-secondary)] leading-relaxed whitespace-pre-wrap">
-                  {rfq.description}
-                </p>
+                <RenderRichText
+                  content={rfq.description}
+                  className="text-sm text-[var(--ui-text-secondary)]"
+                />
               </div>
             )}
 
