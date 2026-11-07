@@ -233,9 +233,33 @@ export default function Register() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="register-whatsapp">
-              {t("register.whatsappLabel")}
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]" htmlFor="register-whatsapp">
+                {t("register.whatsappLabel")}
+              </label>
+              {(() => {
+                const digits = form.whatsapp.replace(/\D/g, "");
+                if (digits.startsWith("60") || digits.startsWith("01")) {
+                  return (
+                    <span className="text-[11px] font-bold text-sky-500 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20 flex items-center gap-1">
+                      <span>🇲🇾</span> Malaysia (+60)
+                    </span>
+                  );
+                }
+                if (digits.startsWith("62") || digits.startsWith("08")) {
+                  return (
+                    <span className="text-[11px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20 flex items-center gap-1">
+                      <span>🇮🇩</span> Indonesia (+62)
+                    </span>
+                  );
+                }
+                return (
+                  <span className="text-[10px] text-[var(--ui-text-muted)] font-medium">
+                    Mendukung 🇮🇩 +62 & 🇲🇾 +60
+                  </span>
+                );
+              })()}
+            </div>
             <div className="relative">
               <HuntrInput
                 id="register-whatsapp"
@@ -244,7 +268,7 @@ export default function Register() {
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
-                placeholder="e.g. 085156334793"
+                placeholder="0812... (ID) atau +6012... (MY)"
                 required
                 disabled={otpSent}
                 style={{ paddingLeft: 48 }}

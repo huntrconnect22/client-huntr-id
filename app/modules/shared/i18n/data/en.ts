@@ -794,7 +794,7 @@ const en = {
     alreadyHaveAccount: "Already have an account?",
     loginNow: "Sign In Now",
     validationFillFields: "Please fill in Full Name, WhatsApp, and Password first.",
-    validationWhatsapp: "Invalid WhatsApp format. Use 08xxxxxxxxxx.",
+    validationWhatsapp: "Invalid WhatsApp format. Use Indonesian (08xxx / +62xxx) or Malaysian (+601xxx / 01xxx) format.",
     validationEnterOtp: "Please enter the OTP verification code.",
     validationOtpLength: "Please enter the complete 6-digit OTP code.",
   },
