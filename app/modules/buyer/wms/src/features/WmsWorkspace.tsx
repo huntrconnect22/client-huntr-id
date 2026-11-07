@@ -607,20 +607,23 @@ export default function WmsPage() {
 
   const cataloguePickerItems: PickerItem[] = useMemo(
     () =>
-      catalogue.map((item: any) => ({
-        id: String(item.id),
-        title: item.name || String(item.item_code),
-        subtitle: String(item.item_code),
-        searchable: `${item.item_code} ${item.name ?? ""}`,
-        imageUrl: item.image_url || (item.image_path ? getAssetUrl(item.image_path) : null),
-        meta: [
-          {
-            label: "SKU",
-            value: String(item.item_code),
-            tone: "brand" as const,
-          },
-        ],
-      })),
+      catalogue.map((item: any) => {
+        const rawImg = item.image_url || item.image_path || item.image;
+        return {
+          id: String(item.id),
+          title: item.name || String(item.item_code),
+          subtitle: String(item.item_code),
+          searchable: `${item.item_code} ${item.name ?? ""}`,
+          imageUrl: rawImg ? getAssetUrl(rawImg) : null,
+          meta: [
+            {
+              label: "SKU",
+              value: String(item.item_code),
+              tone: "brand" as const,
+            },
+          ],
+        };
+      }),
     [catalogue],
   );
 
@@ -628,27 +631,39 @@ export default function WmsPage() {
     () => [
       {
         id: "good",
-        title: "Good",
-        subtitle: "Inspection passed — fully accepted",
-        meta: [{ label: "Tone", value: "Accepted", tone: "success" as const }],
+        title: "Good — Diterima Penuh",
+        subtitle: "Semua barang lolos inspeksi dan diterima sesuai pesanan",
+        meta: [
+          { label: "Status", value: "Accepted", tone: "success" as const },
+          { label: "Tindakan", value: "Stok langsung ditambahkan", tone: "muted" as const },
+        ],
       },
       {
         id: "damaged",
-        title: "Damaged",
-        subtitle: "Goods arrived damaged",
-        meta: [{ label: "Tone", value: "Review", tone: "brand" as const }],
+        title: "Damaged — Barang Rusak",
+        subtitle: "Sebagian atau seluruh barang tiba dalam kondisi rusak",
+        meta: [
+          { label: "Status", value: "Perlu ditinjau", tone: "brand" as const },
+          { label: "Tindakan", value: "Catat di inspection notes", tone: "muted" as const },
+        ],
       },
       {
         id: "short",
-        title: "Short shipment",
-        subtitle: "Less quantity received than ordered",
-        meta: [{ label: "Tone", value: "Short", tone: "muted" as const }],
+        title: "Short Shipment — Kurang Kiriman",
+        subtitle: "Jumlah barang yang diterima kurang dari yang dipesan",
+        meta: [
+          { label: "Status", value: "Kekurangan", tone: "muted" as const },
+          { label: "Tindakan", value: "Input qty aktual diterima", tone: "muted" as const },
+        ],
       },
       {
         id: "other",
-        title: "Other",
-        subtitle: "Custom inspection note required",
-        meta: [{ label: "Tone", value: "Manual", tone: "default" as const }],
+        title: "Other — Kondisi Lainnya",
+        subtitle: "Kondisi tidak sesuai kategori di atas, perlu catatan manual",
+        meta: [
+          { label: "Status", value: "Manual review", tone: "default" as const },
+          { label: "Tindakan", value: "Wajib isi inspection notes", tone: "muted" as const },
+        ],
       },
     ],
     [],
@@ -659,12 +674,17 @@ export default function WmsPage() {
       warehouses.map((w: any) => ({
         id: String(w.id),
         title: w.name,
-        subtitle: `${w.code} · ${w.address || "—"}`,
+        subtitle: `Kode: ${w.code}${w.address ? ` · ${w.address}` : ""}`,
         meta: [
           {
             label: "Bins",
             value: String(w.bins?.length || 0),
-            tone: "muted" as const,
+            tone: (w.bins?.length || 0) > 0 ? ("success" as const) : ("muted" as const),
+          },
+          {
+            label: "Kode",
+            value: w.code || "—",
+            tone: "brand" as const,
           },
         ],
       })),
@@ -673,18 +693,26 @@ export default function WmsPage() {
 
   const poPickerItems: PickerItem[] = useMemo(
     () =>
-      inboundOrders.map((po: any) => ({
-        id: String(po.id),
-        title: po.po_number,
-        subtitle: `${po.vendor_name || "Vendor"} · ${po.status || "open"}`,
-        meta: [
-          {
-            label: "Lines",
-            value: String(po.lines?.length || 0),
-            tone: "muted" as const,
-          },
-        ],
-      })),
+      inboundOrders.map((po: any) => {
+        const openLines = (po.lines || []).filter((l: any) => Number(l.remaining_quantity || 0) > 0).length;
+        return {
+          id: String(po.id),
+          title: po.po_number,
+          subtitle: po.vendor_name || "Vendor tidak diketahui",
+          meta: [
+            {
+              label: "Lines",
+              value: String(po.lines?.length || 0),
+              tone: "muted" as const,
+            },
+            {
+              label: "Sisa Open",
+              value: String(openLines),
+              tone: openLines > 0 ? ("brand" as const) : ("muted" as const),
+            },
+          ],
+        };
+      }),
     [inboundOrders],
   );
 
@@ -697,10 +725,15 @@ export default function WmsPage() {
       .map((line: any) => ({
         id: String(line.sku),
         title: line.name || line.sku,
-        subtitle: `${line.sku}`,
+        subtitle: `SKU: ${line.sku}${line.uom ? ` · ${line.uom}` : ""}`,
         meta: [
           {
-            label: "Remaining",
+            label: "Dipesan",
+            value: String(line.ordered_quantity || line.quantity || 0),
+            tone: "muted" as const,
+          },
+          {
+            label: "Sisa diterima",
             value: String(line.remaining_quantity || 0),
             tone: "brand" as const,
           },
@@ -712,34 +745,44 @@ export default function WmsPage() {
     const bins =
       warehouses.find((w: any) => String(w.id) === putawayForm.warehouse_id)
         ?.bins || [];
-    return {
-      all: bins.map((bin: any) => ({
+    const mapBin = (bin: any, forStorage = false) => {
+      const binTypeLabel = `${String(bin.type || "storage").charAt(0).toUpperCase()}${String(bin.type || "storage").slice(1)}`;
+      const capacity = toNumeric(bin.capacity_units);
+      const totalUnits = toNumeric(bin.total_units);
+      return {
         id: String(bin.id),
-        title: bin.name || bin.code,
-        subtitle: `${bin.code} · ${bin.type}`,
+        title: bin.code,
+        subtitle: `${bin.name || "Tanpa nama"} · ${binTypeLabel}`,
+        tags: [binTypeLabel],
         meta: [
           {
             label: "Status",
             value: bin.status || "active",
-            tone:
-              bin.status === "active"
-                ? ("success" as const)
-                : ("muted" as const),
+            tone: bin.status === "active" ? ("success" as const) : ("muted" as const),
           },
+          forStorage
+            ? {
+                label: "Kapasitas",
+                value: capacity > 0 ? `${formatQuantity(totalUnits)}/${formatQuantity(capacity)}` : "Tidak dibatasi",
+                tone: "muted" as const,
+              }
+            : {
+                label: "Tipe",
+                value: binTypeLabel,
+                tone: "brand" as const,
+              },
         ],
-      })),
+      };
+    };
+    return {
+      all: bins.map((bin: any) => mapBin(bin, false)),
       storage: bins
         .filter(
           (bin: any) =>
             ["storage", "picking", "packing"].includes(bin.type) &&
             bin.status === "active",
         )
-        .map((bin: any) => ({
-          id: String(bin.id),
-          title: bin.name || bin.code,
-          subtitle: `${bin.code} · ${bin.type}`,
-          meta: [{ label: "Type", value: bin.type, tone: "brand" as const }],
-        })),
+        .map((bin: any) => mapBin(bin, true)),
     };
   }, [warehouses, putawayForm.warehouse_id]);
 
