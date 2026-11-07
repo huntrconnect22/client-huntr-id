@@ -4,6 +4,7 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeftRight, Settings, LogOut } from "lucide-react";
 import { useLanguage } from "~/context/LanguageContext";
+import { getAssetUrl } from "~/shared/lib/assets";
 
 interface UserMenuDropdownProps {
   user: any;
@@ -79,15 +80,19 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
             fontSize: 13,
           }}
         >
-          {user.profile_photo_url ? (
-            <img
-              src={user.profile_photo_url}
-              alt={user.name || "User"}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            user.name?.[0]?.toUpperCase() || "U"
-          )}
+          {(() => {
+            const rawPhoto = user.profile_photo_url || user.profile_photo_path || user.avatar_url || user.avatar;
+            const photoUrl = rawPhoto ? getAssetUrl(rawPhoto) : undefined;
+            return photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={user.name || "User"}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              user.name?.[0]?.toUpperCase() || "U"
+            );
+          })()}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div

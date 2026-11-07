@@ -17,6 +17,7 @@ import { askHuntrAssist, type HuntrAssistResponse } from "~/modules/shared/api/a
 import type { NavItemConfig } from "./navigation";
 import { UserMenuDropdown } from "./UserMenuDropdown";
 import { MainMenuNews } from "./MainMenuNews";
+import { getAssetUrl } from "~/shared/lib/assets";
 
 interface AppDrawerProps {
   navItems: NavItemConfig[];
@@ -175,7 +176,11 @@ export function AppDrawer({ navItems, pathname, pendingCounts, unreadCount = 0, 
                 sx={{ minHeight: 42, maxWidth: { xs: 44, sm: 220 }, px: { xs: 0.5, sm: 1 }, gap: 0.75, border: 1, borderColor: "divider", borderRadius: 1.5, bgcolor: "background.paper", color: "text.primary" }}
               >
                 <Box sx={{ width: 30, height: 30, flexShrink: 0, overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 1, bgcolor: "primary.main", color: "primary.contrastText", fontSize: 12, fontWeight: 800 }}>
-                  {user.profile_photo_url ? <Box component="img" src={user.profile_photo_url} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (user.name?.[0]?.toUpperCase() || "U")}
+                  {(() => {
+                    const rawPhoto = user.profile_photo_url || user.profile_photo_path || user.avatar_url || user.avatar;
+                    const photoUrl = rawPhoto ? getAssetUrl(rawPhoto) : undefined;
+                    return photoUrl ? <Box component="img" src={photoUrl} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (user.name?.[0]?.toUpperCase() || "U");
+                  })()}
                 </Box>
                 <Box sx={{ minWidth: 0, display: { xs: "none", sm: "block" }, textAlign: "left" }}>
                   <Typography noWrap variant="body2" sx={{ maxWidth: 140, fontWeight: 750, lineHeight: 1.15 }}>{user.name || "User"}</Typography>
