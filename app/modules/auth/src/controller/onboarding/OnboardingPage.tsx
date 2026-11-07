@@ -1,9 +1,26 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
+import {
+  Box,
+  Container,
+  Card,
+  CardContent,
+  Typography,
+  LinearProgress,
+  Alert,
+  Button,
+  Stack,
+  CircularProgress,
+  Divider,
+  useTheme,
+} from "@mui/material";
 import { 
-  Building2, MapPin, ScrollText, LogIn, 
-  ChevronRight, ChevronLeft, Loader2, AlertCircle, Sparkles
+  Building2,
+  MapPin,
+  ScrollText,
+  LogIn,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
 // --- MVVM: ViewModel ---
@@ -29,11 +46,11 @@ const STEP_ICONS = [
 /**
  * Onboarding Route Component (Express Onboarding)
  * 
- * Tanggung jawab: Entry point untuk fitur onboarding kilat.
- * 3 Langkah Cepat tanpa birokrasi dokumen di awal (Starter Tier Instant Access).
+ * Tanggung jawab: Entry point untuk fitur onboarding kilat (100% Pure MUI).
  */
 export default function Onboarding() {
   const { t } = useLanguage();
+  const theme = useTheme();
   const vm = useOnboardingViewModel();
   const isVendor = vm.formData.type === "vendor";
   const completionSlide = isVendor ? 2 : 3;
@@ -115,102 +132,233 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start md:justify-center p-4 md:p-8 relative bg-[var(--ui-bg-page-grad)]">
-      
-      {/* Visual Decor: Background ambient blur matching AuthLayout */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-5%] w-[450px] h-[450px] rounded-full bg-orange-500/10 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-indigo-500/10 blur-[100px]" />
-      </div>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: { xs: "flex-start", md: "center" },
+        bgcolor: "background.default",
+        p: { xs: 2, sm: 3, md: 5 },
+        position: "relative",
+      }}
+    >
+      {/* Ambient background decoration */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 0,
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "-10%",
+            left: "-5%",
+            width: 450,
+            height: 450,
+            borderRadius: "50%",
+            bgcolor: (theme) => `${theme.palette.primary.main}12`,
+            filter: "blur(120px)",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: "-10%",
+            right: "-5%",
+            width: 400,
+            height: 400,
+            borderRadius: "50%",
+            bgcolor: "rgba(99, 102, 241, 0.08)",
+            filter: "blur(100px)",
+          }}
+        />
+      </Box>
 
       {/* Branding Header */}
-      <header className="sticky top-0 mb-6 w-full max-w-3xl flex items-center justify-between z-10 py-2">
-        <div className="flex items-center gap-3">
-          <img 
-            src="/assets/img/logo/sidebar.png" 
-            alt="Huntr Logo" 
-            className="w-32 h-8 md:w-36 md:h-9 object-contain"
+      <Box
+        component="header"
+        sx={{
+          width: "100%",
+          maxWidth: 820,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          zIndex: 1,
+          mb: { xs: 2.5, md: 4 },
+        }}
+      >
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <Box
+            component="img"
+            src="/assets/img/logo/sidebar.png"
+            alt="Huntr Logo"
+            sx={{
+              height: { xs: 28, md: 34 },
+              width: "auto",
+              objectFit: "contain",
+            }}
           />
-          <div className="hidden sm:block pl-2 border-l border-[var(--ui-border)]">
-            <div className="font-extrabold text-sm text-[var(--ui-text-primary)] tracking-tight">Huntr.id</div>
-            <div className="text-[9px] text-orange-400 tracking-widest font-bold uppercase">Quick Onboarding</div>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
+          <Box
+            sx={{
+              display: { xs: "none", sm: "block" },
+              pl: 1.5,
+              borderLeft: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
+              Huntr.id
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                color: "primary.main",
+                textTransform: "uppercase",
+                fontSize: 9,
+              }}
+            >
+              Quick Onboarding
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <LanguageSwitcher />
           <ThemeToggle />
-        </div>
-      </header>
+        </Stack>
+      </Box>
 
-      <main className="w-full max-w-3xl relative z-10 my-auto">
+      {/* Main Form Content */}
+      <Container
+        maxWidth="md"
+        disableGutters
+        sx={{
+          maxWidth: 820,
+          position: "relative",
+          zIndex: 1,
+          width: "100%",
+        }}
+      >
         {/* Step Tracker UI */}
         <StepTracker steps={stepMeta} currentSlide={vm.slide} />
 
         {/* Main Card Container */}
-        <div className="bg-[var(--ui-bg-card)] border border-[var(--ui-border)] rounded-3xl backdrop-blur-xl overflow-hidden shadow-2xl">
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 4,
+            overflow: "hidden",
+            boxShadow: (theme) =>
+              theme.palette.mode === "dark"
+                ? "0 10px 40px rgba(0,0,0,0.4)"
+                : "0 10px 35px rgba(0,0,0,0.06)",
+            bgcolor: "background.paper",
+          }}
+        >
           {/* Top Progress Bar */}
-          <div 
-            className="h-1.5 transition-all duration-500" 
-            style={{ 
-              background: `linear-gradient(90deg, ${activeStep.color}, ${activeStep.color}80)`,
-              width: `${progressPercent}%`
-            }} 
+          <LinearProgress
+            variant="determinate"
+            value={progressPercent}
+            sx={{
+              height: 5,
+              bgcolor: (theme) => `${theme.palette.primary.main}1A`,
+              "& .MuiLinearProgress-bar": {
+                bgcolor: activeStep.color || "primary.main",
+                transition: "transform 0.4s ease",
+              },
+            }}
           />
-          
-          <div className="p-6 md:p-8">
-            {/* Global Error Display */}
+
+          <CardContent sx={{ p: { xs: 3, sm: 4, md: 5 } }}>
+            {/* Global Error Alert */}
             {vm.error && (
-              <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-4 text-red-400 text-sm mb-6 flex items-center gap-3 animate-shake">
-                <AlertCircle size={18} className="shrink-0" /> <span>{vm.error}</span>
-              </div>
+              <Alert severity="error" sx={{ mb: 3.5, borderRadius: 2.5 }}>
+                {vm.error}
+              </Alert>
             )}
 
             {/* Render Slide Content */}
-            <SlideContent 
-              vm={vm} 
+            <SlideContent
+              vm={vm}
               pricing={pricing}
               handleLoginAsCompany={handleLoginAsCompany}
             />
 
             {/* Navigation Buttons (Only shown for steps 1 - 3) */}
             {vm.slide < SUCCESS_SLIDE && (
-              <footer className="mt-8 pt-6 border-t border-[var(--ui-border)] flex items-center justify-between gap-4">
-                {vm.slide > 1 ? (
-                  <HuntrButton
-                    onClick={() => vm.setSlide((p: number) => p - 1)} 
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] hover:border-orange-500/30 font-semibold text-sm transition-all"
-                  >
-                    <ChevronLeft size={16} /> Kembali
-                  </HuntrButton>
-                ) : (
-                  <div />
-                )}
-
-                <HuntrButton
-                  onClick={nextSlide} 
-                  disabled={vm.isLoading}
-                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-500/25"
+              <Box sx={{ mt: 5 }}>
+                <Divider sx={{ mb: 3 }} />
+                <Stack
+                  direction="row"
+                  sx={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                  }}
                 >
-                  {vm.isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin" size={16} /> Menyiapkan Workspace…
-                    </>
-                  ) : vm.slide === completionSlide ? (
-                    <>
-                      Buat Workspace & Masuk <ChevronRight size={16} />
-                    </>
+                  {vm.slide > 1 ? (
+                    <Button
+                      variant="outlined"
+                      color="inherit"
+                      onClick={() => vm.setSlide((p: number) => p - 1)}
+                      startIcon={<ChevronLeft size={18} />}
+                      sx={{
+                        borderRadius: 2.5,
+                        px: 3,
+                        py: 1.25,
+                        fontWeight: 700,
+                        textTransform: "none",
+                      }}
+                    >
+                      Kembali
+                    </Button>
                   ) : (
-                    <>
-                      Lanjutkan <ChevronRight size={16} />
-                    </>
+                    <Box />
                   )}
-                </HuntrButton>
-              </footer>
+
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={nextSlide}
+                    disabled={vm.isLoading}
+                    endIcon={
+                      !vm.isLoading && <ChevronRight size={18} />
+                    }
+                    startIcon={
+                      vm.isLoading ? <CircularProgress size={18} color="inherit" /> : undefined
+                    }
+                    sx={{
+                      borderRadius: 2.5,
+                      px: { xs: 3, sm: 4 },
+                      py: 1.25,
+                      fontWeight: 800,
+                      textTransform: "none",
+                      fontSize: 14,
+                      boxShadow: (theme) => `0 4px 14px ${theme.palette.primary.main}40`,
+                    }}
+                  >
+                    {vm.isLoading ? (
+                      "Menyiapkan Workspace…"
+                    ) : vm.slide === completionSlide ? (
+                      "Buat Workspace & Masuk"
+                    ) : (
+                      "Lanjutkan"
+                    )}
+                  </Button>
+                </Stack>
+              </Box>
             )}
-          </div>
-        </div>
-      </main>
-    </div>
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   );
 }
