@@ -70,7 +70,7 @@ export function CrmRecords({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari data..."
-              className="h-9 w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] py-1.5 pl-8 pr-3 text-xs text-[var(--ui-text-primary)] outline-none transition-all placeholder:text-[var(--ui-text-muted)] focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
+              className="h-9 w-full rounded-lg border border-[var(--ui-border-input)] bg-[var(--ui-bg-input)] py-1.5 pl-9 pr-3 text-xs text-[var(--ui-text-primary)] outline-none transition-all placeholder:text-[var(--ui-text-muted)] focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
             />
           </div>
 

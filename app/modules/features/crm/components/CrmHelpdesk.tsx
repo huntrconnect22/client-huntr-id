@@ -255,7 +255,7 @@ export function CrmHelpdesk({
                   placeholder="Cari kontak, nomor, atau pesan..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-8 pl-8 pr-7 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] placeholder:text-[var(--ui-text-muted)] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20"
+                  className="w-full h-8 pl-9 pr-7 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] placeholder:text-[var(--ui-text-muted)] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20"
                 />
                 {searchQuery && (
                   <button

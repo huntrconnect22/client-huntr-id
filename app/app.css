@@ -353,3 +353,30 @@ body {
   outline: 2px solid var(--huntr-orange);
   outline-offset: -2px;
 }
+
+/* ── Form Inputs Icon Padding Overrides ──────────────────────────────────────
+ * In Tailwind v4 with CSS layers, utility classes inside @layer utilities can
+ * be overridden by unlayered component styles. These unlayered rules guarantee
+ * that left/right padding for inputs with embedded icons (search, currency, etc.)
+ * are always respected across the entire application so placeholders and text
+ * never overlap with icons.
+ */
+input[class*="pl-6"], textarea[class*="pl-6"], select[class*="pl-6"] { padding-left: 1.5rem !important; }
+input[class*="pl-7"], textarea[class*="pl-7"], select[class*="pl-7"] { padding-left: 1.75rem !important; }
+input[class*="pl-8"], textarea[class*="pl-8"], select[class*="pl-8"] { padding-left: 2rem !important; }
+input[class*="pl-9"], textarea[class*="pl-9"], select[class*="pl-9"] { padding-left: 2.25rem !important; }
+input[class*="pl-10"], textarea[class*="pl-10"], select[class*="pl-10"] { padding-left: 2.5rem !important; }
+input[class*="pl-11"], textarea[class*="pl-11"], select[class*="pl-11"] { padding-left: 2.75rem !important; }
+input[class*="pl-12"], textarea[class*="pl-12"], select[class*="pl-12"] { padding-left: 3rem !important; }
+input[class*="pl-14"], textarea[class*="pl-14"], select[class*="pl-14"] { padding-left: 3.5rem !important; }
+input[class*="pl-16"], textarea[class*="pl-16"], select[class*="pl-16"] { padding-left: 4rem !important; }
+
+input[class*="pr-6"], textarea[class*="pr-6"] { padding-right: 1.5rem !important; }
+input[class*="pr-7"], textarea[class*="pr-7"] { padding-right: 1.75rem !important; }
+input[class*="pr-8"], textarea[class*="pr-8"] { padding-right: 2rem !important; }
+input[class*="pr-9"], textarea[class*="pr-9"] { padding-right: 2.25rem !important; }
+input[class*="pr-10"], textarea[class*="pr-10"] { padding-right: 2.5rem !important; }
+input[class*="pr-12"], textarea[class*="pr-12"] { padding-right: 3rem !important; }
+input[class*="pr-14"], textarea[class*="pr-14"] { padding-right: 3.5rem !important; }
+input[class*="pr-16"], textarea[class*="pr-16"] { padding-right: 4rem !important; }
+

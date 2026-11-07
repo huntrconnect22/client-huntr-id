@@ -124,12 +124,12 @@
 }
 
 .auth-input--with-icon {
-  padding-left: 48px;
-  padding-right: 16px;
+  padding-left: 48px !important;
+  padding-right: 16px !important;
 }
 
 .auth-input--with-action {
-  padding-right: 52px;
+  padding-right: 52px !important;
 }
 
 .auth-input-icon {

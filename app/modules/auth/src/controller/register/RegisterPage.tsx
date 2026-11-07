@@ -225,9 +225,10 @@ export default function Register() {
                 placeholder="e.g. Budi Santoso"
                 required
                 disabled={otpSent}
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
+                style={{ paddingLeft: 48 }}
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
               />
-              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+              <User size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
             </div>
           </div>
 
@@ -246,9 +247,10 @@ export default function Register() {
                 placeholder="e.g. 085156334793"
                 required
                 disabled={otpSent}
-                className="w-full pl-11 pr-20 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
+                style={{ paddingLeft: 48 }}
+                className="w-full pl-12 pr-20 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
               />
-              <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+              <Phone size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
               {otpSent && (
                 <HuntrButton
                   type="button"
@@ -275,9 +277,10 @@ export default function Register() {
                 autoComplete="email"
                 placeholder="budi@perusahaan.com"
                 disabled={otpSent}
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
+                style={{ paddingLeft: 48 }}
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
               />
-              <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+              <Mail size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
             </div>
           </div>
 
@@ -295,9 +298,10 @@ export default function Register() {
                 placeholder={t("register.passwordPlaceholder")}
                 required
                 disabled={otpSent}
-                className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
+                style={{ paddingLeft: 48 }}
+                className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/60 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder:text-[var(--ui-text-muted)]/50 disabled:opacity-75"
               />
-              <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
+              <Lock size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
               <button
                 type="button"
                 onClick={() => setShowPw(p => !p)}
