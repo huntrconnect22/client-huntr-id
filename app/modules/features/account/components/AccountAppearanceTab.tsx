@@ -1,43 +1,69 @@
 import React from "react";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import ThemeToggle from "../../../components/ThemeToggle";
 import { useLanguage } from "../../../context/LanguageContext";
 
+/**
+ * AccountAppearanceTab Component
+ * 
+ * Pure Material UI implementation.
+ */
 export function AccountAppearanceTab() {
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, maxWidth: 800 }}>
+      <Box>
+        <Typography variant="h6" sx={{ fontWeight: 800 }}>
           {t("settings.appearance.title")}
-        </h2>
-        <p className="text-sm text-[var(--ui-text-muted)] mt-1">
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {t("settings.appearance.subtitle")}
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="space-y-2.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "text.secondary",
+            px: 0.5,
+          }}
+        >
           {t("settings.appearance.displayMode")}
-        </span>
-        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)]">
-          <div className="p-4 px-5 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-sm font-semibold text-[var(--ui-text-primary)]">
+        </Typography>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            borderRadius: 3,
+            bgcolor: "background.paper",
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 {t("settings.appearance.interfaceTheme")}
-              </div>
-              <div className="text-xs text-[var(--ui-text-muted)] mt-0.5">
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                 {t("settings.appearance.interfaceThemeDesc")}
-              </div>
-            </div>
-            <div>
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+              </Typography>
+            </Box>
+            <ThemeToggle />
+          </Stack>
+        </Paper>
+      </Box>
+    </Box>
   );
 }
-
-

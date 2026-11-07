@@ -1,7 +1,19 @@
-import { Input as HuntrInput } from "~/shared/ui/Fields";
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
-import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Box,
+  Paper,
+  Stack,
+  Typography,
+  TextField,
+  Button,
+  IconButton,
+  InputAdornment,
+  CircularProgress,
+  Chip,
+  Divider,
+  Alert,
+} from "@mui/material";
+import { Eye, EyeOff, CheckCircle2, ShieldAlert } from "lucide-react";
 import {
   updatePassword,
   enable2FA,
@@ -20,6 +32,11 @@ interface AccountSecurityTabProps {
   onSuccess: (msg: string | null) => void;
 }
 
+/**
+ * AccountSecurityTab Component
+ * 
+ * Pure Material UI implementation.
+ */
 export function AccountSecurityTab({
   user,
   onUserUpdate,
@@ -107,7 +124,7 @@ export function AccountSecurityTab({
   };
 
   const handleDisable2FA = async () => {
-    if (!confirm(t("settings.security.disable2FAConfirm"))) return;
+    if (!window.confirm(t("settings.security.disable2FAConfirm"))) return;
     setLoading(true);
     onError(null);
     try {
@@ -128,186 +145,287 @@ export function AccountSecurityTab({
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5, maxWidth: 840 }}>
+      <Box>
+        <Typography variant="h6" sx={{ fontWeight: 800 }}>
           {t("settings.security.title")}
-        </h2>
-        <p className="text-sm text-[var(--ui-text-muted)] mt-1">
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {t("settings.security.subtitle")}
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Change Password Group */}
-      <div className="space-y-2.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "text.secondary",
+            px: 0.5,
+          }}
+        >
           {t("settings.security.loginPassword")}
-        </span>
-        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
-          <form onSubmit={handleUpdatePassword}>
-            {/* Current Password Row */}
-            <div className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">
-                {t("settings.security.currentPassword")}
-              </label>
-              <div className="sm:w-2/3">
-                <HuntrInput
-                  type="password"
-                  placeholder={t("settings.security.currentPasswordPlaceholder")}
-                  value={passwordForm.current_password}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50"
-                />
-              </div>
-            </div>
+        </Typography>
 
-            {/* New Password Row */}
-            <div className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--ui-border)]">
-              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">
-                {t("settings.security.newPassword")}
-              </label>
-              <div className="sm:w-2/3 relative">
-                <HuntrInput
-                  type={showPw ? "text" : "password"}
-                  placeholder={t("settings.security.newPasswordPlaceholder")}
-                  value={passwordForm.password}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50 pr-10"
-                />
-                <HuntrButton
-                  type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: 3,
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Box component="form" onSubmit={handleUpdatePassword} sx={{ p: { xs: 2.5, sm: 3 } }}>
+            <Stack spacing={2.5}>
+              <TextField
+                fullWidth
+                size="small"
+                type="password"
+                required
+                label={t("settings.security.currentPassword")}
+                placeholder={t("settings.security.currentPasswordPlaceholder")}
+                value={passwordForm.current_password}
+                onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+              />
+
+              <TextField
+                fullWidth
+                size="small"
+                type={showPw ? "text" : "password"}
+                required
+                label={t("settings.security.newPassword")}
+                placeholder={t("settings.security.newPasswordPlaceholder")}
+                value={passwordForm.password}
+                onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setShowPw(!showPw)} edge="end">
+                          {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                size="small"
+                type={showConfirmPw ? "text" : "password"}
+                required
+                label={t("settings.security.confirmPassword")}
+                placeholder={t("settings.security.confirmPasswordPlaceholder")}
+                value={passwordForm.password_confirmation}
+                onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setShowConfirmPw(!showConfirmPw)} edge="end">
+                          {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 1 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                  startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+                  sx={{
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1,
+                    fontWeight: 700,
+                    textTransform: "none",
+                  }}
                 >
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </HuntrButton>
-              </div>
-            </div>
-
-            {/* Confirm Password Row */}
-            <div className="p-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--ui-border)]">
-              <label className="text-sm font-semibold text-[var(--ui-text-primary)] sm:w-1/3">
-                {t("settings.security.confirmPassword")}
-              </label>
-              <div className="sm:w-2/3 relative">
-                <HuntrInput
-                  type={showConfirmPw ? "text" : "password"}
-                  placeholder={t("settings.security.confirmPasswordPlaceholder")}
-                  value={passwordForm.password_confirmation}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm outline-none focus:border-orange-500/50 pr-10"
-                />
-                <HuntrButton
-                  type="button"
-                  onClick={() => setShowConfirmPw(!showConfirmPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]"
-                >
-                  {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </HuntrButton>
-              </div>
-            </div>
-
-            {/* Save Button Row */}
-            <div className="p-3.5 px-5 bg-[var(--ui-bg-card)] border-t border-[var(--ui-border)] flex justify-end">
-              <HuntrButton
-                type="submit"
-                disabled={loading}
-                style={{ color: 'white' }}
-                className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all shadow-sm flex items-center gap-2"
-              >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.security.updatePasswordBtn")}
-              </HuntrButton>
-            </div>
-          </form>
-        </div>
-      </div>
+                  {t("settings.security.updatePasswordBtn")}
+                </Button>
+              </Box>
+            </Stack>
+          </Box>
+        </Paper>
+      </Box>
 
       {/* 2FA Group */}
-      <div className="space-y-2.5 pt-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "text.secondary",
+            px: 0.5,
+          }}
+        >
           {t("settings.security.twoFactorAuth")}
-        </span>
-        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5 space-y-4">
+        </Typography>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 2.5, sm: 3 },
+            borderRadius: 3,
+            bgcolor: "background.paper",
+          }}
+        >
           {!twoFactorEnabled && !confirming2FA && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold text-[var(--ui-text-primary)]">
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{
+                alignItems: { xs: "flex-start", sm: "center" },
+                justifyContent: "space-between",
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                   {t("settings.security.twoFactorOffTitle")}
-                </div>
-                <p className="text-xs text-[var(--ui-text-muted)] mt-1">
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   {t("settings.security.twoFactorOffDesc")}
-                </p>
-              </div>
-              <HuntrButton
+                </Typography>
+              </Box>
+
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={handleEnable2FA}
                 disabled={loading}
-                style={{ color: 'white' }}
-                className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex-shrink-0"
+                sx={{
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  whiteSpace: "nowrap",
+                }}
               >
                 {t("settings.security.enable2FABtn")}
-              </HuntrButton>
-            </div>
+              </Button>
+            </Stack>
           )}
 
           {confirming2FA && qrCode && (
-            <div className="space-y-4 pt-1">
-              <p className="text-sm font-medium text-[var(--ui-text-primary)]">
+            <Stack spacing={2.5}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 {t("settings.security.scanQrTitle")}
-              </p>
-              <div dangerouslySetInnerHTML={{ __html: qrCode }} className="bg-white p-3 rounded-md w-fit" />
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                  {t("settings.security.enterCodeLabel")}
-                </label>
-                <HuntrInput
-                  type="text"
+              </Typography>
+
+              <Box
+                sx={{
+                  bgcolor: "#ffffff",
+                  p: 2,
+                  borderRadius: 2,
+                  width: "fit-content",
+                  display: "inline-block",
+                  "& svg": { display: "block" },
+                }}
+                dangerouslySetInnerHTML={{ __html: qrCode }}
+              />
+
+              <Box sx={{ maxWidth: 320 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label={t("settings.security.enterCodeLabel")}
+                  placeholder={t("settings.security.codePlaceholder")}
                   value={twoFactorCode}
                   onChange={(e) => setTwoFactorCode(e.target.value)}
-                  placeholder={t("settings.security.codePlaceholder")}
-                  className="w-full max-w-xs px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-sm outline-none"
                 />
-              </div>
-              <div className="flex gap-2">
-                <HuntrButton onClick={handleConfirm2FA} disabled={loading} style={{ color: 'white' }} className="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all">
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : t("settings.security.confirmBtn")}
-                </HuntrButton>
-                <HuntrButton onClick={() => { setConfirming2FA(false); setQrCode(null); }} className="px-5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm font-semibold text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] transition-all">
+              </Box>
+
+              <Stack direction="row" spacing={1.5}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleConfirm2FA}
+                  disabled={loading}
+                  startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+                  sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
+                >
+                  {t("settings.security.confirmBtn")}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  onClick={() => {
+                    setConfirming2FA(false);
+                    setQrCode(null);
+                  }}
+                  sx={{ borderRadius: 2, textTransform: "none" }}
+                >
                   {t("settings.security.cancelBtn")}
-                </HuntrButton>
-              </div>
-            </div>
+                </Button>
+              </Stack>
+            </Stack>
           )}
 
           {twoFactorEnabled && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <CheckCircle2 size={18} />
-                  <span className="font-semibold text-sm">{t("settings.security.twoFactorActive")}</span>
-                </div>
-                <HuntrButton onClick={handleDisable2FA} disabled={loading} className="px-5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm hover:bg-red-500/20 transition-all">
+            <Stack spacing={2.5}>
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <CheckCircle2 size={20} color="#10b981" />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "success.main" }}>
+                    {t("settings.security.twoFactorActive")}
+                  </Typography>
+                </Stack>
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleDisable2FA}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+                >
                   {t("settings.security.disableBtn")}
-                </HuntrButton>
-              </div>
+                </Button>
+              </Stack>
+
               {recoveryCodes.length > 0 && (
-                <div className="p-3.5 rounded-md bg-black/30">
-                  <p className="text-xs font-semibold text-[var(--ui-text-primary)] mb-2">
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: "action.hover",
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 1 }}>
                     {t("settings.security.recoveryCodesTitle")}
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5 font-mono text-xs text-orange-300">
-                    {recoveryCodes.map(c => <span key={c}>{c}</span>)}
-                  </div>
-                </div>
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: 1,
+                      fontFamily: "monospace",
+                      fontSize: 12,
+                      color: "primary.main",
+                    }}
+                  >
+                    {recoveryCodes.map((c) => (
+                      <span key={c}>{c}</span>
+                    ))}
+                  </Box>
+                </Paper>
               )}
-            </div>
+            </Stack>
           )}
-        </div>
-      </div>
-    </div>
+        </Paper>
+      </Box>
+    </Box>
   );
 }
-
-

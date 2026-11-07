@@ -1,20 +1,45 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
-import { Monitor, Smartphone, Clock, Trash2 } from "lucide-react";
+import {
+  Box,
+  Paper,
+  Stack,
+  Typography,
+  Button,
+  IconButton,
+  Chip,
+  Avatar,
+  Divider,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+  Tooltip,
+} from "@mui/material";
+import { Monitor, Smartphone, Trash2, RefreshCw } from "lucide-react";
 import Swal from "sweetalert2";
 import { getSessions, logoutSession } from "../../../lib/api";
 import { useLanguage } from "../../../context/LanguageContext";
 
+/**
+ * AccountSessionsTab Component
+ * 
+ * Pure Material UI implementation.
+ */
 export function AccountSessionsTab() {
   const { t } = useLanguage();
   const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const fetchSessions = async () => {
+    setLoading(true);
     try {
       const data = await getSessions();
       setSessions(data.sessions || []);
     } catch (err) {
       console.error("Failed to fetch sessions", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,90 +71,148 @@ export function AccountSessionsTab() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, maxWidth: 860 }}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
             {t("settings.sessions.title")}
-          </h2>
-          <p className="text-sm text-[var(--ui-text-muted)] mt-1">
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             {t("settings.sessions.subtitle")}
-          </p>
-        </div>
-        <HuntrButton
+          </Typography>
+        </Box>
+
+        <Button
+          variant="outlined"
+          color="inherit"
           onClick={fetchSessions}
-          className="px-4 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm font-semibold text-orange-400 hover:border-orange-500/40 transition-all"
+          disabled={loading}
+          startIcon={<RefreshCw size={15} className={loading ? "animate-spin" : ""} />}
+          sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, fontSize: 13 }}
         >
           {t("settings.sessions.refresh")}
-        </HuntrButton>
-      </div>
+        </Button>
+      </Stack>
 
-      <div className="space-y-2.5">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "text.secondary",
+            px: 0.5,
+          }}
+        >
           {t("settings.sessions.connectedDevices")}
-        </span>
-        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
+        </Typography>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: 3,
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          }}
+        >
           {sessions.length === 0 ? (
-            <div className="text-center py-12 text-[var(--ui-text-muted)]">
-              <Monitor size={40} className="mx-auto mb-2 opacity-20" />
-              <p className="text-sm">{t("settings.sessions.noSessions")}</p>
-            </div>
+            <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
+              <Monitor size={44} style={{ opacity: 0.3, marginBottom: 12 }} />
+              <Typography variant="body2">{t("settings.sessions.noSessions")}</Typography>
+            </Box>
           ) : (
-            sessions.map((session) => {
-              const isMobile =
-                session.name?.toLowerCase().includes("android") ||
-                session.name?.toLowerCase().includes("ios") ||
-                session.user_agent?.toLowerCase().includes("mobile");
-              const Icon = isMobile ? Smartphone : Monitor;
-              return (
-                <div key={session.id} className="p-4 px-5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        session.is_current_device
-                          ? "bg-orange-500/15 text-orange-500"
-                          : "bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)]"
-                      }`}
+            <List disablePadding>
+              {sessions.map((session, index) => {
+                const isMobile =
+                  session.name?.toLowerCase().includes("android") ||
+                  session.name?.toLowerCase().includes("ios") ||
+                  session.user_agent?.toLowerCase().includes("mobile");
+                const Icon = isMobile ? Smartphone : Monitor;
+
+                return (
+                  <React.Fragment key={session.id || index}>
+                    {index > 0 && <Divider />}
+                    <ListItem
+                      sx={{
+                        p: { xs: 2, sm: 2.5 },
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
                     >
-                      <Icon size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
-                          {session.type === "API Token" ? session.name || "Unknown Device" : session.ip_address}
-                        </span>
-                        {session.is_current_device && (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            {t("settings.sessions.thisDevice")}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-[var(--ui-text-muted)] truncate mt-0.5 flex items-center gap-2">
-                        <span>{session.type === "API Token" ? "API Token" : session.user_agent}</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} /> {session.last_active}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {!session.is_current_device && (
-                    <HuntrButton
-                      onClick={() => handleLogoutSession(session.id)}
-                      className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all flex-shrink-0"
-                      title={t("settings.sessions.terminateConfirmBtn")}
-                    >
-                      <Trash2 size={16} />
-                    </HuntrButton>
-                  )}
-                </div>
-              );
-            })
+                      <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0, pr: 2 }}>
+                        <Avatar
+                          sx={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 2.5,
+                            bgcolor: session.is_current_device
+                              ? (theme) => `${theme.palette.primary.main}1A`
+                              : "action.hover",
+                            color: session.is_current_device ? "primary.main" : "text.secondary",
+                          }}
+                        >
+                          <Icon size={20} />
+                        </Avatar>
+
+                        <Box sx={{ minWidth: 0 }}>
+                          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.5 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }} noWrap>
+                              {session.type === "API Token" ? session.name || "Unknown Device" : session.ip_address}
+                            </Typography>
+                            {session.is_current_device && (
+                              <Chip
+                                size="small"
+                                label={t("settings.sessions.currentDevice")}
+                                color="success"
+                                sx={{ height: 20, fontSize: 10, fontWeight: 700 }}
+                              />
+                            )}
+                          </Stack>
+
+                          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }} noWrap>
+                            {session.user_agent || "Web Browser"}
+                          </Typography>
+                          {session.last_active_at && (
+                            <Typography variant="caption" color="text.disabled" sx={{ display: "block" }}>
+                              {t("settings.sessions.lastActive")}: {session.last_active_at}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Stack>
+
+                      {!session.is_current_device && (
+                        <Tooltip title={t("settings.sessions.terminateBtn")}>
+                          <IconButton
+                            color="error"
+                            size="small"
+                            onClick={() => handleLogoutSession(session.id)}
+                            sx={{
+                              bgcolor: "rgba(239, 68, 68, 0.08)",
+                              "&:hover": { bgcolor: "rgba(239, 68, 68, 0.16)" },
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </ListItem>
+                  </React.Fragment>
+                );
+              })}
+            </List>
           )}
-        </div>
-      </div>
-    </div>
+        </Paper>
+      </Box>
+    </Box>
   );
 }
-
-
