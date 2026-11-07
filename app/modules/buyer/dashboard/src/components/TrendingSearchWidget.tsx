@@ -1,4 +1,4 @@
-import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import Paper from "@mui/material/Paper";
 import React, { useEffect, useState } from "react";
 import { TrendingUp, Flame, Minus, Sparkles } from "lucide-react";
 import { getTrendingSearches } from "../../lib/api/catalogue";
@@ -94,7 +94,7 @@ export function TrendingSearchWidget() {
   const keywords = data?.keywords ?? [];
 
   return (
-    <HuntrSurface
+    <Paper variant="outlined"
       style={{
         background: "var(--ui-bg-card)",
         border: "1px solid var(--ui-border)",
@@ -375,6 +375,6 @@ export function TrendingSearchWidget() {
           </div>
         )}
       </div>
-    </HuntrSurface>
+    </Paper>
   );
 }

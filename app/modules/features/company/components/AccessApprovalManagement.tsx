@@ -1,7 +1,32 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
 import React, { useEffect, useMemo, useState } from "react";
-import { Check, Loader2, Plus, Save, ShieldCheck, Trash2, Users, Workflow } from "lucide-react";
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  IconButton,
+  CircularProgress,
+  Chip,
+  Alert,
+  Checkbox,
+  FormControlLabel,
+  Divider,
+  Grid,
+} from "@mui/material";
+import {
+  ShieldCheck,
+  Users,
+  Workflow,
+  Plus,
+  Save,
+  Trash2,
+  Check,
+} from "lucide-react";
 import {
   createApprovalFlow,
   createCompanyPermission,
@@ -52,50 +77,74 @@ export function AccessApprovalManagement({ company }: { company: any }) {
 
   const permissionGroups = useMemo(() => {
     const groups: Record<string, Permission[]> = {};
-    for (const permission of config?.permission_catalog || []) (groups[permission.category] ||= []).push(permission);
+    for (const permission of config?.permission_catalog || []) {
+      (groups[permission.category] ||= []).push(permission);
+    }
     return groups;
   }, [config]);
 
   const editRole = (role: Role) => {
     setEditingRole(role);
-    setRoleForm({ name: role.name, description: role.description || "", permission_keys: role.permissions.map((permission) => permission.key) });
-    setNotice(null); setError(null);
+    setRoleForm({ name: role.name, description: role.description || "", permission_keys: role.permissions.map((p) => p.key) });
+    setNotice(null);
+    setError(null);
   };
 
-  const resetRole = () => { setEditingRole(null); setRoleForm(emptyRole); };
+  const resetRole = () => {
+    setEditingRole(null);
+    setRoleForm(emptyRole);
+  };
 
   const saveRole = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!company?.id || !roleForm.name.trim()) return;
-    setSaving(true); setError(null);
+    setSaving(true);
+    setError(null);
     try {
       const payload = { ...roleForm, name: roleForm.name.trim() };
       if (editingRole) await updateCompanyRole(company.id, editingRole.id, payload);
       else await createCompanyRole(company.id, payload);
       setNotice(editingRole ? "Role dan aksesnya diperbarui." : "Role baru siap digunakan untuk anggota team.");
-      resetRole(); await load();
-    } catch (e: any) { setError(e?.message || "Role gagal disimpan."); }
-    finally { setSaving(false); }
+      resetRole();
+      await load();
+    } catch (e: any) {
+      setError(e?.message || "Role gagal disimpan.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const removeRole = async (role: Role) => {
     if (!company?.id || role.is_system || !window.confirm(`Hapus role ${role.name}?`)) return;
-    setSaving(true); setError(null);
-    try { await deleteCompanyRole(company.id, role.id); setNotice("Role dihapus."); await load(); }
-    catch (e: any) { setError(e?.message || "Role tidak dapat dihapus."); }
-    finally { setSaving(false); }
+    setSaving(true);
+    setError(null);
+    try {
+      await deleteCompanyRole(company.id, role.id);
+      setNotice("Role dihapus.");
+      await load();
+    } catch (e: any) {
+      setError(e?.message || "Role tidak dapat dihapus.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addPermission = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!company?.id || !customPermission.trim()) return;
-    setSaving(true); setError(null);
+    setSaving(true);
+    setError(null);
     try {
       const response = await createCompanyPermission(company.id, { name: customPermission.trim() });
       setRoleForm((form) => ({ ...form, permission_keys: [...form.permission_keys, response.permission.key] }));
-      setCustomPermission(""); setNotice("Permission khusus ditambahkan dan dipilih pada role ini."); await load();
-    } catch (e: any) { setError(e?.message || "Permission khusus gagal ditambahkan."); }
-    finally { setSaving(false); }
+      setCustomPermission("");
+      setNotice("Permission khusus ditambahkan dan dipilih pada role ini.");
+      await load();
+    } catch (e: any) {
+      setError(e?.message || "Permission khusus gagal ditambahkan.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const beginFlow = (flow?: Flow) => {
@@ -107,14 +156,23 @@ export function AccessApprovalManagement({ company }: { company: any }) {
       max_amount: flow.max_amount || "",
       is_active: flow.is_active,
       steps: flow.steps.map((step) => ({ name: step.name || "", company_role_id: step.company_role_id, required_approvals: step.required_approvals || 1 })),
-    } : { name: "", subject_type: "purchase_request", min_amount: "", max_amount: "", is_active: true, steps: config?.roles?.length ? [{ company_role_id: config.roles[0].id, name: "", required_approvals: 1 }] : [] });
-    setNotice(null); setError(null);
+    } : {
+      name: "",
+      subject_type: "purchase_request",
+      min_amount: "",
+      max_amount: "",
+      is_active: true,
+      steps: config?.roles?.length ? [{ company_role_id: config.roles[0].id, name: "", required_approvals: 1 }] : [],
+    });
+    setNotice(null);
+    setError(null);
   };
 
   const saveFlow = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!company?.id || !flowForm.name.trim() || !flowForm.steps.length) return;
-    setSaving(true); setError(null);
+    setSaving(true);
+    setError(null);
     try {
       const payload = {
         ...flowForm,
@@ -125,82 +183,462 @@ export function AccessApprovalManagement({ company }: { company: any }) {
       if (editingFlow) await updateApprovalFlow(company.id, editingFlow.id, payload);
       else await createApprovalFlow(company.id, payload);
       setNotice(editingFlow ? "Alur approval diperbarui." : "Alur approval aktif dan akan dipakai untuk dokumen baru.");
-      setEditingFlow(null); await load();
-    } catch (e: any) { setError(e?.message || "Alur approval gagal disimpan."); }
-    finally { setSaving(false); }
+      setEditingFlow(null);
+      await load();
+    } catch (e: any) {
+      setError(e?.message || "Alur approval gagal disimpan.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const removeFlow = async (flow: Flow) => {
     if (!company?.id || !window.confirm(`Hapus alur ${flow.name}?`)) return;
-    setSaving(true); setError(null);
-    try { await deleteApprovalFlow(company.id, flow.id); setNotice("Alur approval dihapus."); await load(); }
-    catch (e: any) { setError(e?.message || "Alur approval tidak dapat dihapus."); }
-    finally { setSaving(false); }
+    setSaving(true);
+    setError(null);
+    try {
+      await deleteApprovalFlow(company.id, flow.id);
+      setNotice("Alur approval dihapus.");
+      await load();
+    } catch (e: any) {
+      setError(e?.message || "Alur approval tidak dapat dihapus.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (loading) return <div className="py-16 flex justify-center"><Loader2 className="animate-spin text-orange-500" size={22} /></div>;
-  if (!config) return <div className="p-4 border border-red-500/20 bg-red-500/5 text-red-500 text-sm">{error || "Konfigurasi akses tidak tersedia."}</div>;
+  if (loading) {
+    return (
+      <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
+        <CircularProgress color="primary" size={28} />
+      </Box>
+    );
+  }
+
+  if (!config) {
+    return (
+      <Alert severity="error" sx={{ borderRadius: 2 }}>
+        {error || "Konfigurasi akses tidak tersedia."}
+      </Alert>
+    );
+  }
 
   const selected = new Set(roleForm.permission_keys);
-  const togglePermission = (key: string) => setRoleForm((form) => ({ ...form, permission_keys: form.permission_keys.includes(key) ? form.permission_keys.filter((item) => item !== key) : [...form.permission_keys, key] }));
+  const togglePermission = (key: string) => {
+    setRoleForm((form) => ({
+      ...form,
+      permission_keys: form.permission_keys.includes(key)
+        ? form.permission_keys.filter((item) => item !== key)
+        : [...form.permission_keys, key],
+    }));
+  };
 
   return (
-    <div className="space-y-5">
-      <section className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 sm:p-5">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 border-b border-[var(--ui-border)] pb-4">
-          <div className="flex gap-3">
-            <div className="w-9 h-9 grid place-items-center bg-orange-500 text-white"><ShieldCheck size={18} /></div>
-            <div><h3 className="font-bold text-[var(--ui-text-primary)]">Access roles</h3><p className="text-xs text-[var(--ui-text-muted)] mt-1">Buat jabatan sesuai struktur perusahaan lalu pilih akses yang benar-benar dibutuhkan.</p></div>
-          </div>
-          <span className="text-xs text-[var(--ui-text-muted)]">Berlaku untuk workspace {company.type === "vendor" ? "vendor" : "buyer"}</span>
-        </div>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {/* Role Management Section */}
+      <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "flex-start", md: "center" }, justifyContent: "space-between", pb: 2.5, borderBottom: "1px solid", borderColor: "divider", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: "primary.main", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <ShieldCheck size={20} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                Role & Akses Pengguna
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Buat jabatan sesuai struktur perusahaan lalu pilih akses yang benar-benar dibutuhkan.
+              </Typography>
+            </Box>
+          </Box>
+          <Chip label={`Workspace ${company.type === "vendor" ? "Vendor" : "Buyer"}`} size="small" variant="outlined" />
+        </Box>
 
-        {notice && <div className="mt-4 px-3 py-2 text-xs text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2"><Check size={14} />{notice}</div>}
-        {error && <div className="mt-4 px-3 py-2 text-xs text-red-600 bg-red-500/10 border border-red-500/20">{error}</div>}
+        {notice && <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }} icon={<Check size={16} />}>{notice}</Alert>}
+        {error && <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>{error}</Alert>}
 
-        <div className="grid xl:grid-cols-[1.05fr_.95fr] gap-5 mt-5">
-          <div className="space-y-2">
-            {config.roles.map((role) => (
-              <div key={role.id} className={`border p-3 flex items-start gap-3 ${editingRole?.id === role.id ? "border-orange-500" : "border-[var(--ui-border)]"}`}>
-                <div className="w-8 h-8 shrink-0 grid place-items-center bg-[var(--ui-bg-input)] text-orange-500"><Users size={15} /></div>
-                <HuntrButton type="button" onClick={() => editRole(role)} className="text-left flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2"><span className="text-sm font-bold text-[var(--ui-text-primary)]">{role.name}</span>{role.is_system && <span className="text-[10px] px-1.5 py-0.5 bg-slate-500/10 text-[var(--ui-text-muted)]">Default</span>}</div>
-                  <p className="text-xs text-[var(--ui-text-muted)] mt-1 line-clamp-1">{role.description || `${role.permissions.length} permissions`}</p>
-                  <p className="text-[10px] text-[var(--ui-text-muted)] mt-2">{role.member_count} member · {role.permissions.length} permissions</p>
-                </HuntrButton>
-                {!role.is_system && <HuntrButton onClick={() => removeRole(role)} title="Hapus role" className="p-1.5 text-[var(--ui-text-muted)] hover:text-red-500"><Trash2 size={14} /></HuntrButton>}
-              </div>
-            ))}
-          </div>
+        <Grid container spacing={3} sx={{ mt: 1 }}>
+          {/* Roles list */}
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {config.roles.map((role) => (
+                <Paper
+                  key={role.id}
+                  elevation={0}
+                  onClick={() => editRole(role)}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: editingRole?.id === role.id ? "primary.main" : "divider",
+                    bgcolor: editingRole?.id === role.id ? "action.selected" : "background.paper",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1.5,
+                    transition: "all 0.2s",
+                    "&:hover": { borderColor: "primary.main" },
+                  }}
+                >
+                  <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: "action.hover", color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center", shrink: 0, mt: 0.5 }}>
+                    <Users size={16} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{role.name}</Typography>
+                      {role.is_system && <Chip label="Default" size="small" sx={{ fontSize: "0.65rem", height: 20 }} />}
+                    </Box>
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }} noWrap>
+                      {role.description || `${role.permissions.length} permissions`}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5, fontSize: "0.7rem" }}>
+                      {role.member_count} member · {role.permissions.length} permissions
+                    </Typography>
+                  </Box>
+                  {!role.is_system && (
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={(e) => { e.stopPropagation(); removeRole(role); }}
+                      title="Hapus role"
+                    >
+                      <Trash2 size={15} />
+                    </IconButton>
+                  )}
+                </Paper>
+              ))}
+            </Box>
+          </Grid>
 
-          <form onSubmit={saveRole} className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-4">
-            <div className="flex items-center justify-between gap-3"><h4 className="font-bold text-sm text-[var(--ui-text-primary)]">{editingRole ? `Edit ${editingRole.name}` : "Role baru"}</h4>{editingRole && <HuntrButton type="button" onClick={resetRole} className="text-xs text-[var(--ui-text-muted)]">Batal</HuntrButton>}</div>
-            <div className="grid sm:grid-cols-2 gap-3 mt-4"><Field label="Nama jabatan" value={roleForm.name} onChange={(name) => setRoleForm({ ...roleForm, name })} placeholder="Contoh: Head of Procurement" /><Field label="Deskripsi" value={roleForm.description} onChange={(description) => setRoleForm({ ...roleForm, description })} placeholder="Tanggung jawab utama" /></div>
-            <div className="mt-4 space-y-3 max-h-[320px] overflow-y-auto pr-1">
-              {Object.entries(permissionGroups).map(([group, permissions]) => <div key={group}><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ui-text-muted)] mb-1.5">{group}</p><div className="grid sm:grid-cols-2 gap-1.5">{permissions.map((permission) => <label key={permission.key} className="flex gap-2 items-start border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-2.5 py-2 cursor-pointer"><HuntrInput type="checkbox" checked={selected.has(permission.key)} onChange={() => togglePermission(permission.key)} className="mt-0.5 accent-orange-500" /><span><span className="block text-xs font-semibold text-[var(--ui-text-primary)]">{permission.name}</span><span className="block text-[10px] text-[var(--ui-text-muted)] leading-snug">{permission.description}</span></span></label>)}</div></div>)}
-            </div>
-            <div className="mt-4 flex gap-2"><HuntrInput value={customPermission} onChange={(event) => setCustomPermission(event.target.value)} className="min-w-0 flex-1 px-3 py-2 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]" placeholder="Permission khusus, mis. Approve budget" /><HuntrButton type="button" onClick={(event) => addPermission(event as any)} disabled={saving || !customPermission.trim()} className="px-3 py-2 border border-[var(--ui-border)] text-xs font-semibold text-[var(--ui-text-primary)]"><Plus size={14} /></HuntrButton></div>
-            <HuntrButton disabled={saving || !roleForm.name.trim()} className="mt-4 w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-sm font-semibold flex justify-center gap-2 items-center">{saving ? <Loader2 className="animate-spin" size={15} /> : <Save size={15} />}{editingRole ? "Simpan role" : "Buat role"}</HuntrButton>
-          </form>
-        </div>
-      </section>
+          {/* Role form */}
+          <Grid size={{ xs: 12, md: 7 }}>
+            <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2, bgcolor: "action.hover", border: "1px solid", borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  {editingRole ? `Edit: ${editingRole.name}` : "Buat Role Baru"}
+                </Typography>
+                {editingRole && (
+                  <Button size="small" onClick={resetRole} sx={{ textTransform: "none" }}>
+                    Batal
+                  </Button>
+                )}
+              </Box>
 
-      <section className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 sm:p-5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-[var(--ui-border)] pb-4"><div className="flex gap-3"><div className="w-9 h-9 grid place-items-center bg-[var(--ui-bg-input)] text-orange-500"><Workflow size={18} /></div><div><h3 className="font-bold text-[var(--ui-text-primary)]">Approval flows</h3><p className="text-xs text-[var(--ui-text-muted)] mt-1">Atur persetujuan berurutan sesuai birokrasi perusahaan. Tahap berikutnya aktif setelah tahap sebelumnya menyetujui.</p></div></div><HuntrButton type="button" onClick={() => beginFlow()} className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold flex items-center justify-center gap-2"><Plus size={15} />Buat alur</HuntrButton></div>
+              <Box component="form" onSubmit={saveRole}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      required
+                      label="Nama Jabatan"
+                      placeholder="Mis. Head of Procurement"
+                      value={roleForm.name}
+                      onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Deskripsi"
+                      placeholder="Tanggung jawab utama"
+                      value={roleForm.description}
+                      onChange={(e) => setRoleForm({ ...roleForm, description: e.target.value })}
+                    />
+                  </Grid>
+                </Grid>
 
-        {flowForm.steps.length > 0 ? <form onSubmit={saveFlow} className="mt-5 border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-4"><div className="flex items-center justify-between"><h4 className="font-bold text-sm text-[var(--ui-text-primary)]">{editingFlow ? "Edit alur approval" : "Alur approval baru"}</h4><HuntrButton type="button" onClick={() => { setEditingFlow(null); setFlowForm({ name: "", subject_type: "purchase_request", min_amount: "", max_amount: "", is_active: true, steps: [] }); }} className="text-xs text-[var(--ui-text-muted)]">Tutup</HuntrButton></div><div className="grid md:grid-cols-3 gap-3 mt-4"><Field label="Nama alur" value={flowForm.name} onChange={(name) => setFlowForm({ ...flowForm, name })} placeholder="PR di atas Rp50 juta" /><Select label="Dokumen" value={flowForm.subject_type} onChange={(subject_type) => setFlowForm({ ...flowForm, subject_type })} options={Object.entries(config.subjects).map(([value, label]) => ({ value, label }))} /><Field label="Minimal nilai (opsional)" type="number" value={flowForm.min_amount} onChange={(min_amount) => setFlowForm({ ...flowForm, min_amount })} placeholder="0" /></div><div className="mt-4"><p className="text-xs font-bold text-[var(--ui-text-muted)] uppercase tracking-wide">Tahapan berurutan</p><div className="space-y-2 mt-2">{flowForm.steps.map((step, index) => <div key={index} className="grid grid-cols-[28px_1fr_34px] gap-2 items-center"><span className="w-7 h-7 grid place-items-center bg-orange-500/10 text-orange-500 text-xs font-bold">{index + 1}</span><HuntrSelect value={step.company_role_id} onChange={(event) => setFlowForm((form) => ({ ...form, steps: form.steps.map((item, itemIndex) => itemIndex === index ? { ...item, company_role_id: event.target.value } : item) }))} className="px-3 py-2 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]">{config.roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</HuntrSelect><HuntrButton type="button" disabled={flowForm.steps.length === 1} onClick={() => setFlowForm((form) => ({ ...form, steps: form.steps.filter((_, itemIndex) => itemIndex !== index) }))} className="p-2 text-[var(--ui-text-muted)] hover:text-red-500 disabled:opacity-30"><Trash2 size={15} /></HuntrButton></div>)}</div><HuntrButton type="button" onClick={() => setFlowForm((form) => ({ ...form, steps: [...form.steps, { company_role_id: config.roles[0]?.id || "", name: "", required_approvals: 1 }] }))} className="mt-3 text-xs text-orange-600 font-semibold flex items-center gap-1"><Plus size={14} />Tambah tahap</HuntrButton></div><HuntrButton disabled={saving || !flowForm.name.trim() || !flowForm.steps.length} className="mt-5 px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-sm font-semibold flex items-center gap-2">{saving ? <Loader2 className="animate-spin" size={15} /> : <Save size={15} />}{editingFlow ? "Simpan perubahan" : "Aktifkan alur"}</HuntrButton></form> : null}
+                <Box sx={{ mt: 2.5, maxHeight: 300, overflowY: "auto", pr: 1 }}>
+                  {Object.entries(permissionGroups).map(([group, permissions]) => (
+                    <Box key={group} sx={{ mb: 2 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary", display: "block", mb: 1 }}>
+                        {group}
+                      </Typography>
+                      <Grid container spacing={1}>
+                        {permissions.map((p) => (
+                          <Grid size={{ xs: 12, sm: 6 }} key={p.key}>
+                            <Paper
+                              elevation={0}
+                              onClick={() => togglePermission(p.key)}
+                              sx={{
+                                p: 1,
+                                borderRadius: 1.5,
+                                border: "1px solid",
+                                borderColor: selected.has(p.key) ? "primary.main" : "divider",
+                                bgcolor: selected.has(p.key) ? "primary.lighter" : "background.paper",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 1,
+                              }}
+                            >
+                              <Checkbox
+                                size="small"
+                                checked={selected.has(p.key)}
+                                onChange={() => togglePermission(p.key)}
+                                sx={{ p: 0.5, mt: 0.2 }}
+                              />
+                              <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 700, display: "block", color: "text.primary" }}>
+                                  {p.name}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.68rem", lineHeight: 1.2, display: "block" }}>
+                                  {p.description}
+                                </Typography>
+                              </Box>
+                            </Paper>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  ))}
+                </Box>
 
-        <div className="mt-4 divide-y divide-[var(--ui-border)] border-t border-[var(--ui-border)]">{config.flows.length === 0 ? <p className="py-6 text-sm text-[var(--ui-text-muted)]">Belum ada alur custom. Tanpa alur, sistem tetap menggunakan approval manager yang sudah ada.</p> : config.flows.map((flow) => <div key={flow.id} className="py-3 flex flex-col md:flex-row md:items-center gap-3"><div className="flex-1"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-sm text-[var(--ui-text-primary)]">{flow.name}</span><span className={`text-[10px] px-1.5 py-0.5 ${flow.is_active ? "text-emerald-600 bg-emerald-500/10" : "text-[var(--ui-text-muted)] bg-slate-500/10"}`}>{flow.is_active ? "Active" : "Inactive"}</span></div><p className="text-xs text-[var(--ui-text-muted)] mt-1">{config.subjects[flow.subject_type]} · {flow.steps.map((step) => step.role?.name || "Role").join(" → ")}</p></div><div className="flex gap-2"><HuntrButton onClick={() => beginFlow(flow)} className="px-2.5 py-1.5 border border-[var(--ui-border)] text-xs font-semibold text-[var(--ui-text-primary)]">Edit</HuntrButton><HuntrButton onClick={() => removeFlow(flow)} className="px-2 py-1.5 text-red-500"><Trash2 size={15} /></HuntrButton></div></div>)}</div>
-      </section>
-    </div>
+                <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Permission khusus, mis. Approve budget"
+                    value={customPermission}
+                    onChange={(e) => setCustomPermission(e.target.value)}
+                  />
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={(e) => addPermission(e as any)}
+                    disabled={saving || !customPermission.trim()}
+                    sx={{ minWidth: 44, px: 1.5 }}
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </Box>
+
+                <Button
+                  fullWidth
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={saving || !roleForm.name.trim()}
+                  startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save size={16} />}
+                  sx={{ mt: 2.5, fontWeight: 600, textTransform: "none", borderRadius: 2 }}
+                >
+                  {editingRole ? "Simpan Perubahan Role" : "Buat Role"}
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Approval Flows Section */}
+      <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "flex-start", md: "center" }, justifyContent: "space-between", pb: 2.5, borderBottom: "1px solid", borderColor: "divider", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: "action.hover", color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Workflow size={20} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                Alur Approval Dokumen
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Atur persetujuan berurutan sesuai birokrasi perusahaan. Tahap berikutnya aktif setelah tahap sebelumnya menyetujui.
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => beginFlow()}
+            startIcon={<Plus size={16} />}
+            sx={{ fontWeight: 600, textTransform: "none", borderRadius: 2 }}
+          >
+            Buat Alur Baru
+          </Button>
+        </Box>
+
+        {flowForm.steps.length > 0 && (
+          <Paper elevation={0} sx={{ p: 2.5, my: 3, borderRadius: 2, bgcolor: "action.hover", border: "1px solid", borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                {editingFlow ? "Edit Alur Approval" : "Buat Alur Approval Baru"}
+              </Typography>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditingFlow(null);
+                  setFlowForm({ name: "", subject_type: "purchase_request", min_amount: "", max_amount: "", is_active: true, steps: [] });
+                }}
+                sx={{ textTransform: "none" }}
+              >
+                Tutup
+              </Button>
+            </Box>
+
+            <Box component="form" onSubmit={saveFlow}>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    required
+                    label="Nama Alur"
+                    placeholder="PR di atas Rp50 juta"
+                    value={flowForm.name}
+                    onChange={(e) => setFlowForm({ ...flowForm, name: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="flow-subject-label">Jenis Dokumen</InputLabel>
+                    <Select
+                      labelId="flow-subject-label"
+                      label="Jenis Dokumen"
+                      value={flowForm.subject_type}
+                      onChange={(e) => setFlowForm({ ...flowForm, subject_type: e.target.value })}
+                    >
+                      {Object.entries(config.subjects).map(([val, label]) => (
+                        <MenuItem key={val} value={val}>{label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Minimal Nilai (Opsional)"
+                    placeholder="0"
+                    value={flowForm.min_amount}
+                    onChange={(e) => setFlowForm({ ...flowForm, min_amount: e.target.value })}
+                  />
+                </Grid>
+              </Grid>
+
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", color: "text.secondary" }}>
+                  Tahapan Persetujuan Berurutan
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mt: 1.5 }}>
+                  {flowForm.steps.map((step, index) => (
+                    <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: "primary.lighter", color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8rem", shrink: 0 }}>
+                        {index + 1}
+                      </Box>
+                      <FormControl fullWidth size="small">
+                        <Select
+                          value={step.company_role_id}
+                          onChange={(e) =>
+                            setFlowForm((form) => ({
+                              ...form,
+                              steps: form.steps.map((item, itemIdx) =>
+                                itemIdx === index ? { ...item, company_role_id: e.target.value } : item
+                              ),
+                            }))
+                          }
+                        >
+                          {config.roles.map((role) => (
+                            <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        disabled={flowForm.steps.length === 1}
+                        onClick={() =>
+                          setFlowForm((form) => ({
+                            ...form,
+                            steps: form.steps.filter((_, itemIdx) => itemIdx !== index),
+                          }))
+                        }
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+                <Button
+                  size="small"
+                  onClick={() =>
+                    setFlowForm((form) => ({
+                      ...form,
+                      steps: [...form.steps, { company_role_id: config.roles[0]?.id || "", name: "", required_approvals: 1 }],
+                    }))
+                  }
+                  startIcon={<Plus size={14} />}
+                  sx={{ mt: 1.5, textTransform: "none", fontWeight: 600 }}
+                >
+                  Tambah Tahap
+                </Button>
+              </Box>
+
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={saving || !flowForm.name.trim() || !flowForm.steps.length}
+                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save size={16} />}
+                sx={{ mt: 3, fontWeight: 600, textTransform: "none", borderRadius: 2 }}
+              >
+                {editingFlow ? "Simpan Perubahan Alur" : "Aktifkan Alur"}
+              </Button>
+            </Box>
+          </Paper>
+        )}
+
+        <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {config.flows.length === 0 ? (
+            <Typography variant="body2" sx={{ py: 3, color: "text.secondary", textAlign: "center" }}>
+              Belum ada alur approval custom. Tanpa alur custom, sistem menggunakan approval manager standar.
+            </Typography>
+          ) : (
+            config.flows.map((flow) => (
+              <Paper
+                key={flow.id}
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  justifyContent: "space-between",
+                  gap: 1.5,
+                }}
+              >
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{flow.name}</Typography>
+                    <Chip
+                      label={flow.is_active ? "Aktif" : "Nonaktif"}
+                      size="small"
+                      color={flow.is_active ? "success" : "default"}
+                      sx={{ fontSize: "0.65rem", height: 20 }}
+                    />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+                    {config.subjects[flow.subject_type]} · {flow.steps.map((step) => step.role?.name || "Role").join(" → ")}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button size="small" variant="outlined" onClick={() => beginFlow(flow)} sx={{ textTransform: "none" }}>
+                    Edit
+                  </Button>
+                  <IconButton size="small" color="error" onClick={() => removeFlow(flow)}>
+                    <Trash2 size={16} />
+                  </IconButton>
+                </Box>
+              </Paper>
+            ))
+          )}
+        </Box>
+      </Paper>
+    </Box>
   );
 }
-
-function Field({ label, value, onChange, placeholder, type = "text" }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; type?: string }) {
-  return <label className="block"><span className="block text-xs font-semibold text-[var(--ui-text-muted)] mb-1.5">{label}</span><HuntrInput type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="w-full px-3 py-2 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]" /></label>;
-}
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
-  return <label className="block"><span className="block text-xs font-semibold text-[var(--ui-text-muted)] mb-1.5">{label}</span><HuntrSelect value={value} onChange={(event) => onChange(event.target.value)} className="w-full px-3 py-2 bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)]">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</HuntrSelect></label>;
-}
-
-

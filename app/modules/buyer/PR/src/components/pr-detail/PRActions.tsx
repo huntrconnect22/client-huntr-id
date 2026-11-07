@@ -1,4 +1,4 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import Button from "@mui/material/Button";
 import React, { useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { apiPost, getRfq } from "~/lib/api";
@@ -63,12 +63,12 @@ export function PRActions({ request, user, activeCompany, onUpdate }: PRActionsP
           Manager Actions
         </div>
         <div className="flex gap-2">
-          <HuntrButton type="button" onClick={() => setShowRejectModal(true)} className={btnReject}>
+          <button type="button" onClick={() => setShowRejectModal(true)} className={btnReject}>
             <XCircle size={13} /> Reject
-          </HuntrButton>
-          <HuntrButton type="button" onClick={handleApprove} className={btnApprove}>
+          </button>
+          <button type="button" onClick={handleApprove} className={btnApprove}>
             <CheckCircle2 size={13} /> Approve & Publish
-          </HuntrButton>
+          </button>
         </div>
       </div>
     </>

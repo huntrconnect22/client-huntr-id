@@ -1,4 +1,5 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import React from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -18,24 +19,19 @@ export const CompareReviewHeader: React.FC<CompareReviewHeaderProps> = ({
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
-      <HuntrButton
+      <IconButton
         onClick={() => navigate(backUrl)}
-        style={{
+        sx={{
           width: 40,
           height: 40,
-          borderRadius: 12,
-          background: "var(--ui-bg-card)",
-          border: "1px solid var(--ui-border)",
-          color: "var(--ui-text-primary)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          borderRadius: 2.5,
+          border: 1,
+          borderColor: "divider",
         }}
         aria-label="Back to Approvals"
       >
         <ArrowLeft size={20} />
-      </HuntrButton>
+      </IconButton>
 
       <div style={{ flex: 1 }}>
         <div
@@ -62,24 +58,19 @@ export const CompareReviewHeader: React.FC<CompareReviewHeaderProps> = ({
         </h1>
       </div>
 
-      <HuntrButton
+      <Button
+        variant="outlined"
+        size="small"
         onClick={onRefresh}
-        style={{
-          padding: "10px 16px",
-          borderRadius: 12,
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid var(--ui-border-input)",
-          color: "var(--ui-text-secondary)",
+        startIcon={<RefreshCw size={14} />}
+        sx={{
+          borderRadius: 2.5,
           fontWeight: 700,
-          fontSize: 13,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
+          textTransform: "none",
         }}
       >
-        <RefreshCw size={14} /> Refresh
-      </HuntrButton>
+        Refresh
+      </Button>
     </div>
   );
 };

@@ -1,17 +1,13 @@
-import { Select as HuntrSelect, Input as HuntrInput } from "~/shared/ui/Fields";
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import { FormLabel } from "./OnboardingUI";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import { Plus, X } from "lucide-react";
 import {
-  PROVINCES,                    // Array 38 nama provinsi
-  getCitiesByProvince,          // Fungsi: provinsi → kota
-  getDistrictsByCity,           // Fungsi: kota → kecamatan
-  getPostalCodesByCity,         // Fungsi: kota → kode pos
-  provinceDataMap               // Data lengkap semua provinsi
+  PROVINCES,
+  getCitiesByProvince,
+  getDistrictsByCity,
+  getPostalCodesByCity,
 } from "../data/geolocation";
-
 
 interface LocationStepProps {
   formData: any;
@@ -74,7 +70,6 @@ export const LocationStep: React.FC<LocationStepProps> = ({
     }
   };
 
-  // Build option lists — Geoapify value is shown first if not already in the list
   const buildOptions = (list: string[], geoValue?: string) => {
     const opts = [...list];
     if (geoValue && !opts.includes(geoValue)) {
@@ -93,7 +88,7 @@ export const LocationStep: React.FC<LocationStepProps> = ({
       {/* Province */}
       <div className="flex flex-col gap-1.5">
         <FormLabel>Province *</FormLabel>
-        <HuntrSelect
+        <select
           value={formData.provincy_country}
           onChange={(e) => handleProvinceChange(e.target.value)}
           className={selectClass}
@@ -104,14 +99,14 @@ export const LocationStep: React.FC<LocationStepProps> = ({
               {p}{geoDetails.state === p ? " ✓" : ""}
             </option>
           ))}
-        </HuntrSelect>
+        </select>
       </div>
 
       {/* City & District */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="flex flex-col gap-1.5">
           <FormLabel>City / Regency *</FormLabel>
-          <HuntrSelect
+          <select
             value={formData.city}
             onChange={(e) => handleCityChange(e.target.value)}
             disabled={!formData.provincy_country}
@@ -125,12 +120,12 @@ export const LocationStep: React.FC<LocationStepProps> = ({
                 {c}{geoDetails.city === c ? " ✓" : ""}
               </option>
             ))}
-          </HuntrSelect>
+          </select>
         </div>
 
         <div className="flex flex-col gap-1.5">
           <FormLabel>District / Kecamatan</FormLabel>
-          <HuntrSelect
+          <select
             value={formData.regency}
             onChange={(e) => updateField("regency", e.target.value)}
             disabled={!formData.city}
@@ -144,7 +139,7 @@ export const LocationStep: React.FC<LocationStepProps> = ({
                 {d}{geoDetails.county === d ? " ✓" : ""}
               </option>
             ))}
-          </HuntrSelect>
+          </select>
         </div>
       </div>
 
@@ -152,7 +147,7 @@ export const LocationStep: React.FC<LocationStepProps> = ({
       <div className="flex flex-col gap-1.5">
         <FormLabel>Postal Code</FormLabel>
         {postalOptions.length > 0 ? (
-          <HuntrSelect
+          <select
             value={formData.zip_code}
             onChange={(e) => updateField("zip_code", e.target.value)}
             className={selectClass}
@@ -163,9 +158,9 @@ export const LocationStep: React.FC<LocationStepProps> = ({
                 {code}{geoDetails.postcode === code ? " ✓" : ""}
               </option>
             ))}
-          </HuntrSelect>
+          </select>
         ) : (
-          <HuntrInput
+          <input
             type="text"
             value={formData.zip_code}
             onChange={(e) => updateField("zip_code", e.target.value)}
@@ -182,17 +177,17 @@ export const LocationStep: React.FC<LocationStepProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <FormLabel>HQ/Office Addresses</FormLabel>
-          <HuntrButton
+          <button
             type="button"
             onClick={addHqAddress}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-bold hover:bg-orange-500/20 transition-all"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-bold hover:bg-orange-500/20 transition-all cursor-pointer"
           >
             <Plus size={16} /> Add Address
-          </HuntrButton>
+          </button>
         </div>
         {formData.hq_addresses?.map((addr: string, idx: number) => (
           <div key={idx} className="flex gap-2">
-            <HuntrInput
+            <input
               type="text"
               value={addr}
               onChange={(e) => updateHqAddress(idx, e.target.value)}
@@ -200,13 +195,13 @@ export const LocationStep: React.FC<LocationStepProps> = ({
               className="flex-1 px-4 py-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] outline-none text-sm"
             />
             {formData.hq_addresses.length > 1 && (
-              <HuntrButton
+              <button
                 type="button"
                 onClick={() => removeHqAddress(idx)}
-                className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all"
+                className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all cursor-pointer"
               >
                 <X size={16} />
-              </HuntrButton>
+              </button>
             )}
           </div>
         ))}
@@ -214,5 +209,3 @@ export const LocationStep: React.FC<LocationStepProps> = ({
     </div>
   );
 };
-
-

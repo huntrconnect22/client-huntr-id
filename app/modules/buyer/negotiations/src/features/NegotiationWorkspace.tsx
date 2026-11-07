@@ -1,5 +1,5 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import Layout from "~/components/Layout";
@@ -53,9 +53,9 @@ function NegotiationResponseModal({ negotiation, onClose, onSuccess }: { negotia
             <h3 className="text-sm font-bold text-[var(--ui-text-primary)]">Review Negotiation</h3>
             <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">Proposed terms for RFQ: {negotiation.proposal?.rfq?.title}</p>
           </div>
-          <HuntrButton onClick={onClose} className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]">
+          <button onClick={onClose} className="text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)]">
             <X size={18} />
-          </HuntrButton>
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -94,7 +94,7 @@ function NegotiationResponseModal({ negotiation, onClose, onSuccess }: { negotia
 
           <div className="space-y-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] block">Your Response Remarks</span>
-            <HuntrTextarea
+            <textarea
               value={remarks}
               onChange={e => setRemarks(e.target.value)}
               placeholder="Any comments regarding your decision..."
@@ -104,21 +104,21 @@ function NegotiationResponseModal({ negotiation, onClose, onSuccess }: { negotia
         </div>
 
         <div className="p-4 border-t border-[var(--ui-border)] flex items-center gap-2">
-          <HuntrButton
+          <button
             onClick={() => handleRespond('declined')}
             disabled={loading}
             className="flex-1 py-2 rounded-lg border border-red-500 text-red-500 font-semibold text-xs hover:bg-red-500/5 transition-all"
           >
             Decline
-          </HuntrButton>
-          <HuntrButton
+          </button>
+          <button
             onClick={() => handleRespond('accepted')}
             disabled={loading}
             style={{ color: 'white' }}
             className="flex-1 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
           >
             {loading ? <Loader2 size={13} className="animate-spin" /> : "Accept New Terms"}
-          </HuntrButton>
+          </button>
         </div>
       </div>
     </div>
@@ -224,12 +224,12 @@ export default function Negotiation() {
               Track all ongoing price and term negotiations.
             </p>
           </div>
-          <HuntrButton
+          <button
             onClick={() => fetchNegotiations(activeCompany.id)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
           >
             <RefreshCw size={13} /> Refresh
-          </HuntrButton>
+          </button>
         </div>
 
         {loading ? (
@@ -270,7 +270,7 @@ export default function Negotiation() {
                   </div>
 
                   {!isBuyer && neg.status === 'pending' && (
-                    <HuntrButton
+                    <button
                       onClick={() => {
                         setSelectedNeg(neg);
                         setShowRespondModal(true);
@@ -279,10 +279,10 @@ export default function Negotiation() {
                       className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-xs font-bold transition-all"
                     >
                       Review & Respond
-                    </HuntrButton>
+                    </button>
                   )}
                   {isBuyer && neg.status === 'pending' && isDemoMode() && (
-                    <HuntrButton
+                    <button
                       onClick={() => handleTriggerBotNegotiation(neg.id)}
                       disabled={triggeringBotId === neg.id}
                       className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-xs font-bold text-white transition-all disabled:opacity-60"
@@ -291,15 +291,15 @@ export default function Negotiation() {
                         ? <Loader2 size={12} className="animate-spin" />
                         : <Bot size={12} />}
                       🤖 AI Bot Respond
-                    </HuntrButton>
+                    </button>
                   )}
                   {isBuyer && neg.status === 'accepted' && (
-                    <HuntrButton
+                    <button
                       onClick={() => navigate(`${getCompanyPrefix()}/my-pr/${neg.proposal?.rfq_id}`)}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-orange-500 hover:border-orange-400/50 transition-all"
                     >
                       Go to Award <ChevronRight size={13} />
-                    </HuntrButton>
+                    </button>
                   )}
                 </div>
                 

@@ -1,4 +1,3 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
@@ -43,19 +42,17 @@ export function CheckoutModal({
         >
           Pembayaran Midtrans
         </h3>
-        <HuntrButton
+        <button
           type="button"
           onClick={onClose}
           aria-label="Tutup pembayaran"
-          className="rounded p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)]"
+          className="rounded p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-input)] hover:text-[var(--ui-text-primary)] cursor-pointer bg-transparent border-0"
         >
           <X size={19} />
-        </HuntrButton>
+        </button>
       </div>
       <div className="min-h-0 overflow-y-auto p-5">{children}</div>
     </dialog>,
     document.body,
   );
 }
-
-

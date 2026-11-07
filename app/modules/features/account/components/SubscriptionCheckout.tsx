@@ -1,5 +1,3 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Select as HuntrSelect } from "~/shared/ui/Fields";
 import { useEffect, useState } from "react";
 import {
   createSubscriptionCheckout,
@@ -161,25 +159,25 @@ export function SubscriptionCheckout({
               {formatRupiah(checkout.amount)} · Status: {checkout.status}
             </p>
           </div>
-          <HuntrButton
+          <button
             type="button"
             onClick={() => setViewPending(true)}
-            className="font-semibold text-orange-500 hover:underline"
+            className="font-semibold text-orange-500 hover:underline cursor-pointer bg-transparent border-0"
           >
             Lihat pembayaran
-          </HuntrButton>
+          </button>
         </div>
       )}
       {loadError && !isOpen && (
         <p role="alert" className="text-xs text-red-500">
           {loadError}{" "}
-          <HuntrButton
+          <button
             type="button"
             onClick={() => setLoadAttempt((n) => n + 1)}
-            className="font-semibold underline"
+            className="font-semibold underline cursor-pointer bg-transparent border-0 text-inherit"
           >
             Coba lagi
-          </HuntrButton>
+          </button>
         </p>
       )}
       {isOpen && (
@@ -191,13 +189,13 @@ export function SubscriptionCheckout({
           ) : loadError ? (
             <p role="alert" className="text-sm text-red-500">
               {loadError}{" "}
-              <HuntrButton
+              <button
                 type="button"
                 onClick={() => setLoadAttempt((n) => n + 1)}
-                className="font-semibold underline"
+                className="font-semibold underline cursor-pointer bg-transparent border-0 text-inherit"
               >
                 Coba lagi
-              </HuntrButton>
+              </button>
             </p>
           ) : checkout ? (
             <div className="space-y-3 text-sm text-[var(--ui-text-secondary)]">
@@ -247,23 +245,23 @@ export function SubscriptionCheckout({
                 </p>
               )}
               {!done && (
-                <HuntrButton
+                <button
                   type="button"
                   disabled={busy}
                   onClick={refresh}
-                  className="rounded bg-orange-600 px-3 py-2 text-xs font-semibold !text-white disabled:opacity-50"
+                  className="rounded bg-orange-600 px-3 py-2 text-xs font-semibold !text-white disabled:opacity-50 cursor-pointer border-0"
                 >
                   {busy ? "Memeriksa..." : "Perbarui status"}
-                </HuntrButton>
+                </button>
               )}
               {done && (
-                <HuntrButton
+                <button
                   type="button"
                   onClick={close}
-                  className="border border-[var(--ui-border)] px-3 py-2 text-xs"
+                  className="border border-[var(--ui-border)] px-3 py-2 text-xs cursor-pointer bg-transparent"
                 >
                   Tutup
-                </HuntrButton>
+                </button>
               )}
             </div>
           ) : (
@@ -329,10 +327,10 @@ export function SubscriptionCheckout({
                 </div>
                 <label className="block">
                   Metode pembayaran{" "}
-                  <HuntrSelect
+                  <select
                     value={method}
                     onChange={(e) => setMethod(e.target.value)}
-                    className="mt-2 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-2"
+                    className="mt-2 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-2 rounded-md outline-none"
                   >
                     {["bca", "bni", "bri", "cimb", "permata", "mandiri"].map(
                       (bank) => (
@@ -341,9 +339,9 @@ export function SubscriptionCheckout({
                         </option>
                       ),
                     )}
-                  </HuntrSelect>
+                  </select>
                 </label>
-                <HuntrButton
+                <button
                   type="button"
                   onClick={submit}
                   disabled={
@@ -351,10 +349,10 @@ export function SubscriptionCheckout({
                     (selected.purchase_type === "addon" &&
                       selectedAddons.length === 0)
                   }
-                  className="rounded bg-orange-600 px-4 py-2 text-xs font-semibold !text-white disabled:opacity-50"
+                  className="rounded bg-orange-600 px-4 py-2 text-xs font-semibold !text-white disabled:opacity-50 cursor-pointer border-0"
                 >
                   {busy ? "Menyiapkan pembayaran..." : "Buat pembayaran"}
-                </HuntrButton>
+                </button>
               </div>
             )
           )}
@@ -368,5 +366,3 @@ export function SubscriptionCheckout({
     </>
   );
 }
-
-

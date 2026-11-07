@@ -1,5 +1,5 @@
-import { Surface as HuntrSurface } from "~/shared/ui/Surface";
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
 import React from "react";
 import { Calendar, MapPin, Package, CheckCircle2, Loader2 } from "lucide-react";
 
@@ -20,7 +20,8 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
   const isProcessing = processingId === String(proposalId);
 
   return (
-    <HuntrSurface
+    <Paper
+      variant="outlined"
       style={{
         padding: 24,
         borderRadius: 24,
@@ -95,36 +96,34 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
 
         {awardedProposal && (
           <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <HuntrButton
+            <Button
+              variant="contained"
+              color="primary"
               onClick={() => {
                 if (proposalId) onApproveWinner(proposalId);
               }}
               disabled={isProcessing}
-              style={{
-                padding: "12px 28px",
-                borderRadius: 12,
-                background: "var(--huntr-orange)",
-                border: "none",
-                color: "#fff",
+              startIcon={
+                isProcessing ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={16} />
+                )
+              }
+              sx={{
+                px: 3.5,
+                py: 1.5,
+                borderRadius: 2.5,
                 fontWeight: 800,
-                fontSize: 14,
-                cursor: isProcessing ? "wait" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                boxShadow: "0 4px 12px rgba(249,115,22,0.2)",
+                fontSize: "0.875rem",
+                textTransform: "none",
               }}
             >
-              {isProcessing ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <CheckCircle2 size={16} />
-              )}
-              Approve & Generate PO
-            </HuntrButton>
+              Approve &amp; Generate PO
+            </Button>
           </div>
         )}
       </div>
-    </HuntrSurface>
+    </Paper>
   );
 };

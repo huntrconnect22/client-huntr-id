@@ -1,5 +1,3 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React from "react";
 import {
   ArrowRight, MapPin, ShieldCheck, User, Sparkles, Loader2, AlertTriangle, CheckCircle2, ExternalLink,
@@ -67,9 +65,9 @@ export function RFQSidebar({
         <Row label={t("rfqDetail.sidebar.timeRemaining")} value={getTenderSummary()} />
 
         {canSubmitProposal() && (
-          <HuntrButton type="button" onClick={onNavigateToProposals} className={`${btnPrimary} mt-3`}>
+          <button type="button" onClick={onNavigateToProposals} className={`${btnPrimary} mt-3`}>
             {t("rfqDetail.sidebar.submitProposal")} <ArrowRight size={13} />
-          </HuntrButton>
+          </button>
         )}
 
         {/* Already submitted — disabled state */}
@@ -106,7 +104,7 @@ export function RFQSidebar({
             </div>
           </div>
           <form onSubmit={onInviteVendor} className="flex flex-col gap-2">
-            <HuntrInput
+            <input
               type="tel"
               required
               placeholder={t("rfqDetail.sidebar.invitePlaceholder")}
@@ -114,14 +112,14 @@ export function RFQSidebar({
               onChange={(e) => setInviteWhatsapp(e.target.value)}
               className={inputClass}
             />
-            <HuntrButton
+            <button
               type="submit"
               disabled={inviting || !inviteWhatsapp}
               className={`${btnPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {inviting ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
               {inviting ? t("rfqDetail.sidebar.sending") : t("rfqDetail.sidebar.inviteBtn")}
-            </HuntrButton>
+            </button>
           </form>
           <div className="mt-2.5 pt-2 border-t border-[var(--ui-border)] flex items-center justify-between">
             <a

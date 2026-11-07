@@ -1,5 +1,10 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import Button from "@mui/material/Button";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
 import React, { useState, useMemo } from "react";
 import {
   X,
@@ -333,13 +338,13 @@ export function MultiVendorAwardModal({
               </p>
             </div>
           </div>
-          <HuntrButton
+          <button
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:bg-[var(--ui-border)] transition-colors"
           >
             <X size={18} />
-          </HuntrButton>
+          </button>
         </div>
 
         {/* Content Body */}
@@ -353,13 +358,13 @@ export function MultiVendorAwardModal({
                 {" "}Pemenang tender <b>harus lebih dari 1 vendor (minimal 2)</b> dan <b>maksimal 5 vendor</b>. Setiap vendor hanya dapat memenangkan barang yang <b>memang ditawarkan oleh vendor tersebut</b>. Hanya item yang di-checklist yang diterbitkan ke PO.
               </div>
             </div>
-            <HuntrButton
+            <button
               type="button"
               onClick={handleAutoAssignBestPrice}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-all shrink-0"
             >
               <Sparkles size={13} /> Alokasi Otomatis (Best Price)
-            </HuntrButton>
+            </button>
           </div>
 
           {/* Section 1: Vendor Selection */}
@@ -453,7 +458,7 @@ export function MultiVendorAwardModal({
                 const isActive = activeVendorId === pId;
 
                 return (
-                  <HuntrButton
+                  <button
                     key={pId}
                     type="button"
                     onClick={() => setActiveVendorId(pId)}
@@ -473,7 +478,7 @@ export function MultiVendorAwardModal({
                     >
                       {count}
                     </span>
-                  </HuntrButton>
+                  </button>
                 );
               })}
             </div>
@@ -492,46 +497,46 @@ export function MultiVendorAwardModal({
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <HuntrButton
+                    <button
                       type="button"
                       onClick={() => selectAllOfferedItemsForVendor(activeVendorId)}
                       className="text-[11px] font-semibold text-orange-500 hover:underline"
                     >
                       Pilih Semua Barang yang Ditawarkan
-                    </HuntrButton>
+                    </button>
                     <span className="text-[var(--ui-text-muted)]">·</span>
-                    <HuntrButton
+                    <button
                       type="button"
                       onClick={() => deselectAllItemsForVendor(activeVendorId)}
                       className="text-[11px] font-semibold text-[var(--ui-text-muted)] hover:underline"
                     >
                       Hapus Pilihan
-                    </HuntrButton>
+                    </button>
                   </div>
                 </div>
 
                 <div className="rounded-xl border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)] huntr-table-scroll">
-                  <HuntrTable className="w-full text-sm border-collapse min-w-[620px]">
-                    <HuntrTableHead>
-                      <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                        <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-10">
+                  <TableContainer><Table size="small" sx={{ minWidth: 620 }}>
+                    <TableHead>
+                      <TableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                        <TableCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-10">
                           Check
-                        </HuntrTableHeaderCell>
-                        <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
                           Produk / Barang RFQ
-                        </HuntrTableHeaderCell>
-                        <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-24">
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-24">
                           Qty
-                        </HuntrTableHeaderCell>
-                        <HuntrTableHeaderCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-36">
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-36">
                           Harga Penawaran
-                        </HuntrTableHeaderCell>
-                        <HuntrTableHeaderCell className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-36">
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-36">
                           Subtotal PO
-                        </HuntrTableHeaderCell>
-                      </HuntrTableRow>
-                    </HuntrTableHead>
-                    <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {rfqItems.map((item: any, idx: number) => {
                         const itemId = String(item.id);
                         const isOfferedByVendor = activeOfferedSet.has(itemId);
@@ -552,7 +557,7 @@ export function MultiVendorAwardModal({
                           });
 
                         return (
-                          <HuntrTableRow
+                          <TableRow
                             key={item.id ?? idx}
                             onClick={() => {
                               if (isOfferedByVendor) {
@@ -567,7 +572,7 @@ export function MultiVendorAwardModal({
                                 : "cursor-pointer hover:bg-[var(--ui-bg-input)]"
                             }`}
                           >
-                            <HuntrTableCell className="px-3 py-2.5 text-center">
+                            <TableCell className="px-3 py-2.5 text-center">
                               {!isOfferedByVendor ? (
                                 <span title="Vendor tidak menawarkan barang ini">
                                   <Ban size={14} className="text-[var(--ui-text-muted)] inline" />
@@ -577,8 +582,8 @@ export function MultiVendorAwardModal({
                               ) : (
                                 <Square size={16} className="text-[var(--ui-text-muted)] inline" />
                               )}
-                            </HuntrTableCell>
-                            <HuntrTableCell className="px-3 py-2.5">
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-xs font-bold text-[var(--ui-text-primary)]">
                                   {cat?.name || item.item_name || "Item #" + (idx + 1)}
@@ -601,11 +606,11 @@ export function MultiVendorAwardModal({
                                   </span>
                                 )}
                               </div>
-                            </HuntrTableCell>
-                            <HuntrTableCell className="px-3 py-2.5 text-xs text-[var(--ui-text-primary)] whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5 text-xs text-[var(--ui-text-primary)] whitespace-nowrap">
                               {item.qty} {cat?.uom || "pcs"}
-                            </HuntrTableCell>
-                            <HuntrTableCell className="px-3 py-2.5 text-xs whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5 text-xs whitespace-nowrap">
                               {!isOfferedByVendor ? (
                                 <span className="text-[var(--ui-text-muted)] italic">—</span>
                               ) : (
@@ -613,8 +618,8 @@ export function MultiVendorAwardModal({
                                   Rp {unitPrice.toLocaleString("id-ID")}
                                 </span>
                               )}
-                            </HuntrTableCell>
-                            <HuntrTableCell className="px-3 py-2.5 text-right text-xs font-bold whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5 text-right text-xs font-bold whitespace-nowrap">
                               {!isOfferedByVendor ? (
                                 <span className="text-[10px] text-[var(--ui-text-muted)] italic">
                                   Tidak ikut tender
@@ -628,12 +633,12 @@ export function MultiVendorAwardModal({
                                   Rp {lineSubtotal.toLocaleString("id-ID")}
                                 </span>
                               )}
-                            </HuntrTableCell>
-                          </HuntrTableRow>
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                    </HuntrTableBody>
-                  </HuntrTable>
+                    </TableBody>
+                  </Table></TableContainer>
                 </div>
               </div>
             ) : null}
@@ -652,15 +657,15 @@ export function MultiVendorAwardModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <HuntrButton
+            <button
               type="button"
               onClick={onClose}
               disabled={isProcessing}
               className="px-4 py-2 rounded-xl text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-card)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors disabled:opacity-50"
             >
               Batal
-            </HuntrButton>
-            <HuntrButton
+            </button>
+            <button
               type="button"
               onClick={handleSubmit}
               disabled={isProcessing || !isCountValid || !allSelectedVendorsHaveItems}
@@ -675,7 +680,7 @@ export function MultiVendorAwardModal({
                   <CheckCircle2 size={14} /> Tetapkan {vendorCount} Pemenang & Terbitkan PO
                 </>
               )}
-            </HuntrButton>
+            </button>
           </div>
         </div>
       </div>

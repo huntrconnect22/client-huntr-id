@@ -14,14 +14,13 @@ import {
 } from "lucide-react";
 import { WmsWorkflowGuide } from "../components/WmsOverview";
 import { formatQuantity, toNumeric } from "../data/quantity";
-import {
-  Table as HuntrTable,
-  TableHead as HuntrTableHead,
-  TableRow as HuntrTableRow,
-  TableHeaderCell as HuntrTableHeaderCell,
-  TableBody as HuntrTableBody,
-  TableCell as HuntrTableCell,
-} from "~/shared/ui/Table";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Button from "@mui/material/Button";
 
 interface Props {
   report: any;
@@ -106,38 +105,38 @@ export function WmsReportsTab({
           </div>
 
           <div className="overflow-x-auto">
-            <HuntrTable className="w-full min-w-[500px] text-left text-sm">
-              <HuntrTableHead>
-                <HuntrTableRow className="border-b border-[var(--ui-border)] text-[11px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-                  <HuntrTableHeaderCell className="py-2.5">Fasilitas Gudang</HuntrTableHeaderCell>
-                  <HuntrTableHeaderCell className="text-right">Varian SKU</HuntrTableHeaderCell>
-                  <HuntrTableHeaderCell className="text-right">Fisik (On-Hand)</HuntrTableHeaderCell>
-                  <HuntrTableHeaderCell className="text-right">Teralokasi</HuntrTableHeaderCell>
-                  <HuntrTableHeaderCell className="text-right">Ketersediaan</HuntrTableHeaderCell>
-                </HuntrTableRow>
-              </HuntrTableHead>
-              <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
+            <TableContainer><Table size="small" sx={{ minWidth: 500 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase", letterSpacing: "0.08em", py: 1.25 }}>Fasilitas Gudang</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Varian SKU</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Fisik (On-Hand)</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Teralokasi</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Ketersediaan</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {(report?.stock_by_warehouse || []).map((x: any) => {
                   const onHand = toNumeric(x.on_hand) || 0;
                   const allocated = toNumeric(x.allocated) || 0;
                   const available = Math.max(0, onHand - allocated);
                   const freePct = onHand > 0 ? Math.round((available / onHand) * 100) : 100;
                   return (
-                    <HuntrTableRow key={x.id} className="group hover:bg-[var(--ui-bg-input)]/40 transition-colors">
-                      <HuntrTableCell className="py-3">
+                    <TableRow key={x.id} hover>
+                      <TableCell sx={{ py: 1.5 }}>
                         <p className="font-semibold text-xs text-[var(--ui-text-primary)]">{x.name}</p>
                         <span className="font-mono text-[11px] text-[var(--ui-text-muted)]">{x.code}</span>
-                      </HuntrTableCell>
-                      <HuntrTableCell className="text-right font-medium text-xs tabular-nums text-[var(--ui-text-secondary)]">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontSize: "0.75rem", fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
                         {x.sku_count}
-                      </HuntrTableCell>
-                      <HuntrTableCell className="text-right font-bold text-xs tabular-nums text-[var(--ui-text-primary)]">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontSize: "0.75rem", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
                         {formatQuantity(onHand)}
-                      </HuntrTableCell>
-                      <HuntrTableCell className="text-right font-medium text-xs tabular-nums text-amber-500">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontSize: "0.75rem", color: "#f59e0b", fontVariantNumeric: "tabular-nums" }}>
                         {formatQuantity(allocated)}
-                      </HuntrTableCell>
-                      <HuntrTableCell className="text-right">
+                      </TableCell>
+                      <TableCell align="right">
                         <div className="flex flex-col items-end gap-1">
                           <span className="font-bold text-xs tabular-nums text-emerald-500">
                             {formatQuantity(available)}
@@ -149,19 +148,19 @@ export function WmsReportsTab({
                             />
                           </div>
                         </div>
-                      </HuntrTableCell>
-                    </HuntrTableRow>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
                 {!report?.stock_by_warehouse?.length && (
-                  <HuntrTableRow>
-                    <HuntrTableCell colSpan={5} className="py-8 text-center text-xs text-[var(--ui-text-muted)]">
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4, fontSize: "0.75rem", color: "text.secondary" }}>
                       Belum ada data stok per gudang tercatat.
-                    </HuntrTableCell>
-                  </HuntrTableRow>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </HuntrTableBody>
-            </HuntrTable>
+              </TableBody>
+            </Table></TableContainer>
           </div>
         </div>
 
@@ -320,14 +319,16 @@ export function WmsReportsTab({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
                     onClick={() => handleOpenReorderModal(x)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--ui-text-brand)] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:opacity-95 transition-opacity cursor-pointer border-0"
+                    startIcon={<ShoppingCart size={14} />}
+                    sx={{ fontWeight: 700 }}
                   >
-                    <ShoppingCart size={14} />
                     Buat Purchase Order (PO)
-                  </button>
+                  </Button>
                 </div>
               </div>
             );

@@ -1,4 +1,4 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import Button from "@mui/material/Button";
 import React, { useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import Layout from "~/components/Layout";
@@ -90,22 +90,21 @@ export default function CompareReview() {
           <p style={{ color: "var(--ui-text-muted)", marginTop: 8 }}>
             Please check the URL or try again later.
           </p>
-          <HuntrButton
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => navigate("/approvals")}
-            style={{
-              marginTop: 20,
-              padding: "12px 20px",
-              borderRadius: 12,
-              background: "var(--huntr-gradient)",
-              border: "none",
-              color: "#fff",
-              fontSize: 14,
+            sx={{
+              mt: 2.5,
+              px: 2.5,
+              py: 1.5,
+              borderRadius: 2,
               fontWeight: 700,
-              cursor: "pointer",
+              textTransform: "none",
             }}
           >
             Back to Approvals
-          </HuntrButton>
+          </Button>
         </div>
       </Layout>
     );

@@ -1,5 +1,5 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Input as HuntrInput } from "~/shared/ui/Fields";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router";
 import Layout from "~/components/Layout";
@@ -609,21 +609,21 @@ export default function Orders() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap ml-auto">
-            <HuntrButton
+            <button
               onClick={() => setShowImportModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all"
             >
               <UploadCloud size={13} /> Import{" "}
               {company?.type === "buyer" ? "Historical PO" : "Catalogue"}
-            </HuntrButton>
-            <HuntrButton
+            </button>
+            <button
               onClick={exportToExcel}
               disabled={orders.length === 0}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:border-orange-400/50 hover:text-orange-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <FileSpreadsheet size={13} /> Export Excel
-            </HuntrButton>
-            <HuntrButton
+            </button>
+            <button
               onClick={() =>
                 fetchOrders(company.id, currentPage, searchQuery, activeTab)
               }
@@ -634,7 +634,7 @@ export default function Orders() {
                 size={13}
                 className={refreshing ? "animate-spin" : ""}
               />
-            </HuntrButton>
+            </button>
           </div>
         </div>
 
@@ -648,7 +648,7 @@ export default function Orders() {
                 { id: "historical", label: "Historical" },
               ] as const
             ).map((tab) => (
-              <HuntrButton
+              <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={activeTab === tab.id ? { color: "white" } : {}}
@@ -659,7 +659,7 @@ export default function Orders() {
                 }`}
               >
                 {tab.label}
-              </HuntrButton>
+              </button>
             ))}
           </div>
 
@@ -668,7 +668,7 @@ export default function Orders() {
               size={14}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
             />
-            <HuntrInput
+            <input
               type="text"
               placeholder="Search by PO number, vendor, or user..."
               value={searchQuery}
@@ -793,7 +793,7 @@ export default function Orders() {
                       {company.type === "buyer" &&
                         po.procurement_mode === "direct" &&
                         po.status === "issued" && (
-                          <HuntrButton
+                          <button
                             onClick={() => handleAdvanceDirectPo(po)}
                             disabled={processingId === po.id}
                             style={{ color: "white" }}
@@ -805,12 +805,12 @@ export default function Orders() {
                               <CheckCircle2 size={11} />
                             )}{" "}
                             Record vendor confirmation
-                          </HuntrButton>
+                          </button>
                         )}
                       {company.type === "buyer" &&
                         po.procurement_mode === "direct" &&
                         po.status === "confirmed" && (
-                          <HuntrButton
+                          <button
                             onClick={() => handleAdvanceDirectPo(po)}
                             disabled={processingId === po.id}
                             style={{ color: "white" }}
@@ -822,12 +822,12 @@ export default function Orders() {
                               <Truck size={11} />
                             )}{" "}
                             Record goods dispatch
-                          </HuntrButton>
+                          </button>
                         )}
                       {company.type === "buyer" &&
                         po.procurement_mode === "direct" &&
                         po.status === "in_transit" && (
-                          <HuntrButton
+                          <button
                             onClick={() => handleAdvanceDirectPo(po)}
                             disabled={processingId === po.id}
                             style={{ color: "white" }}
@@ -839,11 +839,11 @@ export default function Orders() {
                               <Package size={11} />
                             )}{" "}
                             Record goods received
-                          </HuntrButton>
+                          </button>
                         )}
                       {company.type === "vendor" &&
                         ["published", "issued"].includes(po.status) && (
-                          <HuntrButton
+                          <button
                             onClick={() => handleConfirmPo(po.id)}
                             disabled={confirmingId === po.id}
                             style={{ color: "white" }}
@@ -855,12 +855,12 @@ export default function Orders() {
                               <CheckCircle2 size={11} />
                             )}{" "}
                             Confirm
-                          </HuntrButton>
+                          </button>
                         )}
                       {company.type === "buyer" &&
                         po.status === "issued" &&
                         isDemoMode() && (
-                          <HuntrButton
+                          <button
                             onClick={() => handleBotConfirmPo(po.id)}
                             disabled={triggeringBotPoId === po.id}
                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-[11px] font-bold text-white transition-all disabled:opacity-60"
@@ -871,10 +871,10 @@ export default function Orders() {
                               <Bot size={11} />
                             )}{" "}
                             🤖 Bot Confirm PO
-                          </HuntrButton>
+                          </button>
                         )}
                       {company.type === "vendor" && po.status === "paid" && (
-                        <HuntrButton
+                        <button
                           onClick={() =>
                             handleUpdateTrackingStatus(
                               po.id,
@@ -892,10 +892,10 @@ export default function Orders() {
                             <Package size={11} />
                           )}{" "}
                           Packing
-                        </HuntrButton>
+                        </button>
                       )}
                       {company.type === "vendor" && po.status === "packing" && (
-                        <HuntrButton
+                        <button
                           onClick={() =>
                             handleArrangeDelivery(po.id, po.buyer_address)
                           }
@@ -909,11 +909,11 @@ export default function Orders() {
                             <Truck size={11} />
                           )}{" "}
                           Deliver
-                        </HuntrButton>
+                        </button>
                       )}
                       {company.type === "vendor" &&
                         po.status === "in_transit" && (
-                          <HuntrButton
+                          <button
                             onClick={() =>
                               handleUpdateTrackingStatus(
                                 po.id,
@@ -931,21 +931,21 @@ export default function Orders() {
                               <CheckCircle2 size={11} />
                             )}{" "}
                             Delivered
-                          </HuntrButton>
+                          </button>
                         )}
                       {company.type === "buyer" &&
                         po.delivery_orders?.some((d: any) =>
                           ["shipped", "delivered"].includes(d.status),
                         ) && (
-                          <HuntrButton
+                          <button
                             onClick={() => navigate(`/receipts?po_id=${po.id}`)}
                             style={{ color: "white" }}
                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[11px] font-bold transition-all"
                           >
                             <Package size={11} /> Receive
-                          </HuntrButton>
+                          </button>
                         )}
-                      <HuntrButton
+                      <button
                         onClick={() => setExpandedPo(isExpanded ? null : po.id)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-400/50 transition-all"
                       >
@@ -954,7 +954,7 @@ export default function Orders() {
                         ) : (
                           <ChevronRight size={15} />
                         )}
-                      </HuntrButton>
+                      </button>
                     </div>
                   </div>
 
@@ -1053,7 +1053,7 @@ export default function Orders() {
             {/* Page buttons */}
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               {/* Prev */}
-              <HuntrButton
+              <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage <= 1 || refreshing}
                 style={{
@@ -1077,7 +1077,7 @@ export default function Orders() {
                 }}
               >
                 <ChevronLeft size={13} /> Prev
-              </HuntrButton>
+              </button>
 
               {/* Page pills */}
               {(() => {
@@ -1110,7 +1110,7 @@ export default function Orders() {
                       …
                     </span>
                   ) : (
-                    <HuntrButton
+                    <button
                       key={p}
                       onClick={() => handlePageChange(p as number)}
                       disabled={refreshing}
@@ -1136,13 +1136,13 @@ export default function Orders() {
                       }}
                     >
                       {p}
-                    </HuntrButton>
+                    </button>
                   ),
                 );
               })()}
 
               {/* Next */}
-              <HuntrButton
+              <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage >= lastPage || refreshing}
                 style={{
@@ -1168,7 +1168,7 @@ export default function Orders() {
                 }}
               >
                 Next <ChevronRight size={13} />
-              </HuntrButton>
+              </button>
             </div>
           </div>
         )}

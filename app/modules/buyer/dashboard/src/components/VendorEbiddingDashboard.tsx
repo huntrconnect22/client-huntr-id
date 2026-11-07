@@ -1,6 +1,11 @@
-import { Surface as HuntrSurface } from "~/shared/ui/Surface";
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
+import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Layout from "../Layout";
@@ -192,7 +197,7 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
         {/* Stats Section Header with Download */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h3 style={{ margin: 0, fontSize: 12, fontWeight: 800, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("dashboard.vendor.statsTitle")}</h3>
-          <HuntrButton
+          <button
             onClick={handleDownloadStats} 
             style={{ 
               background: "rgba(249,115,22,0.1)", 
@@ -209,53 +214,53 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
             }}
           >
             {t("dashboard.vendor.downloadStats")}
-          </HuntrButton>
+          </button>
         </div>
 
         {/* Stat cards compact row — all cards uniform small size */}
         <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
           {/* Company */}
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px", borderLeft: "3px solid #f97316" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.companyLabel")}</div>
             <div style={{ fontSize: 13, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeCompany?.name || "—"}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 3 }}>{user?.name}</div>
-          </HuntrSurface>
+          </Paper>
           {/* Total Tender */}
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.totalJoined")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : String(participatedCount)}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.uniqueTenders")}</div>
-          </HuntrSurface>
+          </Paper>
           {/* Wins */}
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.wins")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#34d399", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : `${wins}`}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.winRate", { rate: winRate })}</div>
-          </HuntrSurface>
+          </Paper>
           {/* Deadline */}
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.nearestDeadline")}</div>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#60a5fa", marginTop: 4, lineHeight: 1.2 }}>{loading ? "..." : countdown}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.activeRfq")}</div>
-          </HuntrSurface>
+          </Paper>
           {/* Open Tenders */}
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.openTenders")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#fb923c", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : openRfqs.filter((rfq: any) => !isRfqExpired(rfq, now)).length}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.activeNow")}</div>
-          </HuntrSurface>
+          </Paper>
           {/* Submitted */}
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.submitted")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#a78bfa", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : vendorProposals.length}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.proposalSent")}</div>
-          </HuntrSurface>
+          </Paper>
           {/* Drafts */}
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, padding: "14px 16px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("dashboard.vendor.drafts")}</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "var(--ui-text-primary)", marginTop: 4, lineHeight: 1 }}>{loading ? "..." : Math.max(openRfqs.filter((rfq: any) => !isRfqExpired(rfq, now)).length - vendorProposals.length, 0)}</div>
             <div style={{ fontSize: 10, color: "var(--ui-text-muted)", marginTop: 4 }}>{t("dashboard.vendor.notSubmitted")}</div>
-          </HuntrSurface>
+          </Paper>
         </section>
 
         {/* Trending Search Indicator */}
@@ -265,14 +270,14 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
 
         {/* Tender table — full width */}
         <section>
-          <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
+          <Paper variant="outlined" style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 12, overflow: "hidden" }}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--ui-border)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("dashboard.vendor.eBiddingModule")}</div>
                 <h2 style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 700, color: "var(--ui-text-primary)" }}>{t("dashboard.vendor.draftAndProposals")}</h2>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <HuntrButton
+                <button
                   onClick={handleDownloadTenderTable} 
                   style={{ 
                     background: "rgba(249,115,22,0.1)", 
@@ -289,7 +294,7 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
                   }}
                 >
                   {t("dashboard.vendor.downloadProposals")}
-                </HuntrButton>
+                </button>
                 <div style={{ display: "flex", gap: 6 }}>
                   {[t("dashboard.vendor.hintMonitor"), t("dashboard.vendor.hintDraft"), t("dashboard.vendor.hintDeadline")].map((item) => (
                     <span key={item} style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(249,115,22,0.1)", color: "#f59e0b", fontSize: 10, fontWeight: 700 }}>
@@ -301,26 +306,26 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
             </div>
 
             <div style={{ overflowX: "auto" }}>
-              <HuntrTable style={{ width: "100%", borderCollapse: "collapse" }}>
-                <HuntrTableHead>
-                  <HuntrTableRow style={{ textAlign: "left", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ui-text-muted)" }}>
-                    <HuntrTableHeaderCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColTender")}</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColBuyer")}</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColStatus")}</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColSubmission")}</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColDeadline")}</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }} />
-                  </HuntrTableRow>
-                </HuntrTableHead>
-                <HuntrTableBody>
+              <TableContainer><Table size="small">
+                <TableHead>
+                  <TableRow style={{ textAlign: "left", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ui-text-muted)" }}>
+                    <TableCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColTender")}</TableCell>
+                    <TableCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColBuyer")}</TableCell>
+                    <TableCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColStatus")}</TableCell>
+                    <TableCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColSubmission")}</TableCell>
+                    <TableCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }}>{t("dashboard.vendor.tableColDeadline")}</TableCell>
+                    <TableCell style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)" }} />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {loading ? (
-                    <HuntrTableRow>
-                      <HuntrTableCell colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>{t("dashboard.vendor.loadingTenders")}</HuntrTableCell>
-                    </HuntrTableRow>
+                    <TableRow>
+                      <TableCell colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>{t("dashboard.vendor.loadingTenders")}</TableCell>
+                    </TableRow>
                   ) : tableRows.length === 0 ? (
-                    <HuntrTableRow>
-                      <HuntrTableCell colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>{t("dashboard.vendor.noActiveTenders")}</HuntrTableCell>
-                    </HuntrTableRow>
+                    <TableRow>
+                      <TableCell colSpan={6} style={{ padding: 32, textAlign: "center", color: "var(--ui-text-muted)" }}>{t("dashboard.vendor.noActiveTenders")}</TableCell>
+                    </TableRow>
                   ) : (
                     tableRows.map(({ rfq, proposal, ranking, submittedAt, deadlineText, status, isExpired }) => {
                       const displayStatus = status === "Draft" ? t("dashboard.vendor.statusDraft")
@@ -329,16 +334,16 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
                         : t("dashboard.vendor.statusAwarded");
 
                       return (
-                        <HuntrTableRow key={rfq.id} style={{ borderBottom: "1px solid var(--ui-border-subtle)" }}>
-                          <HuntrTableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                        <TableRow key={rfq.id} style={{ borderBottom: "1px solid var(--ui-border-subtle)" }}>
+                          <TableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
                             <div style={{ fontWeight: 800, color: "var(--ui-text-primary)", lineHeight: 1.4, fontSize: 13 }}>{rfq.title}</div>
                             <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>{rfq.items?.length || 0} items</div>
-                          </HuntrTableCell>
-                          <HuntrTableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                          </TableCell>
+                          <TableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
                             <div style={{ fontWeight: 700, color: "var(--ui-text-primary)", fontSize: 13 }}>{rfq.company?.name || "Buyer"}</div>
                             <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>RFQ {String(rfq.id).slice(0, 8)}</div>
-                          </HuntrTableCell>
-                          <HuntrTableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                          </TableCell>
+                          <TableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
                             <span style={{
                               padding: "4px 8px",
                               borderRadius: 999,
@@ -358,20 +363,20 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
                             <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 6 }}>
                               {proposal ? `Winner: ${proposal.winner_status || "submitted"}` : isExpired ? t("dashboard.vendor.deadlinePassed") : t("dashboard.vendor.noProposal")}
                             </div>
-                          </HuntrTableCell>
-                          <HuntrTableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                          </TableCell>
+                          <TableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
                             <div style={{ fontWeight: 700, color: "var(--ui-text-primary)", fontSize: 13 }}>{proposal ? `Rp ${Number(proposal.price_offer || 0).toLocaleString("id-ID")}` : isExpired ? "N/A" : t("dashboard.vendor.statusDraft")}</div>
                             <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
                               {ranking ? `Rank #${ranking.rank}` : submittedAt === "-" ? (isExpired ? t("dashboard.vendor.expired") : t("dashboard.vendor.notSubmittedShort")) : `Sent ${submittedAt}`}
                             </div>
-                          </HuntrTableCell>
-                          <HuntrTableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                          </TableCell>
+                          <TableCell style={{ padding: "12px 14px", verticalAlign: "top" }}>
                             <div style={{ fontWeight: 700, color: isExpired ? "#ef4444" : "var(--ui-text-primary)", fontSize: 13 }}>{deadlineText}</div>
                             <div style={{ fontSize: 11, color: "var(--ui-text-muted)", marginTop: 2 }}>
                               {isExpired ? t("dashboard.vendor.closed") : proposal ? `Sent ${submittedAt}` : t("dashboard.vendor.ready")}
                             </div>
-                          </HuntrTableCell>
-                          <HuntrTableCell style={{ padding: "12px 14px", verticalAlign: "top", textAlign: "right" }}>
+                          </TableCell>
+                          <TableCell style={{ padding: "12px 14px", verticalAlign: "top", textAlign: "right" }}>
                             {isExpired ? (
                               <span style={{
                                 padding: "6px 10px",
@@ -386,7 +391,7 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
                                 {t("dashboard.vendor.closed")}
                               </span>
                             ) : (
-                              <HuntrButton
+                              <button
                                 type="button"
                                 onClick={() => navigate("/proposals", { state: { rfqId: rfq.id } })}
                                 style={{
@@ -401,17 +406,17 @@ export function VendorEbiddingDashboard({ user, activeCompany }: { user: any, ac
                                 }}
                               >
                                 {proposal ? t("dashboard.vendor.view") : t("dashboard.vendor.open")}
-                              </HuntrButton>
+                              </button>
                             )}
-                          </HuntrTableCell>
-                        </HuntrTableRow>
+                          </TableCell>
+                        </TableRow>
                       );
                     })
                   )}
-                </HuntrTableBody>
-              </HuntrTable>
+                </TableBody>
+              </Table></TableContainer>
             </div>
-          </HuntrSurface>
+          </Paper>
         </section>
       </div>
     </Layout>

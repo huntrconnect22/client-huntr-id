@@ -1,4 +1,4 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import Button from "@mui/material/Button";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import Layout from "~/components/Layout";
@@ -329,14 +329,17 @@ export default function RfqDetail() {
                         </p>
                       </div>
                     </div>
-                    <HuntrButton
+                    <Button
                       type="button"
+                      variant="contained"
+                      color="primary"
                       disabled={generatingBots}
                       onClick={handleTriggerDemoBots}
-                      className="px-3.5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white text-xs font-bold rounded-lg flex items-center gap-2 shrink-0 transition shadow-sm"
+                      startIcon={generatingBots ? <Loader2 size={14} className="animate-spin" /> : undefined}
+                      sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.75rem", borderRadius: 2 }}
                     >
-                      {generatingBots ? <Loader2 size={14} className="animate-spin" /> : t("rfqDetail.demoBot.triggerBtn")}
-                    </HuntrButton>
+                      {t("rfqDetail.demoBot.triggerBtn")}
+                    </Button>
                   </div>
                 )}
 

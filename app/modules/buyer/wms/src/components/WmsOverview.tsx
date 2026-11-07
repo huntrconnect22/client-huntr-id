@@ -1,4 +1,4 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import Button from "@mui/material/Button";
 import {
   Activity,
   ArrowDownToLine,
@@ -197,11 +197,11 @@ export function WmsOverview({
       {/* KPI strip */}
       <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpiCards.map(({ label, value, Icon, tab, color, bg }) => (
-          <HuntrButton
+          <Button
             key={label}
-            type="button"
             onClick={() => onTabChange(tab)}
-            className="group !grid !w-full !grid-rows-[auto_1fr] !items-stretch !justify-stretch min-h-36 gap-5 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 text-left transition-all hover:border-[var(--ui-text-brand)]/35 hover:shadow-sm hover:-translate-y-0.5"
+            variant="outlined"
+            sx={{ display: "grid", gridTemplateRows: "auto 1fr", alignItems: "stretch", justifyItems: "stretch", minHeight: 144, gap: 2.5, borderRadius: 2, p: 2.5, textAlign: "left", width: "100%", textTransform: "none", "&:hover": { transform: "translateY(-2px)", boxShadow: 2 } }}
           >
             <div className="flex items-center justify-between">
               <span className={`flex h-11 w-11 items-center justify-center rounded-md ${bg} ${color}`}>
@@ -213,7 +213,7 @@ export function WmsOverview({
               <p className="text-3xl font-black leading-none tabular-nums tracking-tight text-[var(--ui-text-primary)]">{value}</p>
               <p className="mt-1 text-[11px] font-medium text-[var(--ui-text-muted)] uppercase tracking-wider">{label}</p>
             </div>
-          </HuntrButton>
+          </Button>
         ))}
       </div>
 
@@ -244,11 +244,10 @@ export function WmsOverview({
           </div>
           <div className="grid divide-y divide-[var(--ui-border)] md:grid-cols-2 md:divide-x md:divide-y-0">
             {setupSteps.map(({ title, description, tab, ready, Icon, color, iconColor }, index) => (
-              <HuntrButton
+              <Button
                 key={title}
-                type="button"
                 onClick={() => onTabChange(tab)}
-                className="group flex min-h-36 items-start gap-4 p-5 text-left transition-colors hover:bg-[var(--ui-bg-input)]/60"
+                sx={{ display: "flex", minHeight: 144, alignItems: "flex-start", gap: 2, p: 2.5, textAlign: "left", textTransform: "none", width: "100%", justifyContent: "flex-start", "&:hover": { bgcolor: "action.hover" } }}
               >
                 <span
                   className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-gradient-to-br ${ready ? color : "from-[var(--ui-bg-input)] to-[var(--ui-bg-input)] border-[var(--ui-border)]"} transition-all`}
@@ -278,7 +277,7 @@ export function WmsOverview({
                   size={15}
                   className={`mt-0.5 shrink-0 transition-transform group-hover:translate-x-0.5 ${ready ? iconColor : "text-[var(--ui-text-muted)]"}`}
                 />
-              </HuntrButton>
+              </Button>
             ))}
           </div>
         </section>
@@ -290,13 +289,14 @@ export function WmsOverview({
               <Activity size={15} className="text-[var(--ui-text-brand)]" />
               <p className="font-bold text-sm text-[var(--ui-text-primary)]">Recent Activity</p>
             </div>
-            <HuntrButton
-              type="button"
+            <Button
+              size="small"
               onClick={() => onTabChange("Stock")}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--ui-text-brand)] hover:opacity-80"
+              endIcon={<ChevronRight size={13} />}
+              sx={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "none" }}
             >
-              View stock <ChevronRight size={13} />
-            </HuntrButton>
+              View stock
+            </Button>
           </div>
           <div className="divide-y divide-[var(--ui-border)]">
             {activity.slice(0, 8).map((x: any) => {
@@ -335,37 +335,40 @@ export function WmsOverview({
                 <p className="text-xs text-[var(--ui-text-muted)]">
                   Receive your first goods to start tracking.
                 </p>
-                <HuntrButton
-                  type="button"
+                <Button
+                  size="small"
                   onClick={() => onTabChange("Receiving & Put Away")}
-                  className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[var(--ui-text-brand)] hover:opacity-80"
+                  startIcon={<TrendingUp size={12} />}
+                  sx={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "none", mt: 0.5 }}
                 >
-                  <TrendingUp size={12} /> Receive now
-                </HuntrButton>
+                  Receive now
+                </Button>
               </div>
             )}
           </div>
           {activityLastPage > 1 && (
             <div className="flex items-center justify-between border-t border-[var(--ui-border)] px-4 py-2.5 text-xs">
-              <HuntrButton
-                type="button"
+              <Button
+                size="small"
+                variant="outlined"
                 disabled={activityPage === 1}
                 onClick={() => onActivityPage(activityPage - 1)}
-                className="rounded-md border border-[var(--ui-border)] px-2.5 py-1 font-semibold text-[var(--ui-text-secondary)] disabled:opacity-40 hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
+                sx={{ textTransform: "none", fontSize: "0.75rem", fontWeight: 600 }}
               >
                 Prev
-              </HuntrButton>
+              </Button>
               <span className="text-[var(--ui-text-muted)]">
                 {activityPage} / {activityLastPage}
               </span>
-              <HuntrButton
-                type="button"
+              <Button
+                size="small"
+                variant="outlined"
                 disabled={activityPage === activityLastPage}
                 onClick={() => onActivityPage(activityPage + 1)}
-                className="rounded-md border border-[var(--ui-border)] px-2.5 py-1 font-semibold text-[var(--ui-text-secondary)] disabled:opacity-40 hover:border-[var(--ui-text-brand)] hover:text-[var(--ui-text-brand)]"
+                sx={{ textTransform: "none", fontSize: "0.75rem", fontWeight: 600 }}
               >
                 Next
-              </HuntrButton>
+              </Button>
             </div>
           )}
         </section>
