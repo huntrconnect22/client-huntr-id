@@ -1415,7 +1415,7 @@ export default function WmsPage() {
                   <div className="relative min-w-[160px] flex-1 max-w-xs">
                     <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
                     <HuntrInput
-                      className={input + " pl-8 py-1.5 text-xs"}
+                      className={input + " pl-9 py-1.5 text-xs"}
                       placeholder="Cari SKU, item, atau bin…"
                       value={stockSearch}
                       onChange={(e) => setStockSearch(e.target.value)}
