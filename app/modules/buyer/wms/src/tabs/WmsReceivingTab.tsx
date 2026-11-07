@@ -65,7 +65,7 @@ interface Props {
   receipts: any[];
   catalogue: any[];
   cataloguePickerItems: any[];
-  setError: (err: string | null) => void;
+  setError: (err: string) => void;
 }
 
 export function WmsReceivingTab({

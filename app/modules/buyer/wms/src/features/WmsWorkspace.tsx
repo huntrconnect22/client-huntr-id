@@ -28,6 +28,7 @@ import { WmsReceivingTab } from "../tabs/WmsReceivingTab";
 import { WmsReorderModals } from "../components/WmsReorderModals";
 import { WmsPickerModals } from "../components/WmsPickerModals";
 import type { PickerItem } from "../components/GenericPickerModal";
+import type { StockPickerItem } from "../components/StockPickerModal";
 import { formatQuantity, toNumeric } from "../data/quantity";
 import { useActiveCompany } from "~/shared/hooks/useActiveCompany";
 import {

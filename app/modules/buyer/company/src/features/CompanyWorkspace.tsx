@@ -1,1018 +1,1621 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Input as HuntrInput, Textarea as HuntrTextarea, Select as HuntrSelect } from "~/shared/ui/Fields";
-import React from "react";
+import React, { useRef, useState, useMemo } from "react";
+import {
+  Box,
+  Card,
+  CardActionArea,
+  Typography,
+  Button,
+  IconButton,
+  Tabs,
+  Tab,
+  Stack,
+  Grid,
+  Avatar,
+  Chip,
+  Divider,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Alert,
+  AlertTitle,
+  CircularProgress,
+  Paper,
+  Tooltip,
+} from "@mui/material";
 import Layout from "~/components/Layout";
-import { 
-  Building2, MapPin, CreditCard, FileText, Users, Plus, X,
-  Loader2, AlertCircle, Camera, ShieldCheck, Activity, Award,
-  BarChart3, Download, CheckCircle2, Globe, Mail, Phone, Tag,
-  Hash, Calendar, TrendingUp, Star, Trash2, Sparkles, Clock, Upload
+import {
+  Building2,
+  MapPin,
+  CreditCard,
+  FileText,
+  Users,
+  Plus,
+  X,
+  AlertCircle,
+  Camera,
+  ShieldCheck,
+  Activity,
+  CheckCircle2,
+  Hash,
+  Trash2,
+  Sparkles,
+  Clock,
+  Upload,
+  Edit2,
+  Save,
+  Copy,
+  Check,
+  ExternalLink,
+  ArrowRight,
+  Briefcase,
 } from "lucide-react";
 import { useCompanyViewModel } from "~/features/company/hooks/useCompanyViewModel";
 import { TeamManagement } from "~/features/company/components/TeamManagement";
 import { AccessApprovalManagement } from "~/features/company/components/AccessApprovalManagement";
 import { getAssetUrl } from "~/lib/assets";
 
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    icon: React.ReactElement;
+    chipSx: {
+      bgcolor: string;
+      color: string;
+      borderColor: string;
+      fontWeight: number;
+      border: string;
+      "& .MuiChip-icon": { color: string };
+    };
+  }
+> = {
+  starter: {
+    label: "Akun Starter",
+    icon: <Sparkles size={13} />,
+    chipSx: {
+      bgcolor: "rgba(59, 130, 246, 0.12)",
+      color: "#1d4ed8",
+      borderColor: "rgba(59, 130, 246, 0.3)",
+      fontWeight: 700,
+      border: "1px solid",
+      "& .MuiChip-icon": { color: "#1d4ed8" },
+    },
+  },
+  approved: {
+    label: "Terverifikasi",
+    icon: <CheckCircle2 size={13} />,
+    chipSx: {
+      bgcolor: "rgba(16, 185, 129, 0.15)",
+      color: "#047857",
+      borderColor: "rgba(16, 185, 129, 0.4)",
+      fontWeight: 700,
+      border: "1px solid",
+      "& .MuiChip-icon": { color: "#047857" },
+    },
+  },
+  pending: {
+    label: "Menunggu Review",
+    icon: <Clock size={13} />,
+    chipSx: {
+      bgcolor: "rgba(245, 158, 11, 0.15)",
+      color: "#b45309",
+      borderColor: "rgba(245, 158, 11, 0.4)",
+      fontWeight: 700,
+      border: "1px solid",
+      "& .MuiChip-icon": { color: "#b45309" },
+    },
+  },
+  rejected: {
+    label: "Verifikasi Ditolak",
+    icon: <AlertCircle size={13} />,
+    chipSx: {
+      bgcolor: "rgba(239, 68, 68, 0.15)",
+      color: "#b91c1c",
+      borderColor: "rgba(239, 68, 68, 0.4)",
+      fontWeight: 700,
+      border: "1px solid",
+      "& .MuiChip-icon": { color: "#b91c1c" },
+    },
+  },
+};
+
 export default function CompanyDetails() {
   const vm = useCompanyViewModel();
-  const [profileBannerDismissed, setProfileBannerDismissed] = React.useState(false);
-  const [docType, setDocType] = React.useState("NPWP");
-  const docFileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const statusCfg: any = {
-    starter:  { cls: "text-indigo-400  bg-indigo-400/10  border-indigo-400/20",  dot: "bg-indigo-400"  },
-    approved: { cls: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", dot: "bg-emerald-500" },
-    pending:  { cls: "text-amber-500   bg-amber-500/10   border-amber-500/20",   dot: "bg-amber-500"   },
-    rejected: { cls: "text-red-500     bg-red-500/10     border-red-500/20",     dot: "bg-red-500"     },
-  };
+  const [profileBannerDismissed, setProfileBannerDismissed] = useState(false);
+  const [docType, setDocType] = useState("NPWP");
+  const [copiedBank, setCopiedBank] = useState(false);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const tabs = [
-    { id: "profile",     label: "Identity",    icon: Building2  },
-    { id: "location",    label: "Location",    icon: MapPin     },
-    { id: "banking",     label: "Banking",     icon: CreditCard },
-    { id: "documents",   label: "Legal Docs",  icon: ShieldCheck},
-    { id: "performance", label: "Performance", icon: Activity   },
-    { id: "team",        label: "Team",        icon: Users      },
-    { id: "access",      label: "Access & approvals", icon: ShieldCheck },
+    { id: "profile", label: "Identitas Perusahaan", icon: <Building2 size={17} /> },
+    { id: "location", label: "Lokasi & Cabang", icon: <MapPin size={17} /> },
+    { id: "banking", label: "Informasi Bank", icon: <CreditCard size={17} /> },
+    { id: "documents", label: "Dokumen Legalitas", icon: <ShieldCheck size={17} /> },
+    { id: "performance", label: "Performa & Aktivitas", icon: <Activity size={17} /> },
+    { id: "team", label: "Tim & Pengguna", icon: <Users size={17} /> },
+    { id: "access", label: "Hak Akses & Approval", icon: <ShieldCheck size={17} /> },
   ];
 
-  const missingFields = React.useMemo(() => {
+  const missingFields = useMemo(() => {
     if (!vm.company) return [];
     const f: string[] = [];
-    if (!vm.company.logo_url && !vm.company.logo_path) f.push("Logo");
-    if (!vm.company.address) f.push("Address");
-    if (!vm.company.bank_name) f.push("Bank");
-    if (!vm.company.documents || vm.company.documents.length === 0) f.push("Docs");
-    if (!vm.company.hq_addresses || (Array.isArray(vm.company.hq_addresses) && vm.company.hq_addresses.length === 0)) f.push("HQ");
-    if (!vm.company.about) f.push("About");
+    if (!vm.company.logo_url && !vm.company.logo_path) f.push("Logo Perusahaan");
+    if (!vm.company.address) f.push("Alamat Utama");
+    if (!vm.company.bank_name) f.push("Akun Bank");
+    if (!vm.company.documents || vm.company.documents.length === 0) f.push("Dokumen Legal (NPWP/NIB)");
+    if (!vm.company.about) f.push("Profil Singkat");
     return f;
   }, [vm.company]);
 
+  const copyToClipboard = (text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedBank(true);
+    setTimeout(() => setCopiedBank(false), 2000);
+  };
+
+  /* ── 1. Loading State ── */
   if (vm.loading) {
     return (
       <Layout title="Company" subtitle="Loading...">
-        <div className="flex items-center justify-center min-h-[50vh] gap-3">
-          <Loader2 size={28} className="animate-spin text-indigo-500" />
-          <span className="text-sm text-[var(--ui-text-muted)]">Loading workspace...</span>
-        </div>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "50vh",
+            gap: 2,
+          }}
+        >
+          <CircularProgress size={32} />
+          <Typography variant="body2" color="text.secondary">
+            Memuat profil perusahaan...
+          </Typography>
+        </Box>
       </Layout>
     );
   }
 
-  /* ── Select Workspace ─────────────────────────────────────────────── */
+  /* ── 2. Select Workspace Screen (Rombak List Company) ── */
   if (!vm.showCompanyWorkspace) {
     return (
-      <Layout title="Company" subtitle="Select workspace">
-        <div className="w-full">
-          {vm.companyListLoading ? (
-            <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-500" /></div>
-          ) : vm.companies.length === 0 ? (
-            <div className="grid max-w-sm grid-cols-1 gap-3 py-12">
-              <HuntrButton type="button" onClick={() => vm.navigate("/onboarding")} className="!min-h-32 !w-full !justify-start rounded-lg border border-dashed border-[var(--ui-border-input)] bg-[var(--ui-bg-card)] p-5 text-left hover:border-indigo-500/50 hover:bg-indigo-500/5">
-                <span className="flex items-center gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-500"><Plus size={20} /></span><span><span className="block text-sm font-bold text-[var(--ui-text-primary)]">Register Company</span><span className="mt-1 block text-xs font-normal leading-relaxed text-[var(--ui-text-muted)]">Create a workspace for your business.</span></span></span>
-              </HuntrButton>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {/* Register new — as a ghost card */}
-              <HuntrButton
-                type="button"
-                disabled={vm.companyCapacity?.remaining === 0}
-                onClick={() => vm.navigate("/onboarding")}
-                className="min-h-32 text-left p-4 rounded-lg border border-dashed border-[var(--ui-border)] bg-transparent hover:border-indigo-500/40 hover:bg-indigo-500/5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:border-[var(--ui-border)] disabled:hover:bg-transparent transition-all flex flex-col items-center justify-center gap-2"
-              >
-                <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                  <Plus size={18} className="text-indigo-500" />
-                </div>
-                <span className="text-sm font-semibold text-[var(--ui-text-muted)]">
-                  {vm.companyCapacity?.remaining === 0 ? "Batas company paket tercapai" : "Register Company"}
-                </span>
-                {vm.companyCapacity && (
-                  <span className="text-[10px] text-[var(--ui-text-muted)]">
-                    {vm.companyCapacity.used} / {vm.companyCapacity.limit} company · {vm.companyCapacity.plan_name}
-                  </span>
-                )}
-              </HuntrButton>
+      <Layout title="Company" subtitle="Pilih Perusahaan">
+        <Box sx={{ width: "100%", py: 3, maxWidth: 1200, mx: "auto" }}>
+          {/* Header Banner */}
+          <Paper
+            variant="outlined"
+            sx={{
+              p: { xs: 2.5, sm: 3.5 },
+              borderRadius: 3,
+              mb: 3.5,
+              bgcolor: "background.paper",
+              background: "linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, rgba(30, 41, 59, 0.07) 100%)",
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
+            >
+              <Box>
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 0.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      bgcolor: "#0f172a",
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Briefcase size={20} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    Pilih Workspace Perusahaan
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Kelola profil legalitas, izin operasional, katalog, tim, dan pengadaan untuk setiap entitas bisnis Anda.
+                </Typography>
+              </Box>
 
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                {vm.companyCapacity && (
+                  <Chip
+                    label={`Paket ${vm.companyCapacity.plan_name}: ${vm.companyCapacity.used}/${vm.companyCapacity.limit}`}
+                    variant="outlined"
+                    size="small"
+                    sx={{ fontWeight: 600, bgcolor: "background.paper" }}
+                  />
+                )}
+                <Button
+                  variant="contained"
+                  startIcon={<Plus size={16} />}
+                  disabled={vm.companyCapacity?.remaining === 0}
+                  onClick={() => vm.navigate("/onboarding")}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    bgcolor: "#0f172a",
+                    color: "#ffffff",
+                    "&:hover": { bgcolor: "#1e293b" },
+                  }}
+                >
+                  Tambah Perusahaan
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
+
+          {vm.companyListLoading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : vm.companies.length === 0 ? (
+            <Card variant="outlined" sx={{ borderRadius: 3, p: 5, textAlign: "center", maxWidth: 480, mx: "auto" }}>
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 3,
+                  bgcolor: "#f1f5f9",
+                  color: "#475569",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
+                  mb: 2,
+                }}
+              >
+                <Building2 size={28} />
+              </Box>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
+                Belum Ada Perusahaan Terdaftar
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Buat workspace bisnis pertama Anda untuk mulai bertransaksi dan mengelola tender di Huntr.
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Plus size={18} />}
+                onClick={() => vm.navigate("/onboarding")}
+                sx={{ borderRadius: 2, px: 3, py: 1 }}
+              >
+                Daftarkan Perusahaan
+              </Button>
+            </Card>
+          ) : (
+            <Grid container spacing={2.5}>
+              {/* Register New Card */}
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 3,
+                    borderStyle: "dashed",
+                    height: "100%",
+                    minHeight: 210,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: "action.hover",
+                    transition: "all 0.2s",
+                    "&:hover": { borderColor: "text.primary", bgcolor: "action.selected" },
+                  }}
+                >
+                  <CardActionArea
+                    onClick={() => vm.navigate("/onboarding")}
+                    disabled={vm.companyCapacity?.remaining === 0}
+                    sx={{
+                      p: 3,
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mb: 1.5,
+                        boxShadow: 1,
+                      }}
+                    >
+                      <Plus size={22} />
+                    </Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, textAlign: "center" }}>
+                      {vm.companyCapacity?.remaining === 0 ? "Batas Paket Tercapai" : "Daftarkan Perusahaan Baru"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, textAlign: "center" }}>
+                      {vm.companyCapacity?.remaining === 0
+                        ? "Upgrade paket untuk menambah kapasitas perusahaan."
+                        : "Tambah badan usaha atau cabang baru ke akun Anda."}
+                    </Typography>
+                  </CardActionArea>
+                </Card>
+              </Grid>
+
+              {/* Company Cards List */}
               {vm.companies.map((c: any) => {
                 const active = vm.selectedWorkspace?.id === c.id;
-                const cfg = statusCfg[c.status] || statusCfg.pending;
+                const statusInfo = STATUS_CONFIG[c.status] || STATUS_CONFIG.pending;
+                const logoSrc = c.logo_url || c.logo_path ? getAssetUrl(c.logo_url || c.logo_path) : undefined;
+
                 return (
-                  <HuntrButton
-                    key={c.id}
-                    onClick={() => vm.openCompanyWorkspace(c)}
-                    className={`text-left p-4 rounded-xl border transition-all hover:-translate-y-0.5 ${
-                      active ? "border-indigo-500/60 bg-indigo-500/5 shadow-sm" : "border-[var(--ui-border)] bg-[var(--ui-bg-card)] hover:border-indigo-500/30"
-                    }`}
-                  >
-                    {/* Logo + Name row */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-[var(--ui-bg-input)] flex items-center justify-center overflow-hidden border border-[var(--ui-border)] flex-shrink-0">
-                        {c.logo_url || c.logo_path
-                          ? <img src={getAssetUrl(c.logo_url || c.logo_path)} className="block h-full w-full object-cover object-center" alt="" />
-                          : <Building2 size={18} className="text-indigo-500" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-[var(--ui-text-primary)] truncate">{c.name}</div>
-                        <span className="text-[10px] font-bold uppercase text-indigo-500 bg-indigo-500/10 px-1.5 py-0.5 rounded">{c.type}</span>
-                      </div>
-                      {active && <CheckCircle2 size={16} className="text-indigo-500 flex-shrink-0" />}
-                    </div>
-                    {/* Meta */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs text-[var(--ui-text-muted)] truncate">{c.formatted_tax_id || c.tax_id || "—"}</span>
-                        {(c.formatted_tax_id || c.tax_id) && (
-                          <span
-                            className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0"
-                            title="NPWP Terverifikasi"
-                          >
-                            <CheckCircle2 size={10} className="text-sky-400" />
-                            <span>Verified</span>
-                          </span>
-                        )}
-                      </div>
-                      <div className={`flex items-center gap-1 text-xs font-semibold capitalize shrink-0 ${cfg.cls.split(' ')[0]}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                        {c.status}
-                      </div>
-                    </div>
-                  </HuntrButton>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={c.id}>
+                    <Card
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 3,
+                        borderColor: active ? "#047857" : "divider",
+                        borderWidth: active ? 2 : 1,
+                        bgcolor: "background.paper",
+                        boxShadow: active ? 2 : 0,
+                        transition: "all 0.2s",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        "&:hover": { boxShadow: 4, transform: "translateY(-3px)", borderColor: "text.secondary" },
+                      }}
+                    >
+                      <CardActionArea
+                        onClick={() => vm.openCompanyWorkspace(c)}
+                        sx={{ p: 2.5, height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "space-between" }}
+                      >
+                        <Box>
+                          {/* Top Row: Avatar + Active badge */}
+                          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                            {/* Neutral Company Avatar (NO ORANGE) */}
+                            <Avatar
+                              src={logoSrc}
+                              variant="rounded"
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: 2.5,
+                                bgcolor: "#f1f5f9",
+                                color: "#334155",
+                                border: "1px solid",
+                                borderColor: "#e2e8f0",
+                              }}
+                            >
+                              <Building2 size={24} />
+                            </Avatar>
+
+                            {active ? (
+                              <Chip
+                                icon={<CheckCircle2 size={13} style={{ color: "#047857" }} />}
+                                label="Sedang Aktif"
+                                size="small"
+                                sx={{
+                                  fontWeight: 700,
+                                  bgcolor: "rgba(16, 185, 129, 0.12)",
+                                  color: "#047857",
+                                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                                }}
+                              />
+                            ) : (
+                              <Chip
+                                label={c.type?.toUpperCase() || "ORGANISASI"}
+                                size="small"
+                                sx={{
+                                  height: 22,
+                                  fontSize: "0.65rem",
+                                  fontWeight: 700,
+                                  bgcolor: "action.hover",
+                                  color: "text.primary",
+                                }}
+                              />
+                            )}
+                          </Stack>
+
+                          {/* Company Name */}
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.3, mb: 1 }} noWrap>
+                            {c.name}
+                          </Typography>
+
+                          {/* Status Badge (Clear, High Contrast) */}
+                          <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 2 }}>
+                            <Chip
+                              icon={statusInfo.icon}
+                              label={statusInfo.label}
+                              size="small"
+                              sx={statusInfo.chipSx}
+                            />
+                            {c.city && (
+                              <Typography variant="caption" color="text.secondary" noWrap>
+                                · {c.city}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </Box>
+
+                        <Box sx={{ mt: "auto" }}>
+                          <Divider sx={{ mb: 1.5 }} />
+
+                          {/* Meta Row: NPWP & Action button */}
+                          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                            <Typography variant="caption" color="text.secondary">
+                              NPWP: {c.formatted_tax_id || c.tax_id || "Belum diisi"}
+                            </Typography>
+                            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", color: "primary.main" }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                Buka
+                              </Typography>
+                              <ArrowRight size={13} />
+                            </Stack>
+                          </Stack>
+                        </Box>
+                      </CardActionArea>
+                    </Card>
+                  </Grid>
                 );
               })}
-            </div>
+            </Grid>
           )}
-        </div>
+        </Box>
       </Layout>
     );
   }
 
-  /* ── Company Details ──────────────────────────────────────────────── */
-  const cfg = statusCfg[vm.company.status] || statusCfg.pending;
-  const winRate = vm.company.stats?.total_proposals > 0
-    ? Math.round((vm.company.stats.won_proposals / vm.company.stats.total_proposals) * 100)
-    : 0;
+  /* ── 3. Main Workspace Details View ── */
+  const statusInfo = STATUS_CONFIG[vm.company.status] || STATUS_CONFIG.pending;
+  const winRate =
+    vm.company.stats?.total_proposals > 0
+      ? Math.round((vm.company.stats.won_proposals / vm.company.stats.total_proposals) * 100)
+      : 0;
+  const logoSrc = vm.company.logo_url || vm.company.logo_path ? getAssetUrl(vm.company.logo_url || vm.company.logo_path) : undefined;
 
   return (
     <Layout title={vm.company.name} subtitle="Company Workspace">
-      <div className="flex flex-col gap-0 w-full">
-
+      <Box sx={{ width: "100%", pb: 6 }}>
         {/* Missing fields banner */}
         {!profileBannerDismissed && missingFields.length > 0 && (
-          <div className="mb-4 p-3 px-4 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
-              <span className="text-xs text-amber-600 font-semibold">Complete profile:</span>
-              <span className="text-xs text-[var(--ui-text-secondary)] truncate">{missingFields.join(" · ")}</span>
-            </div>
-            <HuntrButton onClick={() => setProfileBannerDismissed(true)} className="text-amber-500 hover:text-amber-600 flex-shrink-0" aria-label="Dismiss">
-              <X size={14} />
-            </HuntrButton>
-          </div>
+          <Alert
+            severity="warning"
+            action={
+              <IconButton size="small" color="inherit" onClick={() => setProfileBannerDismissed(true)}>
+                <X size={16} />
+              </IconButton>
+            }
+            sx={{ mb: 3, borderRadius: 2 }}
+          >
+            <AlertTitle sx={{ fontWeight: 700, fontSize: "0.875rem" }}>Lengkapi Profil Perusahaan</AlertTitle>
+            Data yang belum lengkap: <strong>{missingFields.join(", ")}</strong>. Lengkapi profil Anda untuk mempercepat verifikasi akun.
+          </Alert>
         )}
 
+        {/* Update Error Banner */}
         {vm.updateError && (
-          <div className="mb-4 p-3 px-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-semibold flex items-center gap-2">
-            <AlertCircle size={14} /> {vm.updateError}
-          </div>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => {}}>
+            {vm.updateError}
+          </Alert>
         )}
 
-        {/* ── Responsive layout: stack on mobile, side-by-side on lg+ ── */}
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start w-full">
-
-          {/* ── MOBILE compact profile header (hidden on lg+) ── */}
-          <div className="lg:hidden w-full">
-            <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] overflow-hidden">
-              {/* Cover gradient */}
-              <div className="h-12 bg-gradient-to-br from-orange-500/20 via-orange-400/10 to-transparent relative">
-                <div className={`absolute top-2 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${cfg.cls}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                  {vm.company.status}
-                </div>
-              </div>
-              <div className="px-4 -mt-6 pb-4">
-                <div className="flex items-end gap-3">
-                  {/* Logo */}
-                  <div className="relative group flex-shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-[var(--ui-bg-input)] border-2 border-[var(--ui-bg-card)] flex items-center justify-center overflow-hidden shadow-md">
-                      {vm.company.logo_url || vm.company.logo_path
-                        ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="block h-full w-full object-cover object-center" alt={vm.company.name} />
-                        : <Building2 size={18} className="text-orange-500" />}
-                      <HuntrButton
-                        onClick={() => document.getElementById('logo-upload-mobile')?.click()}
-                        className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-xl"
-                        aria-label="Upload logo"
-                      >
-                        <Camera size={13} className="text-white" />
-                      </HuntrButton>
-                    </div>
-                    {vm.logoUploading && (
-                      <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
-                        <Loader2 size={12} className="animate-spin text-white" />
-                      </div>
-                    )}
-                    <HuntrInput id="logo-upload-mobile" type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) vm.handleLogoUpload(f); }} />
-                  </div>
-                  {/* Name + type */}
-                  <div className="flex-1 min-w-0 pt-2">
-                    <h2 className="text-sm font-bold text-[var(--ui-text-primary)] truncate leading-snug">{vm.company.name}</h2>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-[10px] font-bold uppercase text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded">{vm.company.type}</span>
-                      {vm.company.city && (
-                        <span className="text-[10px] text-[var(--ui-text-muted)] flex items-center gap-0.5">
-                          <MapPin size={9} className="text-orange-500" />
-                          {vm.company.city}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick stats row */}
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] px-2.5 py-2 text-center">
-                    <div className="text-base font-bold text-[var(--ui-text-primary)]">
-                      {vm.company.type === 'buyer' ? (vm.company.stats?.total_pr || 0) : (vm.company.stats?.total_proposals || 0)}
-                    </div>
-                    <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">{vm.company.type === 'buyer' ? 'Total PR' : 'Total Bids'}</div>
-                  </div>
-                  <div className="rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] px-2.5 py-2 text-center">
-                    <div className="text-base font-bold text-[var(--ui-text-primary)]">
-                      {vm.company.type === 'buyer' ? (vm.company.stats?.approved_pr || 0) : (vm.company.stats?.won_proposals || 0)}
-                    </div>
-                    <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">{vm.company.type === 'buyer' ? 'Approved' : 'Won'}</div>
-                  </div>
-                  <div className="rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] px-2.5 py-2 text-center">
-                    <div className="text-base font-bold text-[var(--ui-text-primary)]">{winRate}%</div>
-                    <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">Win Rate</div>
-                  </div>
-                </div>
-
-                {/* Mobile action button */}
-                <div className="mt-3">
-                  {!vm.isEditing ? (
-                    <HuntrButton
-                      onClick={() => vm.setIsEditing(true)}
-                      className="w-full px-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] font-semibold text-sm hover:border-orange-500/40 transition-all"
-                    >
-                      Edit Profile
-                    </HuntrButton>
-                  ) : (
-                    <div className="flex gap-2">
-                      <HuntrButton
-                        onClick={vm.handleSaveCompany}
-                        disabled={vm.updatingCompany}
-                        style={{ color: 'white' }}
-                        className="flex-1 px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex items-center justify-center gap-2"
-                      >
-                        {vm.updatingCompany ? <Loader2 size={14} className="animate-spin" /> : "Save Changes"}
-                      </HuntrButton>
-                      <HuntrButton
-                        onClick={() => vm.setIsEditing(false)}
-                        className="px-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] font-medium text-sm"
-                      >
-                        Cancel
-                      </HuntrButton>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── DESKTOP LEFT SIDEBAR (hidden on mobile) ── */}
-          <div className="hidden lg:flex w-64 flex-shrink-0 sticky top-4 flex-col gap-4">
-
-            {/* Logo + Identity */}
-            <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] overflow-hidden">
-              {/* Cover gradient */}
-              <div className="h-16 bg-gradient-to-br from-orange-500/20 via-orange-400/10 to-transparent relative">
-                <div className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${cfg.cls}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                  {vm.company.status}
-                </div>
-              </div>
-
-              {/* Logo — overlaps cover */}
-              <div className="px-4 -mt-7 mb-3">
-                <div className="relative group w-fit">
-                  <div className="w-14 h-14 rounded-xl bg-[var(--ui-bg-input)] border-2 border-[var(--ui-bg-card)] flex items-center justify-center overflow-hidden shadow-lg">
-                    {vm.company.logo_url || vm.company.logo_path
-                      ? <img src={getAssetUrl(vm.company.logo_url || vm.company.logo_path)} className="block h-full w-full object-cover object-center" alt={vm.company.name} />
-                      : <Building2 size={22} className="text-orange-500" />}
-                    <HuntrButton
-                      onClick={() => document.getElementById('logo-upload-2')?.click()}
-                      className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-xl"
-                      aria-label="Upload logo"
-                    >
-                      <Camera size={16} className="text-white" />
-                    </HuntrButton>
-                  </div>
-                  {vm.logoUploading && (
-                    <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
-                      <Loader2 size={14} className="animate-spin text-white" />
-                    </div>
-                  )}
-                  <HuntrInput id="logo-upload-2" type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) vm.handleLogoUpload(f); }} />
-                </div>
-              </div>
-
-              <div className="px-4 pb-4">
-                <h2 className="text-sm font-bold text-[var(--ui-text-primary)] leading-snug">{vm.company.name}</h2>
-                <span className="text-[10px] font-bold uppercase text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded mt-1 inline-block">{vm.company.type}</span>
-
-                {vm.company.about && (
-                  <p className="text-xs text-[var(--ui-text-muted)] mt-2.5 leading-relaxed line-clamp-3">{vm.company.about}</p>
-                )}
-
-                <div className="mt-3 space-y-1.5">
-                  {vm.company.email && (
-                    <div className="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
-                      <Mail size={11} className="text-orange-500 flex-shrink-0" />
-                      <span className="truncate">{vm.company.email}</span>
-                    </div>
-                  )}
-                  {vm.company.phone && (
-                    <div className="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
-                      <Phone size={11} className="text-orange-500 flex-shrink-0" />
-                      <span>{vm.company.phone}</span>
-                    </div>
-                  )}
-                  {vm.company.city && (
-                    <div className="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
-                      <MapPin size={11} className="text-orange-500 flex-shrink-0" />
-                      <span>{vm.company.city}{vm.company.provincy_country ? `, ${vm.company.provincy_country}` : ''}</span>
-                    </div>
-                  )}
-                  {(vm.company.formatted_tax_id || vm.company.tax_id) && (
-                    <div className="flex items-center justify-between gap-1 text-xs text-[var(--ui-text-muted)]">
-                      <div className="flex items-center gap-2 truncate">
-                        <Hash size={11} className="text-orange-500 flex-shrink-0" />
-                        <span className="truncate">{vm.company.formatted_tax_id || vm.company.tax_id}</span>
-                      </div>
-                      <span
-                        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0"
-                        title="NPWP Terverifikasi"
-                      >
-                        <CheckCircle2 size={10} className="text-sky-400" />
-                        <span>Verified</span>
-                      </span>
-                    </div>
-                  )}
-                  {vm.company.industry_type && (
-                    <div className="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
-                      <Tag size={11} className="text-orange-500 flex-shrink-0" />
-                      <span>{vm.company.industry_type}</span>
-                    </div>
-                  )}
-                  {vm.company.created_at && (
-                    <div className="flex items-center gap-2 text-xs text-[var(--ui-text-muted)]">
-                      <Calendar size={11} className="text-orange-500 flex-shrink-0" />
-                      <span>Since {new Date(vm.company.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short' })}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
-              <div className="px-3.5 py-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <TrendingUp size={13} className="text-orange-500" />
-                  <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
-                    {vm.company.type === 'buyer' ? 'Total PR' : 'Total Bids'}
-                  </span>
-                </div>
-                <span className="text-sm font-bold text-[var(--ui-text-primary)]">
-                  {vm.company.type === 'buyer' ? (vm.company.stats?.total_pr || 0) : (vm.company.stats?.total_proposals || 0)}
-                </span>
-              </div>
-              <div className="px-3.5 py-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Star size={13} className="text-emerald-500" />
-                  <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
-                    {vm.company.type === 'buyer' ? 'Approved' : 'Won'}
-                  </span>
-                </div>
-                <span className="text-sm font-bold text-[var(--ui-text-primary)]">
-                  {vm.company.type === 'buyer' ? (vm.company.stats?.approved_pr || 0) : (vm.company.stats?.won_proposals || 0)}
-                </span>
-              </div>
-              {vm.company.type === 'vendor' && (
-                <div className="px-3.5 py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 size={13} className="text-blue-500" />
-                    <span className="text-xs font-semibold text-[var(--ui-text-muted)]">Win Rate</span>
-                  </div>
-                  <span className="text-sm font-bold text-[var(--ui-text-primary)]">{winRate}%</span>
-                </div>
-              )}
-            </div>
-
-            {/* Edit actions */}
-            <div className="flex flex-col gap-2">
-              {!vm.isEditing ? (
-                <HuntrButton
-                  onClick={() => vm.setIsEditing(true)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] font-semibold text-sm hover:border-orange-500/40 transition-all"
-                >
-                  Edit Profile
-                </HuntrButton>
-              ) : (
-                <>
-                  <HuntrButton
-                    onClick={vm.handleSaveCompany}
-                    disabled={vm.updatingCompany}
-                    style={{ color: 'white' }}
-                    className="w-full px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 font-semibold text-sm transition-all flex items-center justify-center gap-2"
-                  >
-                    {vm.updatingCompany ? <Loader2 size={14} className="animate-spin" /> : "Save Changes"}
-                  </HuntrButton>
-                  <HuntrButton
-                    onClick={() => vm.setIsEditing(false)}
-                    className="w-full px-4 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] font-medium text-sm"
-                  >
-                    Cancel
-                  </HuntrButton>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT — Tabbed Content */}
-          <div className="flex-1 min-w-0 w-full">
-            {/* Tab nav: clean pill scrollbar on mobile, underline tabs on sm+ */}
-            <div className="mb-4">
-              {/* Mobile: horizontal scrollable pills with active indicators */}
-              <div className="flex sm:hidden gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-                {tabs.map(t => {
-                  const isActive = vm.activeTab === t.id;
-                  return (
-                    <HuntrButton
-                      key={t.id}
-                      type="button"
-                      onClick={() => vm.setActiveTab(t.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
-                        isActive
-                          ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
-                          : "bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
-                      }`}
-                    >
-                      <t.icon size={13} />
-                      <span>{t.label}</span>
-                    </HuntrButton>
-                  );
-                })}
-              </div>
-
-              {/* Desktop: horizontal tab bar */}
-              <div className="hidden sm:flex gap-0.5 border-b border-[var(--ui-border)] overflow-x-auto scrollbar-hide">
-                {tabs.map(t => (
-                  <HuntrButton
-                    key={t.id}
-                    onClick={() => vm.setActiveTab(t.id)}
-                    className={`flex items-center gap-1.5 px-3.5 pb-2.5 pt-1 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${
-                      vm.activeTab === t.id
-                        ? "border-orange-500 text-orange-500"
-                        : "border-transparent text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:border-[var(--ui-border)]"
-                    }`}
-                  >
-                    <t.icon size={14} /> {t.label}
-                  </HuntrButton>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Identity ── */}
-            {vm.activeTab === "profile" && (
-              <div className="space-y-3 sm:space-y-4">
-                <SectionLabel>Corporate Identity</SectionLabel>
-                {vm.isEditing ? (
-                  <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
-                    <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <EditField label="Company Name" value={vm.editForm.name} onChange={v => vm.setEditForm({...vm.editForm, name: v})} />
-                      <SelectField label="Country" value={vm.editForm.country} onChange={v => vm.setEditForm({...vm.editForm, country: v})} options={[{v:"ID",l:"Indonesia"},{v:"MY",l:"Malaysia"},{v:"SG",l:"Singapore"}]} />
-                      <SelectField label="Industry Type" value={vm.editForm.industry_type} onChange={v => vm.setEditForm({ ...vm.editForm, industry_type: v })}
-                        options={["Technology","Manufacturing","Healthcare","Retail","Finance","Construction","Logistics","Agriculture","Education","Other"].map(o=>({v:o,l:o}))}
-                        placeholder="Select Industry..."
-                      />
-                      <NpwpField
-                        value={vm.editForm.tax_id}
-                        country={vm.editForm.country}
-                        verification={vm.npwpVerification}
-                        onChange={v => {
-                          vm.setEditForm({ ...vm.editForm, tax_id: v });
-                          vm.clearNpwpVerification();
-                        }}
-                        onVerify={vm.handleVerifyNpwp}
-                      />
-                      <EditField label="Company Website" type="url" placeholder="https://perusahaan.com" value={vm.editForm.website} onChange={v => vm.setEditForm({...vm.editForm, website: v})} />
-                      <EditField label="Email" value={vm.editForm.email} onChange={v => vm.setEditForm({...vm.editForm, email: v})} />
-                      <EditField label="Phone / WA" value={vm.editForm.phone} onChange={v => vm.setEditForm({...vm.editForm, phone: v})} />
-                    </div>
-                    <div className="p-3.5 sm:p-5 grid grid-cols-1 gap-3 sm:gap-4">
-                      <EditField label="About" value={vm.editForm.about} textarea onChange={v => vm.setEditForm({...vm.editForm, about: v})} />
-                      <EditField label="Keywords / Tags" value={vm.editForm.keywords} textarea onChange={v => vm.setEditForm({...vm.editForm, keywords: v})} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
-                    <DisplayRow label="Company Name" value={vm.company.name} />
-                    <DisplayRow label="Industry Type" value={vm.company.industry_type} />
-                    <DisplayRow label="Tax ID (NPWP)" value={vm.company.formatted_tax_id || vm.company.tax_id} />
-                    <WebsiteRow website={vm.company.website} />
-                    <DisplayRow label="Email Address" value={vm.company.email} />
-                    <DisplayRow label="Phone Number" value={vm.company.phone} />
-                    <DisplayRow label="Keywords / Tags" value={Array.isArray(vm.company.keywords) ? vm.company.keywords.join(", ") : vm.company.keywords} />
-                    {vm.company.about && (
-                      <div className="p-3.5 sm:p-5 flex flex-col gap-1">
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Business Biography</span>
-                        <p className="text-xs sm:text-sm text-[var(--ui-text-primary)] leading-relaxed break-words">{vm.company.about}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── Location ── */}
-            {vm.activeTab === "location" && (
-              <div className="space-y-3 sm:space-y-4">
-                <SectionLabel>Primary Address</SectionLabel>
-                {vm.isEditing ? (
-                  <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
-                    <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <EditField label="Province" value={vm.editForm.provincy_country} onChange={v => vm.setEditForm({...vm.editForm, provincy_country: v})} />
-                      <EditField label="City" value={vm.editForm.city} onChange={v => vm.setEditForm({...vm.editForm, city: v})} />
-                      <EditField label="Zip Code" value={vm.editForm.zip_code} onChange={v => vm.setEditForm({...vm.editForm, zip_code: v})} />
-                    </div>
-                    <div className="p-3.5 sm:p-5">
-                      <EditField label="Full Address" value={vm.editForm.address} textarea onChange={v => vm.setEditForm({...vm.editForm, address: v})} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
-                    <DisplayRow label="Province / Country" value={vm.company.provincy_country} />
-                    <DisplayRow label="City" value={vm.company.city} />
-                    <DisplayRow label="Zip Code" value={vm.company.zip_code} />
-                    <DisplayRow label="Full Business Address" value={vm.company.address} />
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between px-0.5 pt-1">
-                  <SectionLabel>HQ / Office Addresses</SectionLabel>
-                  {vm.isEditing && (
-                    <HuntrButton type="button" onClick={vm.addHqAddress} className="flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 text-xs font-semibold hover:bg-orange-500/20 transition-all">
-                      <Plus size={12} /> Add
-                    </HuntrButton>
-                  )}
-                </div>
-
-                {vm.isEditing ? (
-                  <div className="space-y-2">
-                    {vm.editForm.hq_addresses?.map((addr: string, idx: number) => (
-                      <div key={idx} className="flex gap-2">
-                        <HuntrTextarea value={addr} onChange={e => vm.updateHqAddress(idx, e.target.value)} placeholder={`HQ Address ${idx + 1}`} rows={2} className="flex-1 px-3 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-xs sm:text-sm focus:border-orange-500/50 outline-none transition-all resize-none" />
-                        {vm.editForm.hq_addresses.length > 1 && (
-                          <HuntrButton type="button" onClick={() => vm.removeHqAddress(idx)} className="px-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all h-fit py-2">
-                            <X size={13} />
-                          </HuntrButton>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
-                    {!vm.company.hq_addresses || (Array.isArray(vm.company.hq_addresses) && vm.company.hq_addresses.length === 0) ? (
-                      <div className="p-4 sm:p-6 text-center"><p className="text-xs text-[var(--ui-text-muted)]">No office locations added yet</p></div>
-                    ) : (
-                      (Array.isArray(vm.company.hq_addresses) ? vm.company.hq_addresses : [vm.company.hq_addresses]).map((addr: string, idx: number) => (
-                        <div key={idx} className="p-3.5 sm:p-4 sm:px-5 flex items-start gap-2.5 sm:gap-3">
-                          <MapPin size={13} className="text-orange-500 flex-shrink-0 mt-0.5" />
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-0.5">Location {idx + 1}</div>
-                            <p className="text-xs sm:text-sm text-[var(--ui-text-primary)] break-words">{addr}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── Banking ── */}
-            {vm.activeTab === "banking" && (
-              <div className="space-y-3 sm:space-y-4">
-                <SectionLabel>Bank Account</SectionLabel>
-                {vm.isEditing ? (
-                  <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)]">
-                    <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <EditField label="Bank Name" value={vm.editForm.bank_name} onChange={v => vm.setEditForm({...vm.editForm, bank_name: v})} />
-                      <EditField label="Account Number" value={vm.editForm.bank_account} onChange={v => vm.setEditForm({...vm.editForm, bank_account: v})} />
-                      <EditField label="Account Holder Name" value={vm.editForm.bank_account_name} onChange={v => vm.setEditForm({...vm.editForm, bank_account_name: v})} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
-                    <DisplayRow label="Beneficiary Bank" value={vm.company.bank_name} />
-                    <DisplayRow label="Account Number" value={vm.company.bank_account} />
-                    <DisplayRow label="Account Holder" value={vm.company.bank_account_name} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── Documents ── */}
-            {vm.activeTab === "documents" && (
-              <div className="space-y-4 sm:space-y-5">
-                {/* Status Guidance Card */}
-                {vm.company.status === "starter" && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/5 border border-indigo-500/25 flex items-start gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
-                      <Sparkles size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-indigo-300">
-                        Lengkapi Dokumen Verifikasi (Upgrade dari Akun Starter)
-                      </div>
-                      <p className="text-xs text-[var(--ui-text-muted)] mt-1 leading-relaxed">
-                        Perusahaan Anda saat ini berstatus <strong>Starter</strong>. Unggah dokumen legalitas (seperti NPWP, NIB, atau SIUP) di bawah ini. Begitu dokumen diunggah, akun akan otomatis diajukan ke tim admin untuk diverifikasi menjadi <strong>Full Access</strong> (dapat membuat tender RFQ dan bertransaksi).
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {vm.company.status === "pending" && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                      <Clock size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-amber-300">
-                        Dokumen Sedang Dalam Peninjauan Admin
-                      </div>
-                      <p className="text-xs text-[var(--ui-text-muted)] mt-1 leading-relaxed">
-                        Dokumen legalitas Anda sudah diterima dan sedang dalam antrean review oleh tim admin Huntr. Anda tetap dapat menambahkan berkas pendukung lainnya jika diperlukan.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {vm.company.status === "approved" && (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-3">
-                    <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-                    <div className="text-xs text-emerald-300">
-                      <strong>Perusahaan Terverifikasi (Full Access):</strong> Seluruh dokumen legalitas telah diapprove. Anda dapat menambahkan berkas legalitas pembaruan kapan saja di bawah ini.
-                    </div>
-                  </div>
-                )}
-
-                {/* Upload Success Alert */}
-                {vm.docSuccess && (
-                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2 text-xs font-semibold text-emerald-400 animate-fade-in">
-                    <CheckCircle2 size={16} /> <span>{vm.docSuccess}</span>
-                  </div>
-                )}
-
-                {/* Upload Error Alert */}
-                {vm.docError && (
-                  <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 flex items-center gap-2 text-xs font-semibold text-red-400 animate-shake">
-                    <AlertCircle size={16} /> <span>{vm.docError}</span>
-                  </div>
-                )}
-
-                {/* Upload Form Box */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm">
-                  <div className="flex items-center justify-between mb-3.5">
-                    <div>
-                      <h4 className="text-sm font-bold text-[var(--ui-text-primary)]">Tambah Dokumen Legalitas Baru</h4>
-                      <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">Format file: PDF, JPG, PNG, DOCX (Maksimal 10MB)</p>
-                    </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
-                      Upload Berkas
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-1">
-                      <label className="text-[10px] font-bold text-[var(--ui-text-muted)] uppercase tracking-wider block mb-1.5">
-                        Jenis Dokumen *
-                      </label>
-                      <HuntrSelect
-                        value={docType}
-                        onChange={(e) => setDocType(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-xs transition-all focus:border-orange-500/50 appearance-none"
-                      >
-                        <option value="NPWP">NPWP (Nomor Pokok Wajib Pajak)</option>
-                        <option value="NIB">NIB (Nomor Induk Berusaha)</option>
-                        <option value="SIUP">SIUP (Surat Izin Usaha Perdagangan)</option>
-                        <option value="Akta Perusahaan">Akta Pendirian Perusahaan</option>
-                        <option value="KTP Direktur">KTP Direktur / Penanggung Jawab</option>
-                        <option value="SK Kemenkumham">SK Kemenkumham</option>
-                        <option value="Rekening Koran">Rekening Koran / Bukti Bank</option>
-                        <option value="SPPKP">SPPKP (Pengusaha Kena Pajak)</option>
-                        <option value="Other">Dokumen Lainnya</option>
-                      </HuntrSelect>
-                    </div>
-
-                    <div className="sm:col-span-2 flex items-end gap-2">
-                      <HuntrInput
-                        ref={docFileInputRef}
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            vm.handleUploadDocument(file, docType);
-                            e.target.value = "";
-                          }
-                        }}
-                      />
-                      <HuntrButton
-                        type="button"
-                        onClick={() => docFileInputRef.current?.click()}
-                        disabled={vm.docUploading}
-                        className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs transition-all shadow-md shadow-orange-500/20 flex items-center justify-center gap-2"
-                      >
-                        {vm.docUploading ? (
-                          <>
-                            <Loader2 size={15} className="animate-spin" /> Mengunggah Dokumen…
-                          </>
-                        ) : (
-                          <>
-                            <Plus size={15} /> Pilih File & Unggah Sekarang
-                          </>
-                        )}
-                      </HuntrButton>
-                    </div>
-                  </div>
-                </div>
-
-                {/* List of Uploaded Documents */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <SectionLabel>Daftar Dokumen Perusahaan ({vm.company.documents?.length || 0})</SectionLabel>
-                  </div>
-                  
-                  <div className="border border-[var(--ui-border)] rounded-2xl overflow-hidden bg-[var(--ui-bg-card)] divide-y divide-[var(--ui-border)]">
-                    {!vm.company.documents || vm.company.documents?.length === 0 ? (
-                      <div className="py-10 text-center">
-                        <FileText size={28} className="mx-auto text-[var(--ui-text-muted)] opacity-30 mb-2" />
-                        <p className="text-sm font-semibold text-[var(--ui-text-primary)]">Belum ada dokumen yang diunggah</p>
-                        <p className="text-xs text-[var(--ui-text-muted)] mt-1">Unggah berkas NPWP, NIB, atau SIUP di atas untuk melengkapi profil verifikasi.</p>
-                      </div>
-                    ) : (
-                      vm.company.documents?.map((doc: any) => (
-                        <div key={doc.id} className="p-3.5 sm:p-4 sm:px-5 flex items-center justify-between gap-3 group hover:bg-[var(--ui-bg-input)] transition-colors">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center flex-shrink-0 border border-orange-500/20">
-                              <FileText size={18} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs sm:text-sm font-bold text-[var(--ui-text-primary)] truncate">
-                                  {doc.type}
-                                </span>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                  Tersimpan
-                                </span>
-                              </div>
-                              <div className="text-[11px] sm:text-xs text-[var(--ui-text-muted)] truncate mt-0.5">
-                                {doc.name || 'Dokumen Resmi'}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 shrink-0">
-                            <a 
-                              href={getAssetUrl(doc.url || doc.file_path)} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              title="Lihat / Unduh Dokumen"
-                              className="px-3 py-1.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs font-semibold text-[var(--ui-text-secondary)] hover:text-orange-500 hover:border-orange-500/50 transition-all flex items-center gap-1.5"
-                            >
-                              <Download size={13} /> <span className="hidden sm:inline">Unduh</span>
-                            </a>
-
-                            <HuntrButton
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm(`Hapus dokumen ${doc.type} (${doc.name})?`)) {
-                                  vm.handleDeleteDocument(doc.id);
-                                }
-                              }}
-                              disabled={vm.docDeletingId === doc.id}
-                              title="Hapus Dokumen"
-                              className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 flex items-center justify-center transition-all disabled:opacity-40"
-                            >
-                              {vm.docDeletingId === doc.id ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Trash2 size={13} />
-                              )}
-                            </HuntrButton>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── Performance ── */}
-            {vm.activeTab === "performance" && (
-              <div className="space-y-3 sm:space-y-4">
-                <SectionLabel>Activity Overview</SectionLabel>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  {vm.company.type === 'buyer' ? (
-                    <>
-                      <StatCard icon={FileText} label="Total PR" value={vm.company.stats?.total_pr || 0} color="orange" />
-                      <StatCard icon={CheckCircle2} label="Approved" value={vm.company.stats?.approved_pr || 0} color="emerald" />
-                      <StatCard icon={Activity} label="Status" value="Active" color="blue" />
-                    </>
-                  ) : (
-                    <>
-                      <StatCard icon={FileText} label="Total Bids" value={vm.company.stats?.total_proposals || 0} color="orange" />
-                      <StatCard icon={Award} label="Won" value={vm.company.stats?.won_proposals || 0} color="emerald" />
-                      <StatCard icon={BarChart3} label="Win Rate" value={`${winRate}%`} color="blue" />
-                    </>
-                  )}
-                </div>
-                <div className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] p-3.5 sm:p-4 sm:px-5">
-                  <p className="text-xs sm:text-sm text-[var(--ui-text-secondary)] leading-relaxed">
-                    Member since <span className="text-[var(--ui-text-primary)] font-semibold">{new Date(vm.company.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>.{" "}
-                    {vm.company.type === 'buyer'
-                      ? `Telah membuat ${vm.company.stats?.total_pr || 0} permintaan pengadaan, ${vm.company.stats?.approved_pr || 0} di antaranya disetujui.`
-                      : `Berpartisipasi dalam ${vm.company.stats?.total_proposals || 0} tender dan berhasil memenangkan ${vm.company.stats?.won_proposals || 0} kontrak (win rate ${winRate}%).`
-                    }
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* ── Team ── */}
-            {vm.activeTab === "team" && (
-              <TeamManagement
-                company={vm.company}
-                teamMembers={vm.teamMembers}
-                teamLoading={vm.teamLoading}
-                isInviting={vm.isInviting}
-                inviteForm={vm.inviteForm}
-                setInviteForm={vm.setInviteForm}
-                handleInviteUser={vm.handleInviteUser}
-                inviteError={vm.inviteError}
-                inviteSuccess={vm.inviteSuccess}
-                onRoleChanged={() => vm.fetchTeamMembers && vm.fetchTeamMembers(vm.company?.id)}
-              />
-            )}
-
-            {vm.activeTab === "access" && (
-              <AccessApprovalManagement company={vm.company} />
-            )}
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
-}
-
-/* ── Helpers ────────────────────────────────────────────────────────────── */
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-0.5 pb-0.5">{children}</div>;
-}
-
-function DisplayRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-4 py-3">
-      {/* Mobile: stacked */}
-      <div className="flex flex-col gap-0.5 sm:hidden">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">{label}</span>
-        <span className="text-sm text-[var(--ui-text-primary)]">{value || "—"}</span>
-      </div>
-      {/* Desktop: side-by-side */}
-      <div className="hidden sm:flex items-center justify-between gap-4">
-        <span className="text-sm font-semibold text-[var(--ui-text-muted)] flex-shrink-0 w-2/5">{label}</span>
-        <span className="text-sm text-[var(--ui-text-primary)] text-right flex-1">{value || "—"}</span>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string | number; color: string }) {
-  const cols: any = { orange: "text-orange-500 bg-orange-500/10", emerald: "text-emerald-500 bg-emerald-500/10", blue: "text-blue-500 bg-blue-500/10" };
-  return (
-    <div className="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-input)] p-4 flex flex-col gap-3">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${cols[color]}`}>
-        <Icon size={16} />
-      </div>
-      <div>
-        <div className="text-xl font-bold text-[var(--ui-text-primary)]">{value}</div>
-        <div className="text-xs text-[var(--ui-text-muted)] mt-0.5">{label}</div>
-      </div>
-    </div>
-  );
-}
-
-function SelectField({ label, value, onChange, options, placeholder }: { label: string; value: string; onChange: (v: string) => void; options: {v:string,l:string}[]; placeholder?: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-semibold text-[var(--ui-text-muted)]">{label}</span>
-      <HuntrSelect value={value} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all appearance-none">
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-      </HuntrSelect>
-    </div>
-  );
-}
-
-function EditField({ label, value, onChange, textarea, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; textarea?: boolean; type?: string; placeholder?: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-semibold text-[var(--ui-text-muted)]">{label}</span>
-      {textarea ? (
-        <HuntrTextarea value={value} onChange={e => onChange(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all resize-none" />
-      ) : (
-        <HuntrInput type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all" />
-      )}
-    </div>
-  );
-}
-
-
-function WebsiteRow({ website }: { website?: string | null }) {
-  return (
-    <div className="px-4 py-3">
-      <div className="flex flex-col gap-0.5 sm:hidden">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Company Website</span>
-        {website ? (
-          <a href={website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-orange-500 hover:underline break-all">
-            <Globe size={13} /> {website}
-          </a>
-        ) : <span className="text-sm text-[var(--ui-text-primary)]">—</span>}
-      </div>
-      <div className="hidden sm:flex items-center justify-between gap-4">
-        <span className="text-sm font-semibold text-[var(--ui-text-muted)] flex-shrink-0 w-2/5">Company Website</span>
-        {website ? (
-          <a href={website} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 text-right text-sm text-orange-500 hover:underline">
-            <Globe size={13} className="shrink-0" /> <span className="truncate">{website}</span>
-          </a>
-        ) : <span className="text-sm text-[var(--ui-text-primary)]">—</span>}
-      </div>
-    </div>
-  );
-}
-
-function NpwpField({
-  value,
-  country,
-  verification,
-  onChange,
-  onVerify,
-}: {
-  value: string;
-  country: string;
-  verification: { state: "idle" | "loading" | "valid" | "invalid"; message: string | null; taxpayerName: string | null };
-  onChange: (value: string) => void;
-  onVerify: () => void;
-}) {
-  const unavailable = country !== "ID" && country !== "INDONESIA";
-  const resultClass = verification.state === "valid" ? "text-emerald-500" : "text-red-500";
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-[var(--ui-text-muted)]">Tax ID (NPWP)</span>
-        <span className="text-[10px] text-[var(--ui-text-muted)]">Pajak Express VSWP</span>
-      </div>
-      <div className="flex gap-2">
-        <HuntrInput
-          value={value || ""}
-          inputMode="numeric"
-          onChange={event => onChange(event.target.value)}
-          className="min-w-0 flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all"
-        />
-        <HuntrButton
-          type="button"
-          onClick={onVerify}
-          disabled={unavailable || verification.state === "loading" || !value?.trim()}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-orange-500 px-3 py-2 text-xs font-semibold text-orange-500 hover:bg-orange-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+        {/* ── Corporate Hero Header (NEUTRAL, NO ORANGE) ── */}
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: 3,
+            overflow: "hidden",
+            mb: 3,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
         >
-          {verification.state === "loading" ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
-          Validasi
-        </HuntrButton>
-      </div>
-      {unavailable && <p className="m-0 text-[11px] text-[var(--ui-text-muted)]">Validasi NPWP tersedia untuk perusahaan Indonesia.</p>}
-      {verification.state !== "idle" && verification.state !== "loading" && verification.message && (
-        <p className={`m-0 text-[11px] ${resultClass}`}>
-          {verification.state === "valid" ? "NPWP valid" : "Validasi gagal"}: {verification.message}
-          {verification.taxpayerName ? ` · ${verification.taxpayerName}` : ""}
-        </p>
-      )}
-    </div>
+          {/* Top Decorative Banner: Sleek Neutral Slate */}
+          <Box
+            sx={{
+              height: 76,
+              background: "linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%)",
+              p: 2,
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "flex-start",
+            }}
+          >
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              {/* CLEAR, HIGH-CONTRAST STATUS BADGE (LABEL ALWAYS VISIBLE) */}
+              <Chip
+                icon={statusInfo.icon}
+                label={statusInfo.label}
+                size="small"
+                sx={statusInfo.chipSx}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => vm.setShowCompanyWorkspace(false)}
+                sx={{
+                  bgcolor: "rgba(255, 255, 255, 0.1)",
+                  color: "#ffffff",
+                  borderColor: "rgba(255, 255, 255, 0.3)",
+                  textTransform: "none",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  "&:hover": {
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    borderColor: "#ffffff",
+                  },
+                }}
+              >
+                Ganti Workspace
+              </Button>
+            </Stack>
+          </Box>
+
+          {/* Profile Identity Bar */}
+          <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pb: 3, pt: 0 }}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2.5}
+              sx={{
+                alignItems: { xs: "flex-start", sm: "flex-end" },
+                justifyContent: "space-between",
+              }}
+            >
+              <Stack direction="row" spacing={2.5} sx={{ alignItems: "flex-end" }}>
+                {/* Logo Avatar: Clean Neutral Slate (NO ORANGE) */}
+                <Box sx={{ position: "relative", mt: -5 }}>
+                  <Avatar
+                    src={logoSrc}
+                    variant="rounded"
+                    sx={{
+                      width: 82,
+                      height: 82,
+                      borderRadius: 3,
+                      border: "3px solid",
+                      borderColor: "background.paper",
+                      bgcolor: "#f1f5f9",
+                      color: "#334155",
+                      boxShadow: 2,
+                    }}
+                  >
+                    <Building2 size={36} />
+                  </Avatar>
+                  <IconButton
+                    size="small"
+                    onClick={() => logoInputRef.current?.click()}
+                    sx={{
+                      position: "absolute",
+                      bottom: -4,
+                      right: -4,
+                      bgcolor: "#0f172a",
+                      color: "#ffffff",
+                      "&:hover": { bgcolor: "#1e293b" },
+                      boxShadow: 2,
+                      width: 28,
+                      height: 28,
+                    }}
+                    title="Ganti Logo"
+                  >
+                    {vm.logoUploading ? <CircularProgress size={14} color="inherit" /> : <Camera size={14} />}
+                  </IconButton>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) vm.handleLogoUpload(f);
+                    }}
+                  />
+                </Box>
+
+                {/* Name & Basic Info */}
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                    {vm.company.name}
+                  </Typography>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mt: 0.75, flexWrap: "wrap" }}>
+                    <Chip
+                      label={vm.company.type?.toUpperCase() || "ORGANIZATION"}
+                      size="small"
+                      sx={{
+                        height: 22,
+                        fontWeight: 700,
+                        fontSize: "0.7rem",
+                        bgcolor: "#f1f5f9",
+                        color: "#334155",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    />
+                    {vm.company.city && (
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                        <MapPin size={13} color="gray" />
+                        <Typography variant="caption" color="text.secondary">
+                          {vm.company.city}
+                          {vm.company.provincy_country ? `, ${vm.company.provincy_country}` : ""}
+                        </Typography>
+                      </Stack>
+                    )}
+                    {(vm.company.formatted_tax_id || vm.company.tax_id) && (
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                        <Hash size={13} color="gray" />
+                        <Typography variant="caption" color="text.secondary">
+                          {vm.company.formatted_tax_id || vm.company.tax_id}
+                        </Typography>
+                        <Chip
+                          icon={<CheckCircle2 size={11} style={{ color: "#0369a1" }} />}
+                          label="NPWP Terverifikasi"
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: "0.65rem",
+                            fontWeight: 700,
+                            bgcolor: "rgba(3, 105, 161, 0.1)",
+                            color: "#0369a1",
+                            border: "1px solid rgba(3, 105, 161, 0.25)",
+                          }}
+                        />
+                      </Stack>
+                    )}
+                  </Stack>
+                </Box>
+              </Stack>
+
+              {/* Action Buttons */}
+              <Stack direction="row" spacing={1.5} sx={{ width: { xs: "100%", sm: "auto" } }}>
+                {!vm.isEditing ? (
+                  <Button
+                    variant="contained"
+                    startIcon={<Edit2 size={16} />}
+                    onClick={() => vm.setIsEditing(true)}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      px: 2.5,
+                      bgcolor: "#0f172a",
+                      color: "#ffffff",
+                      "&:hover": { bgcolor: "#1e293b" },
+                    }}
+                  >
+                    Edit Profil
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="contained"
+                      startIcon={vm.updatingCompany ? <CircularProgress size={16} color="inherit" /> : <Save size={16} />}
+                      disabled={vm.updatingCompany}
+                      onClick={vm.handleSaveCompany}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        px: 2.5,
+                        bgcolor: "#047857",
+                        color: "#ffffff",
+                        "&:hover": { bgcolor: "#065f46" },
+                      }}
+                    >
+                      Simpan Perubahan
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => vm.setIsEditing(false)}
+                      sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+                    >
+                      Batal
+                    </Button>
+                  </>
+                )}
+              </Stack>
+            </Stack>
+
+            <Divider sx={{ my: 2.5 }} />
+
+            {/* Quick Metrics Bar */}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  {vm.company.type === "buyer" ? "TOTAL PERMINTAAN (PR)" : "TOTAL PENAWARAN (BIDS)"}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {vm.company.type === "buyer" ? vm.company.stats?.total_pr || 0 : vm.company.stats?.total_proposals || 0}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  {vm.company.type === "buyer" ? "PR DISETUJUI" : "KONTRAK DIMENANGKAN"}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: "#047857" }}>
+                  {vm.company.type === "buyer" ? vm.company.stats?.approved_pr || 0 : vm.company.stats?.won_proposals || 0}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  WIN RATE
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: "#1d4ed8" }}>
+                  {winRate}%
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  BERGABUNG SEJAK
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {vm.company.created_at
+                    ? new Date(vm.company.created_at).toLocaleDateString("id-ID", { year: "numeric", month: "short" })
+                    : "—"}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        </Paper>
+
+        {/* ── Modern MUI Navigation Tabs ── */}
+        <Paper variant="outlined" sx={{ borderRadius: 3, mb: 3, bgcolor: "background.paper" }}>
+          <Tabs
+            value={vm.activeTab}
+            onChange={(_, val) => vm.setActiveTab(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              px: 2,
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                minHeight: 48,
+              },
+            }}
+          >
+            {tabs.map((t) => (
+              <Tab key={t.id} value={t.id} icon={t.icon} iconPosition="start" label={t.label} />
+            ))}
+          </Tabs>
+        </Paper>
+
+        {/* ── TAB 1: Identitas Perusahaan ── */}
+        {vm.activeTab === "profile" && (
+          <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 }, bgcolor: "background.paper" }}>
+            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2.5 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Profil & Legalitas Entitas
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Informasi resmi entitas bisnis yang akan tertera pada faktur, PO, dan dokumen pengadaan.
+                </Typography>
+              </Box>
+              {!vm.isEditing && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Edit2 size={14} />}
+                  onClick={() => vm.setIsEditing(true)}
+                  sx={{ borderRadius: 2, textTransform: "none" }}
+                >
+                  Ubah
+                </Button>
+              )}
+            </Stack>
+
+            <Divider sx={{ mb: 3 }} />
+
+            {vm.isEditing ? (
+              <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Nama Perusahaan *"
+                    size="small"
+                    value={vm.editForm.name || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, name: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="country-label">Negara</InputLabel>
+                    <Select
+                      labelId="country-label"
+                      label="Negara"
+                      value={vm.editForm.country || "ID"}
+                      onChange={(e) => vm.setEditForm({ ...vm.editForm, country: e.target.value })}
+                    >
+                      <MenuItem value="ID">Indonesia</MenuItem>
+                      <MenuItem value="MY">Malaysia</MenuItem>
+                      <MenuItem value="SG">Singapore</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="industry-label">Sektor / Bidang Industri</InputLabel>
+                    <Select
+                      labelId="industry-label"
+                      label="Sektor / Bidang Industri"
+                      value={vm.editForm.industry_type || ""}
+                      onChange={(e) => vm.setEditForm({ ...vm.editForm, industry_type: e.target.value })}
+                    >
+                      {[
+                        "Technology",
+                        "Manufacturing",
+                        "Healthcare",
+                        "Retail & Commerce",
+                        "Finance & Banking",
+                        "Construction",
+                        "Logistics & Supply Chain",
+                        "Agriculture",
+                        "Education",
+                        "Other",
+                      ].map((ind) => (
+                        <MenuItem key={ind} value={ind}>
+                          {ind}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Stack direction="row" spacing={1}>
+                    <TextField
+                      fullWidth
+                      label="Nomor NPWP (15/16 Digit)"
+                      size="small"
+                      value={vm.editForm.tax_id || ""}
+                      onChange={(e) => {
+                        vm.setEditForm({ ...vm.editForm, tax_id: e.target.value });
+                        vm.clearNpwpVerification();
+                      }}
+                      placeholder="Contoh: 012345678901234"
+                    />
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={vm.handleVerifyNpwp}
+                      disabled={vm.npwpVerification.state === "loading" || !vm.editForm.tax_id?.trim()}
+                      sx={{ whiteSpace: "nowrap", px: 2, borderRadius: 2 }}
+                    >
+                      {vm.npwpVerification.state === "loading" ? <CircularProgress size={16} /> : "Validasi"}
+                    </Button>
+                  </Stack>
+                  {vm.npwpVerification.message && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: "block",
+                        mt: 0.5,
+                        fontWeight: 600,
+                        color: vm.npwpVerification.state === "valid" ? "#047857" : "#b91c1c",
+                      }}
+                    >
+                      {vm.npwpVerification.message}
+                      {vm.npwpVerification.taxpayerName ? ` · ${vm.npwpVerification.taxpayerName}` : ""}
+                    </Typography>
+                  )}
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Email Perusahaan"
+                    size="small"
+                    type="email"
+                    value={vm.editForm.email || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, email: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Nomor Telepon / WhatsApp"
+                    size="small"
+                    value={vm.editForm.phone || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, phone: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    label="Website Perusahaan"
+                    size="small"
+                    value={vm.editForm.website || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, website: e.target.value })}
+                    placeholder="https://perusahaan.co.id"
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Tentang Perusahaan (Profil Singkat)"
+                    value={vm.editForm.about || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, about: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    label="Kata Kunci / Tag Pencarian"
+                    size="small"
+                    value={vm.editForm.keywords || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, keywords: e.target.value })}
+                    helperText="Pisahkan dengan koma (misal: Supplier IT, Logistik Jakarta, B2B Procurement)"
+                  />
+                </Grid>
+              </Grid>
+            ) : (
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    NAMA RESMI PERUSAHAAN
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                    {vm.company.name || "—"}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    BIDANG INDUSTRI
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                    {vm.company.industry_type || "Belum dipilih"}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    NOMOR NPWP
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                    {vm.company.formatted_tax_id || vm.company.tax_id || "Belum diisi"}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    WEBSITE RESMI
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>
+                    {vm.company.website ? (
+                      <Button
+                        href={vm.company.website.startsWith("http") ? vm.company.website : `https://${vm.company.website}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        size="small"
+                        endIcon={<ExternalLink size={14} />}
+                        sx={{ textTransform: "none", p: 0, fontWeight: 600 }}
+                      >
+                        {vm.company.website}
+                      </Button>
+                    ) : (
+                      <Typography variant="body1" color="text.secondary">
+                        —
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    EMAIL RESMI
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                    {vm.company.email || "—"}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    NOMOR KONTAK
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                    {vm.company.phone || "—"}
+                  </Typography>
+                </Grid>
+                <Grid size={12}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    PROFIL & DESKRIPSI USAHA
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 0.75, lineHeight: 1.7 }}>
+                    {vm.company.about || "Belum ada deskripsi profil perusahaan."}
+                  </Typography>
+                </Grid>
+                {vm.company.keywords && (
+                  <Grid size={12}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: "block", mb: 1 }}>
+                      KATA KUNCI & SPESIALISASI
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+                      {(Array.isArray(vm.company.keywords)
+                        ? vm.company.keywords
+                        : String(vm.company.keywords).split(",")
+                      ).map((kw: string, i: number) => (
+                        <Chip key={i} label={kw.trim()} size="small" variant="outlined" />
+                      ))}
+                    </Stack>
+                  </Grid>
+                )}
+              </Grid>
+            )}
+          </Paper>
+        )}
+
+        {/* ── TAB 2: Lokasi & Cabang ── */}
+        {vm.activeTab === "location" && (
+          <Stack spacing={3}>
+            {/* Primary Address */}
+            <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 }, bgcolor: "background.paper" }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
+                Kantor Pusat (Alamat Utama)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                Alamat domisili legal dan surat-menyurat perusahaan.
+              </Typography>
+
+              {vm.isEditing ? (
+                <Grid container spacing={2.5}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Provinsi / Negara"
+                      value={vm.editForm.provincy_country || ""}
+                      onChange={(e) => vm.setEditForm({ ...vm.editForm, provincy_country: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Kota / Kabupaten"
+                      value={vm.editForm.city || ""}
+                      onChange={(e) => vm.setEditForm({ ...vm.editForm, city: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Kode Pos"
+                      value={vm.editForm.zip_code || ""}
+                      onChange={(e) => vm.setEditForm({ ...vm.editForm, zip_code: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Alamat Lengkap Kantor Pusat"
+                      value={vm.editForm.address || ""}
+                      onChange={(e) => vm.setEditForm({ ...vm.editForm, address: e.target.value })}
+                    />
+                  </Grid>
+                </Grid>
+              ) : (
+                <Grid container spacing={2.5}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      PROVINSI / NEGARA
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                      {vm.company.provincy_country || "—"}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      KOTA / KABUPATEN
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                      {vm.company.city || "—"}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      KODE POS
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 600, mt: 0.5 }}>
+                      {vm.company.zip_code || "—"}
+                    </Typography>
+                  </Grid>
+                  <Grid size={12}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      ALAMAT LENGKAP
+                    </Typography>
+                    <Typography variant="body1" sx={{ mt: 0.5 }}>
+                      {vm.company.address || "Belum ada alamat kantor yang diisi."}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              )}
+            </Paper>
+
+            {/* Operational & Branch Addresses */}
+            <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 }, bgcolor: "background.paper" }}>
+              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2.5 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    Kantor Cabang & Lokasi Operasional
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Gudang, site project, atau kantor perwakilan lainnya.
+                  </Typography>
+                </Box>
+                {vm.isEditing && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Plus size={15} />}
+                    onClick={vm.addHqAddress}
+                    sx={{ borderRadius: 2, textTransform: "none" }}
+                  >
+                    Tambah Lokasi
+                  </Button>
+                )}
+              </Stack>
+
+              {vm.isEditing ? (
+                <Stack spacing={2}>
+                  {(vm.editForm.hq_addresses || []).map((addr: string, idx: number) => (
+                    <Stack direction="row" spacing={1.5} key={idx} sx={{ alignItems: "flex-start" }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label={`Cabang / Lokasi #${idx + 1}`}
+                        value={addr}
+                        onChange={(e) => vm.updateHqAddress(idx, e.target.value)}
+                        placeholder="Contoh: Gedung Bursa Efek Indonesia Tower 2 Lt. 17, Jakarta Selatan"
+                      />
+                      <IconButton
+                        color="error"
+                        onClick={() => vm.removeHqAddress(idx)}
+                        disabled={(vm.editForm.hq_addresses || []).length <= 1}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </Stack>
+                  ))}
+                </Stack>
+              ) : (
+                <Stack spacing={1.5}>
+                  {!vm.company.hq_addresses ||
+                  (Array.isArray(vm.company.hq_addresses) && vm.company.hq_addresses.length === 0) ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                      Belum ada alamat kantor cabang tambahan.
+                    </Typography>
+                  ) : (
+                    (Array.isArray(vm.company.hq_addresses)
+                      ? vm.company.hq_addresses
+                      : [vm.company.hq_addresses]
+                    ).map((addr: string, idx: number) => (
+                      <Paper
+                        key={idx}
+                        variant="outlined"
+                        sx={{ p: 2, borderRadius: 2, display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
+                        <MapPin size={16} color="gray" />
+                        <Typography variant="body2">{addr}</Typography>
+                      </Paper>
+                    ))
+                  )}
+                </Stack>
+              )}
+            </Paper>
+          </Stack>
+        )}
+
+        {/* ── TAB 3: Informasi Bank ── */}
+        {vm.activeTab === "banking" && (
+          <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 }, bgcolor: "background.paper" }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
+              Rekening Bank Resmi
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Informasi rekening bank yang digunakan untuk penyelesaian pembayaran transaksi & penagihan.
+            </Typography>
+
+            {vm.isEditing ? (
+              <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Nama Bank (misal: BCA, Mandiri, BRI)"
+                    value={vm.editForm.bank_name || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, bank_name: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Nomor Rekening"
+                    value={vm.editForm.bank_account || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, bank_account: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Nama Pemilik Rekening"
+                    value={vm.editForm.bank_account_name || ""}
+                    onChange={(e) => vm.setEditForm({ ...vm.editForm, bank_account_name: e.target.value })}
+                  />
+                </Grid>
+              </Grid>
+            ) : (
+              <Card
+                variant="outlined"
+                sx={{
+                  borderRadius: 3,
+                  p: 3,
+                  maxWidth: 500,
+                  bgcolor: "action.hover",
+                  borderColor: "divider",
+                }}
+              >
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 2 }}>
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 2,
+                      bgcolor: "#0f172a",
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <CreditCard size={22} />
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      {vm.company.bank_name || "Bank Belum Diatur"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Rekening Utama Perusahaan
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Divider sx={{ my: 1.5 }} />
+
+                <Stack spacing={1}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      NOMOR REKENING
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>
+                        {vm.company.bank_account || "—"}
+                      </Typography>
+                      {vm.company.bank_account && (
+                        <Tooltip title={copiedBank ? "Tersalin!" : "Salin nomor rekening"}>
+                          <IconButton size="small" onClick={() => copyToClipboard(vm.company.bank_account)}>
+                            {copiedBank ? <Check size={14} color="green" /> : <Copy size={14} />}
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      ATAS NAMA
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {vm.company.bank_account_name || vm.company.name || "—"}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Card>
+            )}
+          </Paper>
+        )}
+
+        {/* ── TAB 4: Dokumen Legalitas ── */}
+        {vm.activeTab === "documents" && (
+          <Stack spacing={3}>
+            {/* Status Guide Alert */}
+            {vm.company.status === "starter" && (
+              <Alert severity="info" sx={{ borderRadius: 2 }}>
+                <AlertTitle sx={{ fontWeight: 700 }}>Akun Starter: Unggah Dokumen untuk Upgrade Full Access</AlertTitle>
+                Perusahaan Anda saat ini berstatus <strong>Starter</strong>. Silakan unggah dokumen legalitas (NPWP, NIB, atau SIUP) di bawah ini. Akun akan otomatis diajukan ke admin untuk verifikasi agar dapat membuat tender dan bertransaksi.
+              </Alert>
+            )}
+            {vm.company.status === "pending" && (
+              <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                <AlertTitle sx={{ fontWeight: 700 }}>Dokumen Sedang Ditinjau Admin</AlertTitle>
+                Berkas legalitas Anda telah diterima dan sedang dalam antrean review oleh tim compliance Huntr.
+              </Alert>
+            )}
+            {vm.company.status === "approved" && (
+              <Alert severity="success" sx={{ borderRadius: 2 }}>
+                <AlertTitle sx={{ fontWeight: 700 }}>Perusahaan Terverifikasi (Full Access)</AlertTitle>
+                Semua dokumen legalitas telah disetujui. Anda dapat menambahkan berkas pembaruan kapan saja di bawah ini.
+              </Alert>
+            )}
+
+            {/* Upload Notifications */}
+            {vm.docSuccess && (
+              <Alert severity="success" sx={{ borderRadius: 2 }}>
+                {vm.docSuccess}
+              </Alert>
+            )}
+            {vm.docError && (
+              <Alert severity="error" sx={{ borderRadius: 2 }}>
+                {vm.docError}
+              </Alert>
+            )}
+
+            {/* Upload Card */}
+            <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 }, bgcolor: "background.paper" }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
+                Tambah Dokumen Legalitas Baru
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                Format file yang didukung: PDF, JPG, PNG, DOCX (Maksimal 10MB per berkas).
+              </Typography>
+
+              <Grid container spacing={2} sx={{ alignItems: "center" }}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="doc-type-label">Jenis Dokumen *</InputLabel>
+                    <Select
+                      labelId="doc-type-label"
+                      label="Jenis Dokumen *"
+                      value={docType}
+                      onChange={(e) => setDocType(e.target.value)}
+                    >
+                      <MenuItem value="NPWP">NPWP (Nomor Pokok Wajib Pajak)</MenuItem>
+                      <MenuItem value="NIB">NIB (Nomor Induk Berusaha)</MenuItem>
+                      <MenuItem value="SIUP">SIUP (Surat Izin Usaha Perdagangan)</MenuItem>
+                      <MenuItem value="Akta Perusahaan">Akta Pendirian Perusahaan</MenuItem>
+                      <MenuItem value="KTP Direktur">KTP Direktur / PIC</MenuItem>
+                      <MenuItem value="SK Kemenkumham">SK Kemenkumham</MenuItem>
+                      <MenuItem value="Rekening Koran">Rekening Koran / Bukti Bank</MenuItem>
+                      <MenuItem value="SPPKP">SPPKP (Pengusaha Kena Pajak)</MenuItem>
+                      <MenuItem value="Other">Dokumen Lainnya</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 8 }}>
+                  <input
+                    ref={docFileInputRef}
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        vm.handleUploadDocument(file, docType);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    startIcon={vm.docUploading ? <CircularProgress size={16} color="inherit" /> : <Upload size={16} />}
+                    disabled={vm.docUploading}
+                    onClick={() => docFileInputRef.current?.click()}
+                    sx={{
+                      borderRadius: 2,
+                      py: 1,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      bgcolor: "#0f172a",
+                      color: "#ffffff",
+                      "&:hover": { bgcolor: "#1e293b" },
+                    }}
+                  >
+                    {vm.docUploading ? "Mengunggah Dokumen..." : "Pilih File & Unggah Sekarang"}
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            {/* Document List */}
+            <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 }, bgcolor: "background.paper" }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                Daftar Dokumen Legalitas ({vm.company.documents?.length || 0})
+              </Typography>
+
+              {!vm.company.documents || vm.company.documents.length === 0 ? (
+                <Box sx={{ py: 6, textAlign: "center" }}>
+                  <FileText size={36} color="gray" style={{ opacity: 0.5, marginBottom: 8 }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    Belum Ada Dokumen yang Diunggah
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Unggah NPWP, NIB, atau SIUP di atas untuk melengkapi berkas legalitas bisnis Anda.
+                  </Typography>
+                </Box>
+              ) : (
+                <Stack spacing={1.5}>
+                  {vm.company.documents.map((doc: any) => {
+                    const docUrl = doc.url || doc.file_path ? getAssetUrl(doc.url || doc.file_path) : "#";
+                    const isDeleting = vm.docDeletingId === doc.id;
+
+                    return (
+                      <Paper
+                        key={doc.id}
+                        variant="outlined"
+                        sx={{
+                          p: 2,
+                          borderRadius: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 2,
+                        }}
+                      >
+                        <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 2,
+                              bgcolor: "#f1f5f9",
+                              color: "#334155",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <FileText size={20} />
+                          </Box>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>
+                              {doc.name || doc.type}
+                            </Typography>
+                            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                              <Chip label={doc.type || "Dokumen"} size="small" sx={{ height: 20, fontSize: "0.65rem" }} />
+                              {doc.created_at && (
+                                <Typography variant="caption" color="text.secondary">
+                                  {new Date(doc.created_at).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </Typography>
+                              )}
+                            </Stack>
+                          </Box>
+                        </Stack>
+
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            href={docUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            startIcon={<ExternalLink size={14} />}
+                            sx={{ borderRadius: 2, textTransform: "none", fontSize: "0.75rem" }}
+                          >
+                            Buka
+                          </Button>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            disabled={isDeleting}
+                            onClick={() => vm.handleDeleteDocument(doc.id)}
+                          >
+                            {isDeleting ? <CircularProgress size={16} color="inherit" /> : <Trash2 size={16} />}
+                          </IconButton>
+                        </Stack>
+                      </Paper>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Paper>
+          </Stack>
+        )}
+
+        {/* ── TAB 5: Performa & Aktivitas ── */}
+        {vm.activeTab === "performance" && (
+          <Stack spacing={3}>
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, textAlign: "center", bgcolor: "background.paper" }}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: "#f1f5f9", color: "#334155", mx: "auto", mb: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <FileText size={22} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    {vm.company.type === "buyer" ? vm.company.stats?.total_pr || 0 : vm.company.stats?.total_proposals || 0}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    {vm.company.type === "buyer" ? "TOTAL PERMINTAAN PENGADAAN" : "TOTAL PENAWARAN TENDER"}
+                  </Typography>
+                </Paper>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, textAlign: "center", bgcolor: "background.paper" }}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: "rgba(16, 185, 129, 0.12)", color: "#047857", mx: "auto", mb: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <CheckCircle2 size={22} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "#047857" }}>
+                    {vm.company.type === "buyer" ? vm.company.stats?.approved_pr || 0 : vm.company.stats?.won_proposals || 0}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    {vm.company.type === "buyer" ? "PERMINTAAN DISETUJUI" : "KONTRAK DIMENANGKAN"}
+                  </Typography>
+                </Paper>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, textAlign: "center", bgcolor: "background.paper" }}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: "rgba(59, 130, 246, 0.12)", color: "#1d4ed8", mx: "auto", mb: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Activity size={22} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "#1d4ed8" }}>
+                    {winRate}%
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    TINGKAT KEBERHASILAN (WIN RATE)
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper" }}>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 700 }}>
+                Ringkasan Rekam Jejak
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
+                Perusahaan terdaftar di platform Huntr sejak{" "}
+                <strong>
+                  {new Date(vm.company.created_at).toLocaleDateString("id-ID", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </strong>
+                .{" "}
+                {vm.company.type === "buyer"
+                  ? `Hingga saat ini telah memproses ${vm.company.stats?.total_pr || 0} purchase request dengan ${vm.company.stats?.approved_pr || 0} di antaranya telah disetujui untuk pengadaan.`
+                  : `Telah berpartisipasi dalam ${vm.company.stats?.total_proposals || 0} tender dan memenangkan ${vm.company.stats?.won_proposals || 0} pesanan kerja dengan tingkat keberhasilan sebesar ${winRate}%.`}
+              </Typography>
+            </Paper>
+          </Stack>
+        )}
+
+        {/* ── TAB 6: Tim & Pengguna ── */}
+        {vm.activeTab === "team" && (
+          <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 3 }, bgcolor: "background.paper" }}>
+            <TeamManagement
+              company={vm.company}
+              teamMembers={vm.teamMembers}
+              teamLoading={vm.teamLoading}
+              isInviting={vm.isInviting}
+              inviteForm={vm.inviteForm}
+              setInviteForm={vm.setInviteForm}
+              handleInviteUser={vm.handleInviteUser}
+              inviteError={vm.inviteError}
+              inviteSuccess={vm.inviteSuccess}
+              onRoleChanged={() => vm.fetchTeamMembers && vm.fetchTeamMembers(vm.company?.id)}
+            />
+          </Paper>
+        )}
+
+        {/* ── TAB 7: Hak Akses & Approval ── */}
+        {vm.activeTab === "access" && (
+          <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 3 }, bgcolor: "background.paper" }}>
+            <AccessApprovalManagement company={vm.company} />
+          </Paper>
+        )}
+      </Box>
+    </Layout>
   );
 }

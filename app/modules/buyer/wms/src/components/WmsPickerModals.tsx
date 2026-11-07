@@ -415,20 +415,6 @@ export function WmsPickerModals({
               return [];
           }
         })()}
-        selectedId={(() => {
-          switch (picker.kind) {
-            case "putaway_sku":
-              return selections["putaway_sku"]?.id || null;
-            case "allocate_sku":
-              return selections["allocate_sku"]?.id || null;
-            case "transfer_sku":
-              return selections["transfer_sku"]?.id || null;
-            case "adjust_sku":
-              return selections["adjust_sku"]?.id || null;
-            default:
-              return null;
-          }
-        })()}
       />
 
       <GenericPickerModal

@@ -15,7 +15,7 @@ interface Props {
   reorderForm: {
     quantity: string;
     vendor_name: string;
-    expected_arrival: string;
+    expected_receiving_date: string;
     notes: string;
   };
   setReorderForm: React.Dispatch<React.SetStateAction<any>>;
@@ -160,11 +160,11 @@ export function WmsReorderModals({
                 <input
                   type="date"
                   className={inputClass}
-                  value={reorderForm.expected_arrival}
+                  value={reorderForm.expected_receiving_date}
                   onChange={(e) =>
                     setReorderForm({
                       ...reorderForm,
-                      expected_arrival: e.target.value,
+                      expected_receiving_date: e.target.value,
                     })
                   }
                 />
