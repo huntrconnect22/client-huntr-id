@@ -351,7 +351,7 @@ export function useCheckout() {
     ]);
   }, [serviceStartDate, serviceEndDate]);
 
-  const updateManualItem = useCallback((id: string, field: string, value: string) => {
+  const updateManualItem = useCallback((id: string, field: string, value: string | number) => {
     setCart((items) =>
       items.map((item) =>
         item.id === id ? { ...item, [field]: value } : item,
