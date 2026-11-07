@@ -10,6 +10,7 @@ import { getAssetUrl } from "../lib/assets";
 import {
   type CartItem,
   updateCartQty,
+  setCartItemQty,
   removeCartItem,
   clearCart,
   getCartItemCount,
@@ -215,11 +216,19 @@ export default function CartSidebar({
                       >
                         <Minus size={mobile ? 18 : 10} />
                       </HuntrButton>
-                      <span className={`text-center font-bold text-[var(--ui-text-primary)] tabular-nums border-x border-[var(--ui-border)] ${
-                        mobile ? "min-w-[44px] py-2 text-base" : "min-w-[24px] py-0.5 text-xs"
-                      }`}>
-                        {item.qty}
-                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={item.qty}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          onCartChange(setCartItemQty(item.id, val === "" ? 1 : Number(val)));
+                        }}
+                        className={`text-center font-bold text-[var(--ui-text-primary)] tabular-nums border-x border-[var(--ui-border)] bg-transparent outline-none focus:bg-orange-500/10 ${
+                          mobile ? "w-[56px] py-2 text-base" : "w-[36px] py-0.5 text-xs"
+                        }`}
+                      />
                       <HuntrButton
                         type="button"
                         onClick={() => handleQty(item.id, 1)}

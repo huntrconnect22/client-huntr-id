@@ -61,7 +61,7 @@ interface AgenticPrDraftTabProps {
   activeCompanyName?: string;
   isCreatingPr: boolean;
   onCreatePr: (config: PrConfig) => void;
-  onUpdateItemQty: (index: number, quantity: number) => void;
+  onUpdateItemQty: (index: number, quantity: number | "") => void;
   formatRupiah: (num: number) => string;
   getTotalBudget: (draft?: any, intent?: any) => number;
   selectedWinner?: any;
@@ -402,19 +402,24 @@ export default function AgenticPrDraftTab({
                           <TableCell align="center">
                             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
                               <TextField
-                                type="number"
+                                type="text"
+                                inputMode="numeric"
                                 size="small"
-                                value={item.qty || 1}
-                                onChange={(e) =>
-                                  onUpdateItemQty(
-                                    idx,
-                                    Math.max(1, Number.parseInt(e.target.value, 10) || 1),
-                                  )
-                                }
+                                placeholder="1"
+                                value={item.qty === "" || item.qty === 0 ? "" : item.qty}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                  const raw = e.target.value.replace(/\D/g, "");
+                                  onUpdateItemQty(idx, raw === "" ? "" : Number(raw));
+                                }}
+                                onBlur={() => {
+                                  if (item.qty === "" || Number(item.qty) <= 0) {
+                                    onUpdateItemQty(idx, 1);
+                                  }
+                                }}
                                 slotProps={{
                                   htmlInput: {
-                                    min: 1,
-                                    style: { textAlign: "center", width: 44, padding: "4px 6px" },
+                                    style: { textAlign: "center", width: 54, padding: "4px 6px" },
                                   },
                                 }}
                               />

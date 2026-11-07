@@ -277,7 +277,7 @@ export function useCheckout() {
 
   const cartTotal = useMemo(() => {
     return cart.reduce(
-      (sum, item) => sum + Number(item.estimated_price || 0) * item.qty,
+      (sum, item) => sum + Number(item.estimated_price || 0) * (Number(item.qty) || 0),
       0,
     );
   }, [cart]);
@@ -307,11 +307,13 @@ export function useCheckout() {
     });
   }, []);
 
-  const updateQuantity = useCallback((id: string, qty: number) => {
+  const updateQuantity = useCallback((id: string, qty: number | "") => {
     setCart((items) => {
-      const newCart = items.map((item) =>
-        item.id === id ? { ...item, qty: Math.max(1, qty || 1) } : item,
-      );
+      const newCart: CartItem[] = items.map((item) => {
+        if (item.id !== id) return item;
+        const finalQty: number | "" = qty === "" ? "" : Math.max(0, Number(qty));
+        return { ...item, qty: finalQty };
+      });
       localStorage.setItem("huntr_cart", JSON.stringify(newCart));
       return newCart;
     });
@@ -325,7 +327,7 @@ export function useCheckout() {
         manual: true,
         name: "",
         uom: "unit",
-        qty: 1,
+        qty: "",
         estimated_price: 0,
         line_type: "goods",
       },
@@ -341,7 +343,7 @@ export function useCheckout() {
         line_type: "service",
         name: "",
         uom: "lot",
-        qty: 1,
+        qty: "",
         estimated_price: 0,
         service_scope: "",
         acceptance_criteria: "",
@@ -459,6 +461,14 @@ export function useCheckout() {
         return;
       }
 
+      for (const item of cart) {
+        const itemQty = Number(item.qty) || 0;
+        if (itemQty <= 0) {
+          setError(`Item "${item.name || "Item"}" harus memiliki kuantitas/volume minimal 1.`);
+          return;
+        }
+      }
+
       cart.forEach((item, index) => {
         formData.append(`items[${index}][line_type]`, item.line_type || "goods");
         if (item.manual) {
@@ -487,7 +497,7 @@ export function useCheckout() {
         } else {
           formData.append(`items[${index}][catalogue_id]`, item.id);
         }
-        formData.append(`items[${index}][qty]`, item.qty.toString());
+        formData.append(`items[${index}][qty]`, (Number(item.qty) || 1).toString());
         formData.append(
           `items[${index}][estimated_price]`,
           (item.estimated_price || 0).toString(),

@@ -13,7 +13,9 @@ import {
   CompareRequestedItems,
   CompareAiAnalysis,
   VendorRankingsList,
+  ComparisonMatrixTable,
 } from "../components/compare-review";
+import { printComparisonForm } from "../utils/printComparisonForm";
 
 export default function CompareReview() {
   const { id } = useParams<{ id: string }>();
@@ -57,6 +59,16 @@ export default function CompareReview() {
     },
     [user, navigate]
   );
+
+  const handlePrint = useCallback(() => {
+    printComparisonForm({
+      request,
+      rankings,
+      awardedProposal,
+      overallAnalysis,
+      companyName: user?.company?.name || request?.company?.name,
+    });
+  }, [request, rankings, awardedProposal, overallAnalysis, user]);
 
   // Loading state
   if (loading) {
@@ -116,7 +128,11 @@ export default function CompareReview() {
       subtitle={`PR #${String(request.id).substring(0, 8).toUpperCase()}`}
     >
       {/* Header Navigation */}
-      <CompareReviewHeader title={request.title} onRefresh={refresh} />
+      <CompareReviewHeader
+        title={request.title}
+        onRefresh={refresh}
+        onPrint={handlePrint}
+      />
 
       {/* Main Content */}
       <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
@@ -130,6 +146,15 @@ export default function CompareReview() {
 
         {/* Overall AI Analysis */}
         <CompareAiAnalysis analysis={overallAnalysis} />
+
+        {/* Full Comparison Matrix Table (Form Komparasi / 比较表) */}
+        <ComparisonMatrixTable
+          request={request}
+          rankings={rankings}
+          awardedProposal={awardedProposal}
+          overallAnalysis={overallAnalysis}
+          companyName={user?.company?.name || request?.company?.name}
+        />
 
         {/* Requested Items List */}
         <CompareRequestedItems items={request.items || []} />
