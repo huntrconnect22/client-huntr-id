@@ -12,14 +12,13 @@ import {
 } from "lucide-react";
 import { WmsWorkflowGuide } from "../components/WmsOverview";
 import { formatQuantity, toNumeric } from "../data/quantity";
-import {
-  Table as HuntrTable,
-  TableHead as HuntrTableHead,
-  TableRow as HuntrTableRow,
-  TableHeaderCell as HuntrTableHeaderCell,
-  TableBody as HuntrTableBody,
-  TableCell as HuntrTableCell,
-} from "~/shared/ui/Table";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Button from "@mui/material/Button";
 
 interface Props {
   cardClass: string;
@@ -243,18 +242,18 @@ export function WmsStockTab({
                     </span>
                   </div>
                   <div className="overflow-x-auto">
-                    <HuntrTable className="w-full min-w-[850px] text-left text-sm">
-                      <HuntrTableHead className="bg-[var(--ui-bg-input)] text-[10px] uppercase tracking-[0.08em] text-[var(--ui-text-muted)]">
-                        <HuntrTableRow>
-                          <HuntrTableHeaderCell className="px-4 py-3 font-semibold">Item</HuntrTableHeaderCell>
-                          <HuntrTableHeaderCell className="py-3 font-semibold">Location</HuntrTableHeaderCell>
-                          <HuntrTableHeaderCell className="py-3 text-right font-semibold">On hand</HuntrTableHeaderCell>
-                          <HuntrTableHeaderCell className="py-3 text-right font-semibold">Reserved</HuntrTableHeaderCell>
-                          <HuntrTableHeaderCell className="py-3 text-right font-semibold">Available</HuntrTableHeaderCell>
-                          <HuntrTableHeaderCell className="px-4 py-3 font-semibold">Ambang Batas & Lead Time</HuntrTableHeaderCell>
-                        </HuntrTableRow>
-                      </HuntrTableHead>
-                      <HuntrTableBody>
+                    <TableContainer><Table size="small" sx={{ minWidth: 850 }}>
+                      <TableHead sx={{ bgcolor: "action.hover" }}>
+                        <TableRow>
+                          <TableCell sx={{ px: 2, py: 1.5, fontWeight: 600, fontSize: "0.625rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Item</TableCell>
+                          <TableCell sx={{ py: 1.5, fontWeight: 600, fontSize: "0.625rem", textTransform: "uppercase" }}>Location</TableCell>
+                          <TableCell align="right" sx={{ py: 1.5, fontWeight: 600, fontSize: "0.625rem", textTransform: "uppercase" }}>On hand</TableCell>
+                          <TableCell align="right" sx={{ py: 1.5, fontWeight: 600, fontSize: "0.625rem", textTransform: "uppercase" }}>Reserved</TableCell>
+                          <TableCell align="right" sx={{ py: 1.5, fontWeight: 600, fontSize: "0.625rem", textTransform: "uppercase" }}>Available</TableCell>
+                          <TableCell sx={{ px: 2, py: 1.5, fontWeight: 600, fontSize: "0.625rem", textTransform: "uppercase" }}>Ambang Batas &amp; Lead Time</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {items.map((x: any) => {
                           const available =
                             toNumeric(x.on_hand) - toNumeric(x.allocated);
@@ -267,11 +266,8 @@ export function WmsStockTab({
                               : toNumeric(x.lead_time_days || 0);
 
                           return (
-                            <HuntrTableRow
-                              key={x.id}
-                              className="border-t border-[var(--ui-border)] hover:bg-[var(--ui-bg-input)]/60 transition-colors"
-                            >
-                              <HuntrTableCell className="px-4 py-3 align-middle">
+                            <TableRow key={x.id} hover>
+                              <TableCell sx={{ px: 2, py: 1.5, verticalAlign: "middle" }}>
                                 <p className="font-semibold text-[var(--ui-text-primary)]">
                                   {x.item_name}
                                 </p>
@@ -288,25 +284,25 @@ export function WmsStockTab({
                                     </span>
                                   )}
                                 </div>
-                              </HuntrTableCell>
-                              <HuntrTableCell className="py-3 align-middle">
+                              </TableCell>
+                              <TableCell sx={{ py: 1.5, verticalAlign: "middle" }}>
                                 <p className="font-medium text-[var(--ui-text-primary)]">{x.warehouse_name}</p>
                                 <p className="mt-0.5 font-mono text-xs text-[var(--ui-text-muted)]">
                                   {x.bin_location || "No bin assigned"}
                                 </p>
-                              </HuntrTableCell>
-                              <HuntrTableCell className="py-3 text-right align-middle tabular-nums">
+                              </TableCell>
+                              <TableCell align="right" sx={{ py: 1.5, verticalAlign: "middle", fontVariantNumeric: "tabular-nums" }}>
                                 <span className="font-semibold text-[var(--ui-text-primary)]">
                                   {formatQuantity(x.on_hand)}
                                 </span>{" "}
                                 <span className="text-xs text-[var(--ui-text-muted)]">
                                   {x.uom || "unit"}
                                 </span>
-                              </HuntrTableCell>
-                              <HuntrTableCell className="py-3 text-right align-middle tabular-nums text-[var(--ui-text-secondary)]">
+                              </TableCell>
+                              <TableCell align="right" sx={{ py: 1.5, verticalAlign: "middle", color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
                                 {formatQuantity(x.allocated)}
-                              </HuntrTableCell>
-                              <HuntrTableCell className="py-3 text-right align-middle tabular-nums">
+                              </TableCell>
+                              <TableCell align="right" sx={{ py: 1.5, verticalAlign: "middle", fontVariantNumeric: "tabular-nums" }}>
                                 <span
                                   className={
                                     belowReorder
@@ -316,8 +312,8 @@ export function WmsStockTab({
                                 >
                                   {formatQuantity(available)}
                                 </span>
-                              </HuntrTableCell>
-                              <HuntrTableCell className="px-4 py-3 align-middle">
+                              </TableCell>
+                              <TableCell sx={{ px: 2, py: 1.5, verticalAlign: "middle" }}>
                                 <div className="flex items-center justify-between gap-3">
                                   <div className="space-y-0.5">
                                     <div className="flex items-center gap-1.5 text-xs">
@@ -359,12 +355,12 @@ export function WmsStockTab({
                                     )}
                                   </div>
                                 </div>
-                              </HuntrTableCell>
-                            </HuntrTableRow>
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                      </HuntrTableBody>
-                    </HuntrTable>
+                      </TableBody>
+                    </Table></TableContainer>
                   </div>
                 </div>
               );

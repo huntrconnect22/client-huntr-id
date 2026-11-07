@@ -1,4 +1,3 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useState } from "react";
 import type { EnterpriseCatalog } from "../../../lib/api/subscription";
 import type { SubscriptionPurchase } from "./SubscriptionCheckout";
@@ -35,22 +34,22 @@ export function EnterprisePlanOptions({
         className="inline-flex border border-[var(--ui-border)] p-0.5 text-xs"
         aria-label="Periode pembayaran"
       >
-        <HuntrButton
+        <button
           type="button"
           onClick={() => setAnnual(false)}
           aria-pressed={!annual}
-          className={`px-3 py-2 ${!annual ? "bg-orange-600 !text-white" : "text-[var(--ui-text-secondary)]"}`}
+          className={`px-3 py-2 border-0 cursor-pointer ${!annual ? "bg-orange-600 !text-white" : "bg-transparent text-[var(--ui-text-secondary)]"}`}
         >
           Bulanan
-        </HuntrButton>
-        <HuntrButton
+        </button>
+        <button
           type="button"
           onClick={() => setAnnual(true)}
           aria-pressed={annual}
-          className={`px-3 py-2 ${annual ? "bg-orange-600 !text-white" : "text-[var(--ui-text-secondary)]"}`}
+          className={`px-3 py-2 border-0 cursor-pointer ${annual ? "bg-orange-600 !text-white" : "bg-transparent text-[var(--ui-text-secondary)]"}`}
         >
           Tahunan
-        </HuntrButton>
+        </button>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {catalog.plans.map((plan, index) => {
@@ -128,7 +127,7 @@ export function EnterprisePlanOptions({
                     : "CRM Enterprise tersedia di Pro"}
                 </li>
               </ul>
-              <HuntrButton
+              <button
                 type="button"
                 disabled={disabled}
                 onClick={() =>
@@ -141,12 +140,12 @@ export function EnterprisePlanOptions({
                     unit_price: amount,
                   })
                 }
-                className="border border-orange-500 px-3 py-2 text-xs font-semibold text-orange-500 hover:bg-orange-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border border-orange-500 bg-transparent px-3 py-2 text-xs font-semibold text-orange-500 hover:bg-orange-500/5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
               >
                 {!catalog.checkout_enabled
                   ? "Checkout belum tersedia"
                   : buttonLabel}
-              </HuntrButton>
+              </button>
             </article>
           );
         })}
@@ -165,5 +164,3 @@ export function EnterprisePlanOptions({
     </div>
   );
 }
-
-

@@ -1,6 +1,10 @@
-import { Input as HuntrInput } from "~/shared/ui/Fields";
-import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
+import Button from "@mui/material/Button";
 import React, { useEffect, useState } from "react";
 import Layout from "~/components/Layout";
 import { apiGet } from "~/lib/api";
@@ -128,7 +132,7 @@ export default function PurchaseRequisitionAudit() {
         {/* Search */}
         <div className="relative">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]" />
-          <HuntrInput
+          <input
             type="text"
             placeholder="Search by title, ID, creator, or approver..."
             value={searchTerm}
@@ -151,59 +155,59 @@ export default function PurchaseRequisitionAudit() {
           <>
             {/* Desktop table */}
             <div className="hidden lg:block rounded-lg border border-[var(--ui-border)] overflow-hidden bg-[var(--ui-bg-card)]">
-              <HuntrTable className="w-full text-sm border-collapse">
-                <HuntrTableHead>
-                  <HuntrTableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
-                    <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[100px]">PR ID</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">Title</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[130px]">Status</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[150px]">Created</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[150px]">Approved</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[160px]">Winner</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] w-[120px]">Company</HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-4 py-2.5 w-[40px]" />
-                  </HuntrTableRow>
-                </HuntrTableHead>
-                <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
+              <TableContainer><Table size="small">
+                <TableHead>
+                  <TableRow className="border-b border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>PR ID</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Title</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Created</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Approved</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Winner</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase" }}>Company</TableCell>
+                    <TableCell sx={{ width: 40 }} />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {filteredRequests.map((req) => {
                     const s = getStatus(req.status);
                     const winner = getWinner(req);
                     return (
-                      <HuntrTableRow
+                      <TableRow
                         key={req.id}
                         onClick={() => navigate(`/my-pr/${req.id}`)}
                         className="hover:bg-[var(--ui-bg-input)] transition-colors cursor-pointer group"
                       >
-                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
+                        <TableCell className="px-4 py-2.5 whitespace-nowrap">
                           <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">
                             #{String(req.id ?? "").substring(0, 8).toUpperCase()}
                           </span>
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-4 py-2.5">
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5">
                           <div className="font-semibold text-[var(--ui-text-primary)] text-sm line-clamp-1">{req.title}</div>
                           <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
                             {req.items?.length ?? 0} item{(req.items?.length ?? 0) !== 1 ? "s" : ""}
                           </div>
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5 whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold ${s.bg} ${s.color}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                             {s.label}
                           </span>
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-4 py-2.5">
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5">
                           <div className="text-xs font-semibold text-[var(--ui-text-primary)]">{req.user?.name || "Unknown"}</div>
                           <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">{formatDateTime(req.created_at)}</div>
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-4 py-2.5">
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5">
                           <div className="text-xs font-semibold text-[var(--ui-text-primary)]">
                             {req.approved_by || "—"}
                           </div>
                           <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
                             {req.approved_at ? formatDateTime(req.approved_at) : "Not approved"}
                           </div>
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-4 py-2.5">
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5">
                           {winner ? (
                             <>
                               <div className="text-xs font-semibold text-orange-400">
@@ -218,23 +222,23 @@ export default function PurchaseRequisitionAudit() {
                               {req.status === "active" ? "Tender open" : "No winner"}
                             </span>
                           )}
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-4 py-2.5 whitespace-nowrap">
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5 text-xs text-[var(--ui-text-secondary)]">
                             <Building2 size={12} className="text-[var(--ui-text-muted)]" />
                             <span className="line-clamp-1">{req.company?.name || "—"}</span>
                           </div>
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-3 py-2.5 text-right">
+                        </TableCell>
+                        <TableCell className="px-3 py-2.5 text-right">
                           <span className="w-7 h-7 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] inline-flex items-center justify-center text-[var(--ui-text-muted)] group-hover:text-orange-500 group-hover:border-orange-500/30 transition-all">
                             <ChevronRight size={13} />
                           </span>
-                        </HuntrTableCell>
-                      </HuntrTableRow>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </HuntrTableBody>
-              </HuntrTable>
+                </TableBody>
+              </Table></TableContainer>
               <div className="px-4 py-2 border-t border-[var(--ui-border)] bg-[var(--ui-bg-input)]">
                 <span className="text-xs text-[var(--ui-text-muted)]">
                   {filteredRequests.length} record{filteredRequests.length !== 1 ? "s" : ""}
@@ -249,7 +253,7 @@ export default function PurchaseRequisitionAudit() {
                 const s = getStatus(req.status);
                 const winner = getWinner(req);
                 return (
-                  <HuntrButton
+                  <button
                     key={req.id}
                     type="button"
                     onClick={() => navigate(`/my-pr/${req.id}`)}
@@ -302,7 +306,7 @@ export default function PurchaseRequisitionAudit() {
                         sub={`${req.items?.length ?? 0} items`}
                       />
                     </div>
-                  </HuntrButton>
+                  </button>
                 );
               })}
             </div>

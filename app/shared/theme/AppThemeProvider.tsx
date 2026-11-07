@@ -1,7 +1,9 @@
 import { useMemo, type ReactNode } from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import GlobalStyles from "@mui/material/GlobalStyles";
-import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
+import createCache from "@emotion/cache";
+import { CacheProvider } from "@emotion/react";
 import { createAppTheme } from "./createAppTheme";
 import { legacyTokens } from "./legacyTokens";
 
@@ -16,25 +18,29 @@ const tokenStyles = {
   "@media (max-width: 768px)": { ":root": { "--ui-layout-padding": "16px" } },
 };
 
+let clientMuiCache: ReturnType<typeof createCache> | undefined;
+
+function getMuiCache() {
+  if (typeof document === "undefined") {
+    return createCache({ key: "mui", prepend: true });
+  }
+  if (!clientMuiCache) {
+    clientMuiCache = createCache({ key: "mui", prepend: true });
+  }
+  return clientMuiCache;
+}
+
 export function AppThemeProvider({ mode, children }: { mode: "light" | "dark"; children: ReactNode }) {
   const theme = useMemo(() => themes[mode], [mode]);
+  const cache = useMemo(() => getMuiCache(), []);
+
   return (
-    <>
-    {/*
-      Keep component defaults before the application stylesheet.  MUI's
-      generated rules otherwise win over Tailwind utility classes in the
-      production SSR bundle (for example `flex`, `block`, padding and width),
-      leaving dialogs and public/auth pages visually collapsed.  Do not use
-      `enableCssLayer` here: it makes Tailwind's base layer outrank MUI in the
-      opposite direction.
-    */}
-    <StyledEngineProvider injectFirst>
+    <CacheProvider value={cache}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <GlobalStyles styles={tokenStyles} />
         {children}
       </ThemeProvider>
-    </StyledEngineProvider>
-    </>
+    </CacheProvider>
   );
 }

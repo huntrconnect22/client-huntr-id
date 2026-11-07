@@ -51,12 +51,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
-        <meta name="emotion-insertion-point" content="" />
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <CanonicalLink />
         {/* Restore theme before first paint — fallback to system preference */}
         <script
+          async
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('huntr_theme');if(t!=='light'&&t!=='dark')t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`,
           }}

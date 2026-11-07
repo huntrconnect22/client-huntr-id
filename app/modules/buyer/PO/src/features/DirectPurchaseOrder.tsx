@@ -1,8 +1,15 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Select as HuntrSelect, Textarea as HuntrTextarea, Input as HuntrInput } from "~/shared/ui/Fields";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, FileText, Loader2, Package, Printer } from "lucide-react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Grid from "@mui/material/Grid";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import { ArrowLeft, FileText, Package, Printer } from "lucide-react";
 import Layout from "~/components/Layout";
 import { apiGet, createDirectPurchaseOrder } from "~/lib/api";
 import { openAuthenticatedDocument } from "~/lib/open-auth-document";
@@ -90,9 +97,9 @@ export default function DirectPurchaseOrder() {
   if (loading) {
     return (
       <Layout title="Create direct PO" subtitle="Loading approved PRs…">
-        <div className="flex justify-center py-16">
-          <Loader2 className="animate-spin text-orange-500" />
-        </div>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress color="primary" />
+        </Box>
       </Layout>
     );
   }
@@ -103,30 +110,34 @@ export default function DirectPurchaseOrder() {
         title="Direct PO created"
         subtitle="The purchase order is ready to print."
       >
-        <div className="max-w-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5">
+        <Paper variant="outlined" sx={{ maxWidth: 560, p: 3, borderRadius: 2 }}>
           <FileText className="text-orange-500" size={28} />
-          <h2 className="mt-3 text-lg font-bold">{createdPo.po_number}</h2>
-          <p className="mt-1 text-sm text-[var(--ui-text-secondary)]">
+          <Typography variant="h6" sx={{ mt: 1.5, fontWeight: 700 }}>
+            {createdPo.po_number}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
             This PO is linked to the approved direct PR and cannot be created
             again from it.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <HuntrButton
-              type="button"
+          </Typography>
+          <Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+            <Button
+              variant="contained"
+              color="primary"
               onClick={() => void openAuthenticatedDocument(`/api/orders/${createdPo.id}/print`)}
-              className="inline-flex items-center gap-2 bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
+              startIcon={<Printer size={16} />}
+              sx={{ textTransform: "none", fontWeight: 600 }}
             >
-              <Printer size={15} /> Print PO
-            </HuntrButton>
-            <HuntrButton
-              type="button"
+              Print PO
+            </Button>
+            <Button
+              variant="outlined"
               onClick={() => navigate("/orders")}
-              className="border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-4 py-2 text-sm font-semibold"
+              sx={{ textTransform: "none", fontWeight: 600 }}
             >
               View purchase orders
-            </HuntrButton>
-          </div>
-        </div>
+            </Button>
+          </Box>
+        </Paper>
       </Layout>
     );
   }
@@ -136,132 +147,128 @@ export default function DirectPurchaseOrder() {
       title="Create direct PO"
       subtitle="Create an urgent PO from an approved direct PR."
     >
-      <div className="max-w-3xl space-y-4">
-        <HuntrButton
-          type="button"
-          onClick={() => navigate("/orders")}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--ui-text-secondary)]"
-        >
-          <ArrowLeft size={14} /> Purchase orders
-        </HuntrButton>
-        <form
-          onSubmit={submit}
-          className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 space-y-4"
-        >
-          <div>
-            <h2 className="font-bold">PO details</h2>
-            <p className="mt-1 text-xs text-[var(--ui-text-muted)]">
-              Choose one approved direct PR. A PR can only create one PO.
-            </p>
-          </div>
-          <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
-            Approved direct PR
-            <HuntrSelect
-              required
-              value={rfqId}
-              onChange={(event) => setRfqId(event.target.value)}
-              className="mt-1 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm text-[var(--ui-text-primary)]"
-            >
-              <option value="">Select PR</option>
-              {requests.map((request) => (
-                <option key={request.id} value={request.id}>
-                  {request.title} · #
-                  {String(request.id).slice(0, 8).toUpperCase()}
-                </option>
-              ))}
-            </HuntrSelect>
-          </label>
-          {selectedRequest && (
-            <div className="border-l-2 border-orange-500 bg-orange-500/5 px-3 py-2 text-xs text-[var(--ui-text-secondary)]">
-              <span className="font-semibold">
-                {selectedRequest.items?.length || 0} items
-              </span>{" "}
-              will be copied from this approved PR. Total uses its approved
-              estimated price.
-            </div>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field
-              label="Vendor name *"
-              value={form.vendor_name}
-              onChange={(vendor_name) => setForm({ ...form, vendor_name })}
-              required
-            />
-            <Field
-              label="Expected receipt"
-              type="date"
-              value={form.expected_receiving_date}
-              onChange={(expected_receiving_date) =>
-                setForm({ ...form, expected_receiving_date })
-              }
-            />
-            <Field
-              label="Purchase category"
-              value={form.purchase_category}
-              onChange={(purchase_category) =>
-                setForm({ ...form, purchase_category })
-              }
-            />
-            <Field
-              label="Purchase type"
-              value={form.purchase_type}
-              onChange={(purchase_type) => setForm({ ...form, purchase_type })}
-            />
-          </div>
-          <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
-            Vendor address
-            <HuntrTextarea
-              value={form.vendor_address}
-              onChange={(event) =>
-                setForm({ ...form, vendor_address: event.target.value })
-              }
-              rows={2}
-              className="mt-1 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm text-[var(--ui-text-primary)]"
-            />
-          </label>
-          {error && (
-            <p className="border-l-2 border-red-500 bg-red-500/5 px-3 py-2 text-xs text-red-600">
-              {error}
-            </p>
-          )}
-          <div className="flex justify-end border-t border-[var(--ui-border)] pt-3">
-            <HuntrButton
-              disabled={saving || !rfqId}
-              className="inline-flex items-center gap-2 bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              {saving && <Loader2 size={15} className="animate-spin" />} Create
-              PO
-            </HuntrButton>
-          </div>
-        </form>
-      </div>
-    </Layout>
-  );
-}
+      <Box sx={{ maxWidth: 768, display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box>
+          <Button
+            size="small"
+            onClick={() => navigate("/orders")}
+            startIcon={<ArrowLeft size={14} />}
+            sx={{ textTransform: "none", color: "text.secondary", fontWeight: 600 }}
+          >
+            Purchase orders
+          </Button>
+        </Box>
 
-function Field({
-  label,
-  value,
-  onChange,
-  required,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-  type?: string;
-}) {
-  return (
-    <label className="block text-xs font-semibold text-[var(--ui-text-secondary)]">
-      {label}
-      <HuntrInput
-        type={type}
-        required={required}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-3 py-2 text-sm text-[var(--ui-text-primary)]"
-      />
-    </label>
+        <Paper
+          component="form"
+          variant="outlined"
+          onSubmit={submit}
+          sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", gap: 2.5 }}
+        >
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              PO details
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Choose one approved direct PR. A PR can only create one PO.
+            </Typography>
+          </Box>
+
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Approved direct PR"
+            required
+            value={rfqId}
+            onChange={(event) => setRfqId(event.target.value)}
+          >
+            <MenuItem value="">Select PR</MenuItem>
+            {requests.map((request) => (
+              <MenuItem key={request.id} value={request.id}>
+                {request.title} · #{String(request.id).slice(0, 8).toUpperCase()}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          {selectedRequest && (
+            <Alert severity="info" sx={{ py: 0.5 }}>
+              <Typography variant="caption" sx={{ display: "block" }}>
+                <strong>{selectedRequest.items?.length || 0} items</strong> will be copied from this approved PR. Total uses its approved estimated price.
+              </Typography>
+            </Alert>
+          )}
+
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Vendor name"
+                required
+                value={form.vendor_name}
+                onChange={(e) => setForm({ ...form, vendor_name: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Expected receipt"
+                type="date"
+                value={form.expected_receiving_date}
+                onChange={(e) => setForm({ ...form, expected_receiving_date: e.target.value })}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Purchase category"
+                value={form.purchase_category}
+                onChange={(e) => setForm({ ...form, purchase_category: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Purchase type"
+                value={form.purchase_type}
+                onChange={(e) => setForm({ ...form, purchase_type: e.target.value })}
+              />
+            </Grid>
+          </Grid>
+
+          <TextField
+            fullWidth
+            size="small"
+            multiline
+            rows={2}
+            label="Vendor address"
+            value={form.vendor_address}
+            onChange={(event) =>
+              setForm({ ...form, vendor_address: event.target.value })
+            }
+          />
+
+          {error && <Alert severity="error">{error}</Alert>}
+
+          <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 1, borderTop: 1, borderColor: "divider" }}>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={saving || !rfqId}
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
+              sx={{ textTransform: "none", fontWeight: 600 }}
+            >
+              {saving ? "Creating…" : "Create PO"}
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    </Layout>
   );
 }

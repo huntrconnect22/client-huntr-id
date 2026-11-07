@@ -1,15 +1,30 @@
-import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  IconButton,
+  CircularProgress,
+  Chip,
+  Alert,
+  Avatar,
+  InputAdornment,
+  Grid,
+} from "@mui/material";
 import {
   UserPlus,
   Users,
-  MessageCircle,
   Mail,
   Loader2,
   Settings,
   Check,
-  X,
+  X as CloseIcon,
 } from "lucide-react";
 import { getCompanyAccess } from "../../../lib/api/company";
 
@@ -107,17 +122,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
       // If current user is updating their own role, refresh their session
       if (currentUser && currentUser.id === userId) {
-        console.log(
-          "🔄 Updating current user role in session from",
-          currentUser.role,
-          "to",
-          newRole,
-        );
-
         const updatedUser = { ...currentUser, role: companyRoles.find((role) => role.id === newRole)?.name || newRole };
         localStorage.setItem("user_session", JSON.stringify(updatedUser));
 
-        // Trigger session manager update if available
         try {
           const { SessionManager } = await import("../../../lib/session");
           SessionManager.notify();
@@ -125,13 +132,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
           // SessionManager not available, that's ok
         }
 
-        // Force page reload for immediate visual update
         setTimeout(() => {
           window.location.reload();
         }, 1000);
       }
 
-      // Call parent callback to refresh team data
       if (onRoleChanged) {
         onRoleChanged();
       }
@@ -148,112 +153,172 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     }
   };
 
-  const getValidRoles = () => companyRoles.map((role) => ({ value: role.id, label: role.name }));
-  return (
-    <div className="flex flex-col gap-6 w-full animate-in fade-in duration-500">
-      {/* Invite Section */}
-      <div className="bg-orange-500/5 border border-orange-500/10 rounded-xl p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white shadow shadow-orange-500/20">
-            <UserPlus size={20} />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-[var(--ui-text-primary)] m-0">
-              Invite Team Member
-            </h3>
-            <p className="text-xs text-[var(--ui-text-muted)] mt-1">
-              Add colleagues to your workspace via Email invitation.
-            </p>
-          </div>
-        </div>
+  const validRoles = companyRoles.map((role) => ({ value: role.id, label: role.name }));
 
-        <form
-          onSubmit={handleInviteUser}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
-        >
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
-              Email Address <span className="text-red-500">*</span>
-            </span>
-            <div className="relative">
-              <Mail
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
-              />
-              <HuntrInput
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}>
+      {/* Invite Section */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 2.5, md: 3 },
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "rgba(239, 125, 0, 0.2)",
+          bgcolor: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(239, 125, 0, 0.05)"
+              : "rgba(239, 125, 0, 0.03)",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+          <Box
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: 2,
+              bgcolor: "primary.main",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(239, 125, 0, 0.25)",
+            }}
+          >
+            <UserPlus size={20} />
+          </Box>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
+              Undang Anggota Tim
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Tambahkan rekan kerja ke workspace perusahaan Anda melalui undangan email.
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box component="form" onSubmit={handleInviteUser}>
+          <Grid container spacing={2} sx={{ alignItems: "flex-end" }}>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <TextField
+                fullWidth
+                size="small"
                 type="email"
                 required
-                placeholder="colleague@company.com"
+                label="Alamat Email"
+                placeholder="rekan@perusahaan.com"
                 value={inviteForm.email}
                 onChange={(e) =>
                   setInviteForm({ ...inviteForm, email: e.target.value })
                 }
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Mail size={16} />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-            </div>
-          </div>
+            </Grid>
 
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold text-[var(--ui-text-muted)]">
-              Workspace Role <span className="text-red-500">*</span>
-            </span>
-            <HuntrSelect
-              required
-              value={inviteForm.role}
-              onChange={(e) =>
-                setInviteForm({ ...inviteForm, role: e.target.value })
-              }
-              className="w-full px-3 py-2 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border-input)] text-[var(--ui-text-primary)] text-sm focus:border-orange-500/50 outline-none transition-all appearance-none cursor-pointer"
-            >
-              <option value="">Select Role...</option>
-              {getValidRoles().map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
-            </HuntrSelect>
-          </div>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormControl fullWidth size="small" required>
+                <InputLabel id="team-invite-role-label">Role Workspace</InputLabel>
+                <Select
+                  labelId="team-invite-role-label"
+                  label="Role Workspace"
+                  value={inviteForm.role}
+                  onChange={(e) =>
+                    setInviteForm({ ...inviteForm, role: e.target.value })
+                  }
+                >
+                  <MenuItem value="">
+                    <em>Pilih Role...</em>
+                  </MenuItem>
+                  {validRoles.map((role) => (
+                    <MenuItem key={role.value} value={role.value}>
+                      {role.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
-          <HuntrButton
-            type="submit"
-            disabled={isInviting}
-            className="h-[38px] px-4 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50"
-          >
-            {isInviting ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <>
-                <Mail size={16} /> Send Email Invite
-              </>
-            )}
-          </HuntrButton>
-        </form>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Button
+                fullWidth
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isInviting}
+                startIcon={
+                  isInviting ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <Mail size={16} />
+                  )
+                }
+                sx={{
+                  height: 40,
+                  fontWeight: 600,
+                  textTransform: "none",
+                  borderRadius: 2,
+                }}
+              >
+                {isInviting ? "Mengirim..." : "Kirim Undangan"}
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
 
         {inviteError && (
-          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-medium">
+          <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
             {inviteError}
-          </div>
+          </Alert>
         )}
         {inviteSuccess && (
-          <div className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-medium">
+          <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>
             {inviteSuccess}
-          </div>
+          </Alert>
         )}
-      </div>
+      </Paper>
 
       {/* List Section */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-[var(--ui-bg-input)] text-orange-500">
-              <Users size={16} />
-            </div>
-            <h3 className="text-base font-bold text-[var(--ui-text-primary)] m-0">
-              Active Team
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-xs font-semibold">
-              {teamMembers.length} Members
-            </span>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 2,
+                bgcolor: "action.hover",
+                color: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Users size={18} />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1rem" }}>
+              Anggota Tim Aktif
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Chip
+              label={`${teamMembers.length} Anggota`}
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ fontWeight: 600 }}
+            />
             {process.env.NODE_ENV === "development" && (
-              <HuntrButton
+              <Button
+                size="small"
+                variant="outlined"
+                color="info"
                 onClick={async () => {
                   try {
                     const { diagnoseRoleInconsistencies } =
@@ -261,135 +326,168 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                     const result = await diagnoseRoleInconsistencies(
                       company.id,
                     );
-                    console.log("Role Diagnosis:", result);
                     alert(
                       `Found ${result.inconsistencies_found} role inconsistencies. Check console for details.`,
                     );
                   } catch (err) {
-                    console.error("Diagnosis failed:", err);
                     alert("Diagnosis failed. Check console for details.");
                   }
                 }}
-                className="px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 text-xs font-semibold hover:bg-blue-500/20 transition-all"
-                title="Diagnose role inconsistencies"
+                sx={{ textTransform: "none", fontSize: "0.75rem", py: 0.2 }}
               >
-                Diagnose
-              </HuntrButton>
+                Diagnosa
+              </Button>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {teamLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-orange-500" />
-          </div>
+          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+            <CircularProgress size={32} color="primary" />
+          </Box>
         ) : teamMembers.length === 0 ? (
-          <div className="text-center py-10 bg-[var(--ui-bg-input)] rounded-xl border border-dashed border-[var(--ui-border)]">
-            <Users
-              size={32}
-              className="mx-auto text-[var(--ui-text-muted)] opacity-30 mb-2"
-            />
-            <p className="text-[var(--ui-text-muted)] text-xs font-medium">
-              No team members yet. Invite your first colleague!
-            </p>
-          </div>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 5,
+              textAlign: "center",
+              borderRadius: 3,
+              border: "1px dashed",
+              borderColor: "divider",
+              bgcolor: "action.hover",
+            }}
+          >
+            <Users size={32} style={{ opacity: 0.4, marginBottom: 8 }} />
+            <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 500 }}>
+              Belum ada anggota tim. Undang rekan kerja pertama Anda!
+            </Typography>
+          </Paper>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <Grid container spacing={2}>
             {teamMembers.map((member) => (
-              <div
-                key={member.id}
-                className="group p-4 rounded-xl bg-[var(--ui-bg-card)] border border-[var(--ui-border)] hover:border-orange-500/30 hover:shadow-md hover:shadow-orange-500/5 transition-all flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[var(--ui-bg-input)] flex items-center justify-center text-orange-500 font-bold text-lg group-hover:bg-orange-500 group-hover:text-white transition-all overflow-hidden shrink-0 border border-[var(--ui-border)]">
-                  {member.profile_photo_url ? (
-                    <img
-                      src={member.profile_photo_url}
-                      alt={member.name || "Member"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    member.name?.charAt(0).toUpperCase() || "?"
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-[var(--ui-text-primary)] truncate">
-                    {member.name || "Unnamed User"}
-                  </div>
-                  <div className="text-xs text-[var(--ui-text-muted)] truncate">
-                    {member.email || member.whatsapp}
-                  </div>
-                </div>
+              <Grid size={{ xs: 12, md: 6, xl: 4 }} key={member.id}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      boxShadow: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "0 4px 16px rgba(0,0,0,0.4)"
+                          : "0 4px 16px rgba(239, 125, 0, 0.08)",
+                    },
+                  }}
+                >
+                  <Avatar
+                    src={member.profile_photo_url}
+                    alt={member.name || "Member"}
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      bgcolor: "primary.main",
+                      fontWeight: 700,
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {member.name?.charAt(0).toUpperCase() || "?"}
+                  </Avatar>
 
-                {/* Role Section */}
-                <div className="flex items-center gap-2">
-                  {editingUserId === member.id ? (
-                    // Edit Mode
-                    <div className="flex items-center gap-1">
-                      <HuntrSelect
-                        value={newRole}
-                        onChange={(e) => setNewRole(e.target.value)}
-                        className="px-2 py-1 rounded-md text-[10px] font-semibold bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] focus:border-orange-500/50 outline-none"
-                        disabled={updatingRole}
-                      >
-                        {getValidRoles().map((role) => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </HuntrSelect>
-                      <HuntrButton
-                        onClick={() => handleRoleSave(member.id)}
-                        disabled={updatingRole}
-                        className="p-1 rounded text-emerald-500 hover:bg-emerald-500/10 transition-all disabled:opacity-50"
-                        title="Simpan perubahan"
-                      >
-                        {updatingRole ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
-                          <Check size={12} />
-                        )}
-                      </HuntrButton>
-                      <HuntrButton
-                        onClick={handleRoleCancel}
-                        disabled={updatingRole}
-                        className="p-1 rounded text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-50"
-                        title="Batal"
-                      >
-                        <X size={12} />
-                      </HuntrButton>
-                    </div>
-                  ) : (
-                    // View Mode
-                    <>
-                      <div
-                        className={`px-2 py-1 rounded-md text-[10px] font-semibold uppercase ${
-                          !member.role_id
-                            ? "bg-red-500/20 text-red-600 border border-red-500/30"
-                            : "bg-orange-500/10 text-orange-500"
-                        }`}
-                      >
-                        {member.role}
-                      </div>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 700, color: "text.primary" }}
+                      noWrap
+                    >
+                      {member.name || "Pengguna Tanpa Nama"}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary", display: "block" }}
+                      noWrap
+                    >
+                      {member.email || member.whatsapp}
+                    </Typography>
+                  </Box>
 
-                      {/* Only show edit button for managers (or company owners in the future) */}
-                      {/* Assuming current user role check will be added later */}
-                      <HuntrButton
-                        onClick={() => handleRoleEdit(member.id, member.role, member.role_id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-[var(--ui-text-muted)] hover:text-orange-500 hover:bg-orange-500/10 transition-all"
-                        title="Edit role"
-                      >
-                        <Settings size={12} />
-                      </HuntrButton>
-                    </>
-                  )}
-                </div>
-              </div>
+                  {/* Role Section */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    {editingUserId === member.id ? (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <FormControl size="small" sx={{ minWidth: 100 }}>
+                          <Select
+                            value={newRole}
+                            onChange={(e) => setNewRole(e.target.value)}
+                            disabled={updatingRole}
+                            sx={{ fontSize: "0.75rem", height: 32 }}
+                          >
+                            {validRoles.map((role) => (
+                              <MenuItem key={role.value} value={role.value} sx={{ fontSize: "0.8rem" }}>
+                                {role.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => handleRoleSave(member.id)}
+                          disabled={updatingRole}
+                          title="Simpan perubahan"
+                        >
+                          {updatingRole ? <Loader2 size={14} className="animate-spin" /> : <Check size={16} />}
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={handleRoleCancel}
+                          disabled={updatingRole}
+                          title="Batal"
+                        >
+                          <CloseIcon size={16} />
+                        </IconButton>
+                      </Box>
+                    ) : (
+                      <>
+                        <Chip
+                          label={member.role}
+                          size="small"
+                          color={!member.role_id ? "error" : "primary"}
+                          variant="outlined"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: "0.7rem",
+                            textTransform: "uppercase",
+                            height: 24,
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRoleEdit(member.id, member.role, member.role_id)}
+                          title="Edit role"
+                          sx={{
+                            color: "text.secondary",
+                            "&:hover": { color: "primary.main" },
+                          }}
+                        >
+                          <Settings size={15} />
+                        </IconButton>
+                      </>
+                    )}
+                  </Box>
+                </Paper>
+              </Grid>
             ))}
-          </div>
+          </Grid>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
-
-

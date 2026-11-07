@@ -1,5 +1,6 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 import { useLocation } from "react-router";
 import Swal from "sweetalert2";
 import {
@@ -50,9 +51,8 @@ import {
   updateWarehouse,
 } from "~/modules/shared/api/wms";
 
-const card = "rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-5 sm:p-6";
-const input =
-  "w-full rounded-lg bg-[var(--ui-bg-input)] px-3 py-2.5 text-sm text-[var(--ui-text-primary)] outline-none ring-1 ring-transparent focus:ring-2 focus:ring-[var(--ui-text-brand)]/25 transition-shadow";
+const card = "";
+const input = "";
 
 type PickerKind =
   | "receive_warehouse"
@@ -593,7 +593,9 @@ export default function WmsPage() {
                   {f}
                 </div>
               ))}
-              <HuntrButton
+              <Button
+                variant="contained"
+                color="primary"
                 disabled={busy}
                 onClick={() =>
                   run(async () => {
@@ -601,11 +603,12 @@ export default function WmsPage() {
                     setInstalled(true);
                   })
                 }
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ui-text-brand)] px-4 py-3 text-sm font-bold !text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                fullWidth
+                sx={{ mt: 2 }}
+                startIcon={busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
               >
-                {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-                Aktifkan WMS & Inventory
-              </HuntrButton>
+                Aktifkan WMS &amp; Inventory
+              </Button>
             </div>
           </div>
         </div>
@@ -618,16 +621,12 @@ export default function WmsPage() {
     >
       <div className="w-full space-y-4">
         {error && (
-          <div className="flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-            <AlertTriangle size={15} className="shrink-0" />
-            {error}
-          </div>
+          <Alert severity="error" onClose={() => setError("")}>{error}</Alert>
         )}
         {busy && (
-          <div className="flex items-center gap-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] px-3 py-2 text-xs text-[var(--ui-text-muted)]">
-            <Loader2 size={13} className="animate-spin text-[var(--ui-text-brand)]" />
+          <Alert severity="info" icon={<Loader2 size={13} className="animate-spin" />} sx={{ py: 0.5 }}>
             Menyimpan transaksi…
-          </div>
+          </Alert>
         )}
         {report?.low_stock_items && report.low_stock_items.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-amber-400/5 p-4">
@@ -644,13 +643,14 @@ export default function WmsPage() {
                 </p>
               </div>
             </div>
-            <HuntrButton
+            <Button
+              variant="contained"
               onClick={() => setTab("Reports")}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-amber-700 transition-colors"
+              sx={{ bgcolor: '#d97706', '&:hover': { bgcolor: '#b45309' }, fontSize: '0.75rem', fontWeight: 700 }}
+              startIcon={<ShoppingCart size={13} />}
             >
-              <ShoppingCart size={13} />
-              Review & Buat PO
-            </HuntrButton>
+              Review &amp; Buat PO
+            </Button>
           </div>
         )}
         {stockImportOpen && (

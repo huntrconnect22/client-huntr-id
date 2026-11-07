@@ -1,11 +1,26 @@
-import { Surface as HuntrSurface } from "~/shared/ui/Surface";
-import { Button as HuntrButton } from "~/shared/ui/Button";
-import { Input as HuntrInput, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import Chip from "@mui/material/Chip";
+import Grid from "@mui/material/Grid";
+import {
+  Package,
+  Calendar,
+  CheckCircle2,
+  FileCheck2,
+  ChevronRight,
+  Truck,
+  ArrowLeft,
+  ShoppingBag,
+} from "lucide-react";
 import Layout from "~/components/Layout";
 import { createReceipt, getOrders } from "~/lib/api";
-import { useNavigate } from "react-router";
-import { Package, Calendar, CheckCircle2, Loader2, FileCheck2, ChevronDown, ChevronRight, Truck, ArrowLeft, ShoppingBag } from "lucide-react";
 
 export default function Receipts() {
   const navigate = useNavigate();
@@ -66,8 +81,8 @@ export default function Receipts() {
         (po) =>
           po.status !== "completed" &&
           po.delivery_orders?.some(
-            (d: any) => d.status === "shipped" || d.status === "delivered"
-          )
+            (d: any) => d.status === "shipped" || d.status === "delivered",
+          ),
       )
     : [];
 
@@ -88,23 +103,29 @@ export default function Receipts() {
     // Validate: rejection reason required for any rejected items
     const itemsInspectionArray = Object.values(inspectionData);
     const missingReason = itemsInspectionArray.find(
-      (item: any) => (item.rejected_qty ?? 0) > 0 && !(item.rejection_reason ?? "").trim()
+      (item: any) =>
+        (item.rejected_qty ?? 0) > 0 && !(item.rejection_reason ?? "").trim(),
     );
     if (missingReason) {
-      setError(`Please provide a rejection reason for "${(missingReason as any).inventory_name}" before confirming.`);
+      setError(
+        `Please provide a rejection reason for "${(missingReason as any).inventory_name}" before confirming.`,
+      );
       return;
     }
 
     setConfirming(true);
     try {
-      const totalReceived = itemsInspectionArray.reduce((sum: number, item: any) => sum + item.received_qty, 0);
+      const totalReceived = itemsInspectionArray.reduce(
+        (sum: number, item: any) => sum + item.received_qty,
+        0,
+      );
 
       const data = await createReceipt({
         po_id: selectedPo.id,
         company_id: company.id,
         received_qty: totalReceived > 0 ? totalReceived : 1,
         handover_document_path: "system/auto",
-        items_inspection: itemsInspectionArray
+        items_inspection: itemsInspectionArray,
       });
       setConfirmed(data.receipt);
       fetchOrders();
@@ -121,223 +142,347 @@ export default function Receipts() {
     const allowed = isGrAllowed(selectedPo.expected_receiving_date);
 
     return (
-      <Layout title="Konfirmasi Penerimaan Barang" subtitle={`PO ${selectedPo.po_number} · ${selectedPo.vendor_name}`}>
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
-
+      <Layout
+        title="Konfirmasi Penerimaan Barang"
+        subtitle={`PO ${selectedPo.po_number} · ${selectedPo.vendor_name}`}
+      >
+        <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 3 }}>
           {/* Back */}
-          <HuntrButton
-            onClick={() => { setSelectedPo(null); setConfirmed(null); setError(null); }}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "var(--ui-text-secondary)", cursor: "pointer", fontSize: 14, fontWeight: 600, padding: 0 }}
-          >
-            <ArrowLeft size={18} /> Back to list
-          </HuntrButton>
+          <Box>
+            <Button
+              onClick={() => {
+                setSelectedPo(null);
+                setConfirmed(null);
+                setError(null);
+              }}
+              startIcon={<ArrowLeft size={18} />}
+              sx={{ color: "text.secondary", fontWeight: 600, textTransform: "none", p: 0 }}
+            >
+              Back to list
+            </Button>
+          </Box>
 
           {/* Success state */}
           {confirmed ? (
-            <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 24, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, textAlign: "center" }}>
-              <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,#22c55e,#16a34a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(34,197,94,0.3)" }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                bgcolor: "success.50",
+                borderColor: "success.light",
+                borderRadius: 4,
+                p: 5,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2.5,
+                textAlign: "center",
+              }}
+            >
+              <Box
+                sx={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: "50%",
+                  bgcolor: "success.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: 3,
+                }}
+              >
                 <CheckCircle2 size={36} color="#fff" />
-              </div>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: "var(--ui-text-primary)" }}>Goods Received Successfully!</h2>
-                <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ui-text-secondary)" }}>
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                  Goods Received Successfully!
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
                   Vendor has been notified. They will issue the final invoice shortly.
-                </p>
-              </div>
-              <HuntrButton
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={() => navigate("/orders")}
-                style={{ padding: "12px 32px", borderRadius: 14, background: "linear-gradient(135deg,#f97316,#f59e0b)", color: "#fff", border: "none", fontWeight: 800, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 12px rgba(249,115,22,0.25)" }}
+                sx={{ px: 4, py: 1.5, borderRadius: 2, fontWeight: 700, textTransform: "none" }}
               >
                 View All Orders
-              </HuntrButton>
-            </div>
+              </Button>
+            </Paper>
           ) : (
             <>
               {/* Delivery Info */}
-              <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, padding: 20, display: "flex", gap: 16, alignItems: "center" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(59,130,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Truck size={22} color="#3b82f6" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Delivery Information</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ui-text-primary)", marginTop: 4 }}>{selectedPo.vendor_name}</div>
+              <Paper
+                variant="outlined"
+                sx={{
+                  borderRadius: 3,
+                  p: 2.5,
+                  display: "flex",
+                  gap: 2,
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 2,
+                    bgcolor: "info.50",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Truck size={22} className="text-blue-500" />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Delivery Information
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 0.5 }}>
+                    {selectedPo.vendor_name}
+                  </Typography>
                   {do_?.tracking_number && (
-                    <div style={{ fontSize: 13, color: "#3b82f6", fontWeight: 600, marginTop: 2 }}>
+                    <Typography variant="body2" sx={{ color: "info.main", fontWeight: 600, mt: 0.25 }}>
                       Tracking: {do_.tracking_number}
-                    </div>
+                    </Typography>
                   )}
-                </div>
+                </Box>
                 {selectedPo.expected_receiving_date && (
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 11, color: "var(--ui-text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Est. Arrival</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: allowed ? "var(--ui-text-primary)" : "#f87171", fontWeight: 700, fontSize: 14, marginTop: 4 }}>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase" }}>
+                      Est. Arrival
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: allowed ? "text.primary" : "error.main", fontWeight: 700, mt: 0.5 }}>
                       <Calendar size={14} /> {selectedPo.expected_receiving_date}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
-              </HuntrSurface>
+              </Paper>
 
               {/* Date restriction warning */}
               {!allowed && (
-                <div style={{ padding: "12px 20px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, fontSize: 14, color: "#f87171", fontWeight: 600 }}>
-                  ⏰ Goods cannot be received yet. Expected arrival date is <strong>{selectedPo.expected_receiving_date}</strong>.
-                </div>
+                <Alert severity="warning">
+                  Goods cannot be received yet. Expected arrival date is <strong>{selectedPo.expected_receiving_date}</strong>.
+                </Alert>
               )}
 
               {/* Items to receive */}
-              <HuntrSurface style={{ background: "var(--ui-bg-card)", border: "1px solid var(--ui-border)", borderRadius: 20, overflow: "hidden" }}>
-                <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--ui-border-input)", display: "flex", alignItems: "center", gap: 10 }}>
-                  <ShoppingBag size={18} color="#f59e0b" />
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "var(--ui-text-primary)" }}>Received Items</span>
-                  <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ui-text-muted)", fontWeight: 600 }}>{selectedPo.items?.length || 0} item</span>
-                </div>
-                <div>
+              <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
+                <Box
+                  sx={{
+                    px: 2.5,
+                    py: 2,
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.25,
+                  }}
+                >
+                  <ShoppingBag size={18} className="text-amber-500" />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                    Received Items
+                  </Typography>
+                  <Typography variant="caption" sx={{ ml: "auto", color: "text.secondary", fontWeight: 600 }}>
+                    {selectedPo.items?.length || 0} item
+                  </Typography>
+                </Box>
+                <Box>
                   {selectedPo.items?.map((item: any, idx: number) => {
                     const idata = inspectionData[item.id] || {};
                     return (
-                      <div key={idx} style={{
-                        padding: "16px 20px",
-                        borderBottom: idx < (selectedPo.items.length - 1) ? "1px solid var(--ui-border-input)" : "none"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                          <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(249,115,22,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <Package size={18} color="#f97316" />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ui-text-primary)" }}>{item.inventory_name}</div>
-                            <div style={{ fontSize: 12, color: "var(--ui-text-muted)", marginTop: 2, fontFamily: "monospace" }}>{item.inventory_code}</div>
-                          </div>
-                          <div style={{ textAlign: "right" }}>
-                            <div style={{ fontSize: 18, fontWeight: 900, color: "#fdba74" }}>{item.qty}</div>
-                            <div style={{ fontSize: 12, color: "var(--ui-text-muted)" }}>{item.uom}</div>
-                          </div>
-                        </div>
-                        
+                      <Box
+                        key={idx}
+                        sx={{
+                          p: 2.5,
+                          borderBottom:
+                            idx < selectedPo.items.length - 1 ? 1 : 0,
+                          borderColor: "divider",
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 2,
+                              bgcolor: "warning.50",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Package size={18} className="text-orange-500" />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                              {item.inventory_name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", mt: 0.25, display: "block" }}>
+                              {item.inventory_code}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: "right" }}>
+                            <Typography variant="h6" sx={{ fontWeight: 900, color: "warning.main", lineHeight: 1 }}>
+                              {item.qty}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {item.uom}
+                            </Typography>
+                          </Box>
+                        </Box>
+
                         {/* Inspection Form for this item */}
                         {allowed && (
-                          <div style={{ marginTop: 16, background: "rgba(0,0,0,0.02)", padding: 16, borderRadius: 12, border: "1px dashed var(--ui-border-input)" }}>
-                            <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
-                              <div style={{ flex: 1 }}>
-                                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 6 }}>Accepted Qty</label>
-                                <HuntrInput
+                          <Paper
+                            variant="outlined"
+                            sx={{
+                              mt: 2,
+                              p: 2,
+                              borderRadius: 2,
+                              borderStyle: "dashed",
+                              bgcolor: "action.hover",
+                            }}
+                          >
+                            <Grid container spacing={2} sx={{ mb: 2 }}>
+                              <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  label="Accepted Qty"
                                   type="number"
-                                  min="0"
-                                  max={item.qty}
+                                  slotProps={{
+                                    htmlInput: { min: 0, max: item.qty },
+                                  }}
                                   value={idata.received_qty ?? item.qty}
                                   onChange={(e) => {
                                     const val = Number(e.target.value);
                                     setInspectionData((prev) => ({
                                       ...prev,
-                                      [item.id]: { ...prev[item.id], received_qty: val, rejected_qty: Number(item.qty) - val }
+                                      [item.id]: {
+                                        ...prev[item.id],
+                                        received_qty: val,
+                                        rejected_qty: Number(item.qty) - val,
+                                      },
                                     }));
                                   }}
-                                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--ui-border-input)", background: "var(--ui-bg)", color: "var(--ui-text-primary)", fontSize: 14 }}
                                 />
-                              </div>
-                              <div style={{ flex: 1 }}>
-                                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 6 }}>Rejected Qty</label>
-                                <HuntrInput
+                              </Grid>
+                              <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  label="Rejected Qty"
                                   type="number"
-                                  min="0"
-                                  max={item.qty}
+                                  slotProps={{
+                                    htmlInput: { min: 0, max: item.qty },
+                                  }}
                                   value={idata.rejected_qty ?? 0}
                                   onChange={(e) => {
                                     const val = Number(e.target.value);
                                     setInspectionData((prev) => ({
                                       ...prev,
-                                      [item.id]: { ...prev[item.id], rejected_qty: val, received_qty: Number(item.qty) - val }
+                                      [item.id]: {
+                                        ...prev[item.id],
+                                        rejected_qty: val,
+                                        received_qty: Number(item.qty) - val,
+                                      },
                                     }));
                                   }}
-                                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--ui-border-input)", background: "var(--ui-bg)", color: "var(--ui-text-primary)", fontSize: 14 }}
                                 />
-                              </div>
-                            </div>
-                            <div>
-                              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--ui-text-muted)", textTransform: "uppercase", marginBottom: 6 }}>Condition / Notes</label>
-                              <HuntrInput
-                                type="text"
-                                placeholder="E.g., Good, Box damaged, Missing parts"
-                                value={idata.condition ?? "Good"}
-                                onChange={(e) => {
-                                  setInspectionData((prev) => ({
-                                    ...prev,
-                                    [item.id]: { ...prev[item.id], condition: e.target.value }
-                                  }));
-                                }}
-                                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--ui-border-input)", background: "var(--ui-bg)", color: "var(--ui-text-primary)", fontSize: 14 }}
-                              />
-                            </div>
+                              </Grid>
+                            </Grid>
+
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Condition / Notes"
+                              placeholder="E.g., Good, Box damaged, Missing parts"
+                              value={idata.condition ?? "Good"}
+                              onChange={(e) => {
+                                setInspectionData((prev) => ({
+                                  ...prev,
+                                  [item.id]: {
+                                    ...prev[item.id],
+                                    condition: e.target.value,
+                                  },
+                                }));
+                              }}
+                            />
 
                             {/* Rejection reason — appears only when there are rejected items */}
                             {(idata.rejected_qty ?? 0) > 0 && (
-                              <div style={{ marginTop: 12 }}>
-                                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#f87171", textTransform: "uppercase", marginBottom: 6 }}>
-                                  ⚠ Rejection Reason <span style={{ color: "#f87171" }}>*</span>
-                                </label>
-                                <HuntrTextarea
+                              <Box sx={{ mt: 2 }}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  multiline
                                   rows={2}
+                                  error
+                                  label="Rejection Reason *"
                                   placeholder="Explain why these items are being rejected (e.g., wrong spec, damaged, expired)"
                                   value={idata.rejection_reason ?? ""}
                                   onChange={(e) => {
                                     setInspectionData((prev) => ({
                                       ...prev,
-                                      [item.id]: { ...prev[item.id], rejection_reason: e.target.value }
+                                      [item.id]: {
+                                        ...prev[item.id],
+                                        rejection_reason: e.target.value,
+                                      },
                                     }));
                                   }}
-                                  style={{
-                                    width: "100%", padding: "10px 12px", borderRadius: 8,
-                                    border: "1px solid rgba(239,68,68,0.4)",
-                                    background: "rgba(239,68,68,0.04)",
-                                    color: "var(--ui-text-primary)", fontSize: 13,
-                                    resize: "vertical", fontFamily: "inherit"
-                                  }}
+                                  helperText={`${idata.rejected_qty} unit will be sent to Return — reason required.`}
                                 />
-                                <p style={{ margin: "4px 0 0", fontSize: 11, color: "#f87171" }}>
-                                  {idata.rejected_qty} unit will be sent to Return — reason required.
-                                </p>
-                              </div>
+                              </Box>
                             )}
-                          </div>
+                          </Paper>
                         )}
-                      </div>
+                      </Box>
                     );
                   })}
-                </div>
-              </HuntrSurface>
+                </Box>
+              </Paper>
 
               {/* Error */}
-              {error && (
-                <div style={{ padding: "12px 20px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, color: "#f87171", fontSize: 14, fontWeight: 600 }}>
-                  ⚠ {error}
-                </div>
-              )}
+              {error && <Alert severity="error">{error}</Alert>}
 
               {/* Confirm button */}
-              <HuntrButton
+              <Button
+                variant="contained"
+                color="success"
                 onClick={handleConfirm}
                 disabled={!allowed || confirming}
-                style={{
-                  padding: "18px", borderRadius: 16, width: "100%",
-                  background: allowed ? "linear-gradient(135deg,#22c55e,#16a34a)" : "var(--ui-bg-input)",
-                  color: allowed ? "#fff" : "var(--ui-text-muted)",
-                  border: "none", fontWeight: 900, fontSize: 17,
-                  cursor: allowed && !confirming ? "pointer" : "not-allowed",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-                  boxShadow: allowed ? "0 8px 24px rgba(34,197,94,0.25)" : "none",
-                  transition: "all 0.3s ease",
+                fullWidth
+                size="large"
+                startIcon={
+                  confirming ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <CheckCircle2 size={20} />
+                  )
+                }
+                sx={{
+                  py: 1.75,
+                  borderRadius: 3,
+                  fontWeight: 900,
+                  fontSize: "1.05rem",
+                  textTransform: "none",
                 }}
               >
-                {confirming
-                  ? <><Loader2 size={20} className="animate-spin" /> Processing...</>
-                  : <><CheckCircle2 size={20} /> Confirm Goods Received</>
-                }
-              </HuntrButton>
-              <p style={{ textAlign: "center", margin: 0, fontSize: 12, color: "var(--ui-text-muted)" }}>
+                {confirming ? "Processing…" : "Confirm Goods Received"}
+              </Button>
+              <Typography
+                variant="caption"
+                sx={{ textAlign: "center", display: "block", color: "text.secondary" }}
+              >
                 By clicking the button above, you confirm that all goods above have been received in good condition.
-              </p>
+              </Typography>
             </>
           )}
-        </div>
+        </Box>
       </Layout>
     );
   }
@@ -345,74 +490,135 @@ export default function Receipts() {
   // ── List view ─────────────────────────────────────────────────────────────────
   return (
     <Layout title="Goods Receipt" subtitle="Konfirmasi penerimaan barang dari vendor">
-      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(34,197,94,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Package size={20} color="#22c55e" />
-          </div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ui-text-primary)" }}>Awaiting Confirmation</h3>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--ui-text-muted)" }}>Select a delivery that has arrived to confirm receipt.</p>
-          </div>
-        </div>
+      <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              bgcolor: "success.50",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Package size={20} className="text-emerald-500" />
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+              Awaiting Confirmation
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Select a delivery that has arrived to confirm receipt.
+            </Typography>
+          </Box>
+        </Box>
 
         {loadingOrders ? (
-          <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <Loader2 size={28} className="animate-spin" color="#f59e0b" style={{ display: "block", margin: "0 auto" }} />
-          </div>
+          <Box sx={{ textAlign: "center", py: 8 }}>
+            <CircularProgress color="primary" />
+          </Box>
         ) : !isBuyer ? (
-          <div style={{ textAlign: "center", padding: "60px 0", background: "var(--ui-bg-input)", borderRadius: 20, border: "1px dashed var(--ui-border-input)" }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              textAlign: "center",
+              py: 8,
+              borderRadius: 4,
+              borderStyle: "dashed",
+            }}
+          >
             <Package size={40} style={{ opacity: 0.15, display: "block", margin: "0 auto 12px" }} />
-            <p style={{ margin: 0, color: "var(--ui-text-secondary)", fontSize: 14 }}>Halaman ini hanya tersedia untuk Buyer.</p>
-          </div>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Halaman ini hanya tersedia untuk Buyer.
+            </Typography>
+          </Paper>
         ) : pendingReceipts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 0", background: "var(--ui-bg-input)", borderRadius: 20, border: "1px dashed var(--ui-border-input)" }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              textAlign: "center",
+              py: 8,
+              borderRadius: 4,
+              borderStyle: "dashed",
+            }}
+          >
             <FileCheck2 size={40} style={{ opacity: 0.15, display: "block", margin: "0 auto 12px" }} />
-            <p style={{ margin: 0, color: "var(--ui-text-secondary)", fontSize: 14 }}>No deliveries awaiting confirmation.</p>
-          </div>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              No deliveries awaiting confirmation.
+            </Typography>
+          </Paper>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {pendingReceipts.map((po) => {
               const allowed = isGrAllowed(po.expected_receiving_date);
               const do_ = po.delivery_orders?.[0];
               return (
-                <HuntrSurface
+                <Paper
                   key={po.id}
+                  variant="outlined"
                   onClick={() => allowed && setSelectedPo(po)}
-                  style={{
-                    background: "var(--ui-bg-card)", border: `1px solid ${allowed ? "var(--ui-border)" : "rgba(239,68,68,0.2)"}`,
-                    borderRadius: 20, padding: "20px 24px",
-                    display: "flex", alignItems: "center", gap: 20,
+                  sx={{
+                    borderRadius: 3,
+                    p: 2.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2.5,
                     cursor: allowed ? "pointer" : "default",
                     opacity: allowed ? 1 : 0.6,
-                    transition: "all 0.25s ease",
+                    borderColor: allowed ? "divider" : "error.light",
+                    transition: "all 0.2s ease",
+                    "&:hover": allowed ? { boxShadow: 1, borderColor: "primary.main" } : {},
                   }}
                 >
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: allowed ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Truck size={22} color={allowed ? "#22c55e" : "#f87171"} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", background: "rgba(249,115,22,0.1)", padding: "2px 8px", borderRadius: 6 }}>{po.po_number}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: allowed ? "#22c55e" : "#f87171", background: allowed ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: 6 }}>
-                        {allowed ? "Siap Diterima" : `Tiba ${po.expected_receiving_date}`}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ui-text-primary)" }}>{po.vendor_name}</div>
-                    <div style={{ fontSize: 13, color: "var(--ui-text-muted)", marginTop: 2 }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2.5,
+                      bgcolor: allowed ? "success.50" : "error.50",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Truck size={22} className={allowed ? "text-emerald-500" : "text-rose-500"} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                      <Chip
+                        size="small"
+                        label={po.po_number}
+                        sx={{ fontWeight: 800, fontSize: "0.7rem", height: 22 }}
+                      />
+                      <Chip
+                        size="small"
+                        color={allowed ? "success" : "error"}
+                        label={allowed ? "Siap Diterima" : `Tiba ${po.expected_receiving_date}`}
+                        sx={{ fontWeight: 700, fontSize: "0.7rem", height: 22 }}
+                      />
+                    </Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                      {po.vendor_name}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.25 }}>
                       {po.items?.length || 0} jenis barang
-                      {do_?.tracking_number && <span> · Resi: <strong style={{ color: "#3b82f6" }}>{do_.tracking_number}</strong></span>}
-                    </div>
-                  </div>
-                  {allowed && <ChevronRight size={20} color="var(--ui-text-muted)" />}
-                </HuntrSurface>
+                      {do_?.tracking_number && (
+                        <span>
+                          {" "}· Resi: <strong>{do_.tracking_number}</strong>
+                        </span>
+                      )}
+                    </Typography>
+                  </Box>
+                  {allowed && <ChevronRight size={20} className="text-gray-400" />}
+                </Paper>
               );
             })}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     </Layout>
   );
 }
-

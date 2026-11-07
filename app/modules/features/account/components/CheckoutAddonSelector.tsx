@@ -1,4 +1,4 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
+import React from "react";
 import { Minus, Plus } from "lucide-react";
 import type { EnterpriseAddon } from "../../../lib/api/subscription";
 
@@ -41,45 +41,45 @@ export function CheckoutAddonSelector({
               </p>
             </div>
             {quantity === 0 ? (
-              <HuntrButton
+              <button
                 type="button"
                 onClick={() => onChange(addon.key, 1)}
                 aria-label={`Tambah ${addon.name}`}
-                className="inline-flex shrink-0 items-center gap-1 rounded border border-orange-600 px-2.5 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-600/5"
+                className="inline-flex shrink-0 items-center gap-1 rounded border border-orange-600 px-2.5 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-600/5 cursor-pointer bg-transparent"
               >
                 <Plus size={14} /> Tambah
-              </HuntrButton>
+              </button>
             ) : (
               <div
                 className="inline-flex shrink-0 items-center border border-[var(--ui-border)]"
                 role="group"
                 aria-label={`Jumlah ${addon.name}`}
               >
-                <HuntrButton
+                <button
                   type="button"
                   onClick={() => onChange(addon.key, quantity - 1)}
                   aria-label={`Kurangi ${addon.name}`}
-                  className="p-2 text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)]"
+                  className="p-2 text-[var(--ui-text-secondary)] hover:bg-[var(--ui-bg-input)] cursor-pointer bg-transparent border-0"
                 >
                   <Minus size={14} />
-                </HuntrButton>
+                </button>
                 <span
                   aria-live="polite"
                   className="min-w-7 text-center text-xs font-semibold text-[var(--ui-text-primary)]"
                 >
                   {quantity}
                 </span>
-                <HuntrButton
+                <button
                   type="button"
                   onClick={() =>
                     onChange(addon.key, Math.min(100, quantity + 1))
                   }
                   aria-label={`Tambah ${addon.name}`}
                   disabled={quantity >= 100}
-                  className="p-2 text-orange-600 hover:bg-[var(--ui-bg-input)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="p-2 text-orange-600 hover:bg-[var(--ui-bg-input)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer bg-transparent border-0"
                 >
                   <Plus size={14} />
-                </HuntrButton>
+                </button>
               </div>
             )}
           </div>
@@ -93,5 +93,3 @@ export function CheckoutAddonSelector({
     </section>
   );
 }
-
-

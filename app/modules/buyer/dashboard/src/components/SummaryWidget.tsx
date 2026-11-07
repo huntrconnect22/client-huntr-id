@@ -1,4 +1,4 @@
-import { Surface as HuntrSurface } from "~/shared/ui/Surface";
+import Paper from "@mui/material/Paper";
 import React from "react";
 
 export function SummaryWidget({
@@ -21,7 +21,7 @@ export function SummaryWidget({
   }[accent];
 
   return (
-    <HuntrSurface style={{
+    <Paper variant="outlined" style={{
       background: "var(--ui-bg-card)",
       border: "1px solid var(--ui-border)",
       borderRadius: 4,
@@ -39,7 +39,7 @@ export function SummaryWidget({
       </div>
       <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, color: "var(--ui-text-primary)" }}>{value}</div>
       <div style={{ fontSize: 11, color: "var(--ui-text-secondary)", lineHeight: 1.4 }}>{hint}</div>
-    </HuntrSurface>
+    </Paper>
   );
 }
 

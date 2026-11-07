@@ -14,14 +14,14 @@ import {
   PickerBrowseButton,
 } from "../features/WmsPickerFields";
 import { formatQuantity, toNumeric } from "../data/quantity";
-import {
-  Table as HuntrTable,
-  TableBody as HuntrTableBody,
-  TableCell as HuntrTableCell,
-  TableHead as HuntrTableHead,
-  TableHeaderCell as HuntrTableHeaderCell,
-  TableRow as HuntrTableRow,
-} from "~/shared/ui/Table";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import {
   importExistingGoodsReceipts,
   putAwayStock,
@@ -838,33 +838,30 @@ export function WmsReceivingTab({
               )
             }
             disabled={!receiveForm.warehouse_id && !warehouses[0]?.id}
-            className="rounded-lg border border-[var(--ui-border)] px-3 py-2 text-xs font-semibold text-[var(--ui-text-secondary)] disabled:opacity-50 hover:bg-[var(--ui-bg-input)] transition-colors"
+className=""
           >
             Import existing Goods Receipts
           </button>
         </div>
-        <HuntrTable className="w-full min-w-[650px] text-left text-sm">
-          <HuntrTableHead className="text-xs text-[var(--ui-text-muted)]">
-            <HuntrTableRow>
-              <HuntrTableHeaderCell className="py-2">Receipt</HuntrTableHeaderCell>
-              <HuntrTableHeaderCell>Warehouse</HuntrTableHeaderCell>
-              <HuntrTableHeaderCell>Lines</HuntrTableHeaderCell>
-              <HuntrTableHeaderCell>Accepted</HuntrTableHeaderCell>
-              <HuntrTableHeaderCell>Rejected</HuntrTableHeaderCell>
-              <HuntrTableHeaderCell>Reference</HuntrTableHeaderCell>
-              <HuntrTableHeaderCell className="text-right">Action</HuntrTableHeaderCell>
-            </HuntrTableRow>
-          </HuntrTableHead>
-          <HuntrTableBody>
+        <TableContainer><Table size="small" sx={{ minWidth: 650 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ py: 1 }}>Receipt</TableCell>
+              <TableCell>Warehouse</TableCell>
+              <TableCell>Lines</TableCell>
+              <TableCell>Accepted</TableCell>
+              <TableCell>Rejected</TableCell>
+              <TableCell>Reference</TableCell>
+              <TableCell align="right">Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {receipts.map((x: any) => (
-              <HuntrTableRow
-                key={x.id}
-                className="border-t border-[var(--ui-border)]"
-              >
-                <HuntrTableCell className="py-2">{x.receipt_number}</HuntrTableCell>
-                <HuntrTableCell>{x.warehouse_name}</HuntrTableCell>
-                <HuntrTableCell>{x.lines?.length || 0}</HuntrTableCell>
-                <HuntrTableCell>
+              <TableRow key={x.id}>
+                <TableCell sx={{ py: 1 }}>{x.receipt_number}</TableCell>
+                <TableCell>{x.warehouse_name}</TableCell>
+                <TableCell>{x.lines?.length || 0}</TableCell>
+                <TableCell>
                   {formatQuantity(
                     (x.lines || []).reduce(
                       (sum: number, line: any) =>
@@ -872,8 +869,8 @@ export function WmsReceivingTab({
                       0,
                     ),
                   )}
-                </HuntrTableCell>
-                <HuntrTableCell>
+                </TableCell>
+                <TableCell>
                   {formatQuantity(
                     (x.lines || []).reduce(
                       (sum: number, line: any) =>
@@ -881,31 +878,22 @@ export function WmsReceivingTab({
                       0,
                     ),
                   )}
-                </HuntrTableCell>
-                <HuntrTableCell>{x.reference || "—"}</HuntrTableCell>
-                <HuntrTableCell className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => printGrn(x)}
-                    className="inline-flex items-center gap-1 rounded-md border border-[var(--ui-border)] px-2 py-1 text-xs font-semibold hover:border-[var(--ui-text-brand)]"
-                  >
-                    <Printer size={13} /> Print GRN
-                  </button>
-                </HuntrTableCell>
-              </HuntrTableRow>
+                </TableCell>
+                <TableCell>{x.reference || "—"}</TableCell>
+                <TableCell align="right">
+                  <Button size="small" variant="outlined" onClick={() => printGrn(x)} startIcon={<Printer size={13} />}>Print GRN</Button>
+                </TableCell>
+              </TableRow>
             ))}
             {!receipts.length && (
-              <HuntrTableRow>
-                <HuntrTableCell
-                  colSpan={7}
-                  className="py-4 text-[var(--ui-text-muted)]"
-                >
+              <TableRow>
+                <TableCell colSpan={7} sx={{ py: 2, color: "text.secondary" }}>
                   No receiving activity recorded yet.
-                </HuntrTableCell>
-              </HuntrTableRow>
+                </TableCell>
+              </TableRow>
             )}
-          </HuntrTableBody>
-        </HuntrTable>
+          </TableBody>
+        </Table></TableContainer>
       </div>
     </div>
   );
