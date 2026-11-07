@@ -1,5 +1,17 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router";
+import {
+  Box,
+  Paper,
+  Stack,
+  Typography,
+  Tabs,
+  Tab,
+  Button,
+  Chip,
+  CircularProgress,
+  useTheme,
+} from "@mui/material";
 import Layout from "~/components/Layout";
 import {
   runAgenticProcurement,
@@ -20,9 +32,7 @@ import {
   Bot,
   ShoppingBag,
   CheckCircle2,
-  Loader2,
 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router";
 import Swal from "sweetalert2";
 import { useLanguage } from "~/context/LanguageContext";
 import {
@@ -37,10 +47,16 @@ import {
   AgenticNoticeBanner,
 } from "~/features/agentic-procurement";
 
+/**
+ * AgenticProcurementPage Component
+ * 
+ * 100% Pure Material UI implementation.
+ */
 export default function AgenticProcurementPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const theme = useTheme();
 
   const [activeCompany, setActiveCompany] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
@@ -56,7 +72,7 @@ export default function AgenticProcurementPage() {
   const [wmsInstalled, setWmsInstalled] = useState(false);
   const [warehouses, setWarehouses] = useState<any[]>([]);
 
-  // Real-time animated workflow steps (title translated on each render via t() and buildSteps)
+  // Real-time animated workflow steps
   function buildSteps(
     statuses?: { step: string; status: string; summary?: string }[],
   ): StepStatus[] {
@@ -91,6 +107,7 @@ export default function AgenticProcurementPage() {
       },
     ];
   }
+
   function getStepTitle(step: string): string {
     switch (step) {
       case "intent_analysis":
@@ -177,16 +194,24 @@ export default function AgenticProcurementPage() {
   useEffect(() => {
     const compStr = localStorage.getItem("active_company");
     if (compStr) {
-      const comp = JSON.parse(compStr);
-      setActiveCompany(comp);
-      if (comp.type === "vendor") {
-        navigate("/");
-        return;
+      try {
+        const comp = JSON.parse(compStr);
+        setActiveCompany(comp);
+        if (comp.type === "vendor") {
+          navigate("/");
+          return;
+        }
+      } catch (e) {
+        console.error("Invalid active company session", e);
       }
     }
     const userStr = localStorage.getItem("user_session");
     if (userStr) {
-      setUser(JSON.parse(userStr));
+      try {
+        setUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error("Invalid user session", e);
+      }
     }
 
     const searchParams = new URLSearchParams(location.search);
@@ -301,7 +326,6 @@ export default function AgenticProcurementPage() {
       if (res && res.success) {
         setResult(res);
 
-        // Bangun summary web_search dari response
         const webSearchCount = res.web_search
           ? Object.keys(res.web_search).length
           : 0;
@@ -311,7 +335,6 @@ export default function AgenticProcurementPage() {
             : res.workflow_steps?.find((s: any) => s.step === "web_search")
                 ?.summary || t("agentic.workflow.brandsFound");
 
-        // Kumpulkan semua sumber URL Brave dari web_search results
         const rawWebSources: any[] = [];
         if (res.web_search) {
           Object.values(res.web_search).forEach((data: any) => {
@@ -327,7 +350,6 @@ export default function AgenticProcurementPage() {
             });
           });
         }
-        // Tambahkan juga sumber dari workflow step jika ada
         const stepSources =
           res.workflow_steps?.find((s: any) => s.step === "web_search")
             ?.sources || [];
@@ -358,7 +380,7 @@ export default function AgenticProcurementPage() {
             title: getStepTitle("web_search"),
             status: "completed",
             summary: webSearchFound,
-            // @ts-ignore — extra fields for source panel
+            // @ts-ignore
             webSearchSources,
             brandRecommendations,
           },
@@ -475,7 +497,7 @@ export default function AgenticProcurementPage() {
       }),
       icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#f97316",
+      confirmButtonColor: "#ef7d00",
       cancelButtonColor: "#6b7280",
       confirmButtonText: t("agentic.prDraft.actions.confirmYes"),
       cancelButtonText: t("agentic.prDraft.actions.cancel"),
@@ -502,7 +524,7 @@ export default function AgenticProcurementPage() {
             title: result.pr_draft.title,
             id: res.rfq.id,
           }),
-          confirmButtonColor: "#f97316",
+          confirmButtonColor: "#ef7d00",
           confirmButtonText: t("agentic.prDraft.actions.successButton"),
         });
 
@@ -694,7 +716,6 @@ export default function AgenticProcurementPage() {
     return `Rp ${Number(num || 0).toLocaleString("id-ID")}`;
   };
 
-  // Tab pills label (translated reactively)
   const tabBadgeCount = (tab: "pr" | "comparison" | "catalogues" | "chat") => {
     if (tab === "pr") return result?.pr_draft?.suggested_items?.length || 0;
     if (tab === "comparison")
@@ -702,44 +723,13 @@ export default function AgenticProcurementPage() {
     if (tab === "catalogues") return result?.catalogues?.length || 0;
     return chatMessages.length;
   };
-  const TABS: {
-    key: "pr" | "comparison" | "catalogues" | "chat";
-    label: string;
-    icon: React.ReactNode;
-    showBadge: boolean;
-  }[] = [
-    {
-      key: "pr",
-      label: t("agentic.tabs.prDraft"),
-      icon: <FileText size={13} />,
-      showBadge: true,
-    },
-    {
-      key: "comparison",
-      label: t("agentic.tabs.comparison"),
-      icon: <Layers size={13} />,
-      showBadge: true,
-    },
-    {
-      key: "catalogues",
-      label: t("agentic.tabs.catalogues"),
-      icon: <Package size={13} />,
-      showBadge: true,
-    },
-    {
-      key: "chat",
-      label: t("agentic.tabs.chat"),
-      icon: <Bot size={13} />,
-      showBadge: false,
-    },
-  ];
 
   return (
     <Layout
       title={t("agentic.page.title")}
       subtitle={t("agentic.page.subtitle")}
     >
-      <div className="flex flex-col gap-4 max-w-7xl mx-auto pb-12">
+      <Box sx={{ maxWidth: 1240, mx: "auto", width: "100%", pb: 8, display: "flex", flexDirection: "column", gap: 3 }}>
         {/* Notice & Disclaimer Banners */}
         <AgenticNoticeBanner
           isFeatureEnabled={isFeatureEnabled}
@@ -789,64 +779,138 @@ export default function AgenticProcurementPage() {
 
         {/* Results Section */}
         {result && (
-          <div className="flex flex-col gap-3">
-            {/* Navigation Tabs & Header Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[var(--ui-border)] pb-2.5">
-              {/* Tab pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-                {TABS.map((tab) => {
-                  const count = tabBadgeCount(tab.key);
-                  return (
-                    <HuntrButton
-                      key={tab.key}
-                      onClick={() => setActiveTab(tab.key)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${
-                        activeTab === tab.key
-                          ? "bg-orange-500 text-white shadow-sm"
-                          : "bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
-                      }`}
-                    >
-                      {tab.icon}
-                      <span>{tab.label}</span>
-                      {tab.showBadge && count > 0 && (
-                        <span className="text-[10px] px-1 rounded bg-white/20">
-                          {count}
-                        </span>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            {/* Header Tabs & Top Actions */}
+            <Paper
+              variant="outlined"
+              sx={{
+                p: { xs: 1.5, sm: 2 },
+                borderRadius: 3,
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { xs: "stretch", sm: "center" },
+                justifyContent: "space-between",
+                gap: 2,
+                bgcolor: "background.paper",
+              }}
+            >
+              <Tabs
+                value={activeTab}
+                onChange={(_, val) => setActiveTab(val)}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  "& .MuiTab-root": {
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    minHeight: 44,
+                    borderRadius: 2,
+                    mr: 1,
+                  },
+                }}
+              >
+                <Tab
+                  value="pr"
+                  icon={<FileText size={15} />}
+                  iconPosition="start"
+                  label={
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <span>{t("agentic.tabs.prDraft")}</span>
+                      {tabBadgeCount("pr") > 0 && (
+                        <Chip
+                          size="small"
+                          label={tabBadgeCount("pr")}
+                          sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
+                        />
                       )}
-                    </HuntrButton>
-                  );
-                })}
-              </div>
+                    </Stack>
+                  }
+                />
+                <Tab
+                  value="comparison"
+                  icon={<Layers size={15} />}
+                  iconPosition="start"
+                  label={
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <span>{t("agentic.tabs.comparison")}</span>
+                      {tabBadgeCount("comparison") > 0 && (
+                        <Chip
+                          size="small"
+                          label={tabBadgeCount("comparison")}
+                          sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
+                        />
+                      )}
+                    </Stack>
+                  }
+                />
+                <Tab
+                  value="catalogues"
+                  icon={<Package size={15} />}
+                  iconPosition="start"
+                  label={
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <span>{t("agentic.tabs.catalogues")}</span>
+                      {tabBadgeCount("catalogues") > 0 && (
+                        <Chip
+                          size="small"
+                          label={tabBadgeCount("catalogues")}
+                          sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
+                        />
+                      )}
+                    </Stack>
+                  }
+                />
+                <Tab
+                  value="chat"
+                  icon={<Bot size={15} />}
+                  iconPosition="start"
+                  label={
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <span>{t("agentic.tabs.chat")}</span>
+                      {chatMessages.length > 0 && (
+                        <Chip
+                          size="small"
+                          label={chatMessages.length}
+                          sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
+                        />
+                      )}
+                    </Stack>
+                  }
+                />
+              </Tabs>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <HuntrButton
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
                   onClick={handleExportToCart}
-                  className="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg bg-[var(--ui-bg-card)] hover:bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                  startIcon={<ShoppingBag size={15} />}
+                  sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, height: 38 }}
                 >
-                  <ShoppingBag size={13} />
-                  <span>{t("agentic.tabs.checkout")}</span>
-                </HuntrButton>
+                  {t("agentic.tabs.checkout")}
+                </Button>
 
-                <HuntrButton
+                <Button
+                  variant="contained"
+                  color="success"
+                  size="small"
                   onClick={() => handleCreatePrNow()}
                   disabled={isCreatingPr}
-                  className="flex-1 sm:flex-initial justify-center px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  startIcon={
+                    isCreatingPr ? (
+                      <CircularProgress size={15} color="inherit" />
+                    ) : (
+                      <CheckCircle2 size={15} />
+                    )
+                  }
+                  sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2, height: 38 }}
                 >
-                  {isCreatingPr ? (
-                    <>
-                      <Loader2 size={13} className="animate-spin" />
-                      <span>{t("agentic.tabs.saving")}</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={13} />
-                      <span>{t("agentic.tabs.createPr")}</span>
-                    </>
-                  )}
-                </HuntrButton>
-              </div>
-            </div>
+                  {isCreatingPr ? t("agentic.tabs.saving") : t("agentic.tabs.createPr")}
+                </Button>
+              </Stack>
+            </Paper>
 
             {/* TAB 1: PR DRAFT PREVIEW */}
             {activeTab === "pr" && result.pr_draft && (
@@ -899,9 +963,9 @@ export default function AgenticProcurementPage() {
                 chatEndRef={chatEndRef}
               />
             )}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     </Layout>
   );
 }

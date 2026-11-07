@@ -1,16 +1,50 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
 import {
-  Sparkles, CheckCircle2, Check, Award, BarChart2,
-  Radar as RadarIcon, ExternalLink, Globe, Image as ImageIcon,
+  Box,
+  Paper,
+  Grid,
+  Stack,
+  Typography,
+  Button,
+  Chip,
+  Card,
+  CardContent,
+  CardActions,
+  LinearProgress,
+  ToggleButtonGroup,
+  ToggleButton,
+  Divider,
+  Avatar,
+  Link as MuiLink,
+} from "@mui/material";
+import {
+  Sparkles,
+  CheckCircle2,
+  Check,
+  Award,
+  BarChart2,
+  Radar as RadarIcon,
+  ExternalLink,
+  Globe,
+  Image as ImageIcon,
   Tag,
+  MousePointerClick,
 } from "lucide-react";
 import {
-  RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  Cell,
 } from "recharts";
-
-import { MousePointerClick } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
 
 interface AgenticComparisonTabProps {
@@ -20,9 +54,13 @@ interface AgenticComparisonTabProps {
   selectedWinnerId?: string | null;
 }
 
-
 const CHART_COLORS = [
-  "#f97316", "#3b82f6", "#8b5cf6", "#10b981", "#f43f5e", "#eab308",
+  "#ef7d00",
+  "#3b82f6",
+  "#8b5cf6",
+  "#10b981",
+  "#f43f5e",
+  "#eab308",
 ];
 
 type ViewMode = "cards" | "radar" | "bar";
@@ -30,17 +68,28 @@ type ViewMode = "cards" | "radar" | "bar";
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-2.5 text-xs shadow-xl">
-        <p className="font-bold text-[var(--ui-text-primary)] mb-1">{label}</p>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 1.5,
+          borderRadius: 2,
+          bgcolor: "background.paper",
+          boxShadow: 3,
+          fontSize: 12,
+        }}
+      >
+        <Typography variant="caption" sx={{ fontWeight: 800, display: "block", mb: 0.5 }}>
+          {label}
+        </Typography>
         {payload.map((p: any, i: number) => (
-          <p key={i} style={{ color: p.color }} className="font-semibold">
+          <Typography key={i} variant="caption" sx={{ color: p.color, fontWeight: 700, display: "block" }}>
             {p.name}:{" "}
             {typeof p.value === "number" && p.value > 10000
               ? `Rp ${p.value.toLocaleString("id-ID")}`
               : p.value}
-          </p>
+          </Typography>
         ))}
-      </div>
+      </Paper>
     );
   }
   return null;
@@ -51,17 +100,38 @@ function ProductThumbnail({ src, alt, fallback }: { src?: string | null; alt: st
   const altText = alt || fallback || "";
   if (!src || failed) {
     return (
-      <div className="w-full h-32 rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex items-center justify-center">
-        <ImageIcon size={28} className="text-[var(--ui-text-muted)]" />
-      </div>
+      <Box
+        sx={{
+          width: "100%",
+          height: 128,
+          borderRadius: 2,
+          bgcolor: "action.hover",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: 1,
+          borderColor: "divider",
+        }}
+      >
+        <ImageIcon size={28} style={{ opacity: 0.3 }} />
+      </Box>
     );
   }
   return (
-    <img
+    <Box
+      component="img"
       src={src}
       alt={altText}
       onError={() => setFailed(true)}
-      className="w-full h-32 object-contain rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)]"
+      sx={{
+        width: "100%",
+        height: 128,
+        objectFit: "contain",
+        borderRadius: 2,
+        bgcolor: "action.hover",
+        border: 1,
+        borderColor: "divider",
+      }}
     />
   );
 }
@@ -119,65 +189,95 @@ export default function AgenticComparisonTab({
     (item) => item.product_name?.substring(0, 18) ?? `${productFallback} ${item.catalogue_id}`
   );
 
-  const viewButtons: { key: ViewMode; label: string; icon: React.ReactNode }[] = [
-    { key: "cards", label: t("agentic.comparison.viewCards"), icon: <Award size={12} /> },
-    { key: "radar", label: t("agentic.comparison.viewRadar"), icon: <RadarIcon size={12} /> },
-    { key: "bar", label: t("agentic.comparison.viewBar"), icon: <BarChart2 size={12} /> },
-  ];
-
   return (
-    <div className="flex flex-col gap-3">
-
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       {/* ── AI Recommendation Banner ── */}
       {comparison.executive_summary && (
-        <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-orange-500/30 flex flex-col gap-1.5 text-xs">
-          <span className="font-bold text-orange-400 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
-            {isWebListingOnly ? <Globe size={12} /> : <Sparkles size={12} />}
-            {isWebListingOnly ? t("agentic.comparison.webListings") : t("agentic.comparison.aiAnalysis")}
-          </span>
-          <p className="text-[var(--ui-text-primary)] leading-relaxed">
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            borderRadius: 3,
+            borderColor: "rgba(239, 125, 0, 0.3)",
+            bgcolor: "rgba(239, 125, 0, 0.04)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+          }}
+        >
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            {isWebListingOnly ? <Globe size={16} color="#ef7d00" /> : <Sparkles size={16} color="#ef7d00" />}
+            <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "primary.main" }}>
+              {isWebListingOnly ? t("agentic.comparison.webListings") : t("agentic.comparison.aiAnalysis")}
+            </Typography>
+          </Stack>
+          <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
             {comparison.executive_summary}
-          </p>
+          </Typography>
           {comparison.winner_reason && (
-            <div className="mt-1 text-[11px] p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-start gap-1.5">
-              <CheckCircle2 size={13} className="flex-shrink-0 mt-0.5" />
-              <span>
-                <b>{t("agentic.comparison.topRecommendation")}</b> {comparison.winner_reason}
-              </span>
-            </div>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: "rgba(16, 185, 129, 0.08)",
+                borderColor: "rgba(16, 185, 129, 0.25)",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+              }}
+            >
+              <CheckCircle2 size={16} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
+              <Typography variant="caption" sx={{ lineHeight: 1.5 }}>
+                <Typography component="span" variant="caption" sx={{ fontWeight: 800, color: "success.main" }}>
+                  {t("agentic.comparison.topRecommendation")}{" "}
+                </Typography>
+                {comparison.winner_reason}
+              </Typography>
+            </Paper>
           )}
-        </div>
+        </Paper>
       )}
 
       {/* ── View Mode Toggle ── */}
       {matrix.length > 0 && !isWebListingOnly && (
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mr-1">
-            {t("agentic.comparison.viewModeLabel")}
-          </span>
-          {viewButtons.map((btn) => (
-            <HuntrButton
-              key={btn.key}
-              type="button"
-              onClick={() => setViewMode(btn.key)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-                viewMode === btn.key
-                  ? "bg-orange-500 text-white shadow-sm"
-                  : "bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-secondary)] hover:border-orange-500/40"
-              }`}
-            >
-              {btn.icon}
-              {btn.label}
-            </HuntrButton>
-          ))}
-        </div>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "text.secondary" }}>
+            {t("agentic.comparison.viewModeLabel")}:
+          </Typography>
+          <ToggleButtonGroup
+            size="small"
+            value={viewMode}
+            exclusive
+            onChange={(_, val) => val && setViewMode(val)}
+            sx={{
+              "& .MuiToggleButton-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: 12,
+                px: 2,
+                borderRadius: 2,
+              },
+            }}
+          >
+            <ToggleButton value="cards">
+              <Award size={13} style={{ marginRight: 6 }} /> {t("agentic.comparison.viewCards")}
+            </ToggleButton>
+            <ToggleButton value="radar">
+              <RadarIcon size={13} style={{ marginRight: 6 }} /> {t("agentic.comparison.viewRadar")}
+            </ToggleButton>
+            <ToggleButton value="bar">
+              <BarChart2 size={13} style={{ marginRight: 6 }} /> {t("agentic.comparison.viewBar")}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
       )}
 
       {/* ── CARDS VIEW ── */}
       {viewMode === "cards" && (
         <>
           {matrix.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Grid container spacing={2}>
               {matrix.map((item: any, idx: number) => {
                 const isWinner =
                   winnerId !== null && String(item.catalogue_id) === String(winnerId);
@@ -187,253 +287,216 @@ export default function AgenticComparisonTab({
                 const showSrc = expandedSources[idx] ?? false;
                 const webSources: any[] = item.web_sources ?? [];
                 const localKey = String(item.catalogue_id ?? item.id ?? item.product_name);
+                const isSelected = localKey === localSelected;
 
                 return (
-                  <div
-                    key={idx}
-                    className={`rounded-xl bg-[var(--ui-bg-card)] border flex flex-col shadow-sm relative overflow-hidden ${
-                      isWinner
-                        ? "border-emerald-500 ring-1 ring-emerald-500/20"
-                        : "border-[var(--ui-border)]"
-                    }`}
-                  >
-                    {/* Winner badge — AI recommendation */}
-                    {isWinner && (
-                      <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
-                        <Award size={9} />
-                        {t("agentic.comparison.recommendedBadge")}
-                      </div>
-                    )}
-
-                    {/* Selected badge — user choice */}
-                    {localKey === localSelected && !isWinner && (
-                      <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
-                        <MousePointerClick size={9} />
-                        {t("agentic.comparison.selectedBadge")}
-                      </div>
-                    )}
-                    {localKey === localSelected && isWinner && (
-                      <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-extrabold uppercase tracking-wider shadow flex items-center gap-0.5">
-                        <MousePointerClick size={9} />
-                        {t("agentic.comparison.selectedBadge")}
-                      </div>
-                    )}
-
-                    {/* Thumbnail */}
-                    <div className="p-3 pb-0">
-                      <ProductThumbnail src={item.thumbnail} alt={item.product_name ?? productFallback} fallback={productFallback} />
-                    </div>
-
-                    <div className="p-3 flex flex-col gap-2">
-                      {/* Nama + skor */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="font-bold text-xs text-[var(--ui-text-primary)] leading-snug">
-                            {item.product_name}
-                          </h4>
-                          {item.vendor_name && (
-                            <span className="text-[10px] text-[var(--ui-text-muted)]">
-                              {item.vendor_name}
-                            </span>
-                          )}
-                        </div>
-                        {!isWebListingOnly && (
-                          <span className="text-[11px] font-bold text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded shrink-0">
-                            {item.score || 85}/100
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Score bar */}
-                      {!isWebListingOnly && (
-                        <div className="w-full h-1 rounded-full bg-[var(--ui-bg-input)] overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${isWinner ? "bg-emerald-500" : "bg-orange-500"}`}
-                            style={{ width: `${item.score || 85}%` }}
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }} key={idx}>
+                    <Card
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 3,
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        position: "relative",
+                        borderWidth: isWinner || isSelected ? 2 : 1,
+                        borderColor: isWinner
+                          ? "success.main"
+                          : isSelected
+                          ? "primary.main"
+                          : "divider",
+                        boxShadow: isWinner
+                          ? "0 4px 16px rgba(16, 185, 129, 0.15)"
+                          : isSelected
+                          ? "0 4px 16px rgba(239, 125, 0, 0.15)"
+                          : "none",
+                      }}
+                    >
+                      {/* Top Badges */}
+                      <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 1, display: "flex", gap: 0.5 }}>
+                        {isWinner && (
+                          <Chip
+                            size="small"
+                            icon={<Award size={12} color="#ffffff" />}
+                            label={t("agentic.comparison.recommendedBadge")}
+                            color="success"
+                            sx={{ fontWeight: 800, fontSize: 10, height: 22 }}
                           />
-                        </div>
-                      )}
-
-                      {/* Harga Brave */}
-                      <div className={`rounded-lg p-2.5 border flex flex-col gap-0.5 ${hasBravePrice ? "bg-blue-500/8 border-blue-500/20" : "bg-[var(--ui-bg-input)] border-[var(--ui-border)]"}`}>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1 mb-0.5">
-                          <Globe size={9} />
-                          {t("agentic.comparison.braveMarketPrice")}
-                        </span>
-                        {hasBravePrice ? (
-                          <>
-                            <span className="text-sm font-bold font-mono text-blue-400">
-                              {formatRupiah(Math.round(listingPrice || marketPrice))}
-                            </span>
-                            {!listingPrice && (item.web_price_min || item.web_price_max) && (
-                              <span className="text-[10px] text-[var(--ui-text-muted)]">
-                                {t("agentic.comparison.rangeLabel")}{" "}
-                                {formatRupiah(Math.round(item.web_price_min ?? item.web_price_avg))}
-                                {" – "}
-                                {formatRupiah(Math.round(item.web_price_max ?? item.web_price_avg))}
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-[11px] text-[var(--ui-text-muted)] italic">
-                            {t("agentic.comparison.noPriceFound")}
-                          </span>
                         )}
-                      </div>
+                        {isSelected && (
+                          <Chip
+                            size="small"
+                            icon={<MousePointerClick size={12} color="#ffffff" />}
+                            label={t("agentic.comparison.selectedBadge")}
+                            color="primary"
+                            sx={{ fontWeight: 800, fontSize: 10, height: 22 }}
+                          />
+                        )}
+                      </Box>
 
-                      {/* Spesifikasi (AI) */}
-                      {item.key_specs && (
-                        <div className="p-2 rounded-lg bg-[var(--ui-bg-input)] text-[11px] text-[var(--ui-text-secondary)] border border-[var(--ui-border)] leading-relaxed">
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] block mb-0.5">
-                            {t("agentic.comparison.mainSpecs")}
-                          </span>
-                          {item.key_specs}
-                        </div>
-                      )}
+                      {/* Thumbnail */}
+                      <Box sx={{ p: 2, pb: 0 }}>
+                        <ProductThumbnail src={item.thumbnail} alt={item.product_name ?? productFallback} fallback={productFallback} />
+                      </Box>
 
-                      {/* Pros */}
-                      {item.pros?.length > 0 && (
-                        <div className="text-[11px]">
-                          <span className="font-semibold text-emerald-400 block mb-0.5 text-[10px]">
-                            {t("agentic.comparison.prosLabel")}
-                          </span>
-                          <ul className="space-y-0.5">
-                            {item.pros.map((pro: string, pIdx: number) => (
-                              <li key={pIdx} className="flex items-start gap-1 text-[var(--ui-text-secondary)]">
-                                <Check size={11} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                                <span>{pro}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Cons */}
-                      {item.cons?.length > 0 && (
-                        <div className="text-[11px]">
-                          <span className="font-semibold text-amber-400 block mb-0.5 text-[10px]">
-                            {t("agentic.comparison.consLabel")}
-                          </span>
-                          <ul className="space-y-0.5">
-                            {item.cons.map((con: string, cIdx: number) => (
-                              <li key={cIdx} className="flex items-start gap-1 text-[var(--ui-text-muted)]">
-                                <span className="text-amber-400">•</span>
-                                <span>{con}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Best for */}
-                      {item.best_for && (
-                        <div className="text-[10px] text-[var(--ui-text-muted)] italic flex items-center gap-1">
-                          <Tag size={9} />
-                          {t("agentic.comparison.bestFor")} {item.best_for}
-                        </div>
-                      )}
-
-                      {/* Sumber web Brave */}
-                      {webSources.length > 0 && (
-                        <div>
-                          <HuntrButton
-                            type="button"
-                            onClick={() =>
-                              setExpandedSources((prev) => ({ ...prev, [idx]: !showSrc }))
-                            }
-                            className="text-[10px] font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
-                          >
-                            <Globe size={10} />
-                            {showSrc ? t("agentic.comparison.hideSources") : t("agentic.comparison.showSources")}{" "}
-                            {t("agentic.comparison.sourcesCount", { count: webSources.length })}
-                          </HuntrButton>
-                          {showSrc && (
-                            <div className="mt-1.5 flex flex-col gap-1.5">
-                              {webSources.map((src: any, sIdx: number) => (
-                                <a
-                                  key={sIdx}
-                                  href={src.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-2 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] hover:border-blue-500/40 transition-colors flex gap-2 group"
-                                >
-                                  {src.thumbnail && (
-                                    <img
-                                      src={src.thumbnail}
-                                      alt=""
-                                      className="w-10 h-10 object-cover rounded shrink-0 bg-[var(--ui-bg-card)]"
-                                      onError={(e) => (e.currentTarget.style.display = "none")}
-                                    />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-[10px] font-semibold text-[var(--ui-text-primary)] line-clamp-1 group-hover:text-blue-400 transition-colors flex items-center gap-0.5">
-                                      {src.title}
-                                      <ExternalLink size={8} className="flex-shrink-0 ml-0.5" />
-                                    </div>
-                                    <div className="text-[9px] text-[var(--ui-text-muted)] truncate">{src.source}</div>
-                                    {src.snippet && (
-                                      <div className="text-[9px] text-[var(--ui-text-secondary)] line-clamp-2 mt-0.5 leading-relaxed">
-                                        {src.snippet}
-                                      </div>
-                                    )}
-                                    {src.price > 0 && (
-                                      <div className="text-[10px] font-bold text-emerald-400 mt-0.5">
-                                        Rp {src.price.toLocaleString("id-ID")}
-                                      </div>
-                                    )}
-                                  </div>
-                                </a>
-                              ))}
-                            </div>
+                      <CardContent sx={{ p: 2, flex: 1, display: "flex", flexDirection: "column", gap: 1.5 }}>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, lineHeight: 1.3 }}>
+                            {item.product_name}
+                          </Typography>
+                          {item.vendor_name && (
+                            <Typography variant="caption" color="text.secondary">
+                              {item.vendor_name}
+                            </Typography>
                           )}
-                        </div>
-                      )}
-                    </div>
+                        </Box>
 
-                    {/* Footer — Select button */}
-                    <div className="px-3 py-2 border-t border-[var(--ui-border)] flex items-center justify-between text-xs mt-auto gap-2">
-                      <span className={`text-[10px] font-semibold shrink-0 ${item.value_rating?.toLowerCase().includes("sangat") ? "text-emerald-400" : "text-[var(--ui-text-muted)]"}`}>
-                        {isWebListingOnly ? t("agentic.comparison.unverifiedWebListing") : (item.value_rating ?? t("agentic.comparison.valueRfq"))}
-                      </span>
+                        {/* Score Bar */}
+                        {!isWebListingOnly && (
+                          <Box>
+                            <Stack direction="row" sx={{ justifyContent: "space-between", mb: 0.5 }}>
+                              <Typography variant="caption" color="text.secondary">Skor Kecocokan:</Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 800, color: isWinner ? "success.main" : "primary.main" }}>
+                                {item.score || 85}/100
+                              </Typography>
+                            </Stack>
+                            <LinearProgress
+                              variant="determinate"
+                              value={item.score || 85}
+                              color={isWinner ? "success" : "primary"}
+                              sx={{ height: 6, borderRadius: 1 }}
+                            />
+                          </Box>
+                        )}
 
-                      {/* Select button */}
-                      {localSelected === localKey ? (
-                          <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[10px] font-bold">
-                            <CheckCircle2 size={10} /> {t("agentic.comparison.selected")}
-                          </span>
-                      ) : (
-                          <HuntrButton
-                            type="button"
+                        {/* Price Reference */}
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: hasBravePrice ? "rgba(59, 130, 246, 0.05)" : "action.hover",
+                            borderColor: hasBravePrice ? "rgba(59, 130, 246, 0.25)" : "divider",
+                          }}
+                        >
+                          <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10, color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5, mb: 0.25 }}>
+                            <Globe size={11} /> {t("agentic.comparison.braveMarketPrice")}
+                          </Typography>
+                          {hasBravePrice ? (
+                            <>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: "monospace", color: "info.main" }}>
+                                {formatRupiah(Math.round(listingPrice || marketPrice))}
+                              </Typography>
+                              {!listingPrice && (item.web_price_min || item.web_price_max) && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                                  Rentang: {formatRupiah(Math.round(item.web_price_min ?? item.web_price_avg))} – {formatRupiah(Math.round(item.web_price_max ?? item.web_price_avg))}
+                                </Typography>
+                              )}
+                            </>
+                          ) : (
+                            <Typography variant="caption" color="text.disabled" sx={{ fontStyle: "italic" }}>
+                              {t("agentic.comparison.noPriceFound")}
+                            </Typography>
+                          )}
+                        </Paper>
+
+                        {/* Key Specs */}
+                        {item.key_specs && (
+                          <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 1.5, bgcolor: "action.hover" }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", fontSize: 9, color: "text.secondary", display: "block" }}>
+                              {t("agentic.comparison.mainSpecs")}
+                            </Typography>
+                            <Typography variant="caption" sx={{ lineHeight: 1.4 }}>
+                              {item.key_specs}
+                            </Typography>
+                          </Paper>
+                        )}
+
+                        {/* Pros */}
+                        {item.pros?.length > 0 && (
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: "success.main", display: "block", mb: 0.5 }}>
+                              {t("agentic.comparison.prosLabel")}
+                            </Typography>
+                            <Stack spacing={0.5}>
+                              {item.pros.map((pro: string, pIdx: number) => (
+                                <Stack direction="row" spacing={0.75} key={pIdx} sx={{ alignItems: "flex-start" }}>
+                                  <Check size={13} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
+                                  <Typography variant="caption" color="text.secondary">{pro}</Typography>
+                                </Stack>
+                              ))}
+                            </Stack>
+                          </Box>
+                        )}
+
+                        {/* Cons */}
+                        {item.cons?.length > 0 && (
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: "warning.main", display: "block", mb: 0.5 }}>
+                              {t("agentic.comparison.consLabel")}
+                            </Typography>
+                            <Stack spacing={0.5}>
+                              {item.cons.map((con: string, cIdx: number) => (
+                                <Stack direction="row" spacing={0.75} key={cIdx} sx={{ alignItems: "flex-start" }}>
+                                  <Typography variant="caption" color="warning.main">•</Typography>
+                                  <Typography variant="caption" color="text.secondary">{con}</Typography>
+                                </Stack>
+                              ))}
+                            </Stack>
+                          </Box>
+                        )}
+                      </CardContent>
+
+                      <Divider />
+
+                      <CardActions sx={{ p: 1.5, px: 2, display: "flex", justifyContent: "space-between" }}>
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>
+                          {isWebListingOnly ? t("agentic.comparison.unverifiedWebListing") : (item.value_rating ?? t("agentic.comparison.valueRfq"))}
+                        </Typography>
+
+                        {isSelected ? (
+                          <Chip
+                            size="small"
+                            icon={<CheckCircle2 size={12} color="#ffffff" />}
+                            label={t("agentic.comparison.selected")}
+                            color="primary"
+                            sx={{ fontWeight: 700, fontSize: 10 }}
+                          />
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
                             onClick={() => handleSelect(item)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] hover:border-blue-500/50 hover:bg-blue-500/8 text-[var(--ui-text-muted)] hover:text-blue-400 text-[10px] font-semibold transition-colors cursor-pointer"
+                            startIcon={<MousePointerClick size={13} />}
+                            sx={{ textTransform: "none", fontSize: 11, fontWeight: 700, borderRadius: 1.5 }}
                           >
-                            <MousePointerClick size={10} />
                             {t("agentic.comparison.pickButton")}
-                          </HuntrButton>
-                      )}
-                    </div>
-                  </div>
+                          </Button>
+                        )}
+                      </CardActions>
+                    </Card>
+                  </Grid>
                 );
               })}
-            </div>
+            </Grid>
           ) : (
-            <div className="p-6 text-center rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-muted)]">
-              {t("agentic.comparison.emptyCompare")}
-            </div>
+            <Paper variant="outlined" sx={{ p: 6, textAlign: "center", borderRadius: 3, color: "text.secondary" }}>
+              <Typography variant="body2">{t("agentic.comparison.emptyCompare")}</Typography>
+            </Paper>
           )}
         </>
       )}
 
       {/* ── RADAR VIEW ── */}
       {viewMode === "radar" && matrix.length > 0 && (
-        <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-3">
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper" }}>
+          <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary", display: "block", mb: 2 }}>
             {t("agentic.comparison.radarTitle")}
-          </p>
-          <ResponsiveContainer width="100%" height={300}>
+          </Typography>
+          <ResponsiveContainer width="100%" height={320}>
             <RadarChart data={radarData}>
-              <PolarGrid stroke="var(--ui-border)" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: "var(--ui-text-muted)", fontSize: 11 }} />
+              <PolarGrid stroke="#e2e8f0" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 11 }} />
               {productNames.map((name, i) => (
                 <Radar
                   key={name}
@@ -445,37 +508,27 @@ export default function AgenticComparisonTab({
                   strokeWidth={2}
                 />
               ))}
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                wrapperStyle={{ fontSize: "11px", color: "var(--ui-text-secondary)" }}
-              />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
               <Tooltip content={<CustomTooltip />} />
             </RadarChart>
           </ResponsiveContainer>
-          <p className="text-[10px] text-[var(--ui-text-muted)] mt-2 text-center">
-            * {t("agentic.comparison.radarNote")}
-          </p>
-        </div>
+        </Paper>
       )}
 
       {/* ── BAR VIEW ── */}
       {viewMode === "bar" && matrix.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
+        <Stack spacing={2.5}>
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary", display: "block", mb: 0.5 }}>
               {t("agentic.comparison.barPriceTitle")}
-            </p>
-            <p className="text-[9px] text-[var(--ui-text-muted)] mb-3 flex items-center gap-1">
-              <Globe size={9} /> {t("agentic.comparison.barPriceNote")}
-            </p>
-            <ResponsiveContainer width="100%" height={220}>
+            </Typography>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={barData} barSize={36}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--ui-border)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: "var(--ui-text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                 <YAxis
                   tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}jt`}
-                  tick={{ fill: "var(--ui-text-muted)", fontSize: 10 }}
+                  tick={{ fontSize: 10, fill: "#64748b" }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -487,20 +540,17 @@ export default function AgenticComparisonTab({
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Paper>
 
-          <div className="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ui-text-muted)] mb-1">
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary", display: "block", mb: 0.5 }}>
               {t("agentic.comparison.barScoreTitle")}
-            </p>
-            <p className="text-[9px] text-[var(--ui-text-muted)] mb-3 flex items-center gap-1">
-              <Sparkles size={9} /> {t("agentic.comparison.barScoreNote")}
-            </p>
-            <ResponsiveContainer width="100%" height={200}>
+            </Typography>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={barData} barSize={36}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--ui-border)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: "var(--ui-text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fill: "var(--ui-text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="Score" radius={[6, 6, 0, 0]}>
                   {barData.map((entry, i) => (
@@ -509,16 +559,9 @@ export default function AgenticComparisonTab({
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-
-          <p className="text-[10px] text-[var(--ui-text-muted)] text-center">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-500 mr-1 align-middle" />
-            {t("agentic.comparison.barLegendGreen")}
-          </p>
-        </div>
+          </Paper>
+        </Stack>
       )}
-    </div>
+    </Box>
   );
 }
-
-
