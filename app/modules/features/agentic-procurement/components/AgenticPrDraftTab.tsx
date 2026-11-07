@@ -1,19 +1,39 @@
-import { Table as HuntrTable, TableHead as HuntrTableHead, TableRow as HuntrTableRow, TableHeaderCell as HuntrTableHeaderCell, TableBody as HuntrTableBody, TableCell as HuntrTableCell } from "~/shared/ui/Table";
-import { Input as HuntrInput, Select as HuntrSelect } from "~/shared/ui/Fields";
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useRef } from "react";
+import {
+  Box,
+  Paper,
+  Grid,
+  Stack,
+  Typography,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  TableFooter,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Chip,
+  IconButton,
+  Divider,
+  CircularProgress,
+  Link as MuiLink,
+} from "@mui/material";
 import {
   Building,
   Calendar,
   ShieldCheck,
   DollarSign,
-  Loader2,
   CheckCircle2,
   Upload,
   X,
   FileText,
   Tag,
-  ChevronDown,
   Trophy,
 } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -73,51 +93,50 @@ function StatusBadgeInner({
   status: string;
   t: (k: string) => string;
 }) {
-  const map: Record<string, { label: string; cls: string }> = {
+  const map: Record<string, { label: string; color: "success" | "info" | "primary" | "warning" | "secondary" | "default" }> = {
     verified_catalogue: {
       label: t("agentic.prDraft.statusBadge.verifiedCatalogue"),
-      cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+      color: "success",
     },
     historical_reference: {
       label: t("agentic.prDraft.statusBadge.historical"),
-      cls: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+      color: "info",
     },
     market_triangulated: {
       label: "Harga tervalidasi",
-      cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+      color: "success",
     },
     web_market_reference: {
       label: t("agentic.prDraft.statusBadge.webMarket"),
-      cls: "bg-orange-500/10 text-orange-400 border-orange-500/30",
+      color: "primary",
     },
     web_listing_reference: {
       label: t("agentic.prDraft.statusBadge.webListing"),
-      cls: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+      color: "info",
     },
     market_estimate: {
       label: t("agentic.prDraft.statusBadge.marketEstimate"),
-      cls: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+      color: "secondary",
     },
     buyer_budget: {
       label: t("agentic.prDraft.statusBadge.buyerBudget"),
-      cls: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+      color: "info",
     },
     rfq_required: {
       label: t("agentic.prDraft.statusBadge.rfqRequired"),
-      cls: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+      color: "warning",
     },
   };
   const m = map[status];
   if (!m) return null;
   return (
-    <span
-      className={
-        "px-1.5 py-0.5 rounded text-[9px] font-bold border whitespace-nowrap " +
-        m.cls
-      }
-    >
-      {m.label}
-    </span>
+    <Chip
+      size="small"
+      label={m.label}
+      color={m.color}
+      variant="outlined"
+      sx={{ height: 20, fontSize: 10, fontWeight: 700 }}
+    />
   );
 }
 
@@ -145,9 +164,7 @@ export default function AgenticPrDraftTab({
   const initialDept = (() => {
     const d = prDraft?.department;
     if (!d) return defaultDept;
-    // Jika sudah pernah di-set ke nilai string cocok dengan translated values, keep
     if (DEPARTMENTS.includes(d)) return d;
-    // Coba match via key originalnya (conbackend msh "Procurement")
     const idx = [
       "Procurement",
       "General Affairs (GA)",
@@ -202,672 +219,453 @@ export default function AgenticPrDraftTab({
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   }
 
-  const tRenderPrf = (s: string) =>
-    typeof s === "string" && s.toLowerCase().includes("urgent")
-      ? "urgent"
-      : "normal";
+  const isUrgent =
+    typeof prDraft.priority === "string" &&
+    prDraft.priority.toLowerCase().includes("urgent");
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* ── Left: PR Document ── */}
-      <div className="lg:col-span-2 flex flex-col gap-3">
-        <div className="p-4 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-3">
+    <Grid container spacing={3}>
+      {/* ── Left Column: PR Draft Document & Table ── */}
+      <Grid size={{ xs: 12, lg: 8 }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 2.5, sm: 3 },
+            borderRadius: 3,
+            bgcolor: "background.paper",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2.5,
+          }}
+        >
           {/* Header */}
-          <div className="border-b border-[var(--ui-border)] pb-3">
-            <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">
+          <Box sx={{ pb: 2, borderBottom: 1, borderColor: "divider" }}>
+            <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "primary.main" }}>
               {t("agentic.prDraft.headerTitle")}
-            </span>
-            <h3 className="text-sm md:text-base font-bold text-[var(--ui-text-primary)] mt-0.5">
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.25 }}>
               {prDraft.title}
-            </h3>
-            <div className="flex flex-wrap items-center gap-2.5 mt-1 text-xs text-[var(--ui-text-muted)]">
-              <span className="flex items-center gap-1">
-                <Building size={11} /> {t("agentic.prDraft.needDeptLabel")}:{" "}
-                {department}
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Calendar size={11} />{" "}
-                {t("agentic.prDraft.tenderLabel", { days: tenderDays })}
-              </span>
-              <span>•</span>
-              <span
-                className={
-                  "px-1.5 rounded font-semibold text-[10px] border " +
-                  (tRenderPrf(prDraft.priority || "") === "urgent"
-                    ? "bg-red-500/10 text-red-400 border-red-500/20"
-                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20")
-                }
-              >
-                {tRenderPrf(prDraft.priority || "") === "urgent"
-                  ? t("agentic.prDraft.priorityUrgent")
-                  : t("agentic.prDraft.priorityNormal")}
-              </span>
+            </Typography>
+
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flexWrap: "wrap", mt: 1, gap: 1 }}>
+              <Chip
+                size="small"
+                icon={<Building size={12} />}
+                label={`${t("agentic.prDraft.needDeptLabel")}: ${department}`}
+                variant="outlined"
+                sx={{ fontSize: 11 }}
+              />
+              <Chip
+                size="small"
+                icon={<Calendar size={12} />}
+                label={t("agentic.prDraft.tenderLabel", { days: tenderDays })}
+                variant="outlined"
+                sx={{ fontSize: 11 }}
+              />
+              <Chip
+                size="small"
+                label={isUrgent ? t("agentic.prDraft.priorityUrgent") : t("agentic.prDraft.priorityNormal")}
+                color={isUrgent ? "error" : "success"}
+                sx={{ fontSize: 11, fontWeight: 700 }}
+              />
               {selectedWinner && (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[10px] font-bold">
-                  <Trophy size={9} />
-                  {t("agentic.prDraft.selectedWinnerPrefix")}{" "}
-                  {selectedWinner.product_name || selectedWinner.name}
-                </span>
+                <Chip
+                  size="small"
+                  icon={<Trophy size={12} color="#f59e0b" />}
+                  label={`${t("agentic.prDraft.selectedWinnerPrefix")} ${selectedWinner.product_name || selectedWinner.name}`}
+                  color="warning"
+                  variant="outlined"
+                  sx={{ fontSize: 11, fontWeight: 700 }}
+                />
               )}
-            </div>
-          </div>
+            </Stack>
+          </Box>
 
           {/* Description */}
-          <div className="flex flex-col gap-1 text-xs">
-            <span className="font-bold text-[var(--ui-text-secondary)] uppercase tracking-wider text-[11px]">
+          <Box>
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "text.secondary", display: "block", mb: 0.75 }}>
               {t("agentic.prDraft.needDescriptionTitle")}
-            </span>
-            <p className="text-xs text-[var(--ui-text-primary)] leading-relaxed bg-[var(--ui-bg-input)] p-3 rounded-md border border-[var(--ui-border)]">
-              {prDraft.description}
-            </p>
-          </div>
+            </Typography>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
+              <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                {prDraft.description}
+              </Typography>
+            </Paper>
+          </Box>
 
-          {/* Justification */}
+          {/* Business Justification */}
           {prDraft.business_justification && (
-            <div className="flex flex-col gap-1 text-xs">
-              <span className="font-bold text-[var(--ui-text-secondary)] uppercase tracking-wider text-[11px] flex items-center gap-1">
-                <ShieldCheck size={12} className="text-orange-400" />
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "text.secondary", display: "flex", alignItems: "center", gap: 0.75, mb: 0.75 }}>
+                <ShieldCheck size={14} color="#ef7d00" />
                 {t("agentic.prDraft.businessJustification")}
-              </span>
-              <div className="text-xs text-[var(--ui-text-primary)] bg-orange-500/5 p-3 rounded-md border border-orange-500/20">
-                {prDraft.business_justification}
-              </div>
-            </div>
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: "rgba(239, 125, 0, 0.04)", borderColor: "rgba(239, 125, 0, 0.25)" }}>
+                <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                  {prDraft.business_justification}
+                </Typography>
+              </Paper>
+            </Box>
           )}
 
-          {/* Line Items — Desktop */}
-          <div className="flex flex-col gap-1.5 mt-1">
-            <span className="font-bold text-[var(--ui-text-secondary)] uppercase tracking-wider text-[11px]">
+          {/* Items Table */}
+          <Box>
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "text.secondary", display: "block", mb: 1 }}>
               {t("agentic.prDraft.lineItemsTitle", {
                 count: prDraft.suggested_items?.length || 0,
               })}
-            </span>
+            </Typography>
 
-            <div className="hidden sm:block overflow-x-auto rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-card)]">
-              <HuntrTable className="w-full text-left text-xs border-collapse">
-                <HuntrTableHead>
-                  <HuntrTableRow className="bg-[var(--ui-bg-input)] border-b border-[var(--ui-border)] text-[var(--ui-text-muted)] font-semibold">
-                    <HuntrTableHeaderCell className="px-3 py-2">
-                      {t("agentic.prDraft.tableHeaders.itemSpec")}
-                    </HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-3 py-2">
-                      {t("agentic.prDraft.tableHeaders.brand")}
-                    </HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-3 py-2 text-center">
-                      {t("agentic.prDraft.tableHeaders.qty")}
-                    </HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-3 py-2 text-right">
-                      {t("agentic.prDraft.tableHeaders.unitPrice")}
-                    </HuntrTableHeaderCell>
-                    <HuntrTableHeaderCell className="px-3 py-2 text-right">
-                      {t("agentic.prDraft.tableHeaders.subtotal")}
-                    </HuntrTableHeaderCell>
-                  </HuntrTableRow>
-                </HuntrTableHead>
-                <HuntrTableBody className="divide-y divide-[var(--ui-border)]">
-                  {!prDraft.suggested_items?.length && (
-                    <HuntrTableRow>
-                      <HuntrTableCell colSpan={5} className="px-3 py-8 text-center text-[var(--ui-text-muted)]">
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2.5, overflow: "hidden" }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: "action.hover" }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>{t("agentic.prDraft.tableHeaders.itemSpec")}</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>{t("agentic.prDraft.tableHeaders.brand")}</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>{t("agentic.prDraft.tableHeaders.qty")}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, fontSize: 12 }}>{t("agentic.prDraft.tableHeaders.unitPrice")}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, fontSize: 12 }}>{t("agentic.prDraft.tableHeaders.subtotal")}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {!prDraft.suggested_items?.length ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary" }}>
                         Belum ada item dengan referensi harga yang dapat dimasukkan ke draft PR.
-                      </HuntrTableCell>
-                    </HuntrTableRow>
-                  )}
-                  {prDraft.suggested_items?.map((item: any, idx: number) => {
-                    const price = item.estimated_price || 0;
-                    const subtotal = (item.qty || 1) * price;
-                    const status =
-                      item.price_status ||
-                      (price > 0
-                        ? item.catalogue_id
-                          ? "verified_catalogue"
-                          : "buyer_budget"
-                        : "rfq_required");
-                    const brand =
-                      item.brand ||
-                      item.vendor_name ||
-                      selectedWinner?.vendor_name ||
-                      "";
-                    const webSources = (item.web_sources || [])
-                      .filter((source: any) => source.link)
-                      .slice(0, 10);
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    prDraft.suggested_items.map((item: any, idx: number) => {
+                      const price = item.estimated_price || 0;
+                      const subtotal = (item.qty || 1) * price;
+                      const status =
+                        item.price_status ||
+                        (price > 0
+                          ? item.catalogue_id
+                            ? "verified_catalogue"
+                            : "buyer_budget"
+                          : "rfq_required");
+                      const brand =
+                        item.brand ||
+                        item.vendor_name ||
+                        selectedWinner?.vendor_name ||
+                        "";
+                      const webSources = (item.web_sources || [])
+                        .filter((source: any) => source.link)
+                        .slice(0, 5);
 
-                    return (
-                      <HuntrTableRow
-                        key={idx}
-                        className="hover:bg-[var(--ui-bg-input)]/50 transition-colors"
-                      >
-                        <HuntrTableCell className="px-3 py-2.5 max-w-xs">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="font-semibold text-[var(--ui-text-primary)]">
-                              {item.name}
-                            </span>
-                            <StatusBadgeInner status={status} t={t} />
-                          </div>
-                          <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5 leading-relaxed">
-                            {item.detailed_specs || item.reason || "—"}
-                          </div>
-                          {item.item_code && (
-                            <div className="text-[10px] text-[var(--ui-text-muted)] opacity-70 font-mono mt-0.5">
-                              {t("agentic.prDraft.itemCodeLabel")}{" "}
-                              {item.item_code}
-                            </div>
-                          )}
-                          {item.price_note && (
-                            <div className="text-[10px] text-blue-400/80 mt-0.5 italic">
-                              {item.price_note}
-                            </div>
-                          )}
-                          {priceConfidenceLabel(item.price_confidence) && (
-                            <div className="text-[10px] text-[var(--ui-text-muted)] mt-0.5">
-                              {priceConfidenceLabel(item.price_confidence)}
-                            </div>
-                          )}
-                          {item.metadata_source && (
-                            <a
-                              href={item.metadata_source}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-1 block truncate text-[10px] text-blue-400 hover:text-blue-300"
-                            >
-                              Metadata produk: {item.metadata_source_title || "lihat sumber"}
-                            </a>
-                          )}
-                          {webSources.length > 0 && (
-                            <div className="mt-1 flex flex-col gap-0.5">
-                              {webSources.map(
-                                (source: any, sourceIndex: number) => (
-                                  <a
-                                    key={sourceIndex}
+                      return (
+                        <TableRow key={idx} hover>
+                          <TableCell sx={{ maxWidth: 300 }}>
+                            <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 0.5 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                {item.name}
+                              </Typography>
+                              <StatusBadgeInner status={status} t={t} />
+                            </Stack>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.4 }}>
+                              {item.detailed_specs || item.reason || "—"}
+                            </Typography>
+                            {item.price_note && (
+                              <Typography variant="caption" sx={{ color: "info.main", fontStyle: "italic", display: "block", mt: 0.25 }}>
+                                {item.price_note}
+                              </Typography>
+                            )}
+                            {webSources.length > 0 && (
+                              <Stack spacing={0.25} sx={{ mt: 0.75 }}>
+                                {webSources.map((source: any, sIdx: number) => (
+                                  <MuiLink
+                                    key={sIdx}
                                     href={source.link}
                                     target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-start justify-between gap-2 text-[10px] text-blue-400 hover:text-blue-300"
+                                    rel="noreferrer"
+                                    sx={{ fontSize: 11, display: "flex", justifyContent: "space-between" }}
                                   >
-                                    <span className="min-w-0 truncate">
+                                    <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                                       {source.title || source.source}
                                     </span>
-                                    {source.price > 0 && (
-                                      <span className="shrink-0">
-                                        {formatRupiah(source.price)}
-                                      </span>
-                                    )}
-                                  </a>
-                                ),
-                              )}
-                            </div>
-                          )}
-                        </HuntrTableCell>
-
-                        <HuntrTableCell className="px-3 py-2.5 min-w-[100px]">
-                          {brand ? (
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-[var(--ui-text-secondary)]">
-                              <Tag
-                                size={10}
-                                className="text-orange-400 flex-shrink-0"
-                              />
-                              {brand}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-[var(--ui-text-muted)] italic">
-                              —
-                            </span>
-                          )}
-                        </HuntrTableCell>
-
-                        <HuntrTableCell className="px-3 py-2.5 text-center font-medium text-[var(--ui-text-primary)] whitespace-nowrap">
-                          <div className="inline-flex items-center justify-center gap-1.5">
-                            <HuntrInput
-                              type="number"
-                              min={1}
-                              step={1}
-                              value={item.qty || 1}
-                              onChange={(event) =>
-                                onUpdateItemQty(
-                                  idx,
-                                  Math.max(
-                                    1,
-                                    Number.parseInt(event.target.value, 10) ||
-                                      1,
-                                  ),
-                                )
-                              }
-                              aria-label={`${t("agentic.prDraft.tableHeaders.qty")} ${item.name}`}
-                              className="w-16 bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded px-2 py-1 text-center text-[var(--ui-text-primary)]"
-                            />
-                            <span>
-                              {item.uom || t("agentic.itemGenericUom")}
-                            </span>
-                          </div>
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-3 py-2.5 text-right font-mono text-[var(--ui-text-secondary)] whitespace-nowrap">
-                          {price > 0 ? (
-                            formatRupiah(price)
-                          ) : (
-                            <span className="text-[11px] text-amber-400 italic">
-                              {t("agentic.prDraft.statusBadge.rfqRequired")}
-                            </span>
-                          )}
-                        </HuntrTableCell>
-                        <HuntrTableCell className="px-3 py-2.5 text-right font-mono font-bold text-orange-400 whitespace-nowrap">
-                          {price > 0 ? (
-                            formatRupiah(subtotal)
-                          ) : (
-                            <span className="text-[11px] text-amber-400 font-medium">
-                              {t("agentic.prDraft.statusBadge.rfqRequired")}
-                            </span>
-                          )}
-                        </HuntrTableCell>
-                      </HuntrTableRow>
-                    );
-                  })}
-                </HuntrTableBody>
-                <tfoot>
-                  <HuntrTableRow className="bg-[var(--ui-bg-input)] font-bold text-[var(--ui-text-primary)]">
-                    <HuntrTableCell colSpan={4} className="px-3 py-2 text-right">
-                      {t("agentic.prDraft.totalBudget")}:
-                    </HuntrTableCell>
-                    <HuntrTableCell className="px-3 py-2 text-right font-mono text-xs text-orange-400">
-                      {totalBudget > 0 ? (
-                        formatRupiah(totalBudget)
-                      ) : (
-                        <span className="text-amber-400 font-semibold">
-                          {t("agentic.prDraft.needVendorOffer")}
-                        </span>
-                      )}
-                    </HuntrTableCell>
-                  </HuntrTableRow>
-                </tfoot>
-              </HuntrTable>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="sm:hidden flex flex-col gap-2">
-              {prDraft.suggested_items?.map((item: any, idx: number) => {
-                const price = item.estimated_price || 0;
-                const subtotal = (item.qty || 1) * price;
-                const status =
-                  item.price_status ||
-                  (price > 0
-                    ? item.catalogue_id
-                      ? "verified_catalogue"
-                      : "buyer_budget"
-                    : "rfq_required");
-                const brand =
-                  item.brand ||
-                  item.vendor_name ||
-                  selectedWinner?.vendor_name ||
-                  "";
-                const webSources = (item.web_sources || [])
-                  .filter((source: any) => source.link)
-                  .slice(0, 10);
-
-                return (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg-input)] flex flex-col gap-1.5 text-xs"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-bold text-[var(--ui-text-primary)] leading-tight">
-                        {item.name}
-                      </div>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 flex-shrink-0">
-                        <HuntrInput
-                          type="number"
-                          min={1}
-                          step={1}
-                          value={item.qty || 1}
-                          onChange={(event) =>
-                            onUpdateItemQty(
-                              idx,
-                              Math.max(
-                                1,
-                                Number.parseInt(event.target.value, 10) || 1,
-                              ),
-                            )
-                          }
-                          aria-label={`${t("agentic.prDraft.tableHeaders.qty")} ${item.name}`}
-                          className="w-12 bg-transparent border-b border-orange-500/40 text-center text-orange-500 focus:outline-none"
-                        />
-                        {item.uom || t("agentic.itemGenericUom")}
-                      </span>
-                    </div>
-                    {brand && (
-                      <div className="flex items-center gap-1 text-[11px] text-[var(--ui-text-secondary)]">
-                        <Tag size={10} className="text-orange-400" />
-                        {brand}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-1">
-                      <StatusBadgeInner status={status} t={t} />
-                    </div>
-                    {item.detailed_specs && (
-                      <p className="text-[11px] text-[var(--ui-text-muted)] leading-relaxed">
-                        {item.detailed_specs}
-                      </p>
-                    )}
-                    {item.price_note && (
-                      <p className="text-[10px] text-blue-400/80 italic">
-                        {item.price_note}
-                      </p>
-                    )}
-                    {priceConfidenceLabel(item.price_confidence) && (
-                      <p className="text-[10px] text-[var(--ui-text-muted)]">
-                        {priceConfidenceLabel(item.price_confidence)}
-                      </p>
-                    )}
-                    {item.metadata_source && (
-                      <a
-                        href={item.metadata_source}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block truncate text-[10px] text-blue-400 hover:text-blue-300"
-                      >
-                        Metadata produk: {item.metadata_source_title || "lihat sumber"}
-                      </a>
-                    )}
-                    {webSources.length > 0 && (
-                      <div className="flex flex-col gap-0.5">
-                        {webSources.map((source: any, sourceIndex: number) => (
-                          <a
-                            key={sourceIndex}
-                            href={source.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-start justify-between gap-2 text-[10px] text-blue-400 hover:text-blue-300"
-                          >
-                            <span className="min-w-0 truncate">
-                              {source.title || source.source}
-                            </span>
-                            {source.price > 0 && (
-                              <span className="shrink-0">
-                                {formatRupiah(source.price)}
-                              </span>
+                                    {source.price > 0 && <strong>{formatRupiah(source.price)}</strong>}
+                                  </MuiLink>
+                                ))}
+                              </Stack>
                             )}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between pt-1 border-t border-[var(--ui-border)] text-[11px]">
-                      <span className="text-[var(--ui-text-muted)]">
-                        {price > 0
-                          ? "@ " + formatRupiah(price)
-                          : t("agentic.prDraft.statusBadge.rfqRequired")}
-                      </span>
-                      <span className="font-bold font-mono text-orange-400">
-                        {price > 0 ? formatRupiah(subtotal) : "—"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+                          </TableCell>
 
-      {/* ── Right: Config + Summary ── */}
-      <div className="flex flex-col gap-3">
-        {/* Department */}
-        <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-2">
-          <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <Building size={12} className="text-orange-400" />
-            {t("agentic.prDraft.configDeptTitle")} ·{" "}
-            {t("agentic.prDraft.deptLabel")}
-          </span>
-          <div className="relative">
-            <HuntrSelect
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="w-full appearance-none bg-[var(--ui-bg-input)] border border-[var(--ui-border)] rounded-md px-3 py-2 text-xs text-[var(--ui-text-primary)] pr-7 focus:outline-none focus:border-orange-400 transition-colors cursor-pointer"
-            >
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </HuntrSelect>
-            <ChevronDown
-              size={12}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)] pointer-events-none"
-            />
-          </div>
-        </div>
+                          <TableCell sx={{ whiteSpace: "nowrap" }}>
+                            {brand ? (
+                              <Chip size="small" icon={<Tag size={10} />} label={brand} variant="outlined" sx={{ fontSize: 11 }} />
+                            ) : (
+                              <Typography variant="caption" color="text.disabled">—</Typography>
+                            )}
+                          </TableCell>
 
-        {/* Tender Duration */}
-        <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-2">
-          <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar size={12} className="text-orange-400" />
-            {t("agentic.prDraft.tenderDurationLabel")}
-          </span>
-          <div className="grid grid-cols-4 gap-1.5">
-            {TENDER_DAYS.map((d) => (
-              <HuntrButton
-                key={d}
-                type="button"
-                onClick={() => setTenderDays(d)}
-                className={
-                  "py-1.5 rounded-md text-[11px] font-bold transition-all border cursor-pointer " +
-                  (tenderDays === d
-                    ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] border-[var(--ui-border)] hover:border-orange-400/60")
-                }
-              >
-                {t("agentic.prDraft.tenderDayShorthand", { days: d })}
-              </HuntrButton>
-            ))}
-          </div>
-          <p className="text-[10px] text-[var(--ui-text-muted)]">
-            {t("agentic.prDraft.tenderActiveDuration")} ·{" "}
-            <span className="font-bold text-[var(--ui-text-primary)]">
-              {tenderDays} {t("agentic.prDraft.tenderDayUnit")}
-            </span>
-          </p>
-        </div>
+                          <TableCell align="center">
+                            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
+                              <TextField
+                                type="number"
+                                size="small"
+                                value={item.qty || 1}
+                                onChange={(e) =>
+                                  onUpdateItemQty(
+                                    idx,
+                                    Math.max(1, Number.parseInt(e.target.value, 10) || 1),
+                                  )
+                                }
+                                slotProps={{
+                                  htmlInput: {
+                                    min: 1,
+                                    style: { textAlign: "center", width: 44, padding: "4px 6px" },
+                                  },
+                                }}
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                {item.uom || t("agentic.itemGenericUom")}
+                              </Typography>
+                            </Stack>
+                          </TableCell>
 
-        {/* Upload */}
-        <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-2">
-          <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <Upload size={12} className="text-orange-400" />
-            {t("agentic.prDraft.attachmentsLabel")}
-          </span>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setIsDragging(false);
-              handleFiles(e.dataTransfer.files);
-            }}
-            className={
-              "border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors " +
-              (isDragging
-                ? "border-orange-400 bg-orange-500/10"
-                : "border-[var(--ui-border)] hover:border-orange-400/50 hover:bg-[var(--ui-bg-input)]")
-            }
-          >
-            <Upload
-              size={16}
-              className="mx-auto mb-1 text-[var(--ui-text-muted)]"
-            />
-            <p className="text-[10px] text-[var(--ui-text-muted)]">
-              {t("agentic.prDraft.attachmentsHint")}
-            </p>
-            <p className="text-[9px] text-[var(--ui-text-muted)] opacity-60 mt-0.5">
-              {t("agentic.prDraft.maxFilesNote", {
-                current: attachments.length,
-              })}
-            </p>
-            <HuntrInput
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-          </div>
-          {attachments.length > 0 && (
-            <div className="flex flex-col gap-1">
-              {attachments.map((f, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[10px]"
+                          <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                            {price > 0 ? (
+                              formatRupiah(price)
+                            ) : (
+                              <Typography variant="caption" color="warning.main" sx={{ fontStyle: "italic" }}>
+                                {t("agentic.prDraft.statusBadge.rfqRequired")}
+                              </Typography>
+                            )}
+                          </TableCell>
+
+                          <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 700, color: "primary.main" }}>
+                            {price > 0 ? (
+                              formatRupiah(subtotal)
+                            ) : (
+                              <Typography variant="caption" color="warning.main">
+                                {t("agentic.prDraft.statusBadge.rfqRequired")}
+                              </Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+                <TableFooter sx={{ bgcolor: "action.hover" }}>
+                  <TableRow>
+                    <TableCell colSpan={4} align="right" sx={{ fontWeight: 800, fontSize: 13 }}>
+                      {t("agentic.prDraft.totalBudget")}:
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 900, fontSize: 14, color: "primary.main" }}>
+                      {totalBudget > 0 ? formatRupiah(totalBudget) : t("agentic.prDraft.needVendorOffer")}
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </TableContainer>
+          </Box>
+        </Paper>
+      </Grid>
+
+      {/* ── Right Column: Configuration & Actions ── */}
+      <Grid size={{ xs: 12, lg: 4 }}>
+        <Stack spacing={2.5}>
+          {/* Department Card */}
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Stack spacing={1.5}>
+              <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", fontSize: 11, color: "text.secondary", display: "flex", alignItems: "center", gap: 1 }}>
+                <Building size={14} color="#ef7d00" />
+                {t("agentic.prDraft.configDeptTitle")}
+              </Typography>
+
+              <FormControl fullWidth size="small">
+                <InputLabel id="pr-dept-label">Departemen</InputLabel>
+                <Select
+                  labelId="pr-dept-label"
+                  label="Departemen"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
                 >
-                  <FileText
-                    size={11}
-                    className="text-orange-400 flex-shrink-0"
-                  />
-                  <span className="flex-1 truncate text-[var(--ui-text-primary)] font-medium">
-                    {f.name}
-                  </span>
-                  <span className="text-[var(--ui-text-muted)] flex-shrink-0">
-                    {formatFileSize(f.size)}
-                  </span>
-                  <HuntrButton
-                    type="button"
-                    onClick={() => removeFile(i)}
-                    className="text-[var(--ui-text-muted)] hover:text-red-400 transition-colors flex-shrink-0 cursor-pointer"
-                  >
-                    <X size={10} />{" "}
-                    <span className="sr-only">
-                      {t("agentic.prDraft.removeFile")}
-                    </span>
-                  </HuntrButton>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                  {DEPARTMENTS.map((d) => (
+                    <MenuItem key={d} value={d}>{d}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          </Paper>
 
-        {/* Financial Summary */}
-        <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-3">
-          <span className="text-[11px] font-bold text-[var(--ui-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-            <DollarSign size={12} className="text-emerald-400" />
-            {t("agentic.prDraft.grandTotal")}
-          </span>
-          <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex flex-col">
-            <span className="text-[10px] text-emerald-400 font-semibold">
-              {t("agentic.prDraft.totalBudget")}
-            </span>
-            <span className="text-lg font-black font-mono text-emerald-400">
-              {totalBudget > 0
-                ? formatRupiah(totalBudget)
-                : t("agentic.prDraft.needVendorOffer")}
-            </span>
-            {totalBudget === 0 && (
-              <span className="text-[10px] text-amber-400 mt-0.5">
-                {t("agentic.prDraft.needVendorOffer")}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 text-xs divide-y divide-[var(--ui-border)]">
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">
-                {t("agentic.prDraft.summaryCompany")}
-              </span>
-              <span className="font-semibold text-[var(--ui-text-primary)]">
-                {activeCompanyName || t("agentic.prDraft.buyerFallback")}
-              </span>
-            </div>
-            {wmsInstalled && (
-              <div className="flex flex-col gap-1.5 pt-2">
-                <label className="text-[var(--ui-text-muted)]">
-                  Receiving warehouse
-                </label>
-                <HuntrSelect
-                  value={warehouseId}
-                  onChange={(event) => setWarehouseId(event.target.value)}
-                  className="w-full rounded-md border border-[var(--ui-border)] bg-[var(--ui-bg-input)] px-2 py-1.5 text-xs text-[var(--ui-text-primary)]"
-                >
-                  <option value="">No WMS warehouse selected</option>
-                  {warehouses
-                    .filter((warehouse) => warehouse.status === "active")
-                    .map((warehouse) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name} · {warehouse.code}
-                      </option>
-                    ))}
-                </HuntrSelect>
-                <span className="text-[10px] text-[var(--ui-text-muted)]">
-                  Goods Receipt will be recorded in this warehouse.
-                </span>
-              </div>
-            )}
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">
-                {t("agentic.prDraft.deptLabel")}
-              </span>
-              <span className="font-semibold text-[var(--ui-text-primary)] truncate max-w-[130px]">
-                {department}
-              </span>
-            </div>
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">
+          {/* Tender Duration */}
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Stack spacing={1.5}>
+              <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", fontSize: 11, color: "text.secondary", display: "flex", alignItems: "center", gap: 1 }}>
+                <Calendar size={14} color="#ef7d00" />
                 {t("agentic.prDraft.tenderDurationLabel")}
-              </span>
-              <span className="font-semibold text-[var(--ui-text-primary)]">
-                {t("agentic.prDraft.tenderDayShorthand", { days: tenderDays })}
-              </span>
-            </div>
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">
+              </Typography>
+
+              <Grid container spacing={1}>
+                {TENDER_DAYS.map((d) => (
+                  <Grid size={{ xs: 3 }} key={d}>
+                    <Button
+                      fullWidth
+                      variant={tenderDays === d ? "contained" : "outlined"}
+                      color={tenderDays === d ? "primary" : "inherit"}
+                      onClick={() => setTenderDays(d)}
+                      sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, py: 0.75 }}
+                    >
+                      {t("agentic.prDraft.tenderDayShorthand", { days: d })}
+                    </Button>
+                  </Grid>
+                ))}
+              </Grid>
+
+              <Typography variant="caption" color="text.secondary">
+                {t("agentic.prDraft.tenderActiveDuration")} · <strong>{tenderDays} {t("agentic.prDraft.tenderDayUnit")}</strong>
+              </Typography>
+            </Stack>
+          </Paper>
+
+          {/* Attachments */}
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Stack spacing={1.5}>
+              <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", fontSize: 11, color: "text.secondary", display: "flex", alignItems: "center", gap: 1 }}>
+                <Upload size={14} color="#ef7d00" />
                 {t("agentic.prDraft.attachmentsLabel")}
-              </span>
-              <span className="font-semibold text-[var(--ui-text-primary)]">
-                {attachments.length > 0
-                  ? attachments.length + " " + t("agentic.prDraft.summaryFiles")
-                  : "—"}
-              </span>
-            </div>
-            {selectedWinner && (
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[var(--ui-text-muted)]">
-                  {t("agentic.comparison.selectedBadge")}
-                </span>
-                <span className="font-semibold text-yellow-400 flex items-center gap-1 truncate max-w-[130px]">
-                  <Trophy size={10} />{" "}
-                  {selectedWinner.product_name || selectedWinner.name}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[var(--ui-text-muted)]">
-                {t("agentic.prDraft.summaryDelivery")}
-              </span>
-              <span className="font-semibold text-[var(--ui-text-primary)] truncate max-w-[130px]">
-                {prDraft.delivery_point_recommendation ||
-                  t("agentic.prDraft.summaryHeadOffice")}
-              </span>
-            </div>
-          </div>
-          <HuntrButton
-            onClick={() =>
-              onCreatePr({ department, tenderDays, attachments, warehouseId })
-            }
-            disabled={isCreatingPr || !(prDraft.suggested_items?.length > 0)}
-            className="w-full mt-1 py-2.5 rounded-md bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-          >
-            {isCreatingPr ? (
-              <>
-                <Loader2 size={13} className="animate-spin" />
-                <span>{t("agentic.tabs.saving")}</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={13} />
-                <span>{t("agentic.prDraft.actions.createNow")}</span>
-              </>
-            )}
-          </HuntrButton>
-        </div>
-      </div>
-    </div>
+              </Typography>
+
+              <Box
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  handleFiles(e.dataTransfer.files);
+                }}
+                sx={{
+                  border: "2px dashed",
+                  borderColor: isDragging ? "primary.main" : "divider",
+                  borderRadius: 2.5,
+                  p: 2.5,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  bgcolor: isDragging ? (theme) => `${theme.palette.primary.main}0D` : "action.hover",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <Upload size={20} style={{ margin: "0 auto 8px", opacity: 0.5 }} />
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                  {t("agentic.prDraft.attachmentsHint")}
+                </Typography>
+                <Typography variant="caption" sx={{ display: "block", color: "text.disabled", mt: 0.5, fontSize: 10 }}>
+                  {t("agentic.prDraft.maxFilesNote", { current: attachments.length })}
+                </Typography>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                  style={{ display: "none" }}
+                  onChange={(e) => handleFiles(e.target.files)}
+                />
+              </Box>
+
+              {attachments.length > 0 && (
+                <Stack spacing={1}>
+                  {attachments.map((f, i) => (
+                    <Paper
+                      key={i}
+                      variant="outlined"
+                      sx={{
+                        p: 1,
+                        borderRadius: 1.5,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+                        <FileText size={14} color="#ef7d00" />
+                        <Typography variant="caption" noWrap sx={{ fontWeight: 600 }}>{f.name}</Typography>
+                      </Stack>
+                      <IconButton size="small" onClick={() => removeFile(i)}>
+                        <X size={12} />
+                      </IconButton>
+                    </Paper>
+                  ))}
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+
+          {/* Financial Summary & Action */}
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Stack spacing={2}>
+              <Typography variant="caption" sx={{ fontWeight: 800, textTransform: "uppercase", fontSize: 11, color: "text.secondary", display: "flex", alignItems: "center", gap: 1 }}>
+                <DollarSign size={14} color="#10b981" />
+                {t("agentic.prDraft.grandTotal")}
+              </Typography>
+
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  borderRadius: 2.5,
+                  bgcolor: "rgba(16, 185, 129, 0.08)",
+                  borderColor: "rgba(16, 185, 129, 0.3)",
+                }}
+              >
+                <Typography variant="caption" sx={{ color: "success.main", fontWeight: 700, display: "block" }}>
+                  {t("agentic.prDraft.totalBudget")}
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 900, fontFamily: "monospace", color: "success.main", mt: 0.25 }}>
+                  {totalBudget > 0 ? formatRupiah(totalBudget) : t("agentic.prDraft.needVendorOffer")}
+                </Typography>
+              </Paper>
+
+              {wmsInstalled && (
+                <FormControl fullWidth size="small">
+                  <InputLabel id="pr-warehouse-label">Gudang Penerimaan</InputLabel>
+                  <Select
+                    labelId="pr-warehouse-label"
+                    label="Gudang Penerimaan"
+                    value={warehouseId}
+                    onChange={(e) => setWarehouseId(e.target.value)}
+                  >
+                    <MenuItem value="">Tanpa Gudang WMS</MenuItem>
+                    {warehouses
+                      .filter((w) => w.status === "active")
+                      .map((w) => (
+                        <MenuItem key={w.id} value={w.id}>{w.name} · {w.code}</MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => onCreatePr({ department, tenderDays, attachments, warehouseId })}
+                disabled={isCreatingPr || !(prDraft.suggested_items?.length > 0)}
+                startIcon={
+                  isCreatingPr ? <CircularProgress size={16} color="inherit" /> : <CheckCircle2 size={16} />
+                }
+                sx={{
+                  borderRadius: 2.5,
+                  py: 1.5,
+                  fontWeight: 800,
+                  textTransform: "none",
+                  fontSize: 14,
+                  boxShadow: (theme) => `0 4px 14px ${theme.palette.primary.main}40`,
+                }}
+              >
+                {isCreatingPr ? t("agentic.tabs.saving") : t("agentic.prDraft.actions.createNow")}
+              </Button>
+            </Stack>
+          </Paper>
+        </Stack>
+      </Grid>
+    </Grid>
   );
 }
-
-

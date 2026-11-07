@@ -1,7 +1,16 @@
-import { Input as HuntrInput } from "~/shared/ui/Fields";
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
-import { Bot, Send, Loader2 } from "lucide-react";
+import {
+  Box,
+  Paper,
+  Stack,
+  Typography,
+  TextField,
+  Button,
+  Avatar,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import { Bot, Send } from "lucide-react";
 import { useLanguage } from "../../../context/LanguageContext";
 import { type ChatMessage } from "../types";
 
@@ -25,71 +34,104 @@ export default function AgenticChatTab({
   const { t } = useLanguage();
 
   return (
-    <div className="p-4 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] shadow-sm flex flex-col gap-3 h-[460px]">
-      <div className="border-b border-[var(--ui-border)] pb-2 flex items-center gap-2">
-        <Bot size={15} className="text-orange-400" />
-        <span className="font-bold text-xs text-[var(--ui-text-primary)]">
+    <Paper
+      variant="outlined"
+      sx={{
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: 3,
+        bgcolor: "background.paper",
+        display: "flex",
+        flexDirection: "column",
+        height: 480,
+      }}
+    >
+      {/* Header */}
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", pb: 1.5, borderBottom: 1, borderColor: "divider" }}>
+        <Bot size={18} color="#ef7d00" />
+        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
           {t("agentic.chat.header")}
-        </span>
-      </div>
+        </Typography>
+      </Stack>
 
-      <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 text-xs">
+      {/* Message List */}
+      <Box sx={{ flex: 1, overflowY: "auto", py: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
         {chatMessages.map((msg, idx) => {
           const isAi = msg.role === "assistant";
           return (
-            <div
+            <Stack
               key={idx}
-              className={`flex gap-2 leading-relaxed ${isAi ? "justify-start" : "justify-end"}`}
+              direction="row"
+              spacing={1}
+              sx={{
+                justifyContent: isAi ? "flex-start" : "flex-end",
+                alignItems: "flex-start",
+              }}
             >
               {isAi && (
-                <div className="w-6 h-6 rounded-md bg-orange-500/10 text-orange-400 flex items-center justify-center flex-shrink-0">
-                  <Bot size={13} />
-                </div>
+                <Avatar
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    bgcolor: (theme) => `${theme.palette.primary.main}1A`,
+                    color: "primary.main",
+                  }}
+                >
+                  <Bot size={15} />
+                </Avatar>
               )}
-              <div
-                className={`p-2.5 rounded-lg max-w-[80%] whitespace-pre-wrap ${
-                  isAi
-                    ? "bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)]"
-                    : "bg-orange-500 text-white"
-                }`}
+
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2.5,
+                  maxWidth: "80%",
+                  bgcolor: isAi ? "action.hover" : "primary.main",
+                  color: isAi ? "text.primary" : "#ffffff",
+                  border: isAi ? 1 : 0,
+                  borderColor: "divider",
+                  whiteSpace: "pre-wrap",
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
               >
                 {msg.content}
-              </div>
-            </div>
+              </Box>
+            </Stack>
           );
         })}
-        {isChatSending && (
-          <div className="flex items-center gap-1.5 text-xs text-orange-400">
-            <Loader2 size={13} className="animate-spin" />
-            <span>{t("agentic.chat.aiThinking")}</span>
-          </div>
-        )}
         <div ref={chatEndRef} />
-      </div>
+      </Box>
 
-      <div className="flex items-center gap-2 border-t border-[var(--ui-border)] pt-2">
-        <HuntrInput
-          type="text"
-          value={chatInput}
-          onChange={(e) => setChatInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onSendMessage();
-          }}
-          placeholder={t("agentic.chat.typingPlaceholder")}
-          disabled={isChatSending}
-          className="flex-1 px-3 py-2 rounded-md bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs text-[var(--ui-text-primary)] outline-none focus:border-orange-500 transition-all"
-        />
-        <HuntrButton
-          onClick={onSendMessage}
-          disabled={isChatSending || !chatInput.trim()}
-          className="px-3 py-2 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1"
-        >
-          <Send size={13} />
-          <span>{t("agentic.chat.send")}</span>
-        </HuntrButton>
-      </div>
-    </div>
+      {/* Input Bar */}
+      <Box
+        component="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSendMessage();
+        }}
+        sx={{ pt: 1.5, borderTop: 1, borderColor: "divider" }}
+      >
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder={t("agentic.chat.placeholder")}
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            disabled={isChatSending}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={isChatSending || !chatInput.trim()}
+            endIcon={isChatSending ? <CircularProgress size={14} color="inherit" /> : <Send size={15} />}
+            sx={{ borderRadius: 2, px: 2.5, textTransform: "none", fontWeight: 700, flexShrink: 0 }}
+          >
+            {t("agentic.chat.sendBtn")}
+          </Button>
+        </Stack>
+      </Box>
+    </Paper>
   );
 }
-
-
