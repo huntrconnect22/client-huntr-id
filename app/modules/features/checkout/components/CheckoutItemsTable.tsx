@@ -22,7 +22,7 @@ interface CheckoutItemsTableProps {
   onAddServiceLine: () => void;
   onUpdateManualItem: (
     id: string,
-    field: "name" | "estimated_price" | "service_scope",
+    field: string,
     value: string | number,
   ) => void;
   onRemoveItem?: (id: string) => void;
