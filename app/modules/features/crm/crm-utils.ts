@@ -108,6 +108,13 @@ export const formatPhoneNumber = (value?: string | null) => {
     }
     return `+62 ${rest}`;
   }
+  if (clean.startsWith("60")) {
+    const rest = clean.slice(2);
+    if (rest.length >= 8) {
+      return `+60 ${rest.slice(0, 2)}-${rest.slice(2, 6)} ${rest.slice(6)}`;
+    }
+    return `+60 ${rest}`;
+  }
   if (clean.startsWith("08")) {
     const rest = clean.slice(2);
     if (rest.length >= 8) {

@@ -1,5 +1,5 @@
 /**
- * Canonical Indonesian WhatsApp format — must match backend WhatsappNumber.
+ * Canonical Indonesian and Malaysian WhatsApp format — must match backend WhatsappNumber.
  */
 export function normalizeWhatsapp(phone: string): string {
   let digits = phone.replace(/\D/g, "");
@@ -7,6 +7,16 @@ export function normalizeWhatsapp(phone: string): string {
 
   if (digits.startsWith("00")) {
     digits = digits.slice(2);
+  }
+
+  // Malaysian international format already present: 601xxxxxxxxx
+  if (/^601\d{8,9}$/.test(digits)) {
+    return digits;
+  }
+
+  // Malaysian local mobile prefix: 01x-xxxxxxx -> convert to 601xxxxxxxxx
+  if (/^01\d{8,9}$/.test(digits)) {
+    return "60" + digits.slice(1);
   }
 
   // Common typo: 685xxxxxxxxxx instead of 085xxxxxxxxxx
@@ -25,10 +35,10 @@ export function normalizeWhatsapp(phone: string): string {
 
 export function isValidWhatsapp(phone: string): boolean {
   const normalized = normalizeWhatsapp(phone);
-  return /^628\d{8,11}$/.test(normalized);
+  // Indonesian: 628xxxxxxxxxx (11-14 digits) | Malaysian: 601xxxxxxxxx (11-12 digits)
+  return /^(628\d{8,11}|601\d{8,9})$/.test(normalized);
 }
 
 export function normalizeOtp(otp: string): string {
   return otp.replace(/\D/g, "").slice(0, 6);
 }
-

@@ -796,7 +796,7 @@ const id: Translations = {
     alreadyHaveAccount: "Sudah memiliki akun?",
     loginNow: "Masuk Sekarang",
     validationFillFields: "Isi Nama Lengkap, Nomor WhatsApp, dan Kata Sandi terlebih dahulu.",
-    validationWhatsapp: "Format WhatsApp tidak valid. Gunakan 08xxxxxxxxxx.",
+    validationWhatsapp: "Format WhatsApp tidak valid. Gunakan format nomor Indonesia (08xxx / +62xxx) atau Malaysia (+601xxx / 01xxx).",
     validationEnterOtp: "Masukkan kode verifikasi OTP.",
     validationOtpLength: "Masukkan 6 digit kode OTP secara lengkap.",
   },
