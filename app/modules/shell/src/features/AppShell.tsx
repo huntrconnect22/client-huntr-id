@@ -333,6 +333,7 @@ export default function AppShell() {
       if (u?.id) fetchUnreadCount(u.id as number);
     };
     syncSession();
+    fetchFreshUserData();
     const unsubscribe = SessionManager.subscribe(syncSession);
     return () => {
       unsubscribe();

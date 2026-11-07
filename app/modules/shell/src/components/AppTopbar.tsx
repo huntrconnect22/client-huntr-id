@@ -7,6 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import { Bell, ShoppingCart } from "lucide-react";
 import { LanguageSwitcher } from "../../../../shared/components/LanguageSwitcher";
 import { useLanguage } from "../../../../context/LanguageContext";
+import { getAssetUrl } from "../../../../shared/lib/assets";
 import "./AppTopbar.css";
 
 interface AppTopbarProps {
@@ -14,7 +15,7 @@ interface AppTopbarProps {
   subtitle?: string;
   breadcrumb?: ReactNode;
   status?: ReactNode;
-  user: { name?: string; email?: string; profile_photo_url?: string } | null;
+  user: { name?: string; email?: string; profile_photo_url?: string; profile_photo_path?: string; avatar_url?: string; avatar?: string } | null;
   cartCount: number;
   unreadCount: number;
   notificationsOpen: boolean;
@@ -70,20 +71,26 @@ export function AppTopbar({
           </IconButton>
           {notificationMenu}
         </div>
-        {user && <div ref={userMenuRef} className="huntr-topbar-menu-anchor huntr-topbar-account">
-          <ButtonBase type="button" className="huntr-topbar-user" onClick={onUserMenu}
-            aria-expanded={userMenuOpen} aria-haspopup="true"
-            aria-label={t("header.userMenu", { name: user.name || "" })}>
-            <Avatar src={user.profile_photo_url} alt={user.name || "User"}
-              sx={{ width: 32, height: 32, borderRadius: 1, bgcolor: "primary.main", color: "primary.contrastText", fontSize: 14 }}>
-              {user.name?.[0]?.toUpperCase() || "U"}
-            </Avatar>
-            <span className="huntr-topbar-user-label">
-              <strong>{user.name}</strong><span>{user.email}</span>
-            </span>
-          </ButtonBase>
-          {userMenu}
-        </div>}
+        {user && (() => {
+          const rawPhoto = user.profile_photo_url || user.profile_photo_path || user.avatar_url || user.avatar;
+          const photoUrl = rawPhoto ? getAssetUrl(rawPhoto) : undefined;
+          return (
+            <div ref={userMenuRef} className="huntr-topbar-menu-anchor huntr-topbar-account">
+              <ButtonBase type="button" className="huntr-topbar-user" onClick={onUserMenu}
+                aria-expanded={userMenuOpen} aria-haspopup="true"
+                aria-label={t("header.userMenu", { name: user.name || "" })}>
+                <Avatar src={photoUrl} alt={user.name || "User"}
+                  sx={{ width: 32, height: 32, borderRadius: 1, bgcolor: "primary.main", color: "primary.contrastText", fontSize: 14 }}>
+                  {user.name?.[0]?.toUpperCase() || "U"}
+                </Avatar>
+                <span className="huntr-topbar-user-label">
+                  <strong>{user.name}</strong><span>{user.email}</span>
+                </span>
+              </ButtonBase>
+              {userMenu}
+            </div>
+          );
+        })()}
       </div>
     </AppBar>
   );
