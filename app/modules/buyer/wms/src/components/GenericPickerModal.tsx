@@ -204,11 +204,11 @@ export function GenericPickerModal({
                         )}
                       </div>
                       {item.meta && item.meta.length > 0 && (
-                        <div className="mt-2.5 grid grid-cols-1 gap-1.5 border-t border-[var(--ui-border)] pt-2 text-[11px] sm:grid-cols-2">
+                        <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--ui-border)] pt-2 text-[11px]">
                           {item.meta.map((m, i) => (
-                            <div
+                            <span
                               key={`${m.label}-${i}`}
-                              className="flex items-center justify-between gap-2"
+                              className="inline-flex items-center gap-1.5"
                             >
                               <span className="font-semibold uppercase tracking-wider text-[var(--ui-text-muted)]">
                                 {m.label}
@@ -221,7 +221,7 @@ export function GenericPickerModal({
                               >
                                 {m.value}
                               </span>
-                            </div>
+                            </span>
                           ))}
                         </div>
                       )}
