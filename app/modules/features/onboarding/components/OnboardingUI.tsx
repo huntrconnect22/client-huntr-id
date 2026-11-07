@@ -1,55 +1,113 @@
-import { Input as HuntrInput } from "~/shared/ui/Fields";
 import React from "react";
+import { Box, Typography, Stack, TextField } from "@mui/material";
 
 /**
  * SlideSection Component
  * 
- * Wadah untuk setiap langkah onboarding dengan animasi dan identitas visual.
+ * Container for each onboarding step with consistent MUI typography and icon badge.
  */
-export const SlideSection = ({ title, subtitle, icon, children, accentColor }: any) => (
-  <div className="flex flex-col gap-6 animate-fade-in">
-    <div className="flex items-center gap-3 md:gap-4">
-      <div 
-        className="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-orange-500/10 border border-orange-500/20 text-orange-400"
+export const SlideSection = ({
+  title,
+  subtitle,
+  icon,
+  children,
+  accentColor,
+}: {
+  title: string;
+  subtitle?: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  accentColor?: string;
+}) => (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
+    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+      <Box
+        sx={{
+          width: 48,
+          height: 48,
+          borderRadius: 2.5,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          bgcolor: accentColor ? `${accentColor}15` : "primary.50",
+          border: 1,
+          borderColor: accentColor ? `${accentColor}35` : "primary.200",
+          color: accentColor || "primary.main",
+        }}
       >
         {icon}
-      </div>
-      <div>
-        <h2 className="text-lg md:text-xl font-extrabold text-[var(--ui-text-primary)] leading-tight tracking-tight">{title}</h2>
-        <p className="text-xs text-[var(--ui-text-secondary)] mt-0.5">{subtitle}</p>
-      </div>
-    </div>
-    <div className="flex flex-col gap-5">{children}</div>
-  </div>
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.25, letterSpacing: "-0.01em" }}>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {children}
+    </Box>
+  </Box>
 );
 
 /**
  * Field Component
  * 
- * Komponen input standar dengan label yang konsisten.
+ * Standard MUI TextField wrapper with consistent styling.
  */
-export const Field = ({ label, value, onChange, placeholder, type = "text" }: any) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-[10px] md:text-[11px] font-bold text-[var(--ui-text-muted)] uppercase tracking-wider">{label}</label>
-    <HuntrInput
-      type={type}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full px-4 py-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-[var(--ui-text-primary)] outline-none text-sm transition-all focus:border-orange-500/50 focus:bg-[var(--ui-bg-input-focus)]"
-    />
-  </div>
+export const Field = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+  helperText,
+}: {
+  label: string;
+  value: any;
+  onChange: (val: any) => void;
+  placeholder?: string;
+  type?: string;
+  required?: boolean;
+  helperText?: string;
+}) => (
+  <TextField
+    fullWidth
+    label={label}
+    type={type}
+    value={value ?? ""}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    required={required}
+    helperText={helperText}
+    variant="outlined"
+    size="medium"
+  />
 );
 
 /**
  * FormLabel Component
  * 
- * Label kecil yang digunakan secara konsisten di seluruh form.
+ * Uppercase tracking caption label.
  */
 export const FormLabel = ({ children }: { children: React.ReactNode }) => (
-  <label className="text-[10px] md:text-[11px] font-bold text-[var(--ui-text-muted)] uppercase tracking-wider">
+  <Typography
+    variant="caption"
+    sx={{
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: "0.06em",
+      color: "text.secondary",
+      display: "block",
+      mb: 0.75,
+    }}
+  >
     {children}
-  </label>
+  </Typography>
 );
-
-
