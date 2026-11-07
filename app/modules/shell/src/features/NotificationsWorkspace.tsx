@@ -5,6 +5,7 @@ import Layout from "~/components/Layout";
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearAllNotifications } from "~/lib/api";
 import { Bell, CheckCircle2, Clock, ExternalLink, Loader2, Mail, MailOpen, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router";
+import Swal from "sweetalert2";
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -81,12 +82,30 @@ export default function Notifications() {
   };
   const handleClearAll = async () => {
     if (!user) return;
-    if (!window.confirm("Hapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.")) return;
+    const result = await Swal.fire({
+      title: "Hapus Semua Notifikasi?",
+      text: "Semua notifikasi akan dihapus secara permanen dan tidak dapat dikembalikan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Ya, Hapus Semua",
+      cancelButtonText: "Batal",
+    });
+    if (!result.isConfirmed) return;
     try {
       await clearAllNotifications(user.id);
       setNotifications([]);
+      Swal.fire({
+        title: "Berhasil!",
+        text: "Semua notifikasi telah dihapus.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } catch (err) {
       console.error("Failed to clear notifications", err);
+      Swal.fire("Gagal", "Terjadi kesalahan saat menghapus notifikasi.", "error");
     }
   };
 
