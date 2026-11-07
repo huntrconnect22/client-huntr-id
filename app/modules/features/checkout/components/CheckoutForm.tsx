@@ -1,5 +1,6 @@
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import { Input as HuntrInput, Select as HuntrSelect, Textarea as HuntrTextarea } from "~/shared/ui/Fields";
+import { RichTextEditor } from "~/shared/ui/RichTextEditor";
 import React from "react";
 import {
   ClipboardList,
@@ -359,12 +360,11 @@ export function CheckoutForm({
           <label className="text-xs font-semibold text-[var(--ui-text-primary)] block">
             Latar Belakang & Justifikasi Kebutuhan
           </label>
-          <HuntrTextarea
-            placeholder="Jelaskan tujuan dan urgensi pengadaan ini untuk mempermudah evaluasi approval manager..."
+          <RichTextEditor
             value={prDesc}
-            onChange={(e) => setPrDesc(e.target.value)}
-            rows={3}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-sm text-[var(--ui-text-primary)] placeholder:text-[var(--ui-text-muted)] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all resize-none leading-relaxed"
+            onChange={setPrDesc}
+            placeholder="Jelaskan tujuan dan urgensi pengadaan ini untuk mempermudah evaluasi approval manager..."
+            minHeight={150}
           />
         </div>
       </div>
