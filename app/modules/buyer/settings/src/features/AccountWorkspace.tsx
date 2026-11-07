@@ -1,9 +1,16 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
-import Layout from "~/components/Layout";
 import { useLocation } from "react-router";
-import { AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
-import { useMediaQuery, MOBILE_BREAKPOINT } from "~/hooks/useMediaQuery";
+import {
+  Box,
+  Grid,
+  Button,
+  Alert,
+  Stack,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
+import Layout from "~/components/Layout";
+import { ArrowLeft } from "lucide-react";
 import {
   AccountSidebarNav,
   AccountSecurityTab,
@@ -16,8 +23,14 @@ import {
 } from "~/features/account";
 import { useLanguage } from "~/context/LanguageContext";
 
+/**
+ * Account Settings Workspace
+ * 
+ * 100% Pure Material UI implementation.
+ */
 export default function AccountSettings() {
-  const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { search } = useLocation();
   const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
@@ -31,10 +44,18 @@ export default function AccountSettings() {
     const session = localStorage.getItem("user_session");
     const companySession = localStorage.getItem("active_company");
     if (session) {
-      setUser(JSON.parse(session));
+      try {
+        setUser(JSON.parse(session));
+      } catch (e) {
+        console.error("Invalid user session", e);
+      }
     }
     if (companySession) {
-      setActiveCompany(JSON.parse(companySession));
+      try {
+        setActiveCompany(JSON.parse(companySession));
+      } catch (e) {
+        console.error("Invalid company session", e);
+      }
     }
   }, []);
 
@@ -79,39 +100,55 @@ export default function AccountSettings() {
 
   return (
     <Layout title={pageTitle} subtitle={pageSubtitle}>
-      <div className="settings-workspace w-full space-y-6">
+      <Box sx={{ width: "100%", pb: 8 }}>
         {/* Mobile Back Button when inside a tab */}
         {isMobile && mobileSelectedTab && (
-          <HuntrButton
-            type="button"
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<ArrowLeft size={16} />}
             onClick={() => {
               setError(null);
               setSuccess(null);
               setMobileSelectedTab(null);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors"
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: 13,
+            }}
           >
-            <ArrowLeft size={14} /> {t("settings.backToMenu")}
-          </HuntrButton>
+            {t("settings.backToMenu")}
+          </Button>
         )}
 
         {/* Feedback messages */}
         {error && (
-          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-semibold flex items-center gap-3">
-            <AlertCircle size={18} /> {error}
-          </div>
+          <Alert
+            severity="error"
+            onClose={() => setError(null)}
+            sx={{ mb: 3, borderRadius: 2.5 }}
+          >
+            {error}
+          </Alert>
         )}
         {success && (
-          <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-semibold flex items-center gap-3">
-            <CheckCircle2 size={18} /> {success}
-          </div>
+          <Alert
+            severity="success"
+            onClose={() => setSuccess(null)}
+            sx={{ mb: 3, borderRadius: 2.5 }}
+          >
+            {success}
+          </Alert>
         )}
 
-        {/* Layout */}
-        <div className="flex w-full flex-col items-start gap-6 md:flex-row md:gap-8">
+        {/* Master-Detail Settings Layout */}
+        <Grid container spacing={{ xs: 2.5, md: 3.5 }} sx={{ alignItems: "flex-start" }}>
           {/* Navigation Sidebar: On mobile, shown only when NO sub-tab is selected */}
           {(!isMobile || !mobileSelectedTab) && (
-            <div className="w-full md:w-64 flex-shrink-0">
+            <Grid size={{ xs: 12, md: 4, lg: 3 }}>
               <AccountSidebarNav
                 activeTab={activeTab || "security"}
                 companyType={activeCompany?.type}
@@ -124,48 +161,50 @@ export default function AccountSettings() {
                   }
                 }}
               />
-            </div>
+            </Grid>
           )}
 
           {/* Content Area: On mobile, shown only when a tab is selected. On desktop, always shown */}
           {(!isMobile || mobileSelectedTab) && (
-            <div className="min-w-0 flex-1 w-full space-y-6">
-              {currentTab === "security" && (
-                <AccountSecurityTab
-                  user={user}
-                  onUserUpdate={handleUserUpdate}
-                  onError={setError}
-                  onSuccess={setSuccess}
-                />
-              )}
+            <Grid size={{ xs: 12, md: 8, lg: 9 }}>
+              <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 3 }}>
+                {currentTab === "security" && (
+                  <AccountSecurityTab
+                    user={user}
+                    onUserUpdate={handleUserUpdate}
+                    onError={setError}
+                    onSuccess={setSuccess}
+                  />
+                )}
 
-              {currentTab === "profile" && (
-                <AccountProfileTab
-                  user={user}
-                  onUserUpdate={handleUserUpdate}
-                  onError={setError}
-                  onSuccess={setSuccess}
-                />
-              )}
+                {currentTab === "profile" && (
+                  <AccountProfileTab
+                    user={user}
+                    onUserUpdate={handleUserUpdate}
+                    onError={setError}
+                    onSuccess={setSuccess}
+                  />
+                )}
 
-              {currentTab === "subscription" && (
-                <AccountSubscriptionTab
-                  user={user}
-                  activeCompany={activeCompany}
-                />
-              )}
+                {currentTab === "subscription" && (
+                  <AccountSubscriptionTab
+                    user={user}
+                    activeCompany={activeCompany}
+                  />
+                )}
 
-              {currentTab === "appearance" && <AccountAppearanceTab />}
+                {currentTab === "appearance" && <AccountAppearanceTab />}
 
-              {currentTab === "features" && activeCompany?.type !== "vendor" && (
-                <AccountFeaturesTab onSuccess={setSuccess} />
-              )}
+                {currentTab === "features" && activeCompany?.type !== "vendor" && (
+                  <AccountFeaturesTab onSuccess={setSuccess} />
+                )}
 
-              {currentTab === "sessions" && <AccountSessionsTab />}
-            </div>
+                {currentTab === "sessions" && <AccountSessionsTab />}
+              </Box>
+            </Grid>
           )}
-        </div>
-      </div>
+        </Grid>
+      </Box>
     </Layout>
   );
 }

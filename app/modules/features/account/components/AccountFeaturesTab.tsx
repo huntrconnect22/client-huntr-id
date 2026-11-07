@@ -1,5 +1,14 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState } from "react";
+import {
+  Box,
+  Paper,
+  Stack,
+  Typography,
+  Chip,
+  Switch,
+  Avatar,
+  useTheme,
+} from "@mui/material";
 import { Sparkles } from "lucide-react";
 import {
   isAgenticProcurementEnabled,
@@ -11,8 +20,14 @@ interface AccountFeaturesTabProps {
   onSuccess: (msg: string | null) => void;
 }
 
+/**
+ * AccountFeaturesTab Component
+ * 
+ * Pure Material UI implementation.
+ */
 export function AccountFeaturesTab({ onSuccess }: AccountFeaturesTabProps) {
   const { t } = useLanguage();
+  const theme = useTheme();
   const [agenticEnabled, setAgenticEnabled] = useState(isAgenticProcurementEnabled());
 
   const handleToggleAgentic = (val: boolean) => {
@@ -26,90 +41,126 @@ export function AccountFeaturesTab({ onSuccess }: AccountFeaturesTabProps) {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, maxWidth: 840 }}>
+      <Box>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
             {t("settings.features.title")}
-          </h2>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
-            {t("settings.features.beta")}
-          </span>
-        </div>
-        <p className="text-sm text-[var(--ui-text-muted)] mt-1">
+          </Typography>
+          <Chip
+            size="small"
+            label={t("settings.features.beta")}
+            color="primary"
+            variant="outlined"
+            sx={{ fontWeight: 700, fontSize: 10, height: 22 }}
+          />
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {t("settings.features.subtitle")}
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="space-y-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "text.secondary",
+            px: 0.5,
+          }}
+        >
           {t("settings.features.aiSection")}
-        </span>
+        </Typography>
 
-        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] divide-y divide-[var(--ui-border)]">
-          {/* Agentic Procurement Toggle Card */}
-          <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white flex-shrink-0 shadow-md shadow-orange-500/20">
-                <Sparkles size={20} />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-bold text-[var(--ui-text-primary)]">
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 2.5, sm: 3 },
+            borderRadius: 3,
+            bgcolor: "background.paper",
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2.5}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+            }}
+          >
+            <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
+              <Avatar
+                sx={{
+                  bgcolor: (theme) => `${theme.palette.primary.main}1A`,
+                  color: "primary.main",
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2.5,
+                  flexShrink: 0,
+                  mt: 0.5,
+                }}
+              >
+                <Sparkles size={22} />
+              </Avatar>
+
+              <Box sx={{ maxWidth: 560 }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 0.5, gap: 0.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                     {t("settings.features.agenticTitle")}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-gradient-to-r from-orange-500/20 to-amber-500/20 text-orange-400 border border-orange-500/30">
-                    {t("settings.features.agenticBadge")}
-                  </span>
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={t("settings.features.agenticBadge")}
+                    sx={{
+                      height: 20,
+                      fontSize: 9,
+                      fontWeight: 800,
+                      bgcolor: (theme) => `${theme.palette.primary.main}15`,
+                      color: "primary.main",
+                    }}
+                  />
                   {agenticEnabled ? (
-                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      {t("settings.features.statusActiveSidebar")}
-                    </span>
+                    <Chip
+                      size="small"
+                      label={t("settings.features.statusActiveSidebar")}
+                      color="success"
+                      sx={{ height: 20, fontSize: 9, fontWeight: 700 }}
+                    />
                   ) : (
-                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-gray-500/10 text-[var(--ui-text-muted)] border border-[var(--ui-border)]">
-                      {t("settings.features.statusInactive")}
-                    </span>
+                    <Chip
+                      size="small"
+                      label={t("settings.features.statusInactive")}
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: 9, fontWeight: 600 }}
+                    />
                   )}
-                </div>
-                <p className="text-xs text-[var(--ui-text-muted)] leading-relaxed max-w-xl">
+                </Stack>
+
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, mb: 1 }}>
                   {t("settings.features.agenticDesc")}
-                </p>
-                <div className="text-[11px] text-[var(--ui-text-secondary)] pt-1 flex items-center gap-1.5">
-                  <span className="font-semibold text-orange-400">{t("settings.features.statusLabel")}</span>
+                </Typography>
+
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>
+                  <Typography component="span" variant="caption" sx={{ color: "primary.main", fontWeight: 700 }}>
+                    {t("settings.features.statusLabel")}:{" "}
+                  </Typography>
                   {agenticEnabled
                     ? t("settings.features.statusActiveText")
                     : t("settings.features.statusInactiveText")}
-                </div>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Stack>
 
-            {/* Interactive Switch Toggle */}
-            <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 flex-shrink-0 pt-2 sm:pt-0">
-              <HuntrButton
-                type="button"
-                role="switch"
-                aria-checked={agenticEnabled}
-                onClick={() => handleToggleAgentic(!agenticEnabled)}
-                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none shadow-inner ${
-                  agenticEnabled
-                    ? "bg-gradient-to-r from-orange-500 to-amber-500"
-                    : "bg-[var(--ui-border)]"
-                }`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    agenticEnabled ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </HuntrButton>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            <Switch
+              checked={agenticEnabled}
+              onChange={(e) => handleToggleAgentic(e.target.checked)}
+              color="primary"
+            />
+          </Stack>
+        </Paper>
+      </Box>
+    </Box>
   );
 }
-
-

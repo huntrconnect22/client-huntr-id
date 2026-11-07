@@ -1,5 +1,12 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
+import {
+  Paper,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  useTheme,
+} from "@mui/material";
 import {
   Shield,
   User,
@@ -7,6 +14,7 @@ import {
   Palette,
   Sparkles,
   Monitor,
+  ChevronRight,
 } from "lucide-react";
 import { useLanguage, type TranslationKey } from "../../../context/LanguageContext";
 
@@ -35,6 +43,8 @@ const TABS: { id: AccountTabType; icon: React.FC<any>; labelKey: TranslationKey;
 
 export function AccountSidebarNav({ activeTab, onSelectTab, companyType }: AccountSidebarNavProps) {
   const { t } = useLanguage();
+  const theme = useTheme();
+
   const visibleTabs = TABS.filter((tab) => {
     if (tab.forBuyerOnly && companyType === "vendor") {
       return false;
@@ -43,50 +53,72 @@ export function AccountSidebarNav({ activeTab, onSelectTab, companyType }: Accou
   });
 
   return (
-    <div className="w-full md:w-64 space-y-1 flex-shrink-0 md:sticky md:top-6">
-      {visibleTabs.map((tab) => {
-        const active = activeTab === tab.id;
-        const Icon = tab.icon;
-        return (
-          <HuntrButton
-            key={tab.id}
-            onClick={() => onSelectTab(tab.id)}
-            style={active ? { color: "white" } : undefined}
-            className={`w-full text-left px-3.5 py-3 md:py-2.5 rounded-xl md:rounded-lg text-sm transition-all flex items-center justify-between md:justify-start gap-3 border md:border-transparent ${
-              active
-                ? "bg-orange-500 font-semibold shadow-sm shadow-orange-500/20 border-orange-500"
-                : "bg-[var(--ui-bg-card)] md:bg-transparent border-[var(--ui-border)] text-[var(--ui-text-primary)] md:text-[var(--ui-text-nav-idle)] hover:text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] font-medium"
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className={`w-8 h-8 md:w-auto md:h-auto rounded-lg flex items-center justify-center ${
-                  active ? "bg-white/20 md:bg-transparent" : "bg-orange-500/10 md:bg-transparent"
-                }`}
+    <Paper
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
+        overflow: "hidden",
+        p: 1,
+        position: { md: "sticky" },
+        top: { md: 24 },
+        bgcolor: "background.paper",
+      }}
+    >
+      <List disablePadding sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+        {visibleTabs.map((tab) => {
+          const active = activeTab === tab.id;
+          const Icon = tab.icon;
+
+          return (
+            <ListItemButton
+              key={tab.id}
+              onClick={() => onSelectTab(tab.id)}
+              selected={active}
+              sx={{
+                borderRadius: 2,
+                py: 1.25,
+                px: 1.5,
+                transition: "all 0.15s ease-in-out",
+                "&.Mui-selected": {
+                  bgcolor: (theme) => `${theme.palette.primary.main}14`,
+                  color: "primary.main",
+                  "&:hover": {
+                    bgcolor: (theme) => `${theme.palette.primary.main}1F`,
+                  },
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 34,
+                  color: active ? "primary.main" : "text.secondary",
+                }}
               >
-                <Icon
-                  size={17}
-                  style={active ? { color: "white" } : undefined}
-                  className={active ? "" : "text-orange-500 md:text-[var(--ui-text-muted)]"}
-                />
-              </div>
-              <span
-                style={active ? { color: "white" } : undefined}
-                className={`truncate ${active ? "font-semibold" : ""}`}
-              >
-                {t(tab.labelKey)}
-              </span>
-            </div>
-            <div className="md:hidden flex items-center">
-              <span className={`text-xs ${active ? "text-white/80" : "text-[var(--ui-text-muted)]"}`}>
-                ›
-              </span>
-            </div>
-          </HuntrButton>
-        );
-      })}
-    </div>
+                <Icon size={18} />
+              </ListItemIcon>
+              <ListItemText
+                primary={t(tab.labelKey)}
+                slotProps={{
+                  primary: {
+                    sx: {
+                      fontSize: 13.5,
+                      fontWeight: active ? 700 : 500,
+                      color: active ? "primary.main" : "text.primary",
+                    },
+                  },
+                }}
+              />
+              <ChevronRight
+                size={14}
+                style={{
+                  opacity: active ? 1 : 0.4,
+                  color: active ? theme.palette.primary.main : theme.palette.text.secondary,
+                }}
+              />
+            </ListItemButton>
+          );
+        })}
+      </List>
+    </Paper>
   );
 }
-
-

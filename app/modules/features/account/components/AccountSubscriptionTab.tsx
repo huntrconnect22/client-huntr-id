@@ -1,5 +1,17 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Paper,
+  Grid,
+  Stack,
+  Typography,
+  Button,
+  Chip,
+  LinearProgress,
+  Avatar,
+  Divider,
+  useTheme,
+} from "@mui/material";
 import {
   Zap,
   Clock,
@@ -25,10 +37,16 @@ interface AccountSubscriptionTabProps {
   activeCompany: any;
 }
 
+/**
+ * AccountSubscriptionTab Component
+ * 
+ * Pure Material UI implementation.
+ */
 export function AccountSubscriptionTab({
   user,
   activeCompany,
 }: AccountSubscriptionTabProps) {
+  const theme = useTheme();
   const { t, locale } = useLanguage();
   const trial = getTrialInfo(user);
   const [usageData, setUsageData] = useState<{
@@ -136,7 +154,7 @@ export function AccountSubscriptionTab({
   };
 
   const enterprisePlanSelector = canChooseEnterprisePlan ? (
-    <div id="enterprise-upgrade-options">
+    <Box id="enterprise-upgrade-options" sx={{ mt: 3 }}>
       <EnterprisePlans
         companyId={activeCompany.id}
         subscriptionReady={subscriptionReady}
@@ -151,7 +169,7 @@ export function AccountSubscriptionTab({
           );
         }}
       />
-    </div>
+    </Box>
   ) : null;
 
   const handleContactSales = () => {
@@ -164,8 +182,8 @@ export function AccountSubscriptionTab({
               ? "Discuss enterprise plans and onboarding with the Huntr team:"
               : "Konsultasikan paket enterprise dan onboarding dengan tim Huntr:"
           }</p>
-          <div style="background: rgba(249, 115, 22, 0.08); padding: 12px; border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.2); margin-bottom: 12px;">
-            <div style="font-weight: 700; color: #f97316; margin-bottom: 4px;">Huntr Enterprise Solutions</div>
+          <div style="background: rgba(239, 125, 0, 0.08); padding: 12px; border-radius: 8px; border: 1px solid rgba(239, 125, 0, 0.2); margin-bottom: 12px;">
+            <div style="font-weight: 700; color: #ef7d00; margin-bottom: 4px;">Huntr Enterprise Solutions</div>
             <div>📧 Email: <b>support@huntr.id</b></div>
             <div>📞 WhatsApp: <b>+62 812-3456-7890</b></div>
             <div>🏢 Jakarta, Indonesia</div>
@@ -177,7 +195,7 @@ export function AccountSubscriptionTab({
         locale === "en" ? "Contact via WhatsApp" : "Hubungi via WhatsApp",
       showCancelButton: true,
       cancelButtonText: locale === "en" ? "Close" : "Tutup",
-      confirmButtonColor: "#f97316",
+      confirmButtonColor: "#ef7d00",
     }).then((res: any) => {
       if (res.isConfirmed) {
         const text = encodeURIComponent(
@@ -191,346 +209,397 @@ export function AccountSubscriptionTab({
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <h2 className="text-xl font-bold text-[var(--ui-text-primary)] m-0">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5, maxWidth: 860 }}>
+      <Box>
+        <Typography variant="h6" sx={{ fontWeight: 800 }}>
           {t("settings.subscription.title")}
-        </h2>
-        <p className="text-sm text-[var(--ui-text-muted)] mt-1">
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {t("settings.subscription.subtitle")}
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* AI Usage Card Section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
-            <Bot size={13} className="text-orange-500" />
-            {t("settings.subscription.aiUsageSection", {
-              month: usageData?.month || t("settings.subscription.thisMonth"),
-            })}
-          </span>
-          <HuntrButton
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", px: 0.5 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Bot size={15} color={theme.palette.primary.main} />
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary" }}>
+              {t("settings.subscription.aiUsageSection", {
+                month: usageData?.month || t("settings.subscription.thisMonth"),
+              })}
+            </Typography>
+          </Stack>
+
+          <Button
+            size="small"
+            variant="text"
+            color="primary"
             onClick={fetchUsage}
             disabled={loadingUsage}
-            className="text-[11px] text-orange-500 hover:text-orange-600 flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer disabled:opacity-50"
+            startIcon={<RefreshCw size={12} className={loadingUsage ? "animate-spin" : ""} />}
+            sx={{ textTransform: "none", fontSize: 11, fontWeight: 700, p: 0.5 }}
           >
-            <RefreshCw
-              size={11}
-              className={loadingUsage ? "animate-spin" : ""}
-            />
-            <span>{t("settings.subscription.refresh")}</span>
-          </HuntrButton>
-        </div>
+            {t("settings.subscription.refresh")}
+          </Button>
+        </Stack>
 
-        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
-              <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <Cpu size={12} className="text-orange-500" />{" "}
-                {t("settings.subscription.totalAiRequests")}
-              </span>
-              <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
-                {usageData?.total_requests?.toLocaleString(numberLocale) ?? 0}
-                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">
-                  / {usageData?.limit?.toLocaleString(numberLocale) ?? "–"} request
-                </span>
-              </div>
-            </div>
+        <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 3, bgcolor: "background.paper" }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", color: "text.secondary", mb: 0.5 }}>
+                  <Cpu size={14} color={theme.palette.primary.main} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    {t("settings.subscription.totalAiRequests")}
+                  </Typography>
+                </Stack>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  {usageData?.total_requests?.toLocaleString(numberLocale) ?? 0}
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.75 }}>
+                    / {usageData?.limit?.toLocaleString(numberLocale) ?? "–"} req
+                  </Typography>
+                </Typography>
+              </Paper>
+            </Grid>
 
-            <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
-              <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <Zap size={12} className="text-amber-500" />{" "}
-                {t("settings.subscription.tokensConsumed")}
-              </span>
-              <div className="text-lg font-bold text-[var(--ui-text-primary)] mt-1">
-                {usageData?.total_tokens?.toLocaleString(numberLocale) ?? 0}
-                <span className="text-[10px] font-normal text-[var(--ui-text-muted)] ml-1">
-                  tokens
-                </span>
-              </div>
-            </div>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", color: "text.secondary", mb: 0.5 }}>
+                  <Zap size={14} color="#f59e0b" />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    {t("settings.subscription.tokensConsumed")}
+                  </Typography>
+                </Stack>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  {usageData?.total_tokens?.toLocaleString(numberLocale) ?? 0}
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.75 }}>
+                    tokens
+                  </Typography>
+                </Typography>
+              </Paper>
+            </Grid>
 
-            <div className="p-3.5 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)] flex flex-col justify-between">
-              <span className="text-[11px] text-[var(--ui-text-muted)] flex items-center gap-1.5 font-medium">
-                <ShieldCheck size={12} className="text-emerald-500" />{" "}
-                {t("settings.subscription.quotaStatus")}
-              </span>
-              <div className={`text-sm font-bold mt-1 flex items-center gap-1 ${aiQuotaExhausted ? "text-red-500" : "text-emerald-500"}`}>
-                <span className={`w-2 h-2 rounded-full inline-block ${aiQuotaExhausted ? "bg-red-500" : "bg-emerald-500"}`} />
-                {usageData?.limit !== undefined
-                  ? `${(usageData.remaining ?? 0).toLocaleString(numberLocale)} tersisa`
-                  : subscription?.enterprise_plan
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", color: "text.secondary", mb: 0.5 }}>
+                  <ShieldCheck size={14} color="#10b981" />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    {t("settings.subscription.quotaStatus")}
+                  </Typography>
+                </Stack>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 800,
+                    color: aiQuotaExhausted ? "error.main" : "success.main",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mt: 0.5,
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      bgcolor: aiQuotaExhausted ? "error.main" : "success.main",
+                    }}
+                  />
+                  {usageData?.limit !== undefined
+                    ? `${(usageData.remaining ?? 0).toLocaleString(numberLocale)} tersisa`
+                    : subscription?.enterprise_plan
                     ? "Tersedia"
                     : t("settings.subscription.trialUnlimited")}
-              </div>
-            </div>
-          </div>
-          {usageData?.limit !== undefined && usageData.limit > 0 && (
-            <div className="mt-3">
-              <div className="mb-1 flex justify-between text-[11px] text-[var(--ui-text-muted)]">
-                <span>{usageData.plan_name ?? "Paket Enterprise"}</span>
-                <span>{Math.min(100, Math.round(((usageData.total_requests ?? 0) / usageData.limit) * 100))}% digunakan</span>
-              </div>
-              <div className="h-1.5 overflow-hidden bg-[var(--ui-border)]">
-                <div className="h-full bg-orange-500" style={{ width: `${Math.min(100, ((usageData.total_requests ?? 0) / usageData.limit) * 100)}%` }} />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
 
-      {subscription && !subscription.enterprise_plan && subscription.gmv_limit > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] flex items-center gap-1.5">
-              <Zap size={13} className="text-orange-500" />{" "}
-              {t("settings.subscription.gmvQuota")}
-            </span>
-            <span
-              className={`text-[10px] font-bold px-2 py-1 rounded-full ${subscription.status === "active" ? "text-emerald-500 bg-emerald-500/10" : "text-amber-500 bg-amber-500/10"}`}
-            >
-              {subscription.status === "active"
-                ? t("settings.subscription.statusActive")
-                : t("settings.subscription.statusNeedsRenewal")}
-            </span>
-          </div>
-          <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-5 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 text-xs">
-              <div>
-                <p className="m-0 text-[var(--ui-text-muted)]">
-                  {t("settings.subscription.realizedGmv")}
-                </p>
-                <p className="m-0 mt-1 text-base font-bold text-[var(--ui-text-primary)]">
-                  {formatRupiah(
-                    subscription.current_realized_gmv +
-                      subscription.reserved_gmv,
-                  )}
-                  <span className="font-normal text-[var(--ui-text-muted)]">
-                    {" "}
-                    / {formatRupiah(subscription.gmv_limit)}
-                  </span>
-                </p>
-              </div>
-              <span className="font-semibold text-orange-500">
-                {t("settings.subscription.remainingGmv", {
-                  amount: formatRupiah(subscription.available_gmv),
-                })}
-              </span>
-            </div>
-            <div className="w-full h-2.5 rounded-full bg-[var(--ui-bg-card)] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all"
-                style={{ width: `${quotaPercent}%` }}
+          {usageData?.limit !== undefined && usageData.limit > 0 && (
+            <Box sx={{ mt: 2.5 }}>
+              <Stack direction="row" sx={{ justifyContent: "space-between", mb: 0.75 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {usageData.plan_name ?? "Paket Enterprise"}
+                </Typography>
+                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                  {Math.min(100, Math.round(((usageData.total_requests ?? 0) / usageData.limit) * 100))}% digunakan
+                </Typography>
+              </Stack>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(100, ((usageData.total_requests ?? 0) / usageData.limit) * 100)}
+                sx={{ height: 6, borderRadius: 1 }}
               />
-            </div>
-            <p className="m-0 text-[11px] text-[var(--ui-text-muted)]">
-              {t("settings.subscription.gmvLimitFeeNote", {
-                fee: formatRupiah(subscription.upfront_fee),
-                date: new Date(subscription.ends_at).toLocaleDateString(
-                  numberLocale,
-                ),
-                overflowNote:
-                  subscription.overflow_strategy === "transaction_fee"
-                    ? t("settings.subscription.overflowTransactionFee")
-                    : t("settings.subscription.overflowNewContract"),
-              })}
-            </p>
-          </div>
-        </div>
+            </Box>
+          )}
+        </Paper>
+      </Box>
+
+      {/* GMV Quota if applicable */}
+      {subscription && !subscription.enterprise_plan && subscription.gmv_limit > 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", px: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary" }}>
+              {t("settings.subscription.gmvQuota")}
+            </Typography>
+            <Chip
+              size="small"
+              label={
+                subscription.status === "active"
+                  ? t("settings.subscription.statusActive")
+                  : t("settings.subscription.statusNeedsRenewal")
+              }
+              color={subscription.status === "active" ? "success" : "warning"}
+              sx={{ height: 20, fontSize: 10, fontWeight: 700 }}
+            />
+          </Stack>
+
+          <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Stack spacing={2}>
+              <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { sm: "flex-end" } }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("settings.subscription.realizedGmv")}
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                    {formatRupiah(subscription.current_realized_gmv + subscription.reserved_gmv)}
+                    <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                      / {formatRupiah(subscription.gmv_limit)}
+                    </Typography>
+                  </Typography>
+                </Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "primary.main" }}>
+                  {t("settings.subscription.remainingGmv", {
+                    amount: formatRupiah(subscription.available_gmv),
+                  })}
+                </Typography>
+              </Stack>
+
+              <LinearProgress
+                variant="determinate"
+                value={quotaPercent}
+                sx={{ height: 8, borderRadius: 1 }}
+              />
+
+              <Typography variant="caption" color="text.secondary">
+                {t("settings.subscription.gmvLimitFeeNote", {
+                  fee: formatRupiah(subscription.upfront_fee),
+                  date: new Date(subscription.ends_at).toLocaleDateString(numberLocale),
+                  overflowNote:
+                    subscription.overflow_strategy === "transaction_fee"
+                      ? t("settings.subscription.overflowTransactionFee")
+                      : t("settings.subscription.overflowNewContract"),
+                })}
+              </Typography>
+            </Stack>
+          </Paper>
+        </Box>
       )}
 
+      {/* Enterprise Plan Card vs Current Plan */}
       {subscription?.enterprise_plan ? (
-        <div className="border border-[var(--ui-border)] bg-[var(--ui-bg-card)] p-4 text-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="m-0 font-bold">
+        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: "background.paper" }}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "flex-start" } }}>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                 {subscription.is_trial
                   ? "Trial Enterprise Pro"
                   : ({ enterprise_starter: "Enterprise Starter", enterprise_growth: "Enterprise Growth", enterprise_pro: "Enterprise Pro" } as Record<string, string>)[subscription.enterprise_plan] || subscription.enterprise_plan}
-              </h3>
-              <p className="mb-0 mt-2 text-[var(--ui-text-muted)]">
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 {subscription.is_trial
                   ? enterpriseTrialActive
                     ? "Trial aktif"
                     : "Trial telah berakhir"
                   : subscription.status === "active" && new Date(subscription.ends_at).getTime() > Date.now()
-                    ? "Aktif"
-                    : "Perlu diperpanjang"}
+                  ? "Aktif"
+                  : "Perlu diperpanjang"}
                 {" · "}Berlaku hingga {new Date(subscription.ends_at).toLocaleDateString(numberLocale)}
-              </p>
-            </div>
+              </Typography>
+            </Box>
+
             {(enterpriseTrialExpired || canOfferUpgrade) && canManageSubscription && (
-              <HuntrButton
-                type="button"
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={openUpgradeOptions}
-                className="bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600"
+                sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, fontSize: 13 }}
               >
                 Upgrade paket
-              </HuntrButton>
+              </Button>
             )}
-          </div>
+          </Stack>
+
           {subscription.scheduled_change && (
-            <p className="mb-0 mt-2 text-xs text-[var(--ui-text-muted)]">
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.5 }}>
               Upgrade ke {({ enterprise_starter: "Enterprise Starter", enterprise_growth: "Enterprise Growth", enterprise_pro: "Enterprise Pro" } as Record<string, string>)[subscription.scheduled_change.enterprise_plan] || subscription.scheduled_change.enterprise_plan} berlaku mulai {subscription.scheduled_change.starts_at ? new Date(subscription.scheduled_change.starts_at).toLocaleDateString(numberLocale) : "akhir periode paket ini"}.
-            </p>
+            </Typography>
           )}
-          {subscription.tax_quota && <p className="mb-0 mt-2 text-[var(--ui-text-muted)]">e-Faktur: {subscription.tax_quota.used.toLocaleString(numberLocale)} / {subscription.tax_quota.limit.toLocaleString(numberLocale)} dokumen digunakan · Tahun paket berakhir {new Date(subscription.tax_quota.ends_at).toLocaleDateString(numberLocale)}</p>}
-        </div>
-      ) : <div className="space-y-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)] px-1">
-          {t("settings.subscription.currentPlan")}
-        </span>
 
-        <div className="border border-[var(--ui-border)] rounded-xl overflow-hidden bg-[var(--ui-bg-input)] p-6 space-y-6">
-          {/* Plan Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
-                <Zap size={24} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold text-[var(--ui-text-primary)] m-0">
-                    {activeCompany?.type === "vendor"
-                      ? t("settings.subscription.vendorFreeTitle")
-                      : t("settings.subscription.buyerTrialTitle")}
-                  </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/15 text-orange-400 border border-orange-500/30">
-                    {activeCompany?.type === "vendor"
-                      ? t("settings.subscription.vendorFreeBadge")
-                      : t("settings.subscription.buyerTrialBadge")}
-                  </span>
-                </div>
-                <p className="text-xs text-[var(--ui-text-muted)] mt-0.5">
-                  {activeCompany?.type === "vendor"
-                    ? t("settings.subscription.vendorFreeDesc")
-                    : t("settings.subscription.buyerTrialDesc")}
-                </p>
-              </div>
-            </div>
+          {subscription.tax_quota && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+              e-Faktur: {subscription.tax_quota.used.toLocaleString(numberLocale)} / {subscription.tax_quota.limit.toLocaleString(numberLocale)} dokumen digunakan · Tahun paket berakhir {new Date(subscription.tax_quota.ends_at).toLocaleDateString(numberLocale)}
+            </Typography>
+          )}
+        </Paper>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "text.secondary", px: 0.5 }}>
+            {t("settings.subscription.currentPlan")}
+          </Typography>
 
-            <div>
-              {activeCompany?.type === "vendor" ? (
-                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Gratis
-                </span>
-              ) : trial.isExpired ? (
-                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-red-400" />
-                  {t("settings.subscription.statusExpired")}
-                </span>
-              ) : trial.isUrgent ? (
-                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  {t("settings.subscription.statusExpiringSoon")}
-                </span>
-              ) : (
-                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  {t("settings.subscription.statusActive")}
-                </span>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 3, bgcolor: "background.paper" }}>
+            <Stack spacing={3}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}>
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                  <Avatar
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2.5,
+                      bgcolor: (theme) => `${theme.palette.primary.main}1A`,
+                      color: "primary.main",
+                    }}
+                  >
+                    <Zap size={24} />
+                  </Avatar>
+                  <Box>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        {activeCompany?.type === "vendor"
+                          ? t("settings.subscription.vendorFreeTitle")
+                          : t("settings.subscription.buyerTrialTitle")}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={
+                          activeCompany?.type === "vendor"
+                            ? t("settings.subscription.vendorFreeBadge")
+                            : t("settings.subscription.buyerTrialBadge")
+                        }
+                        color="primary"
+                        variant="outlined"
+                        sx={{ height: 20, fontSize: 10, fontWeight: 700 }}
+                      />
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">
+                      {activeCompany?.type === "vendor"
+                        ? t("settings.subscription.vendorFreeDesc")
+                        : t("settings.subscription.buyerTrialDesc")}
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Box>
+                  {activeCompany?.type === "vendor" ? (
+                    <Chip size="small" label="Gratis" color="success" sx={{ fontWeight: 700 }} />
+                  ) : trial.isExpired ? (
+                    <Chip size="small" label={t("settings.subscription.statusExpired")} color="error" sx={{ fontWeight: 700 }} />
+                  ) : trial.isUrgent ? (
+                    <Chip size="small" label={t("settings.subscription.statusExpiringSoon")} color="warning" sx={{ fontWeight: 700 }} />
+                  ) : (
+                    <Chip size="small" label={t("settings.subscription.statusActive")} color="success" sx={{ fontWeight: 700 }} />
+                  )}
+                </Box>
+              </Stack>
+
+              {/* Progress Timeline for Buyer */}
+              {activeCompany?.type !== "vendor" && (
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                  <Stack spacing={1.5}>
+                    <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center", color: "text.primary" }}>
+                        <Clock size={15} color={theme.palette.primary.main} />
+                        <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                          {t("settings.subscription.remainingTrialTime")}
+                        </Typography>
+                      </Stack>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: "primary.main" }}>
+                        {trial.isExpired
+                          ? t("settings.subscription.expiredTime")
+                          : t("settings.subscription.daysRemainingText", {
+                              days: trial.daysRemaining,
+                            })}
+                      </Typography>
+                    </Stack>
+
+                    <LinearProgress
+                      variant="determinate"
+                      value={trial.percentRemaining}
+                      sx={{ height: 6, borderRadius: 1 }}
+                    />
+
+                    <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {t("settings.subscription.validUntil")}
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                        {trial.formattedEndDate}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </Paper>
               )}
-            </div>
-          </div>
 
-          {/* Progress Timeline */}
-          {activeCompany?.type !== "vendor" && (
-            <div className="space-y-2 p-4 rounded-lg bg-[var(--ui-bg-card)] border border-[var(--ui-border)]">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[var(--ui-text-primary)] flex items-center gap-1.5">
-                  <Clock size={14} className="text-orange-500" />
-                  {t("settings.subscription.remainingTrialTime")}
-                </span>
-                <span className="font-bold text-orange-500">
-                  {trial.isExpired
-                    ? t("settings.subscription.expiredTime")
-                    : t("settings.subscription.daysRemainingText", {
-                        days: trial.daysRemaining,
-                      })}
-                </span>
-              </div>
-              {/* Progress Bar */}
-              <div className="w-full h-2.5 rounded-full bg-[var(--ui-bg-input)] overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    trial.isExpired
-                      ? "bg-red-500"
-                      : trial.isUrgent
-                        ? "bg-gradient-to-r from-red-500 to-amber-500"
-                        : "bg-gradient-to-r from-orange-500 to-amber-400"
-                  }`}
-                  style={{ width: `${trial.percentRemaining}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-[var(--ui-text-muted)] pt-1">
-                <span>{t("settings.subscription.validUntil")}</span>
-                <span className="font-medium text-[var(--ui-text-primary)]">
-                  {trial.formattedEndDate}
-                </span>
-              </div>
-            </div>
-          )}
+              {/* Features Matrix */}
+              <Box>
+                <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", fontSize: 11, letterSpacing: "0.05em", color: "text.secondary", display: "block", mb: 1.5 }}>
+                  {t("settings.subscription.featuresIncluded")}
+                </Typography>
+                <Grid container spacing={1.5}>
+                  {[
+                    t("settings.subscription.features.unlimitedPrRfq"),
+                    t("settings.subscription.features.multiTierApproval"),
+                    t("settings.subscription.features.aiAgentic"),
+                    t("settings.subscription.features.efakturVat"),
+                    t("settings.subscription.features.liveBidding"),
+                    t("settings.subscription.features.teamInvites"),
+                  ].map((feat, i) => (
+                    <Grid size={{ xs: 12, sm: 6 }} key={i}>
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                        <ShieldCheck size={16} color="#10b981" />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+                          {feat}
+                        </Typography>
+                      </Stack>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
 
-          {/* Features Matrix */}
-          <div className="space-y-2.5">
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--ui-text-muted)]">
-              {t("settings.subscription.featuresIncluded")}
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[var(--ui-text-secondary)]">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-emerald-500" />
-                <span>
-                  {t("settings.subscription.features.unlimitedPrRfq")}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-emerald-500" />
-                <span>
-                  {t("settings.subscription.features.multiTierApproval")}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-emerald-500" />
-                <span>{t("settings.subscription.features.aiAgentic")}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-emerald-500" />
-                <span>{t("settings.subscription.features.efakturVat")}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-emerald-500" />
-                <span>{t("settings.subscription.features.liveBidding")}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-emerald-500" />
-                <span>{t("settings.subscription.features.teamInvites")}</span>
-              </div>
-            </div>
-          </div>
+              <Divider />
 
-          {/* Contact Sales Action */}
-          <div className="pt-2 border-t border-[var(--ui-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="text-xs text-[var(--ui-text-muted)]">
-              {t("settings.subscription.upgradePrompt")}
-            </div>
-            <HuntrButton
-              type="button"
-              onClick={handleContactSales}
-              style={{ color: "white" }}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
-            >
-              <PhoneCall size={14} />
-              <span>{t("settings.subscription.contactSalesBtn")}</span>
-              <ArrowRight size={13} />
-            </HuntrButton>
-          </div>
-        </div>
-      </div>}
+              {/* Contact Sales Action */}
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}>
+                <Typography variant="caption" color="text.secondary">
+                  {t("settings.subscription.upgradePrompt")}
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleContactSales}
+                  startIcon={<PhoneCall size={14} />}
+                  endIcon={<ArrowRight size={14} />}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    px: 2.5,
+                  }}
+                >
+                  {t("settings.subscription.contactSalesBtn")}
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
+        </Box>
+      )}
 
       {enterprisePlanSelector}
-    </div>
+    </Box>
   );
 }
-
-
