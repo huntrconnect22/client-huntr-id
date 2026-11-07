@@ -315,6 +315,26 @@ export function RichTextEditor({
   );
 }
 
+/** Utility to convert HTML string to clean plain text for previews, table snippets, or searches */
+export function stripHtml(html?: string | null): string {
+  if (!html) return "";
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*[\/]?>/gi, " ")
+    .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/<[^>]*$/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Helper component to safely render Rich Text HTML or Plaintext fallback */
 export function RenderRichText({
   content,
