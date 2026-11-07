@@ -509,6 +509,10 @@ export default function AgenticProcurementPage() {
     try {
       const payload = {
         ...result.pr_draft,
+        suggested_items: (result.pr_draft.suggested_items || []).map((i: any) => ({
+          ...i,
+          qty: Number(i.qty) || 1,
+        })),
         department,
         duration_days: tenderDays,
         warehouse_id: config?.warehouseId || null,
@@ -623,13 +627,13 @@ export default function AgenticProcurementPage() {
     setActiveTab("pr");
   };
 
-  const handleUpdatePrItemQty = (itemIndex: number, quantity: number) => {
+  const handleUpdatePrItemQty = (itemIndex: number, quantity: number | string) => {
     setResult((previous: any) => {
       const items = previous?.pr_draft?.suggested_items;
       if (!Array.isArray(items) || !items[itemIndex]) return previous;
 
       const suggestedItems = items.map((item: any, index: number) =>
-        index === itemIndex ? { ...item, qty: Math.max(1, quantity) } : item,
+        index === itemIndex ? { ...item, qty: quantity === "" ? "" : Math.max(0, Number(quantity)) } : item,
       );
 
       return {
@@ -640,7 +644,7 @@ export default function AgenticProcurementPage() {
           estimated_total_budget: suggestedItems.reduce(
             (total: number, item: any) =>
               total +
-              (Number(item.qty) || 1) * (Number(item.estimated_price) || 0),
+              (Number(item.qty) || 0) * (Number(item.estimated_price) || 0),
             0,
           ),
         },

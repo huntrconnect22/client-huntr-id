@@ -26,7 +26,7 @@ interface CheckoutItemsTableProps {
     value: string | number,
   ) => void;
   onRemoveItem?: (id: string) => void;
-  onUpdateQuantity: (id: string, qty: number) => void;
+  onUpdateQuantity: (id: string, qty: number | "") => void;
   onUpdateEstimatedPrice: (id: string, price: number) => void;
 }
 
@@ -145,7 +145,7 @@ export function CheckoutItemsTable({
         ) : (
           cart.map((item, idx) => {
             const isService = item.line_type === "service";
-            const subtotal = Number(item.estimated_price || 0) * (item.qty || 1);
+            const subtotal = Number(item.estimated_price || 0) * (Number(item.qty) || 0);
 
             return (
               <div
@@ -250,12 +250,25 @@ export function CheckoutItemsTable({
                       {isService ? "Volume" : "Kuantitas"}
                     </label>
                     <HuntrInput
-                      type="number"
-                      min="1"
-                      value={item.qty}
-                      onChange={(e) =>
-                        onUpdateQuantity(item.id, Math.max(1, Number(e.target.value)))
-                      }
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={item.qty === 0 || item.qty === "" ? "" : item.qty}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          onUpdateQuantity(item.id, "");
+                          return;
+                        }
+                        const clean = raw.replace(/\D/g, "");
+                        onUpdateQuantity(item.id, clean === "" ? "" : Number(clean));
+                      }}
+                      onBlur={() => {
+                        if (item.qty === "" || Number(item.qty) <= 0) {
+                          onUpdateQuantity(item.id, 1);
+                        }
+                      }}
                       className="w-full h-10 px-3 rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-xs font-bold text-[var(--ui-text-primary)] text-center outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
                     />
                   </div>

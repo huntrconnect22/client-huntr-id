@@ -52,6 +52,15 @@ export function updateCartQty(id: string, delta: number): CartItem[] {
   return next;
 }
 
+export function setCartItemQty(id: string, qty: number): CartItem[] {
+  const next = loadCart()
+    .map((i) =>
+      String(i.id) === String(id) ? { ...i, qty: Math.max(1, qty) } : i
+    );
+  saveCart(next);
+  return next;
+}
+
 export function removeCartItem(id: string): CartItem[] {
   const next = loadCart().filter((i) => String(i.id) !== String(id));
   saveCart(next);

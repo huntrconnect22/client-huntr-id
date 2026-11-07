@@ -8,7 +8,7 @@ export interface CartItem {
   uom?: string;
   image_url?: string | null;
   image_path?: string | null;
-  qty: number;
+  qty: number | "";
   estimated_price: number;
   line_type?: "goods" | "service";
   service_scope?: string;
