@@ -101,6 +101,49 @@ export function printComparisonForm({
     vendorTotals[p.id] = 0;
   });
 
+  // Helper to extract initial offer (penawaran awal) and negotiated deal offer for a vendor
+  const getVendorItemOffers = (p: any, item: any, qty: number) => {
+    const pItemOffer = p.items?.find(
+      (pi: any) => String(pi.rfq_item_id) === String(item.id)
+    );
+    const acceptedNeg =
+      p.acceptedNegotiation ||
+      p.accepted_negotiation ||
+      (p.negotiations || []).find((n: any) => n.status === "accepted");
+    const negItem = acceptedNeg?.items?.find(
+      (ni: any) =>
+        String(ni.proposal_item_id) === String(pItemOffer?.id) ||
+        String(ni.proposal_item_id) === String(item.id)
+    );
+
+    // Initial price offer submitted by vendor at bid time (Kotak Biru)
+    let initialPrice = 0;
+    if (pItemOffer?.initial_price_offer !== undefined && pItemOffer?.initial_price_offer !== null) {
+      initialPrice = Number(pItemOffer.initial_price_offer);
+    } else if (negItem?.original_price !== undefined && negItem?.original_price !== null) {
+      initialPrice = Number(negItem.original_price);
+    } else if (pItemOffer?.price_offer !== undefined && pItemOffer?.price_offer !== null) {
+      initialPrice = Number(pItemOffer.price_offer);
+    } else if (p.initial_price_offer) {
+      initialPrice = Number(p.initial_price_offer) / (items.length || 1) / qty;
+    } else if (p.price_offer) {
+      initialPrice = Number(p.price_offer) / (items.length || 1) / qty;
+    }
+
+    // Effective / negotiated deal price (Kotak Kuning)
+    let effectivePrice = Number(pItemOffer?.price_offer ?? initialPrice);
+    if (negItem && negItem.negotiated_price !== undefined && negItem.negotiated_price !== null) {
+      effectivePrice = Number(negItem.negotiated_price);
+    }
+
+    return {
+      initial: initialPrice,
+      effective: effectivePrice > 0 ? effectivePrice : initialPrice,
+      itemOffer: pItemOffer,
+      acceptedNeg,
+    };
+  };
+
   const tableRows = items.map((item, idx) => {
     const qty = Number(item.qty || 1);
     const uom = item.uom || item.catalogue?.uom || "Pcs";
@@ -108,35 +151,77 @@ export function printComparisonForm({
     const specs = item.specifications || item.catalogue?.specifications || item.service_scope || "";
     const fullDescription = specs ? `${itemName} - ${specs}` : itemName;
 
-    // Last price resolution: 1. historical, 2. estimated_price from PR, 3. 0
-    const lastPrice = Number(item.last_price ?? (item.estimated_price ?? 0));
-    totalLastPrice += lastPrice * qty;
+    // Find best vendor for this item (lowest price automatically goes to Kotak Kuning)
+    let bestVendor: any = null;
+    let bestEffectivePrice = Infinity;
+    let bestInitialPrice = 0;
 
-    // Find awarded price for this item
-    const awardedItemOffer = awarded?.items?.find(
-      (pi: any) => String(pi.rfq_item_id) === String(item.id)
-    );
-    const awardedUnitPrice = awardedItemOffer
-      ? Number(awardedItemOffer.price_offer || 0)
-      : (awarded?.price_offer ? Number(awarded.price_offer) / (items.length || 1) / qty : 0);
-    const awardedTotalPrice = awardedUnitPrice * qty;
-    totalAwardedPrice += awardedTotalPrice;
+    // Check if this item is explicitly checklisted/awarded to a specific vendor
+    const explicitlyAwardedVendor = allProposals.find((p: any) => {
+      const pi = p.items?.find((i: any) => String(i.rfq_item_id) === String(item.id));
+      return pi?.is_awarded;
+    });
 
-    // Deviation from last price
-    let deviation = 0;
-    if (lastPrice > 0) {
-      deviation = ((awardedUnitPrice - lastPrice) / lastPrice) * 100;
+    if (explicitlyAwardedVendor) {
+      const off = getVendorItemOffers(explicitlyAwardedVendor, item, qty);
+      bestVendor = explicitlyAwardedVendor;
+      bestEffectivePrice = off.effective;
+      bestInitialPrice = off.initial;
+    } else {
+      // Automatically select the vendor with lowest effective price for this item
+      for (const p of allProposals) {
+        const off = getVendorItemOffers(p, item, qty);
+        if (off.effective > 0 && off.effective < bestEffectivePrice) {
+          bestEffectivePrice = off.effective;
+          bestInitialPrice = off.initial;
+          bestVendor = p;
+        }
+      }
     }
 
-    // Build per-vendor cells
+    // Fallback if no prices found
+    if (bestEffectivePrice === Infinity) {
+      const defAwarded = awarded || allProposals[0];
+      const off = defAwarded ? getVendorItemOffers(defAwarded, item, qty) : { effective: 0, initial: 0 };
+      bestEffectivePrice = off.effective;
+      bestInitialPrice = off.initial;
+      bestVendor = defAwarded;
+    }
+
+    const itemAwardedUnitPrice = bestEffectivePrice;
+    const itemAwardedTotalPrice = itemAwardedUnitPrice * qty;
+    const itemAwardedVendorName = bestVendor?.company?.name || bestVendor?.vendor || "—";
+    totalAwardedPrice += itemAwardedTotalPrice;
+
+    // Last price resolution:
+    // Priority 1: Historical last purchase price
+    // Priority 2: Target price from PR (estimated_price)
+    // Priority 3: Vendor's initial submitted price before negotiation
+    let lastPrice = 0;
+    let lastPriceSource = "none";
+    if (Number(item.last_price) > 0) {
+      lastPrice = Number(item.last_price);
+      lastPriceSource = "historical";
+    } else if (Number(item.estimated_price) > 0) {
+      lastPrice = Number(item.estimated_price);
+      lastPriceSource = "target_price";
+    } else if (bestInitialPrice > 0) {
+      lastPrice = bestInitialPrice;
+      lastPriceSource = "initial_bid";
+    }
+    totalLastPrice += lastPrice * qty;
+
+    // Deviation calculation (shows savings / penghematan)
+    let deviation = 0;
+    if (lastPrice > 0) {
+      deviation = ((itemAwardedUnitPrice - lastPrice) / lastPrice) * 100;
+    }
+
+    // Build per-vendor cells (Kotak Biru: always displays INITIAL offer submitted at bid time)
     const vendorCellsHtml = allProposals
       .map((p) => {
-        const pItemOffer = p.items?.find(
-          (pi: any) => String(pi.rfq_item_id) === String(item.id)
-        );
-        const unitPrice = pItemOffer
-          ? Number(pItemOffer.price_offer || 0)
-          : (p.price_offer ? Number(p.price_offer) / (items.length || 1) / qty : 0);
+        const off = getVendorItemOffers(p, item, qty);
+        const unitPrice = off.initial;
         const lineTotal = unitPrice * qty;
         vendorTotals[p.id] = (vendorTotals[p.id] || 0) + lineTotal;
 
@@ -157,9 +242,9 @@ export function printComparisonForm({
         <td class="text-center font-bold">${qty}</td>
         <td class="text-center">${escapeHtml(uom)}</td>
         <td class="text-right num font-bold ${lastPrice === 0 ? "text-muted" : ""}">${formatCurrency(lastPrice)}</td>
-        <td class="text-right num font-bold text-success">${formatCurrency(awardedUnitPrice)}</td>
-        <td class="text-right num font-bold text-success">${formatCurrency(awardedTotalPrice)}</td>
-        <td class="text-center vendor-badge font-bold">${escapeHtml(awardedVendorName)}</td>
+        <td class="text-right num font-bold text-success">${formatCurrency(itemAwardedUnitPrice)}</td>
+        <td class="text-right num font-bold text-success">${formatCurrency(itemAwardedTotalPrice)}</td>
+        <td class="text-center vendor-badge font-bold">${escapeHtml(itemAwardedVendorName)}</td>
         <td class="text-right num font-bold ${deviation < 0 ? "text-success" : deviation > 0 ? "text-danger" : ""}">${lastPrice > 0 ? formatPercent(deviation) : "0.00%"}</td>
         ${vendorCellsHtml}
       </tr>
@@ -194,11 +279,24 @@ export function printComparisonForm({
       })
       .join("");
 
-  // Terms and conditions rows
+  // Terms and conditions rows (Kotak Kuning adapts if negotiated terms exist)
+  const awardedNeg =
+    awarded?.acceptedNegotiation ||
+    awarded?.accepted_negotiation ||
+    (awarded?.negotiations || []).find((n: any) => n.status === "accepted");
+
+  const awardedPaymentVal =
+    awardedNeg?.payment_scheme || awarded?.payment_term || "Cash before delivery / TOP 30 Days";
+  const awardedDeliveryVal = awardedNeg?.delivery_terms
+    ? `${awardedNeg.delivery_terms} working days after PO`
+    : awarded?.delivery_days
+    ? `${awarded.delivery_days} working days after PO`
+    : "Prompt";
+
   const termsList = [
     {
       title: "1. Payment Scheme / 付款方式",
-      awardedVal: awarded?.payment_term || "Cash before delivery / TOP 30 Days",
+      awardedVal: awardedPaymentVal,
       getVendorVal: (p: any) => p.payment_term || "—",
     },
     {
@@ -208,7 +306,7 @@ export function printComparisonForm({
     },
     {
       title: "3. Delivery Time / 交货期",
-      awardedVal: awarded?.delivery_days ? `${awarded.delivery_days} working days after PO` : "Prompt",
+      awardedVal: awardedDeliveryVal,
       getVendorVal: (p: any) => (p.delivery_days ? `${p.delivery_days} working days` : "—"),
     },
     {
