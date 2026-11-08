@@ -16,6 +16,7 @@ import {
   ComparisonMatrixTable,
   SeparateOrderModal,
 } from "../components/compare-review";
+import { CancelAwardModal } from "../components/rfq-detail/CancelAwardModal";
 import { printComparisonForm } from "../utils/printComparisonForm";
 
 export default function CompareReview() {
@@ -24,6 +25,7 @@ export default function CompareReview() {
   const { user } = useAppShell();
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [showSeparateOrderModal, setShowSeparateOrderModal] = useState(false);
+  const [showCancelAwardModal, setShowCancelAwardModal] = useState(false);
 
   const {
     request,
@@ -124,6 +126,9 @@ export default function CompareReview() {
     );
   }
 
+  const isManager = user?.role === "manager" || user?.role === "admin" || user?.company?.owner_id === user?.id;
+  const isAwarded = Boolean(awardedProposal || request?.status === "awarded");
+
   return (
     <Layout
       title={`Compare & Review: ${request.title}`}
@@ -145,6 +150,8 @@ export default function CompareReview() {
           processingId={processingId}
           onApproveWinner={handleApproveWinner}
           onOpenSeparateOrder={() => setShowSeparateOrderModal(true)}
+          canCancelAward={Boolean(isManager && isAwarded)}
+          onCancelAward={() => setShowCancelAwardModal(true)}
         />
 
         {/* Overall AI Analysis */}
@@ -179,6 +186,18 @@ export default function CompareReview() {
         onSuccess={refresh}
         buyerUserId={user?.id || ""}
       />
+
+      {/* Cancel Award Modal */}
+      {showCancelAwardModal && (
+        <CancelAwardModal
+          rfqId={String(request.id)}
+          rfqTitle={request.title}
+          isOpen={showCancelAwardModal}
+          onClose={() => setShowCancelAwardModal(false)}
+          onSuccess={refresh}
+          managerUserId={user?.id || ""}
+        />
+      )}
     </Layout>
   );
 }

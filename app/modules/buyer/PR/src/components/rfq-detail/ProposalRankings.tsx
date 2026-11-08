@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Trophy, MessageSquare, Award, Loader2, Sparkles, FileText, Info, Users, PackageCheck,
+  Trophy, MessageSquare, Award, Loader2, Sparkles, FileText, Info, Users, PackageCheck, RotateCcw, Paperclip,
 } from "lucide-react";
 import {
   Table,
@@ -11,7 +11,9 @@ import {
 } from "@mui/material";
 import { getAssetUrl } from "~/lib/assets";
 import { useLanguage } from "~/context/LanguageContext";
+import { openAuthenticatedDocument } from "~/shared/lib/open-auth-document";
 import { MultiVendorAwardModal } from "./MultiVendorAwardModal";
+import { CancelAwardModal } from "./CancelAwardModal";
 
 const btnSecondary =
   "inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors disabled:opacity-50 cursor-pointer";
@@ -38,6 +40,8 @@ interface ProposalRankingsProps {
   onAIRank: () => void;
   aiRankLoading: boolean;
   showAiPanel: boolean;
+  currentUserId?: string;
+  onAwardCancelled?: () => void;
 }
 
 export function ProposalRankings({
@@ -53,11 +57,14 @@ export function ProposalRankings({
   onAIRank,
   aiRankLoading,
   showAiPanel,
+  currentUserId,
+  onAwardCancelled,
 }: ProposalRankingsProps) {
   const { t } = useLanguage();
   const topRank = rankings.find((r) => r.rank === 1);
   const [awardModeTab, setAwardModeTab] = useState<"single" | "multi">("single");
   const [showMultiModal, setShowMultiModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   if (rankings.length === 0) return null;
 
@@ -132,6 +139,37 @@ export function ProposalRankings({
           {t("rfqDetail.proposals.evaluationDetail")}
         </p>
       </div>
+
+      {/* Awarded State Banner with Cancel Award for Manager */}
+      {isRfqAlreadyAwarded && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 mb-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+              <Award size={18} />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-[var(--ui-text-primary)]">
+                Pemenang Tender Telah Ditetapkan
+              </div>
+              <div className="text-[11px] text-[var(--ui-text-muted)] mt-0.5">
+                {rfq?.award_cancelled_at
+                  ? `Dibatalkan sebelumnya pada ${new Date(rfq.award_cancelled_at).toLocaleDateString()}`
+                  : "Draft Purchase Order (PO) telah diterbitkan dan menunggu proses selanjutnya."}
+              </div>
+            </div>
+          </div>
+          {canApproveOrAward && (
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer"
+            >
+              <RotateCcw size={13} />
+              <span>Batalkan Award (Manager)</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Multi-Vendor Action Card */}
       {canApproveOrAward && !isRfqAlreadyAwarded && awardModeTab === "multi" && isMultiVendorAvailable && (
@@ -286,18 +324,28 @@ export function ProposalRankings({
                     )}
                   </TableCell>
                   <TableCell className="px-3 py-2 whitespace-nowrap">
-                    {(p.document_path || p.document_url) ? (
-                      <a
-                        href={p.document_url || getAssetUrl(p.document_path)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] font-semibold text-orange-500 hover:underline"
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openAuthenticatedDocument(`/api/proposals/${p.id}/print`)}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-500 hover:text-orange-600 hover:underline cursor-pointer"
+                        title="Lihat Dokumen Penawaran / Quotation Resmi (Audit Trail)"
                       >
-                        <FileText size={11} className="inline" />
-                      </a>
-                    ) : (
-                      <span className="text-[11px] text-[var(--ui-text-muted)]">—</span>
-                    )}
+                        <FileText size={12} />
+                        <span>Quotation</span>
+                      </button>
+                      {(p.document_path || p.document_url) && (
+                        <a
+                          href={p.document_url || getAssetUrl(p.document_path)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-semibold text-[var(--ui-text-muted)] hover:text-orange-500 ml-1"
+                          title="Lampiran Tambahan Vendor"
+                        >
+                          <Paperclip size={12} />
+                        </a>
+                      )}
+                    </div>
                   </TableCell>
                   {canApproveOrAward && !isRfqAlreadyAwarded && (
                     <TableCell className="px-3 py-2">
@@ -342,6 +390,21 @@ export function ProposalRankings({
             await onAwardMulti(awards, awardMode);
           }}
           isProcessing={isProcessing}
+        />
+      )}
+
+      {/* Cancel Award Modal */}
+      {showCancelModal && (
+        <CancelAwardModal
+          rfqId={String(rfq?.id)}
+          rfqTitle={rfq?.title}
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onSuccess={() => {
+            setShowCancelModal(false);
+            if (onAwardCancelled) onAwardCancelled();
+          }}
+          managerUserId={currentUserId || ""}
         />
       )}
     </section>

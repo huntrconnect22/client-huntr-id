@@ -356,6 +356,10 @@ export default function RfqDetail() {
                   onAIRank={handleAiRank}
                   aiRankLoading={aiRankLoading}
                   showAiPanel={showAiPanel}
+                  currentUserId={user?.id}
+                  onAwardCancelled={() => {
+                    if (id) loadRfq(id);
+                  }}
                 />
                 <AIAnalysisPanel
                   showAiPanel={showAiPanel}

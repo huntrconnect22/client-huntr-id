@@ -8,6 +8,7 @@ import Button from "@mui/material/Button";
 import React from "react";
 import { Trophy, Building2, Package, MessageSquare, Loader2, FileText } from "lucide-react";
 import { getAssetUrl } from "~/lib/assets";
+import { openAuthenticatedDocument } from "~/shared/lib/open-auth-document";
 
 const btnSecondary =
   "inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-secondary)] hover:border-orange-500/30 transition-colors disabled:opacity-50";
@@ -95,18 +96,27 @@ export function ProposalRankings({
                   {proposal.payment_term}
                 </TableCell>
                 <TableCell className="px-3 py-2 whitespace-nowrap">
-                  {(proposal.document_path || proposal.document_url) ? (
-                    <a
-                      href={proposal.document_url || getAssetUrl(proposal.document_path)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-500 hover:underline"
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openAuthenticatedDocument(`/api/proposals/${proposal.id}/print`)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-500 hover:underline cursor-pointer"
+                      title="Lihat Dokumen Penawaran / Quotation (Audit)"
                     >
-                      <FileText size={11} /> View
-                    </a>
-                  ) : (
-                    <span className="text-[11px] text-[var(--ui-text-muted)]">—</span>
-                  )}
+                      <FileText size={11} /> Quotation
+                    </button>
+                    {(proposal.document_path || proposal.document_url) && (
+                      <a
+                        href={proposal.document_url || getAssetUrl(proposal.document_path)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-semibold text-[var(--ui-text-muted)] hover:text-orange-500 ml-1"
+                        title="Lampiran Vendor"
+                      >
+                        Doc
+                      </a>
+                    )}
+                  </div>
                 </TableCell>
                 {(onAwardWinner || onOpenNegotiation) && (
                   <TableCell className="px-3 py-2">

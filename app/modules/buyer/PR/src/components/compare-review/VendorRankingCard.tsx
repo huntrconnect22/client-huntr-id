@@ -10,8 +10,10 @@ import {
   AlertCircle,
   Lightbulb,
   BarChart3,
+  Paperclip,
 } from "lucide-react";
 import { getAssetUrl } from "~/lib/assets";
+import { openAuthenticatedDocument } from "~/shared/lib/open-auth-document";
 
 interface VendorRankingCardProps {
   rankData: any;
@@ -111,8 +113,30 @@ export const VendorRankingCard: React.FC<VendorRankingCardProps> = ({
                 {proposal.warranty_months} months warranty
               </div>
             </div>
-            {(proposal.document_path || proposal.document_url) && (
-              <div style={{ marginTop: 12 }}>
+            <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              {proposal.id && (
+                <button
+                  type="button"
+                  onClick={() => openAuthenticatedDocument(`/api/proposals/${proposal.id}/print`)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    color: isWinner ? "#22c55e" : "#ef7d00",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    background: "transparent",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                  }}
+                >
+                  <FileText size={14} /> Dokumen Penawaran (Quotation)
+                </button>
+              )}
+
+              {(proposal.document_path || proposal.document_url) && (
                 <a
                   href={proposal.document_url || getAssetUrl(proposal.document_path)}
                   target="_blank"
@@ -121,16 +145,16 @@ export const VendorRankingCard: React.FC<VendorRankingCardProps> = ({
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
-                    color: isWinner ? "#22c55e" : "#f97316",
+                    color: "var(--ui-text-muted)",
                     fontSize: 13,
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textDecoration: "none",
                   }}
                 >
-                  <FileText size={14} /> View Vendor Document
+                  <Paperclip size={13} /> Lampiran Vendor
                 </a>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
