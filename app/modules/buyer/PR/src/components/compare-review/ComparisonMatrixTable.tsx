@@ -421,218 +421,317 @@ export const ComparisonMatrixTable: React.FC<ComparisonMatrixTableProps> = ({
           </TableHead>
 
           <TableBody>
-            {items.map((item, idx) => {
-              const qty = Number(item.qty || 1);
-              const uom = item.uom || item.catalogue?.uom || "Pcs";
-              const itemName = item.item_name || item.catalogue?.name || `Item #${idx + 1}`;
-              const specs = item.specifications || item.catalogue?.specifications || item.service_scope || "";
+            {(() => {
+              // Helper to extract initial offer and negotiated deal offer for a vendor
+              const getVendorItemOffers = (p: any, item: any, qty: number) => {
+                const pItemOffer = p.items?.find(
+                  (pi: any) => String(pi.rfq_item_id) === String(item.id)
+                );
+                const acceptedNeg =
+                  p.acceptedNegotiation ||
+                  p.accepted_negotiation ||
+                  (p.negotiations || []).find((n: any) => n.status === "accepted");
+                const negItem = acceptedNeg?.items?.find(
+                  (ni: any) =>
+                    String(ni.proposal_item_id) === String(pItemOffer?.id) ||
+                    String(ni.proposal_item_id) === String(item.id)
+                );
 
-              // Last price resolution: 1. historical, 2. estimated_price, 3. 0
-              const lastPrice = Number(item.last_price ?? (item.estimated_price ?? 0));
-              const lastPriceSource = item.last_price_source || (item.last_price ? "historical" : item.estimated_price ? "target_price" : "none");
-              totalLastPrice += lastPrice * qty;
+                // Initial price offer submitted by vendor at bid time (Kotak Biru)
+                let initialPrice = 0;
+                if (pItemOffer?.initial_price_offer !== undefined && pItemOffer?.initial_price_offer !== null) {
+                  initialPrice = Number(pItemOffer.initial_price_offer);
+                } else if (negItem?.original_price !== undefined && negItem?.original_price !== null) {
+                  initialPrice = Number(negItem.original_price);
+                } else if (pItemOffer?.price_offer !== undefined && pItemOffer?.price_offer !== null) {
+                  initialPrice = Number(pItemOffer.price_offer);
+                } else if (p.initial_price_offer) {
+                  initialPrice = Number(p.initial_price_offer) / (items.length || 1) / qty;
+                } else if (p.price_offer) {
+                  initialPrice = Number(p.price_offer) / (items.length || 1) / qty;
+                }
 
-              // Awarded item offer
-              const awardedItemOffer = awarded?.items?.find(
-                (pi: any) => String(pi.rfq_item_id) === String(item.id)
-              );
-              const awardedUnitPrice = awardedItemOffer
-                ? Number(awardedItemOffer.price_offer || 0)
-                : (awarded?.price_offer ? Number(awarded.price_offer) / (items.length || 1) / qty : 0);
-              const awardedTotalPrice = awardedUnitPrice * qty;
-              totalAwardedPrice += awardedTotalPrice;
+                // Effective / negotiated deal price (Kotak Kuning)
+                let effectivePrice = Number(pItemOffer?.price_offer ?? initialPrice);
+                if (negItem && negItem.negotiated_price !== undefined && negItem.negotiated_price !== null) {
+                  effectivePrice = Number(negItem.negotiated_price);
+                }
 
-              let deviation = 0;
-              if (lastPrice > 0) {
-                deviation = ((awardedUnitPrice - lastPrice) / lastPrice) * 100;
-              }
+                return {
+                  initial: initialPrice,
+                  effective: effectivePrice > 0 ? effectivePrice : initialPrice,
+                  itemOffer: pItemOffer,
+                  acceptedNeg,
+                };
+              };
 
-              return (
-                <TableRow key={item.id || idx} hover sx={{ "&:last-child td": { borderBottom: "1px solid var(--ui-border)" } }}>
-                  <TableCell sx={{ textAlign: "center", fontWeight: 700, fontSize: "0.75rem" }}>
-                    {idx + 1}
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 800, fontSize: "0.825rem", color: "var(--ui-text-primary)" }}>
-                      {itemName}
-                    </Typography>
-                    {specs && (
-                      <Typography variant="caption" sx={{ color: "var(--ui-text-muted)", display: "block", fontSize: "0.725rem" }}>
-                        {specs}
+              return items.map((item, idx) => {
+                const qty = Number(item.qty || 1);
+                const uom = item.uom || item.catalogue?.uom || "Pcs";
+                const itemName = item.item_name || item.catalogue?.name || `Item #${idx + 1}`;
+                const specs = item.specifications || item.catalogue?.specifications || item.service_scope || "";
+
+                // Find lowest price vendor for this item (automatically goes into Kotak Kuning)
+                let bestVendor: any = null;
+                let bestEffectivePrice = Infinity;
+                let bestInitialPrice = 0;
+
+                const explicitlyAwardedVendor = allProposals.find((p: any) => {
+                  const pi = p.items?.find((i: any) => String(i.rfq_item_id) === String(item.id));
+                  return pi?.is_awarded;
+                });
+
+                if (explicitlyAwardedVendor) {
+                  const off = getVendorItemOffers(explicitlyAwardedVendor, item, qty);
+                  bestVendor = explicitlyAwardedVendor;
+                  bestEffectivePrice = off.effective;
+                  bestInitialPrice = off.initial;
+                } else {
+                  for (const p of allProposals) {
+                    const off = getVendorItemOffers(p, item, qty);
+                    if (off.effective > 0 && off.effective < bestEffectivePrice) {
+                      bestEffectivePrice = off.effective;
+                      bestInitialPrice = off.initial;
+                      bestVendor = p;
+                    }
+                  }
+                }
+
+                if (bestEffectivePrice === Infinity) {
+                  const defAwarded = awarded || allProposals[0];
+                  const off = defAwarded ? getVendorItemOffers(defAwarded, item, qty) : { effective: 0, initial: 0 };
+                  bestEffectivePrice = off.effective;
+                  bestInitialPrice = off.initial;
+                  bestVendor = defAwarded;
+                }
+
+                const itemAwardedUnitPrice = bestEffectivePrice;
+                const itemAwardedTotalPrice = itemAwardedUnitPrice * qty;
+                const itemAwardedVendorName = bestVendor?.company?.name || bestVendor?.vendor || "—";
+                totalAwardedPrice += itemAwardedTotalPrice;
+
+                // Last price resolution:
+                // 1. Historical purchase price
+                // 2. Target price from PR (estimated_price)
+                // 3. Initial offer submitted by vendor before negotiation
+                let lastPrice = 0;
+                let lastPriceSource = "none";
+                if (Number(item.last_price) > 0) {
+                  lastPrice = Number(item.last_price);
+                  lastPriceSource = "historical";
+                } else if (Number(item.estimated_price) > 0) {
+                  lastPrice = Number(item.estimated_price);
+                  lastPriceSource = "target_price";
+                } else if (bestInitialPrice > 0) {
+                  lastPrice = bestInitialPrice;
+                  lastPriceSource = "initial_bid";
+                }
+                totalLastPrice += lastPrice * qty;
+
+                let deviation = 0;
+                if (lastPrice > 0) {
+                  deviation = ((itemAwardedUnitPrice - lastPrice) / lastPrice) * 100;
+                }
+
+                return (
+                  <TableRow key={item.id || idx} hover sx={{ "&:last-child td": { borderBottom: "1px solid var(--ui-border)" } }}>
+                    <TableCell sx={{ textAlign: "center", fontWeight: 700, fontSize: "0.75rem" }}>
+                      {idx + 1}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 800, fontSize: "0.825rem", color: "var(--ui-text-primary)" }}>
+                        {itemName}
                       </Typography>
-                    )}
-                    {item.sku && (
-                      <Typography variant="caption" sx={{ color: "#ef7d00", fontWeight: 700, fontSize: "0.7rem" }}>
-                        SKU: {item.sku}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ textAlign: "center", fontWeight: 800, fontSize: "0.8rem" }}>
-                    {qty}
-                  </TableCell>
-                  <TableCell sx={{ textAlign: "center", fontSize: "0.75rem", color: "var(--ui-text-muted)" }}>
-                    {uom}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "right",
-                      borderRight: "1px solid var(--ui-border)",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 800,
-                          fontSize: "0.8rem",
-                          fontFamily: "monospace",
-                          color: lastPrice === 0 ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
-                        }}
-                      >
-                        Rp {lastPrice.toLocaleString("id-ID")}
-                      </Typography>
-                      {lastPriceSource === "historical" ? (
-                        <Tooltip title={`Berdasarkan riwayat pembelian terakhir ${item.last_price_date ? `(${item.last_price_date})` : ""}`} arrow>
-                          <Chip
-                            icon={<History size={10} />}
-                            label="Historical"
-                            size="small"
-                            sx={{
-                              height: 16,
-                              fontSize: "0.6rem",
-                              fontWeight: 800,
-                              bgcolor: "rgba(34, 197, 94, 0.12)",
-                              color: "#166534",
-                              mt: 0.25,
-                            }}
-                          />
-                        </Tooltip>
-                      ) : lastPriceSource === "target_price" ? (
-                        <Tooltip title="Belum pernah beli, diambil dari Target Price PR" arrow>
-                          <Chip
-                            icon={<Target size={10} />}
-                            label="Target PR"
-                            size="small"
-                            sx={{
-                              height: 16,
-                              fontSize: "0.6rem",
-                              fontWeight: 800,
-                              bgcolor: "rgba(239, 125, 0, 0.12)",
-                              color: "#c2410c",
-                              mt: 0.25,
-                            }}
-                          />
-                        </Tooltip>
-                      ) : (
-                        <Tooltip title="Tidak ada data riwayat harga atau target PR (0)" arrow>
-                          <Chip
-                            icon={<HelpCircle size={10} />}
-                            label="No Prior Data"
-                            size="small"
-                            sx={{
-                              height: 16,
-                              fontSize: "0.6rem",
-                              fontWeight: 700,
-                              bgcolor: "var(--ui-border)",
-                              color: "var(--ui-text-muted)",
-                              mt: 0.25,
-                            }}
-                          />
-                        </Tooltip>
+                      {specs && (
+                        <Typography variant="caption" sx={{ color: "var(--ui-text-muted)", display: "block", fontSize: "0.725rem" }}>
+                          {specs}
+                        </Typography>
                       )}
-                    </Box>
-                  </TableCell>
-
-                  {/* Awarded Cells */}
-                  <TableCell sx={{ textAlign: "right", bgcolor: "rgba(34, 197, 94, 0.02)" }}>
-                    <Typography variant="body2" sx={{ fontWeight: 800, fontSize: "0.8rem", color: "#166534", fontFamily: "monospace" }}>
-                      Rp {awardedUnitPrice.toLocaleString("id-ID")}
-                    </Typography>
-                  </TableCell>
-                  <TableCell sx={{ textAlign: "right", bgcolor: "rgba(34, 197, 94, 0.02)" }}>
-                    <Typography variant="body2" sx={{ fontWeight: 800, fontSize: "0.8rem", color: "#166534", fontFamily: "monospace" }}>
-                      Rp {awardedTotalPrice.toLocaleString("id-ID")}
-                    </Typography>
-                  </TableCell>
-                  <TableCell sx={{ textAlign: "center", bgcolor: "rgba(34, 197, 94, 0.02)" }}>
-                    <Chip
-                      label={awardedVendorName}
-                      size="small"
+                      {item.sku && (
+                        <Typography variant="caption" sx={{ color: "#ef7d00", fontWeight: 700, fontSize: "0.7rem" }}>
+                          SKU: {item.sku}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "center", fontWeight: 800, fontSize: "0.8rem" }}>
+                      {qty}
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "center", fontSize: "0.75rem", color: "var(--ui-text-muted)" }}>
+                      {uom}
+                    </TableCell>
+                    <TableCell
                       sx={{
-                        fontWeight: 800,
-                        fontSize: "0.68rem",
-                        bgcolor: "#dcfce7",
-                        color: "#15803d",
-                        maxWidth: 110,
+                        textAlign: "right",
+                        borderRight: "1px solid var(--ui-border)",
                       }}
-                    />
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "right",
-                      bgcolor: "rgba(34, 197, 94, 0.02)",
-                      borderRight: "2px solid var(--ui-border)",
-                    }}
-                  >
-                    {lastPrice > 0 ? (
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.25 }}>
-                        {deviation < 0 ? (
-                          <TrendingDown size={12} color="#16a34a" />
-                        ) : deviation > 0 ? (
-                          <TrendingUp size={12} color="#dc2626" />
-                        ) : null}
+                    >
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
                         <Typography
-                          variant="caption"
+                          variant="body2"
                           sx={{
                             fontWeight: 800,
+                            fontSize: "0.8rem",
                             fontFamily: "monospace",
-                            color: deviation < 0 ? "#16a34a" : deviation > 0 ? "#dc2626" : "var(--ui-text-muted)",
+                            color: lastPrice === 0 ? "var(--ui-text-muted)" : "var(--ui-text-primary)",
                           }}
                         >
-                          {deviation > 0 ? `+${deviation.toFixed(2)}%` : `${deviation.toFixed(2)}%`}
+                          Rp {lastPrice.toLocaleString("id-ID")}
                         </Typography>
+                        {lastPriceSource === "historical" ? (
+                          <Tooltip title={`Berdasarkan riwayat pembelian terakhir ${item.last_price_date ? `(${item.last_price_date})` : ""}`} arrow>
+                            <Chip
+                              icon={<History size={10} />}
+                              label="Historical"
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: "0.6rem",
+                                fontWeight: 800,
+                                bgcolor: "rgba(34, 197, 94, 0.12)",
+                                color: "#166534",
+                                mt: 0.25,
+                              }}
+                            />
+                          </Tooltip>
+                        ) : lastPriceSource === "target_price" ? (
+                          <Tooltip title="Belum pernah beli, diambil dari Target Price PR" arrow>
+                            <Chip
+                              icon={<Target size={10} />}
+                              label="Target PR"
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: "0.6rem",
+                                fontWeight: 800,
+                                bgcolor: "rgba(239, 125, 0, 0.12)",
+                                color: "#c2410c",
+                                mt: 0.25,
+                              }}
+                            />
+                          </Tooltip>
+                        ) : lastPriceSource === "initial_bid" ? (
+                          <Tooltip title="Berdasarkan penawaran awal vendor sebelum negosiasi" arrow>
+                            <Chip
+                              icon={<History size={10} />}
+                              label="Initial Bid"
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: "0.6rem",
+                                fontWeight: 800,
+                                bgcolor: "rgba(59, 130, 246, 0.12)",
+                                color: "#1d4ed8",
+                                mt: 0.25,
+                              }}
+                            />
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Tidak ada data riwayat harga atau target PR (0)" arrow>
+                            <Chip
+                              icon={<HelpCircle size={10} />}
+                              label="No Prior Data"
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: "0.6rem",
+                                fontWeight: 700,
+                                bgcolor: "var(--ui-border)",
+                                color: "var(--ui-text-muted)",
+                                mt: 0.25,
+                              }}
+                            />
+                          </Tooltip>
+                        )}
                       </Box>
-                    ) : (
-                      <Typography variant="caption" sx={{ color: "var(--ui-text-muted)" }}>
-                        0.00%
+                    </TableCell>
+
+                    {/* Awarded Cells (Kotak Kuning) */}
+                    <TableCell sx={{ textAlign: "right", bgcolor: "rgba(34, 197, 94, 0.02)" }}>
+                      <Typography variant="body2" sx={{ fontWeight: 800, fontSize: "0.8rem", color: "#166534", fontFamily: "monospace" }}>
+                        Rp {itemAwardedUnitPrice.toLocaleString("id-ID")}
                       </Typography>
-                    )}
-                  </TableCell>
-
-                  {/* Vendors Quotations */}
-                  {allProposals.map((p, pIdx) => {
-                    const pItemOffer = p.items?.find(
-                      (pi: any) => String(pi.rfq_item_id) === String(item.id)
-                    );
-                    const unitPrice = pItemOffer
-                      ? Number(pItemOffer.price_offer || 0)
-                      : (p.price_offer ? Number(p.price_offer) / (items.length || 1) / qty : 0);
-                    const lineTotal = unitPrice * qty;
-                    vendorTotals[p.id] = (vendorTotals[p.id] || 0) + lineTotal;
-
-                    return (
-                      <React.Fragment key={`cell-${p.id || pIdx}-${item.id || idx}`}>
-                        <TableCell sx={{ textAlign: "right" }}>
-                          <Typography variant="body2" sx={{ fontSize: "0.78rem", fontFamily: "monospace" }}>
-                            Rp {unitPrice.toLocaleString("id-ID")}
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "right", bgcolor: "rgba(34, 197, 94, 0.02)" }}>
+                      <Typography variant="body2" sx={{ fontWeight: 800, fontSize: "0.8rem", color: "#166534", fontFamily: "monospace" }}>
+                        Rp {itemAwardedTotalPrice.toLocaleString("id-ID")}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "center", bgcolor: "rgba(34, 197, 94, 0.02)" }}>
+                      <Chip
+                        label={itemAwardedVendorName}
+                        size="small"
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: "0.68rem",
+                          bgcolor: "#dcfce7",
+                          color: "#15803d",
+                          maxWidth: 110,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        textAlign: "right",
+                        bgcolor: "rgba(34, 197, 94, 0.02)",
+                        borderRight: "2px solid var(--ui-border)",
+                      }}
+                    >
+                      {lastPrice > 0 ? (
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.25 }}>
+                          {deviation < 0 ? (
+                            <TrendingDown size={12} color="#16a34a" />
+                          ) : deviation > 0 ? (
+                            <TrendingUp size={12} color="#dc2626" />
+                          ) : null}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 800,
+                              fontFamily: "monospace",
+                              color: deviation < 0 ? "#16a34a" : deviation > 0 ? "#dc2626" : "var(--ui-text-muted)",
+                            }}
+                          >
+                            {deviation > 0 ? `+${deviation.toFixed(2)}%` : `${deviation.toFixed(2)}%`}
                           </Typography>
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            textAlign: "right",
-                            borderRight: pIdx === allProposals.length - 1 ? "none" : "1px solid var(--ui-border)",
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ fontWeight: 700, fontSize: "0.78rem", fontFamily: "monospace" }}>
-                            Rp {lineTotal.toLocaleString("id-ID")}
-                          </Typography>
-                        </TableCell>
-                      </React.Fragment>
-                    );
-                  })}
-                </TableRow>
-              );
-            })}
+                        </Box>
+                      ) : (
+                        <Typography variant="caption" sx={{ color: "var(--ui-text-muted)" }}>
+                          0.00%
+                        </Typography>
+                      )}
+                    </TableCell>
+
+                    {/* Vendors Initial Quotations (Kotak Biru) */}
+                    {allProposals.map((p, pIdx) => {
+                      const off = getVendorItemOffers(p, item, qty);
+                      const unitPrice = off.initial;
+                      const lineTotal = unitPrice * qty;
+                      vendorTotals[p.id] = (vendorTotals[p.id] || 0) + lineTotal;
+
+                      return (
+                        <React.Fragment key={`cell-${p.id || pIdx}-${item.id || idx}`}>
+                          <TableCell sx={{ textAlign: "right" }}>
+                            <Typography variant="body2" sx={{ fontSize: "0.78rem", fontFamily: "monospace" }}>
+                              Rp {unitPrice.toLocaleString("id-ID")}
+                            </Typography>
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              textAlign: "right",
+                              borderRight: pIdx === allProposals.length - 1 ? "none" : "1px solid var(--ui-border)",
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: "0.78rem", fontFamily: "monospace" }}>
+                              Rp {lineTotal.toLocaleString("id-ID")}
+                            </Typography>
+                          </TableCell>
+                        </React.Fragment>
+                      );
+                    })}
+                  </TableRow>
+                );
+              });
+            })()}
 
             {/* Total Row */}
             <TableRow sx={{ bgcolor: "var(--ui-bg-subtle)", "& td": { fontWeight: 900 } }}>
@@ -761,61 +860,78 @@ export const ComparisonMatrixTable: React.FC<ComparisonMatrixTableProps> = ({
       </TableContainer>
 
       {/* Terms & Conditions Comparison Footer */}
-      <Box sx={{ p: 2.5, bgcolor: "var(--ui-bg-subtle)", borderTop: "1px solid var(--ui-border)" }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1.5, color: "var(--ui-text-primary)" }}>
-          Terms &amp; Condition Comparison (条款和条件比较)
-        </Typography>
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: "var(--ui-bg-input)" }}>
-                <TableCell sx={{ fontWeight: 800, width: 220 }}>Condition / Syarat</TableCell>
-                <TableCell sx={{ fontWeight: 800, color: "#15803d", bgcolor: "rgba(34, 197, 94, 0.08)" }}>
-                  Awarded ({awardedVendorName})
-                </TableCell>
-                {allProposals.map((p, idx) => (
-                  <TableCell key={`th-term-${p.id || idx}`} sx={{ fontWeight: 800 }}>
-                    {p.company?.name || p.vendor || `Vendor #${idx + 1}`}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow hover>
-                <TableCell sx={{ fontWeight: 700 }}>1. Payment Scheme / 付款方式</TableCell>
-                <TableCell sx={{ bgcolor: "rgba(34, 197, 94, 0.02)", fontWeight: 700, color: "#166534" }}>
-                  {awarded?.payment_term || "Cash before delivery / TOP 30 Days"}
-                </TableCell>
-                {allProposals.map((p, idx) => (
-                  <TableCell key={`pt-${p.id || idx}`}>{p.payment_term || "—"}</TableCell>
-                ))}
-              </TableRow>
-              <TableRow hover>
-                <TableCell sx={{ fontWeight: 700 }}>2. Delivery Time / 交货期</TableCell>
-                <TableCell sx={{ bgcolor: "rgba(34, 197, 94, 0.02)", fontWeight: 700, color: "#166534" }}>
-                  {awarded?.delivery_days ? `${awarded.delivery_days} working days after PO` : "Prompt"}
-                </TableCell>
-                {allProposals.map((p, idx) => (
-                  <TableCell key={`dt-${p.id || idx}`}>
-                    {p.delivery_days ? `${p.delivery_days} working days` : "—"}
-                  </TableCell>
-                ))}
-              </TableRow>
-              <TableRow hover>
-                <TableCell sx={{ fontWeight: 700 }}>3. Warranty / 保修期</TableCell>
-                <TableCell sx={{ bgcolor: "rgba(34, 197, 94, 0.02)", fontWeight: 700, color: "#166534" }}>
-                  {awarded?.warranty_months ? `${awarded.warranty_months} Months` : "Standard Warranty"}
-                </TableCell>
-                {allProposals.map((p, idx) => (
-                  <TableCell key={`w-${p.id || idx}`}>
-                    {p.warranty_months ? `${p.warranty_months} Months` : "—"}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
+      {(() => {
+        const awardedNeg =
+          awarded?.acceptedNegotiation ||
+          awarded?.accepted_negotiation ||
+          (awarded?.negotiations || []).find((n: any) => n.status === "accepted");
+
+        const awardedPaymentVal =
+          awardedNeg?.payment_scheme || awarded?.payment_term || "Cash before delivery / TOP 30 Days";
+        const awardedDeliveryVal = awardedNeg?.delivery_terms
+          ? `${awardedNeg.delivery_terms} working days after PO`
+          : awarded?.delivery_days
+          ? `${awarded.delivery_days} working days after PO`
+          : "Prompt";
+
+        return (
+          <Box sx={{ p: 2.5, bgcolor: "var(--ui-bg-subtle)", borderTop: "1px solid var(--ui-border)" }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 1.5, color: "var(--ui-text-primary)" }}>
+              Terms &amp; Condition Comparison (条款和条件比较)
+            </Typography>
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "var(--ui-bg-input)" }}>
+                    <TableCell sx={{ fontWeight: 800, width: 220 }}>Condition / Syarat</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#15803d", bgcolor: "rgba(34, 197, 94, 0.08)" }}>
+                      Awarded ({awardedVendorName})
+                    </TableCell>
+                    {allProposals.map((p, idx) => (
+                      <TableCell key={`th-term-${p.id || idx}`} sx={{ fontWeight: 800 }}>
+                        {p.company?.name || p.vendor || `Vendor #${idx + 1}`}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow hover>
+                    <TableCell sx={{ fontWeight: 700 }}>1. Payment Scheme / 付款方式</TableCell>
+                    <TableCell sx={{ bgcolor: "rgba(34, 197, 94, 0.02)", fontWeight: 700, color: "#166534" }}>
+                      {awardedPaymentVal}
+                    </TableCell>
+                    {allProposals.map((p, idx) => (
+                      <TableCell key={`pt-${p.id || idx}`}>{p.payment_term || "—"}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow hover>
+                    <TableCell sx={{ fontWeight: 700 }}>2. Delivery Time / 交货期</TableCell>
+                    <TableCell sx={{ bgcolor: "rgba(34, 197, 94, 0.02)", fontWeight: 700, color: "#166534" }}>
+                      {awardedDeliveryVal}
+                    </TableCell>
+                    {allProposals.map((p, idx) => (
+                      <TableCell key={`dt-${p.id || idx}`}>
+                        {p.delivery_days ? `${p.delivery_days} working days` : "—"}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow hover>
+                    <TableCell sx={{ fontWeight: 700 }}>3. Warranty / 保修期</TableCell>
+                    <TableCell sx={{ bgcolor: "rgba(34, 197, 94, 0.02)", fontWeight: 700, color: "#166534" }}>
+                      {awarded?.warranty_months ? `${awarded.warranty_months} Months` : "Standard Warranty"}
+                    </TableCell>
+                    {allProposals.map((p, idx) => (
+                      <TableCell key={`w-${p.id || idx}`}>
+                        {p.warranty_months ? `${p.warranty_months} Months` : "—"}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        );
+      })()}
     </Paper>
   );
 };
