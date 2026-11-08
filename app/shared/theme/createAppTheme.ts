@@ -6,7 +6,7 @@ export function createAppTheme(mode: PaletteMode) {
   return createTheme({
     palette: {
       mode,
-      primary: { main: "#c54e08", light: "#fb923c", dark: "#9a3904", contrastText: "#fff" },
+      primary: { main: dark ? "#fb923c" : "#c54e08", light: "#fed7aa", dark: "#9a3904", contrastText: dark ? "#10141c" : "#fff" },
       secondary: { main: dark ? "#a5b4fc" : "#4f46e5" },
       background: { default: dark ? "#10141c" : "#f5f7fa", paper: dark ? "#191f2b" : "#fff" },
       text: { primary: dark ? "#f1f5f9" : "#172234", secondary: dark ? "#a7b3c5" : "#526176" },
@@ -58,6 +58,54 @@ export function createAppTheme(mode: PaletteMode) {
       MuiChip: { styleOverrides: { root: { borderRadius: 4, fontWeight: 500 } } },
       MuiTooltip: { defaultProps: { arrow: true } },
       MuiAlert: { styleOverrides: { root: { borderRadius: 6 } } },
+      MuiSkeleton: {
+        defaultProps: {
+          animation: "wave",
+        },
+        styleOverrides: {
+          root: {
+            backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "#e2e8f0",
+            borderRadius: 6,
+          },
+          wave: {
+            "&::after": {
+              background: dark
+                ? "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent)"
+                : "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent)",
+            },
+          },
+          pulse: {
+            "&::after": {
+              background: dark ? "rgba(255, 255, 255, 0.14)" : "#cbd5e1",
+            },
+          },
+        },
+      },
+      MuiCircularProgress: {
+        defaultProps: {
+          color: "primary",
+        },
+        styleOverrides: {
+          root: {
+            color: dark ? "#fb923c" : "#c54e08",
+          },
+          circle: {
+            strokeLinecap: "round",
+          },
+        },
+      },
+      MuiLinearProgress: {
+        styleOverrides: {
+          root: {
+            backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "#e2e8f0",
+            borderRadius: 4,
+          },
+          bar: {
+            backgroundColor: dark ? "#fb923c" : "#c54e08",
+            borderRadius: 4,
+          },
+        },
+      },
       MuiCssBaseline: {
         styleOverrides: {
           body: { backgroundImage: "none" },
