@@ -1,13 +1,14 @@
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import React from "react";
-import { Calendar, MapPin, Package, CheckCircle2, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Package, CheckCircle2, Loader2, Split } from "lucide-react";
 
 interface CompareReviewSummaryProps {
   request: any;
   awardedProposal: any;
   processingId: string | null;
   onApproveWinner: (proposalId: string | number) => void;
+  onOpenSeparateOrder?: () => void;
 }
 
 export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
@@ -15,6 +16,7 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
   awardedProposal,
   processingId,
   onApproveWinner,
+  onOpenSeparateOrder,
 }) => {
   const proposalId = awardedProposal?.proposal?.id || awardedProposal?.proposal_id;
   const isProcessing = processingId === String(proposalId);
@@ -94,8 +96,33 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
           </div>
         </div>
 
-        {awardedProposal && (
-          <div style={{ display: "flex", alignItems: "flex-end" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          {onOpenSeparateOrder && (
+            <Button
+              variant="outlined"
+              onClick={onOpenSeparateOrder}
+              disabled={isProcessing}
+              startIcon={<Split size={16} />}
+              sx={{
+                px: 2.5,
+                py: 1.5,
+                borderRadius: 2.5,
+                fontWeight: 800,
+                fontSize: "0.875rem",
+                textTransform: "none",
+                borderColor: "#ef7d00",
+                color: "#ef7d00",
+                "&:hover": {
+                  borderColor: "#d96d00",
+                  bgcolor: "rgba(239, 125, 0, 0.08)",
+                },
+              }}
+            >
+              Separate Order (Pisah PO)
+            </Button>
+          )}
+
+          {awardedProposal && (
             <Button
               variant="contained"
               color="primary"
@@ -121,8 +148,8 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
             >
               Approve &amp; Generate PO
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </Paper>
   );

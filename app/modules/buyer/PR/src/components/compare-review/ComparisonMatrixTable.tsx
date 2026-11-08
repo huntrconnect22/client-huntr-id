@@ -20,6 +20,7 @@ import {
   TrendingUp,
   FileSpreadsheet,
   Award,
+  Split,
 } from "lucide-react";
 import { printComparisonForm } from "../../utils/printComparisonForm";
 
@@ -29,6 +30,7 @@ interface ComparisonMatrixTableProps {
   awardedProposal: any;
   overallAnalysis?: string;
   companyName?: string;
+  onOpenSeparateOrder?: () => void;
 }
 
 export const ComparisonMatrixTable: React.FC<ComparisonMatrixTableProps> = ({
@@ -37,6 +39,7 @@ export const ComparisonMatrixTable: React.FC<ComparisonMatrixTableProps> = ({
   awardedProposal,
   overallAnalysis = "",
   companyName,
+  onOpenSeparateOrder,
 }) => {
   const items: any[] = request?.items || [];
 
@@ -155,26 +158,51 @@ export const ComparisonMatrixTable: React.FC<ComparisonMatrixTableProps> = ({
           </Box>
         </Box>
 
-        <Button
-          variant="contained"
-          onClick={handlePrint}
-          startIcon={<Printer size={16} />}
-          sx={{
-            background: "linear-gradient(135deg, #ef7d00 0%, #d96d00 100%)",
-            color: "#ffffff",
-            fontWeight: 800,
-            textTransform: "none",
-            borderRadius: 2.5,
-            px: 2.5,
-            py: 1,
-            boxShadow: "0 4px 14px rgba(239, 125, 0, 0.25)",
-            "&:hover": {
-              background: "#d96d00",
-            },
-          }}
-        >
-          Print / Export PDF Form
-        </Button>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+          {onOpenSeparateOrder && (
+            <Button
+              variant="outlined"
+              onClick={onOpenSeparateOrder}
+              startIcon={<Split size={16} />}
+              sx={{
+                borderColor: "#ef7d00",
+                color: "#ef7d00",
+                fontWeight: 800,
+                textTransform: "none",
+                borderRadius: 2.5,
+                px: 2,
+                py: 1,
+                "&:hover": {
+                  borderColor: "#d96d00",
+                  bgcolor: "rgba(239, 125, 0, 0.08)",
+                },
+              }}
+            >
+              Separate Order (Pisah PO)
+            </Button>
+          )}
+
+          <Button
+            variant="contained"
+            onClick={handlePrint}
+            startIcon={<Printer size={16} />}
+            sx={{
+              background: "linear-gradient(135deg, #ef7d00 0%, #d96d00 100%)",
+              color: "#ffffff",
+              fontWeight: 800,
+              textTransform: "none",
+              borderRadius: 2.5,
+              px: 2.5,
+              py: 1,
+              boxShadow: "0 4px 14px rgba(239, 125, 0, 0.25)",
+              "&:hover": {
+                background: "#d96d00",
+              },
+            }}
+          >
+            Print / Export PDF Form
+          </Button>
+        </Box>
       </Box>
 
       {/* Main Table */}

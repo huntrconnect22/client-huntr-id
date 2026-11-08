@@ -1,5 +1,6 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useEffect, useRef, useState } from "react";
+import Fab from "@mui/material/Fab";
+import Badge from "@mui/material/Badge";
 import { ShoppingCart } from "lucide-react";
 import CartSidebar from "./CartSidebar";
 import {
@@ -8,14 +9,12 @@ import {
   getCartItemCount,
   type CartItem,
 } from "../lib/cart";
-import { useMediaQuery, MOBILE_BREAKPOINT } from "../hooks/useMediaQuery";
 
 interface GlobalCartPanelProps {
   companyPrefix: string;
 }
 
 export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps) {
-  const isMobile = useMediaQuery(MOBILE_BREAKPOINT);
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>(() => loadCart());
   const prevCartLen = useRef(cart.length);
@@ -63,46 +62,35 @@ export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps)
 
   return (
     <>
-      {cartOpen && !isMobile && (
-        <CartSidebar
-          cart={cart}
-          onCartChange={setCart}
-          companyPrefix={companyPrefix}
-          onClose={() => setCartOpen(false)}
-        />
-      )}
+      <CartSidebar
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        cart={cart}
+        onCartChange={setCart}
+        companyPrefix={companyPrefix}
+      />
 
-      {isMobile && cartCount > 0 && (
-        <div className="huntr-cart-fab md:hidden">
-          <HuntrButton
-            type="button"
-            onClick={() => setCartOpen((p) => !p)}
-            aria-label={`View cart (${cartCount} items)`}
-            className="huntr-cart-fab-btn relative flex items-center justify-center text-white touch-manipulation"
-          >
-            <ShoppingCart size={20} strokeWidth={2} />
-            {cartCount > 0 && (
-              <span className="huntr-cart-fab-badge">
-                {cartCount > 99 ? "99+" : cartCount}
-              </span>
-            )}
-          </HuntrButton>
-        </div>
-      )}
-
-      {cartOpen && isMobile && (
-        <div className="huntr-cart-mobile-sheet md:hidden">
-          <div className="huntr-cart-mobile-panel">
-            <div className="w-12 h-1.5 bg-[var(--ui-border)] rounded-full mx-auto mt-3 mb-2 flex-shrink-0" />
-            <CartSidebar
-              cart={cart}
-              onCartChange={setCart}
-              companyPrefix={companyPrefix}
-              onClose={() => setCartOpen(false)}
-              embedded
-            />
-          </div>
-        </div>
+      {/* Floating mobile button */}
+      {cartCount > 0 && !cartOpen && (
+        <Fab
+          aria-label={`View cart (${cartCount} items)`}
+          onClick={() => setCartOpen(true)}
+          sx={{
+            display: { xs: "flex", md: "none" },
+            position: "fixed",
+            bottom: "calc(78px + env(safe-area-inset-bottom, 0px))",
+            right: 16,
+            zIndex: 1100,
+            bgcolor: "#ef7d00",
+            color: "#fff",
+            "&:hover": { bgcolor: "#d66f00" },
+            boxShadow: "0 4px 16px rgba(239, 125, 0, 0.4)",
+          }}
+        >
+          <Badge badgeContent={cartCount > 99 ? "99+" : cartCount} color="error">
+            <ShoppingCart size={22} />
+          </Badge>
+        </Fab>
       )}
     </>
   );

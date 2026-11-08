@@ -1,11 +1,32 @@
-import { Button as HuntrButton } from "~/shared/ui/Button";
 import React from "react";
 import { useNavigate } from "react-router";
-import Swal from "sweetalert2";
+import Drawer from "@mui/material/Drawer";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import Stack from "@mui/material/Stack";
+import Avatar from "@mui/material/Avatar";
+import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
+import Paper from "@mui/material/Paper";
 import {
-  ShoppingCart, Plus, Minus, Package,
-  CheckCircle2, ArrowRight, Tag, Ruler, X, Sparkles, Trash2,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Package,
+  CheckCircle2,
+  ArrowRight,
+  Tag,
+  Ruler,
+  X,
+  Sparkles,
+  Trash2,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import { getAssetUrl } from "../lib/assets";
 import {
   type CartItem,
@@ -18,28 +39,33 @@ import {
 import { useLanguage } from "../context/LanguageContext";
 
 interface CartSidebarProps {
+  open?: boolean;
+  onClose?: () => void;
   cart: CartItem[];
   onCartChange: (cart: CartItem[]) => void;
   companyPrefix: string;
-  onClose?: () => void;
-  /** Use relative layout inside mobile bottom sheet */
+  /** Legacy prop preserved for backward compatibility */
   embedded?: boolean;
 }
 
 export default function CartSidebar({
+  open = true,
+  onClose,
   cart,
   onCartChange,
   companyPrefix,
-  onClose,
-  embedded = false,
 }: CartSidebarProps) {
   const { t } = useLanguage();
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const totalItems = getCartItemCount(cart);
-  const skuCount   = cart.length;
+  const skuCount = cart.length;
 
   const handleQty = (id: string, delta: number) => {
     onCartChange(updateCartQty(id, delta));
+  };
+
+  const handleSetQty = (id: string, qty: number) => {
+    onCartChange(setCartItemQty(id, Math.max(1, qty)));
   };
 
   const handleRemove = async (item: CartItem) => {
@@ -51,7 +77,7 @@ export default function CartSidebar({
       confirmButtonText: t("marketplace.cartSidebar.removeBtn"),
       cancelButtonText: t("marketplace.cartSidebar.cancelBtn"),
       confirmButtonColor: "#ef4444",
-      cancelButtonColor: "var(--ui-bg-input)",
+      cancelButtonColor: "#94a3b8",
     });
     if (result.isConfirmed) onCartChange(removeCartItem(item.id));
   };
@@ -66,223 +92,461 @@ export default function CartSidebar({
       confirmButtonText: t("marketplace.cartSidebar.clearConfirmBtn"),
       cancelButtonText: t("marketplace.cartSidebar.cancelBtn"),
       confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
     });
-    if (result.isConfirmed) { clearCart(); onCartChange([]); }
+    if (result.isConfirmed) {
+      clearCart();
+      onCartChange([]);
+    }
   };
 
-  const handleCheckout = () => navigate(`${companyPrefix}/checkout`);
+  const handleCheckout = () => {
+    onClose?.();
+    navigate(`${companyPrefix}/checkout`);
+  };
 
-  const mobile = embedded;
+  const handleViewFullCart = () => {
+    onClose?.();
+    navigate(`${companyPrefix}/cart`);
+  };
 
   return (
-    /* Fixed panel attached to right edge — no border-radius on right side, flush with viewport */
-    <aside
-      className={`flex flex-col bg-[var(--ui-bg-card)] border-[var(--ui-border)] huntr-cart-sidebar${mobile ? " huntr-cart-sidebar--mobile" : ""}`}
-      style={{
-        position: embedded ? "relative" : "fixed",
-        top: embedded ? undefined : "var(--huntr-header-height, 64px)",
-        right: embedded ? undefined : 0,
-        width: embedded ? "100%" : 288,
-        height: embedded ? "auto" : "calc(100dvh - var(--huntr-header-height, 64px))",
-        maxHeight: embedded ? "calc(90dvh - 28px)" : undefined,
-        borderRadius: embedded ? 0 : "8px 0 0 8px",
-        borderLeftWidth: embedded ? 0 : 1,
-        borderTopWidth: embedded ? 0 : 1,
-        borderBottomWidth: embedded ? 0 : 1,
-        zIndex: embedded ? undefined : 99,
-        boxShadow: embedded ? "none" : "-4px 0 16px rgba(0,0,0,0.08)",
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      slotProps={{
+        backdrop: {
+          sx: {
+            bgcolor: "rgba(15, 23, 42, 0.45)",
+            backdropFilter: "blur(3px)",
+          },
+        },
+        paper: {
+          sx: {
+            width: { xs: "100%", sm: 400 },
+            maxWidth: "100vw",
+            bgcolor: "background.paper",
+            backgroundImage: "none",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "-12px 0 32px rgba(0, 0, 0, 0.15)",
+          },
+        },
       }}
     >
       {/* Header */}
-      <div className={`flex items-center justify-between border-b border-[var(--ui-border)] flex-shrink-0 ${mobile ? "px-4 py-4" : "px-4 py-3"}`}>
-        <div className="flex items-center gap-2.5 min-w-0">
-          <ShoppingCart size={mobile ? 18 : 14} className="text-orange-500 flex-shrink-0" />
-          <span className={`font-bold text-[var(--ui-text-primary)] ${mobile ? "text-sm" : "text-xs"}`}>{t("marketplace.cartSidebar.title")}</span>
-          {totalItems > 0 && (
-            <span className={`text-[var(--ui-text-muted)] truncate ${mobile ? "text-xs" : "text-[10px]"}`}>
-              {t("marketplace.cartSidebar.counts", { skus: skuCount, units: totalItems })}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+      <Box
+        sx={{
+          px: 2.5,
+          py: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "background.paper",
+          flexShrink: 0,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Avatar
+            variant="rounded"
+            sx={{
+              width: 36,
+              height: 36,
+              bgcolor: "#ef7d00",
+              color: "#fff",
+              borderRadius: 2,
+            }}
+          >
+            <ShoppingCart size={18} />
+          </Avatar>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              {t("marketplace.cartSidebar.title") || "Keranjang Belanja"}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {totalItems > 0
+                ? t("marketplace.cartSidebar.counts", { skus: skuCount, units: totalItems })
+                : "0 item"}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           {cart.length > 0 && (
-            <HuntrButton
-              type="button"
+            <Button
+              size="small"
+              color="error"
               onClick={handleClear}
-              title={t("marketplace.cartSidebar.clear")}
-              className={`font-semibold text-red-400 hover:text-red-500 hover:bg-red-500/8 rounded-lg transition-all touch-manipulation ${
-                mobile ? "min-h-11 px-4 text-sm" : "px-2 py-1 text-[10px]"
-              }`}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.75rem",
+                px: 1,
+                minWidth: 0,
+              }}
             >
-              {t("marketplace.cartSidebar.clear")}
-            </HuntrButton>
+              {t("marketplace.cartSidebar.clear") || "Hapus Semua"}
+            </Button>
           )}
           {onClose && (
-            <HuntrButton
-              type="button"
+            <IconButton
+              size="small"
               onClick={onClose}
-              title={t("marketplace.cartSidebar.close")}
-              aria-label={t("marketplace.cartSidebar.close")}
-              className={`flex items-center justify-center rounded-lg text-[var(--ui-text-muted)] hover:text-[var(--ui-text-primary)] hover:bg-[var(--ui-bg-input)] border border-transparent hover:border-[var(--ui-border)] transition-all touch-manipulation cursor-pointer ${
-                mobile ? "w-11 h-11" : "w-7 h-7"
-              }`}
+              aria-label={t("marketplace.cartSidebar.close") || "Close"}
+              sx={{
+                color: "text.secondary",
+                "&:hover": { color: "text.primary", bgcolor: "action.hover" },
+              }}
             >
-              <X size={mobile ? 20 : 15} />
-            </HuntrButton>
+              <X size={18} />
+            </IconButton>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      {/* Empty */}
+      {/* Body */}
       {cart.length === 0 ? (
-        <div className={`flex flex-col items-center justify-center gap-4 flex-1 text-center ${mobile ? "px-6 py-10" : "px-4"}`}>
-          <Package size={mobile ? 40 : 28} className="text-[var(--ui-text-muted)] opacity-20" />
-          <div>
-            <p className={`font-semibold text-[var(--ui-text-secondary)] ${mobile ? "text-sm" : "text-xs"}`}>{t("marketplace.cartSidebar.emptyTitle")}</p>
-            <p className={`text-[var(--ui-text-muted)] mt-1 leading-relaxed ${mobile ? "text-sm" : "text-[11px]"}`}>
-              {t("marketplace.cartSidebar.emptyDesc")}
-            </p>
-          </div>
-        </div>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            p: 4,
+            textAlign: "center",
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 64,
+              height: 64,
+              bgcolor: "action.hover",
+              color: "text.disabled",
+              mb: 2,
+            }}
+          >
+            <Package size={32} />
+          </Avatar>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            {t("marketplace.cartSidebar.emptyTitle") || "Keranjang Masih Kosong"}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 0.5, mb: 3, maxWidth: 280 }}
+          >
+            {t("marketplace.cartSidebar.emptyDesc") ||
+              "Telusuri katalog marketplace dan tambahkan produk yang dibutuhkan."}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => {
+              onClose?.();
+              navigate(`${companyPrefix}/marketplace`);
+            }}
+            endIcon={<ArrowRight size={16} />}
+            sx={{
+              bgcolor: "#ef7d00",
+              "&:hover": { bgcolor: "#d66f00" },
+              textTransform: "none",
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+            }}
+          >
+            Jelajahi Marketplace
+          </Button>
+        </Box>
       ) : (
-        <>
-          {/* Items */}
-          <div className="overflow-y-auto flex-1 divide-y divide-[var(--ui-border)]">
-            {cart.map((item) => (
-              <div
-                key={item.id}
-                className={`group relative flex items-start transition-colors hover:bg-[var(--ui-bg-input)] ${
-                  mobile ? "gap-3 px-4 py-4" : "gap-2.5 px-3 py-3"
-                }`}
-              >
-                <HuntrButton
-                  type="button"
-                  onClick={() => handleRemove(item)}
-                  aria-label={`Remove ${item.name}`}
-                  className={`absolute z-10 flex items-center justify-center rounded-xl text-[var(--ui-text-muted)] transition-all touch-manipulation active:scale-95 ${
-                    mobile
-                      ? "top-3 right-3 h-11 w-11 bg-[var(--ui-bg-input)] border border-[var(--ui-border)] text-red-400 active:bg-red-500/10"
-                      : "top-2.5 right-2 h-6 w-6 rounded-md opacity-40 hover:bg-red-500/10 hover:text-red-500 hover:opacity-100 group-hover:opacity-70"
-                  }`}
-                >
-                  <Trash2 size={mobile ? 18 : 12} strokeWidth={1.75} />
-                </HuntrButton>
-
+        <Box
+          sx={{
+            flex: 1,
+            overflowY: "auto",
+            p: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+          }}
+        >
+          {cart.map((item) => (
+            <Paper
+              key={item.id}
+              variant="outlined"
+              sx={{
+                p: 1.5,
+                borderRadius: 2.5,
+                borderColor: "divider",
+                bgcolor: "background.paper",
+                position: "relative",
+                transition: "border-color 0.15s ease",
+                "&:hover": { borderColor: "primary.light" },
+              }}
+            >
+              <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
                 {/* Thumbnail */}
-                <div className={`rounded-xl bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex items-center justify-center flex-shrink-0 overflow-hidden ${
-                  mobile ? "w-14 h-14" : "w-10 h-10 rounded-lg"
-                }`}>
-                  {item.image_url || item.image_path ? (
-                    <img
-                      src={getAssetUrl((item.image_url || item.image_path) as string)}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                    />
-                  ) : (
-                    <Package size={mobile ? 20 : 14} className="text-[var(--ui-text-muted)] opacity-30" />
-                  )}
-                </div>
+                <Avatar
+                  variant="rounded"
+                  src={
+                    item.image_url || item.image_path
+                      ? getAssetUrl((item.image_url || item.image_path) as string)
+                      : undefined
+                  }
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1.5,
+                    bgcolor: "action.hover",
+                    border: 1,
+                    borderColor: "divider",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Package size={20} />
+                </Avatar>
 
                 {/* Info */}
-                <div className={`flex-1 min-w-0 ${mobile ? "pr-12" : "pr-5"}`}>
-                  <p className={`font-semibold text-[var(--ui-text-primary)] line-clamp-2 leading-snug ${
-                    mobile ? "text-sm" : "text-[11px]"
-                  }`}>{item.name}</p>
-                  <div className={`flex items-center gap-2 mt-1 ${mobile ? "flex-wrap" : ""}`}>
+                <Box sx={{ flex: 1, minWidth: 0, pr: 3 }}>
+                  <Typography
+                    variant="body2"
+                    noWrap
+                    title={item.name}
+                    sx={{ fontSize: "0.85rem", fontWeight: 600 }}
+                  >
+                    {item.name}
+                  </Typography>
+
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.5, flexWrap: "wrap" }}>
                     {item.item_code && (
-                      <span className={`inline-flex items-center gap-1 text-[var(--ui-text-muted)] ${mobile ? "text-xs" : "text-[9px]"}`}>
-                        <Tag size={mobile ? 10 : 7} /> {item.item_code}
-                      </span>
+                      <Chip
+                        size="small"
+                        icon={<Tag size={10} />}
+                        label={item.item_code}
+                        sx={{ height: 20, fontSize: "0.68rem" }}
+                      />
                     )}
                     {item.uom && (
-                      <span className={`inline-flex items-center gap-1 text-[var(--ui-text-muted)] ${mobile ? "text-xs" : "text-[9px]"}`}>
-                        <Ruler size={mobile ? 10 : 7} /> {item.uom}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Qty */}
-                  <div className={`flex items-center ${mobile ? "mt-3" : "mt-2"}`}>
-                    <div className={`flex items-center rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-page)] overflow-hidden ${
-                      mobile ? "shadow-sm" : "rounded-md"
-                    }`}>
-                      <HuntrButton
-                        type="button"
-                        onClick={() => handleQty(item.id, -1)}
-                        className={`flex items-center justify-center text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-inset)] hover:text-orange-500 active:bg-[var(--ui-bg-inset)] transition-all touch-manipulation ${
-                          mobile ? "w-11 h-11" : "w-6 h-6"
-                        }`}
-                      >
-                        <Minus size={mobile ? 18 : 10} />
-                      </HuntrButton>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={item.qty}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, "");
-                          onCartChange(setCartItemQty(item.id, val === "" ? 1 : Number(val)));
-                        }}
-                        className={`text-center font-bold text-[var(--ui-text-primary)] tabular-nums border-x border-[var(--ui-border)] bg-transparent outline-none focus:bg-orange-500/10 ${
-                          mobile ? "w-[56px] py-2 text-base" : "w-[36px] py-0.5 text-xs"
-                        }`}
+                      <Chip
+                        size="small"
+                        icon={<Ruler size={10} />}
+                        label={item.uom}
+                        sx={{ height: 20, fontSize: "0.68rem" }}
                       />
-                      <HuntrButton
-                        type="button"
-                        onClick={() => handleQty(item.id, 1)}
-                        className={`flex items-center justify-center text-[var(--ui-text-muted)] hover:bg-[var(--ui-bg-inset)] hover:text-orange-500 active:bg-[var(--ui-bg-inset)] transition-all touch-manipulation ${
-                          mobile ? "w-11 h-11" : "w-6 h-6"
-                        }`}
-                      >
-                        <Plus size={mobile ? 18 : 10} />
-                      </HuntrButton>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                    )}
+                  </Box>
 
-          {/* Footer */}
-          <div className={`border-t border-[var(--ui-border)] flex-shrink-0 space-y-3 ${
-            mobile ? "px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]" : "px-3.5 py-3 space-y-2"
-          }`}>
-            <div className={`flex items-center justify-between ${mobile ? "text-sm" : "text-[11px]"}`}>
-              <span className="text-[var(--ui-text-muted)]">{t("marketplace.cartSidebar.totalUnits")}</span>
-              <span className="font-bold text-[var(--ui-text-primary)] tabular-nums">{totalItems}</span>
-            </div>
-            <div className={`flex items-center justify-between ${mobile ? "text-sm" : "text-[11px]"}`}>
-              <span className="text-[var(--ui-text-muted)]">{t("marketplace.cartSidebar.skus")}</span>
-              <span className="font-bold text-[var(--ui-text-primary)] tabular-nums">{skuCount}</span>
-            </div>
-            <p className={`text-[var(--ui-text-muted)] leading-relaxed bg-[var(--ui-bg-inset)] border border-[var(--ui-border)] rounded-lg ${
-              mobile ? "text-xs px-3 py-2.5" : "text-[10px] px-2 py-1.5"
-            }`}>
-              {t("marketplace.cartSidebar.vendorQuoteNotice")}
-            </p>
-            <HuntrButton
-              type="button"
-              onClick={handleCheckout}
-              style={{ color: "white" }}
-              className={`w-full rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 font-bold flex items-center justify-center gap-2 transition-all touch-manipulation ${
-                mobile ? "min-h-12 py-3.5 text-sm" : "py-2 rounded-md text-xs gap-1.5"
-              }`}
-            >
-              <CheckCircle2 size={mobile ? 18 : 13} />
-              {t("marketplace.cartSidebar.createPrBtn")}
-              <ArrowRight size={mobile ? 16 : 11} />
-            </HuntrButton>
-            {cart.length >= 3 && (
-              <div className={`flex items-start gap-2 text-purple-500 ${mobile ? "text-xs" : "text-[10px]"}`}>
-                <Sparkles size={mobile ? 12 : 9} className="flex-shrink-0 mt-0.5" />
-                <span>{t("marketplace.cartSidebar.aiCheckoutHint")}</span>
-              </div>
-            )}
-          </div>
-        </>
+                  {item.estimated_price && Number(item.estimated_price) > 0 ? (
+                    <Typography
+                      variant="caption"
+                      color="#ef7d00"
+                      sx={{ display: "block", mt: 0.5, fontWeight: 700 }}
+                    >
+                      Rp {Number(item.estimated_price).toLocaleString("id-ID")}{" "}
+                      <span style={{ fontWeight: 400, color: "var(--ui-text-muted, #94a3b8)" }}>
+                        / {item.uom || "unit"}
+                      </span>
+                    </Typography>
+                  ) : null}
+                </Box>
+
+                {/* Delete button */}
+                <Tooltip title="Hapus">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemove(item)}
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      color: "text.disabled",
+                      "&:hover": { color: "error.main", bgcolor: "error.lighter" },
+                    }}
+                  >
+                    <Trash2 size={15} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              {/* Stepper Row */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mt: 1.5,
+                  pt: 1,
+                  borderTop: "1px dashed",
+                  borderColor: "divider",
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Kuantitas
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1.5,
+                    overflow: "hidden",
+                    bgcolor: "action.hover",
+                  }}
+                >
+                  <IconButton
+                    size="small"
+                    onClick={() => handleQty(item.id, -1)}
+                    disabled={item.qty <= 1}
+                    sx={{ p: 0.5, borderRadius: 0, width: 28, height: 28 }}
+                  >
+                    <Minus size={13} />
+                  </IconButton>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={item.qty}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      handleSetQty(item.id, val === "" ? 1 : Number(val));
+                    }}
+                    style={{
+                      width: 44,
+                      textAlign: "center",
+                      fontWeight: 700,
+                      fontSize: "0.85rem",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      color: "inherit",
+                    }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleQty(item.id, 1)}
+                    sx={{ p: 0.5, borderRadius: 0, width: 28, height: 28 }}
+                  >
+                    <Plus size={13} />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Paper>
+          ))}
+        </Box>
       )}
-    </aside>
+
+      {/* Footer */}
+      {cart.length > 0 && (
+        <Box
+          sx={{
+            p: 2.5,
+            borderTop: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+            flexShrink: 0,
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              {t("marketplace.cartSidebar.totalUnits") || "Total Unit"}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {totalItems} Unit
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              {t("marketplace.cartSidebar.skus") || "Total SKU"}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {skuCount} Produk
+            </Typography>
+          </Box>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.25,
+              borderRadius: 2,
+              borderColor: "divider",
+              bgcolor: "action.hover",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <AlertCircle size={14} style={{ color: "#ef7d00", flexShrink: 0 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+              {t("marketplace.cartSidebar.vendorQuoteNotice") ||
+                "Harga dan spesifikasi akan dikonfirmasi melalui penawaran vendor saat pembuatan PR."}
+            </Typography>
+          </Paper>
+
+          <Button
+            variant="contained"
+            fullWidth
+            size="large"
+            onClick={handleCheckout}
+            startIcon={<CheckCircle2 size={18} />}
+            endIcon={<ArrowRight size={18} />}
+            sx={{
+              bgcolor: "#ef7d00",
+              "&:hover": { bgcolor: "#d66f00" },
+              fontWeight: 700,
+              py: 1.3,
+              borderRadius: 2,
+              textTransform: "none",
+              fontSize: "0.95rem",
+              boxShadow: "0 4px 14px rgba(239, 125, 0, 0.35)",
+            }}
+          >
+            {t("marketplace.cartSidebar.createPrBtn") || "Buat Purchase Request"}
+          </Button>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            size="small"
+            onClick={handleViewFullCart}
+            endIcon={<ExternalLink size={14} />}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              borderRadius: 2,
+              borderColor: "divider",
+              color: "text.secondary",
+              "&:hover": { borderColor: "#ef7d00", color: "#ef7d00", bgcolor: "transparent" },
+            }}
+          >
+            Lihat Halaman Keranjang Lengkap
+          </Button>
+
+          {cart.length >= 3 && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 0.75,
+                color: "secondary.main",
+                fontSize: "0.75rem",
+              }}
+            >
+              <Sparkles size={13} />
+              <Typography variant="caption" color="inherit">
+                {t("marketplace.cartSidebar.aiCheckoutHint")}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      )}
+    </Drawer>
   );
 }
