@@ -572,7 +572,7 @@ export default function Marketplace() {
             </button>
           </div>
         ) : (
-          <div className="grid gap-5 grid-cols-1 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid gap-4 sm:gap-5 grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {items.map(item => {
               const isSelected = compareIds.includes(item.id);
               const justAdded = addedId === item.id;
@@ -581,14 +581,14 @@ export default function Marketplace() {
                 <div
                   key={item.id}
                   onClick={() => navigate(`${getCompanyPrefix()}/marketplace/${item.id}`)}
-                  className={`group rounded-2xl border bg-[var(--ui-bg-card)] flex flex-col transition-all duration-200 cursor-pointer hover:border-orange-500/40 hover:shadow-lg overflow-hidden ${
-                    isSelected ? "border-indigo-500/70 ring-2 ring-indigo-500/25 shadow-md" : "border-[var(--ui-border)]"
+                  className={`group rounded-2xl border bg-[var(--ui-bg-card)] flex flex-col transition-all duration-200 cursor-pointer hover:border-orange-500/40 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden ${
+                    isSelected ? "border-indigo-500/70 ring-2 ring-indigo-500/25 shadow-md" : "border-[var(--ui-border)] shadow-xs"
                   }`}
                 >
                   {/* Image Container with Floating Badges */}
-                  <div className="relative h-44 sm:h-48 bg-[var(--ui-bg-input)] flex items-center justify-center p-4 overflow-hidden border-b border-[var(--ui-border)]/50">
-                    {/* Floating Category Tag (Clean & Subtle, Replaces Orange Caption) */}
-                    <span className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-lg bg-[var(--ui-bg-card)]/90 backdrop-blur-md border border-[var(--ui-border)] text-[10px] font-semibold text-[var(--ui-text-secondary)] shadow-xs">
+                  <div className="relative h-44 sm:h-46 bg-[var(--ui-bg-input)]/50 flex items-center justify-center p-3.5 overflow-hidden border-b border-[var(--ui-border)]/60">
+                    {/* Floating Category Tag */}
+                    <span className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-lg bg-[var(--ui-bg-card)]/90 backdrop-blur-md border border-[var(--ui-border)] text-[10px] font-semibold text-[var(--ui-text-secondary)] shadow-xs max-w-[130px] truncate">
                       {item.category || "Umum"}
                     </span>
 
@@ -597,16 +597,18 @@ export default function Marketplace() {
                       <img
                         src={getAssetUrl(item.image_url || item.image_path)}
                         alt={item.name}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300 ease-out"
                         onError={e => { (e.target as HTMLElement).style.display = "none"; }}
                       />
                     ) : (
-                      <Package size={32} className="text-[var(--ui-text-muted)] opacity-25" />
+                      <div className="flex flex-col items-center justify-center text-[var(--ui-text-muted)] opacity-30 gap-1.5">
+                        <Package size={32} />
+                      </div>
                     )}
 
                     {/* In-Cart Status Badge */}
                     {inCart && !justAdded && (
-                      <div className="absolute top-3 right-3 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                      <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-xs">
                         <CheckCircle2 size={11} />
                         <span>Di PR</span>
                       </div>
@@ -614,54 +616,70 @@ export default function Marketplace() {
                   </div>
 
                   {/* Card Content */}
-                  <div className="p-4 flex flex-col flex-1 justify-between gap-2">
+                  <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between gap-3">
                     {/* Top Info Section */}
-                    <div className="space-y-1">
-                      {/* Brand / Vendor Label (Fixed h-4 so title position never shifts) */}
-                      <p className="text-[11px] font-medium text-[var(--ui-text-muted)] truncate h-4 leading-4">
-                        {item.brand || "\u00A0"}
-                      </p>
+                    <div className="space-y-1.5">
+                      {/* Meta Row: Brand & SKU */}
+                      <div className="flex items-center justify-between gap-1 text-[11px] text-[var(--ui-text-muted)] min-h-[18px]">
+                        <span className="truncate font-medium text-[var(--ui-text-muted)]">
+                          {item.brand || "\u00A0"}
+                        </span>
+                        {item.item_code && (
+                          <span className="shrink-0 font-mono text-[9px] px-1.5 py-0.5 rounded bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] border border-[var(--ui-border)]/60">
+                            {item.item_code}
+                          </span>
+                        )}
+                      </div>
 
-                      {/* Item Title (Fixed 2-line height h-10 so 1-line or 2-line titles are identical) */}
+                      {/* Item Title */}
                       <h3
                         title={item.name}
-                        className="text-sm font-bold text-[var(--ui-text-primary)] line-clamp-2 leading-snug h-10 group-hover:text-orange-500 transition-colors"
+                        className="text-xs sm:text-sm font-semibold text-[var(--ui-text-primary)] line-clamp-2 leading-snug min-h-[2.5rem] group-hover:text-orange-500 transition-colors"
                       >
                         {item.name}
                       </h3>
 
                       {/* AI Score (if available) */}
                       {item.ai_score !== undefined && (
-                        <div className="pt-1">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+                        <div className="pt-0.5">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
                             <Sparkles size={10} /> {t("marketplace.item.match", { score: item.ai_score })}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Bottom Section: Fixed-Height Price Bar + Fixed-Position Action Buttons */}
+                    {/* Bottom Section: Price Bar + Action Buttons */}
                     <div className="mt-auto pt-2 space-y-2.5">
-                      {/* Price Bar (Fixed h-8 with border-t: preserves identical row height even if price is missing) */}
-                      <div className="h-8 border-t border-[var(--ui-border)]/50 flex items-center">
+                      {/* Price Bar */}
+                      <div className="pt-2 border-t border-[var(--ui-border)]/60 flex items-baseline justify-between gap-2 min-h-[32px]">
                         {item.price > 0 ? (
-                          <span className="text-base sm:text-lg font-black text-[var(--ui-text-primary)] tabular-nums block">
-                            Rp {Number(item.price).toLocaleString("id-ID")}
-                          </span>
+                          <div className="flex items-baseline gap-1 truncate">
+                            <span className="text-sm sm:text-base font-bold text-[var(--ui-text-primary)] tabular-nums truncate">
+                              Rp {Number(item.price).toLocaleString("id-ID")}
+                            </span>
+                            {item.uom && (
+                              <span className="text-[11px] font-normal text-[var(--ui-text-muted)] shrink-0">
+                                /{item.uom}
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-xs text-[var(--ui-text-muted)] select-none block">
-                            &nbsp;
-                          </span>
+                          <div className="flex items-center">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-orange-600 dark:text-orange-400 bg-orange-500/10 border border-orange-500/20">
+                              Harga via RFQ
+                            </span>
+                          </div>
                         )}
                       </div>
 
-                      {/* Actions: Add to Cart & Compare (Fixed at the bottom of the card) */}
-                      <div className="flex items-center gap-2">
+                      {/* Actions: Add to Cart & Compare */}
+                      <div className="flex items-center gap-2 pt-0.5">
                         <HuntrButton
                           type="button"
                           aria-label={t("marketplace.item.addToCart")}
                           onClick={e => handleAddToCart(item, e)}
-                          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs ${
                             justAdded
                               ? "bg-emerald-500 text-white"
                               : inCart
@@ -670,11 +688,11 @@ export default function Marketplace() {
                           } cursor-pointer active:scale-[0.98]`}
                         >
                           {justAdded ? (
-                            <><CheckCircle2 size={14} /> {t("marketplace.item.added")}</>
+                            <><CheckCircle2 size={13} /> {t("marketplace.item.added")}</>
                           ) : inCart ? (
-                            <><Plus size={14} /> {t("marketplace.item.addMore")}</>
+                            <><Plus size={13} /> {t("marketplace.item.addMore")}</>
                           ) : (
-                            <><ShoppingCart size={14} /> {t("marketplace.item.addToCart")}</>
+                            <><ShoppingCart size={13} /> {t("marketplace.item.addToCart")}</>
                           )}
                         </HuntrButton>
                         <button
@@ -682,13 +700,13 @@ export default function Marketplace() {
                           aria-label={isSelected ? "Remove from comparison" : "Compare"}
                           title={isSelected ? "Hapus dari perbandingan" : "Bandingkan spesifikasi"}
                           onClick={e => { e.stopPropagation(); toggleCompare(item.id); }}
-                          className={`w-9 h-9 shrink-0 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                          className={`w-8 h-8 shrink-0 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                             isSelected
                               ? "border-indigo-600 bg-indigo-600 text-white shadow-xs"
                               : "border-[var(--ui-border)] bg-[var(--ui-bg-input)] text-[var(--ui-text-muted)] hover:border-indigo-400 hover:text-indigo-500"
                           }`}
                         >
-                          {isSelected ? <CheckCircle2 size={15} /> : <GitCompare size={15} />}
+                          {isSelected ? <CheckCircle2 size={14} /> : <GitCompare size={14} />}
                         </button>
                       </div>
                     </div>
