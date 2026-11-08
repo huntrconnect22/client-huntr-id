@@ -5,3 +5,4 @@ export { CompareAiAnalysis } from "./CompareAiAnalysis";
 export { VendorRankingCard } from "./VendorRankingCard";
 export { VendorRankingsList } from "./VendorRankingsList";
 export { ComparisonMatrixTable } from "./ComparisonMatrixTable";
+export { SeparateOrderModal } from "./SeparateOrderModal";

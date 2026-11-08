@@ -14,6 +14,7 @@ import {
   CompareAiAnalysis,
   VendorRankingsList,
   ComparisonMatrixTable,
+  SeparateOrderModal,
 } from "../components/compare-review";
 import { printComparisonForm } from "../utils/printComparisonForm";
 
@@ -22,6 +23,7 @@ export default function CompareReview() {
   const navigate = useNavigate();
   const { user } = useAppShell();
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showSeparateOrderModal, setShowSeparateOrderModal] = useState(false);
 
   const {
     request,
@@ -142,6 +144,7 @@ export default function CompareReview() {
           awardedProposal={awardedProposal}
           processingId={processingId}
           onApproveWinner={handleApproveWinner}
+          onOpenSeparateOrder={() => setShowSeparateOrderModal(true)}
         />
 
         {/* Overall AI Analysis */}
@@ -154,6 +157,7 @@ export default function CompareReview() {
           awardedProposal={awardedProposal}
           overallAnalysis={overallAnalysis}
           companyName={user?.company?.name || request?.company?.name}
+          onOpenSeparateOrder={() => setShowSeparateOrderModal(true)}
         />
 
         {/* Requested Items List */}
@@ -165,6 +169,16 @@ export default function CompareReview() {
           recommendedWinnerId={recommendedWinnerId}
         />
       </div>
+
+      {/* Separate Order / Split PO Modal */}
+      <SeparateOrderModal
+        rfq={request}
+        rankings={rankings}
+        isOpen={showSeparateOrderModal}
+        onClose={() => setShowSeparateOrderModal(false)}
+        onSuccess={refresh}
+        buyerUserId={user?.id || ""}
+      />
     </Layout>
   );
 }

@@ -316,7 +316,6 @@ export default function Marketplace() {
     <Layout title={t("marketplace.title")} subtitle={t("marketplace.subtitle")}>
       <div
         className="w-full space-y-6 transition-all duration-300 pb-12"
-        style={{ paddingRight: cartPanelOpen && !isMobile ? 296 : 0 }}
       >
         {/* Agentic Procurement Quick Launch Banner */}
         {isAgenticEnabled && (
@@ -569,7 +568,7 @@ export default function Marketplace() {
             </button>
           </div>
         ) : (
-          <div className={`grid gap-5 ${cartPanelOpen ? "grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"}`}>
+          <div className="grid gap-5 grid-cols-1 min-[520px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {items.map(item => {
               const isSelected = compareIds.includes(item.id);
               const justAdded = addedId === item.id;

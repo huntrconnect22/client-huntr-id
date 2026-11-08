@@ -212,7 +212,7 @@ export function MultiVendorAwardModal({
 
   // Validation rules
   const vendorCount = selectedProposalIds.length;
-  const isCountValid = vendorCount >= 2 && vendorCount <= 5;
+  const isCountValid = vendorCount >= 1 && vendorCount <= 10;
 
   const vendorsWithoutItems = selectedProposalIds.filter((pId) => {
     const list = vendorItemChecklists[pId] || [];
@@ -263,7 +263,7 @@ export function MultiVendorAwardModal({
       Swal.fire({
         icon: "error",
         title: "Jumlah Vendor Tidak Valid",
-        text: "Pemenang tender harus lebih dari 1 vendor (minimal 2) dan maksimal 5 vendor pemenang.",
+        text: "Pilih minimal 1 vendor dan maksimal 10 vendor untuk penerbitan Purchase Order.",
       });
       return;
     }
@@ -328,9 +328,9 @@ export function MultiVendorAwardModal({
             </div>
             <div>
               <h3 className="text-sm font-bold text-[var(--ui-text-primary)] flex items-center gap-2">
-                Skema Multi-Vendor Split Award
+                Separate Order &amp; Multi-Vendor Split Award
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-orange-500/15 text-orange-500">
-                  2 - 5 Pemenang
+                  Separate PO
                 </span>
               </h3>
               <p className="text-[11px] text-[var(--ui-text-muted)] mt-0.5">
