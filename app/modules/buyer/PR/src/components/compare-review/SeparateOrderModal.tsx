@@ -20,6 +20,7 @@ import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import Tooltip from "@mui/material/Tooltip";
+import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   X,
@@ -74,6 +75,7 @@ export const SeparateOrderModal: React.FC<SeparateOrderModalProps> = ({
   // Map: rfq_item_id -> selected proposal_id (or "none")
   const [itemVendorMap, setItemVendorMap] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Initialize: default all items to Rank #1 vendor (if available)
   useEffect(() => {
@@ -216,8 +218,8 @@ export const SeparateOrderModal: React.FC<SeparateOrderModalProps> = ({
     0
   );
 
-  // Submit Separate Order
-  const handleConfirmSeparateOrder = async () => {
+  // Open confirmation dialog directly in front
+  const handleConfirmSeparateOrder = () => {
     if (activeOrdersCount === 0) {
       Swal.fire({
         icon: "warning",
@@ -226,37 +228,11 @@ export const SeparateOrderModal: React.FC<SeparateOrderModalProps> = ({
       });
       return;
     }
+    setShowConfirmDialog(true);
+  };
 
-    const confirmRes = await Swal.fire({
-      title: "Konfirmasi Penerbitan Separate Order",
-      html: `
-        <div style="text-align: left; font-size: 13px; line-height: 1.6;">
-          <p>Anda akan menerbitkan <strong>${activeOrdersCount} Purchase Order (PO)</strong> terpisah untuk tender ini:</p>
-          <ul style="padding-left: 20px; margin: 8px 0;">
-            ${Object.values(groupedOrders)
-              .map(
-                (g) =>
-                  `<li><strong>${g.proposal.company?.name || "Vendor"}</strong>: ${
-                    g.items.length
-                  } item (Total Rp ${g.grandTotal.toLocaleString("id-ID")})</li>`
-              )
-              .join("")}
-          </ul>
-          <p style="color: #64748b; font-size: 11px; margin-top: 8px;">
-            Setiap vendor hanya akan menerima PO untuk barang-barang yang dipilih.
-          </p>
-        </div>
-      `,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Ya, Terbitkan PO Sekarang",
-      cancelButtonText: "Periksa Kembali",
-      confirmButtonColor: "#ef7d00",
-      cancelButtonColor: "#64748b",
-    });
-
-    if (!confirmRes.isConfirmed) return;
-
+  // Execute publication of separate orders
+  const handleExecutePublish = async () => {
     setIsSubmitting(true);
     try {
       // Build awards payload
@@ -265,22 +241,23 @@ export const SeparateOrderModal: React.FC<SeparateOrderModalProps> = ({
         item_ids: group.items.map((gi) => String(gi.item.id)),
       }));
 
-      const res = await apiPost(`/api/rfqs/${rfq.id}/award-winners`, {
+      await apiPost(`/api/rfqs/${rfq.id}/award-winners`, {
         awards,
         award_mode: "separate_order",
         generate_po: true,
         user_id: buyerUserId,
       });
 
-      await Swal.fire({
+      setShowConfirmDialog(false);
+      onClose();
+      onSuccess();
+
+      Swal.fire({
         icon: "success",
         title: "Separate Order Berhasil!",
         text: `${activeOrdersCount} Purchase Order telah berhasil dibuat dan diterbitkan untuk masing-masing vendor.`,
         confirmButtonColor: "#ef7d00",
       });
-
-      onClose();
-      onSuccess();
     } catch (err: any) {
       console.error("Failed to execute separate order", err);
       Swal.fire({
@@ -294,11 +271,12 @@ export const SeparateOrderModal: React.FC<SeparateOrderModalProps> = ({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
+    <>
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        maxWidth="lg"
+        fullWidth
       slotProps={{
         paper: {
           sx: {
@@ -792,5 +770,170 @@ export const SeparateOrderModal: React.FC<SeparateOrderModalProps> = ({
         </Box>
       </DialogActions>
     </Dialog>
+
+    {/* Confirmation Dialog (Rendered with zIndex: 1400 so it appears directly in front) */}
+    <Dialog
+        open={showConfirmDialog}
+        onClose={() => !isSubmitting && setShowConfirmDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{ zIndex: 1400 }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: "rgba(15, 23, 42, 0.6)",
+              backdropFilter: "blur(4px)",
+            },
+          },
+          paper: {
+            sx: {
+              borderRadius: 3.5,
+              p: 1,
+              boxShadow: "0 20px 45px rgba(0, 0, 0, 0.25)",
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                bgcolor: "rgba(239, 125, 0, 0.12)",
+                color: "#ef7d00",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Split size={22} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                Konfirmasi Penerbitan Separate Order
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Tender: {rfq?.title || "RFQ"}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ py: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Sistem akan menerbitkan <strong>{activeOrdersCount} Purchase Order (PO)</strong> terpisah sesuai alokasi item yang telah dipilih:
+          </Typography>
+
+          <Stack spacing={1.5} sx={{ mb: 2.5 }}>
+            {Object.entries(groupedOrders).map(([pId, g]) => (
+              <Paper
+                key={pId}
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  borderRadius: 2.5,
+                  borderColor: "divider",
+                  bgcolor: "action.hover",
+                }}
+              >
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Building2 size={16} style={{ color: "#ef7d00" }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      {g.proposal.company?.name || "Vendor"}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={`${g.items.length} item`}
+                    size="small"
+                    sx={{ fontWeight: 700, height: 22, fontSize: "0.7rem", bgcolor: "#ef7d00", color: "#fff" }}
+                  />
+                </Box>
+
+                <Box sx={{ pl: 3, mb: 1.5 }}>
+                  {g.items.map((gi) => (
+                    <Typography key={gi.item.id} variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                      &bull; {gi.item.item_name || gi.item.name} ({gi.item.qty}x @ Rp {Number(gi.unitPrice).toLocaleString("id-ID")})
+                    </Typography>
+                  ))}
+                </Box>
+
+                <Divider sx={{ my: 1, borderColor: "divider" }} />
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Order (Termasuk PPN 11%)
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 800, color: "#ef7d00" }}>
+                    Rp {g.grandTotal.toLocaleString("id-ID")}
+                  </Typography>
+                </Box>
+              </Paper>
+            ))}
+          </Stack>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              borderRadius: 2,
+              borderColor: "rgba(239, 125, 0, 0.3)",
+              bgcolor: "rgba(239, 125, 0, 0.05)",
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+            }}
+          >
+            <AlertCircle size={18} style={{ color: "#ef7d00", flexShrink: 0 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+              Setiap vendor hanya akan menerima PO untuk item-item yang dialokasikan di atas. Status tender akan berubah menjadi <strong>Awarded (Separate Order)</strong>.
+            </Typography>
+          </Paper>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2, pt: 1, gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setShowConfirmDialog(false)}
+            disabled={isSubmitting}
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              borderColor: "divider",
+              color: "text.secondary",
+            }}
+          >
+            Periksa Kembali
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={handleExecutePublish}
+            disabled={isSubmitting}
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <CheckCircle2 size={16} />
+              )
+            }
+            sx={{
+              borderRadius: 2,
+              fontWeight: 700,
+              textTransform: "none",
+              bgcolor: "#ef7d00",
+              "&:hover": { bgcolor: "#d66f00" },
+              boxShadow: "0 4px 12px rgba(239, 125, 0, 0.3)",
+              px: 3,
+            }}
+          >
+            {isSubmitting ? "Menerbitkan PO..." : "Ya, Terbitkan PO Sekarang"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };

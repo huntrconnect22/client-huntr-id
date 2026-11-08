@@ -1,7 +1,7 @@
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import React from "react";
-import { Calendar, MapPin, Package, CheckCircle2, Loader2, Split } from "lucide-react";
+import { Calendar, MapPin, Package, CheckCircle2, Loader2, Split, RotateCcw } from "lucide-react";
 
 interface CompareReviewSummaryProps {
   request: any;
@@ -9,6 +9,8 @@ interface CompareReviewSummaryProps {
   processingId: string | null;
   onApproveWinner: (proposalId: string | number) => void;
   onOpenSeparateOrder?: () => void;
+  canCancelAward?: boolean;
+  onCancelAward?: () => void;
 }
 
 export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
@@ -17,6 +19,8 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
   processingId,
   onApproveWinner,
   onOpenSeparateOrder,
+  canCancelAward,
+  onCancelAward,
 }) => {
   const proposalId = awardedProposal?.proposal?.id || awardedProposal?.proposal_id;
   const isProcessing = processingId === String(proposalId);
@@ -119,6 +123,32 @@ export const CompareReviewSummary: React.FC<CompareReviewSummaryProps> = ({
               }}
             >
               Separate Order (Pisah PO)
+            </Button>
+          )}
+
+          {canCancelAward && onCancelAward && (
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={onCancelAward}
+              disabled={isProcessing}
+              startIcon={<RotateCcw size={16} />}
+              sx={{
+                px: 2.5,
+                py: 1.5,
+                borderRadius: 2.5,
+                fontWeight: 800,
+                fontSize: "0.875rem",
+                textTransform: "none",
+                borderColor: "#ef4444",
+                color: "#ef4444",
+                "&:hover": {
+                  borderColor: "#dc2626",
+                  bgcolor: "rgba(239, 68, 68, 0.08)",
+                },
+              }}
+            >
+              Batalkan Award
             </Button>
           )}
 
