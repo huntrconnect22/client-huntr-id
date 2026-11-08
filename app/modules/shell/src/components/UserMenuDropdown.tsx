@@ -188,6 +188,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
       )}
 
       <HuntrButton
+        type="button"
         onClick={() => {
           onClose();
           navigate("/account");
@@ -214,6 +215,7 @@ export const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
       </HuntrButton>
 
       <HuntrButton
+        type="button"
         onClick={() => {
           onClose();
           onLogout();

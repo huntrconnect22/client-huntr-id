@@ -22,7 +22,14 @@ interface EventBusContextType {
   reconnect: () => void;
 }
 
-const EventBusContext = createContext<EventBusContextType | null>(null);
+const defaultEventBusContext: EventBusContextType = {
+  lastEvent: null,
+  emit: () => {},
+  connectionStatus: 'disabled',
+  reconnect: () => {},
+};
+
+const EventBusContext = createContext<EventBusContextType>(defaultEventBusContext);
 
 export function EventBusProvider({ children }: { children: React.ReactNode }) {
   const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null);
@@ -384,10 +391,9 @@ export function EventBusProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useEventBus() {
+export function useEventBus(): EventBusContextType {
   const ctx = useContext(EventBusContext);
-  if (!ctx) throw new Error('useEventBus must be inside provider');
-  return ctx;
+  return ctx || defaultEventBusContext;
 }
 
 /**

@@ -16,9 +16,16 @@ interface GlobalCartPanelProps {
 
 export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps) {
   const [cartOpen, setCartOpen] = useState(false);
-  const [cart, setCart] = useState<CartItem[]>(() => loadCart());
-  const prevCartLen = useRef(cart.length);
-  const skipPersist = useRef(true);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const isMounted = useRef(false);
+  const prevCartLen = useRef(0);
+
+  useEffect(() => {
+    const initialCart = loadCart();
+    setCart(initialCart);
+    prevCartLen.current = initialCart.length;
+    isMounted.current = true;
+  }, []);
 
   useEffect(() => {
     const onUpdate = (e: Event) => {
@@ -30,10 +37,7 @@ export default function GlobalCartPanel({ companyPrefix }: GlobalCartPanelProps)
   }, []);
 
   useEffect(() => {
-    if (skipPersist.current) {
-      skipPersist.current = false;
-      return;
-    }
+    if (!isMounted.current) return;
     saveCart(cart);
     if (cart.length > 0 && prevCartLen.current === 0) {
       setCartOpen(true);

@@ -91,8 +91,12 @@ export default function Marketplace() {
   const [localSearch, setLocalSearch] = useState(searchTerm);
   const [items, setItems] = useState<any[]>(() => loaderData?.items || []);
   const [loading, setLoading] = useState<boolean>(() => !loaderData?.items || loaderData.items.length === 0);
-  const [cart, setCart] = useState<CartItem[]>(() => loadCart());
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [activeCompany, setActiveCompany] = useState<any>(null);
+
+  useEffect(() => {
+    setCart(loadCart());
+  }, []);
   const [totalPages, setTotalPages] = useState<number>(() => loaderData?.totalPages || 1);
   const [isAgenticEnabled, setIsAgenticEnabled] = useState(false);
   const isInitialMount = useRef(true);

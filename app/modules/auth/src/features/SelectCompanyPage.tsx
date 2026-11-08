@@ -53,12 +53,30 @@ export default function SelectCompany() {
     if (canRegisterNew) navigate("/onboarding");
   };
 
-  const handleSignOut = () => { 
+  const handleSignOut = async () => { 
+    try {
+      const { logout } = await import("~/modules/shared/api/auth");
+      await logout().catch(() => {});
+    } catch {
+      // ignore network/auth errors
+    }
     SessionManager.clearAll();
     localStorage.removeItem("user_session");
     localStorage.removeItem("active_company");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("otp_session");
     localStorage.removeItem("huntr_cart");
-    navigate("/login"); 
+    sessionStorage.clear();
+
+    // Clear any auth cookies if present
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    window.location.href = "/login"; 
   };
 
   const statusMeta: Record<string, { color: string; bg: string; label: string }> = {

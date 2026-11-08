@@ -22,10 +22,10 @@ let clientMuiCache: ReturnType<typeof createCache> | undefined;
 
 function getMuiCache() {
   if (typeof document === "undefined") {
-    return createCache({ key: "mui", prepend: true });
+    return createCache({ key: "css", prepend: true });
   }
   if (!clientMuiCache) {
-    clientMuiCache = createCache({ key: "mui", prepend: true });
+    clientMuiCache = createCache({ key: "css", prepend: true });
   }
   return clientMuiCache;
 }

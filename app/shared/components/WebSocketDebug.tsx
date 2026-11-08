@@ -1,10 +1,12 @@
 import { Button as HuntrButton } from "~/shared/ui/Button";
 import React, { useState, useEffect, useRef } from 'react';
-import { useEventBus } from '../lib/EventBus';
+import { useEventBus } from '~/shared/realtime/EventBus';
 import { getConnectionState } from '../lib/echo';
 
 export default function WebSocketDebug() {
-  const { connectionStatus, reconnect } = useEventBus();
+  const eventBus = useEventBus();
+  const connectionStatus = eventBus?.connectionStatus || 'disabled';
+  const reconnect = eventBus?.reconnect || (() => {});
   const echoState = getConnectionState();
   const [isExpanded, setIsExpanded] = useState(false);
   const debugPanelRef = useRef<HTMLDivElement>(null);
