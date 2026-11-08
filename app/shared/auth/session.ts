@@ -81,7 +81,11 @@ export class SessionManager {
   }
 
   static clearUser() {
-    localStorage.removeItem(this.USER_KEY);
+    try {
+      localStorage.removeItem(this.USER_KEY);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('token');
+    } catch {}
     this.notify();
   }
 
@@ -100,13 +104,23 @@ export class SessionManager {
   }
 
   static clearCompany() {
-    localStorage.removeItem(this.COMPANY_KEY);
+    try {
+      localStorage.removeItem(this.COMPANY_KEY);
+    } catch {}
     this.notify();
   }
 
   static clearAll() {
-    this.clearUser();
-    this.clearCompany();
+    try {
+      localStorage.removeItem(this.USER_KEY);
+      localStorage.removeItem(this.COMPANY_KEY);
+      localStorage.removeItem(this.OTP_KEY);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('huntr_cart');
+      sessionStorage.clear();
+    } catch {}
+    this.notify();
   }
 
   // OTP Session functions

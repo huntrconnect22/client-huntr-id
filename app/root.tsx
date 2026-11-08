@@ -14,7 +14,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import { EventBusProvider } from "./shared/lib/EventBus";
+import { EventBusProvider } from "~/shared/realtime/EventBus";
 import WebSocketDebug from "~/shared/components/WebSocketDebug";
 import MaintenanceBanner from "~/shared/components/MaintenanceBanner";
 import LinearProgress from "@mui/material/LinearProgress";

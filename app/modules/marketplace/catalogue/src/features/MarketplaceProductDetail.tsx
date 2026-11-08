@@ -97,8 +97,12 @@ export default function MarketplaceDetail() {
   const [loading, setLoading] = useState(!loaderData?.product);
   const [error, setError]     = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
-  const [cart, setCart]       = useState<CartItem[]>(() => loadCart());
+  const [cart, setCart]       = useState<CartItem[]>([]);
   const [justAdded, setJustAdded] = useState(false);
+
+  useEffect(() => {
+    setCart(loadCart());
+  }, []);
 
   /* ── Helpers ── */
   const getCompanyPrefix = () => {

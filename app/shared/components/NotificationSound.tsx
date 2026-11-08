@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useEventBus } from '../lib/EventBus';
+import { useEventBus } from '~/shared/realtime/EventBus';
 
 export default function NotificationSound() {
   const audioRef = useRef<HTMLAudioElement | null>(null);

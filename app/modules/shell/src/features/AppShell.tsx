@@ -309,12 +309,19 @@ export default function AppShell() {
 
   // Function to fetch fresh user data from backend
   const fetchFreshUserData = async () => {
+    const currentUser = SessionManager.getUser();
+    const token = SessionManager.getToken();
+    if (!currentUser && !token) return;
+
     try {
       const { getAuthenticatedUser } = await import("~/lib/api");
       const freshUser = await getAuthenticatedUser();
-      const currentUser = SessionManager.getUser();
+      if (!freshUser || !freshUser.id) return;
+
       if (currentUser?.token) {
         freshUser.token = currentUser.token;
+      } else if (token) {
+        freshUser.token = token;
       }
       SessionManager.setUser(freshUser);
       setUser(freshUser);
@@ -333,7 +340,9 @@ export default function AppShell() {
       if (u?.id) fetchUnreadCount(u.id as number);
     };
     syncSession();
-    fetchFreshUserData();
+    if (SessionManager.getUser() || SessionManager.getToken()) {
+      fetchFreshUserData();
+    }
     const unsubscribe = SessionManager.subscribe(syncSession);
     return () => {
       unsubscribe();
@@ -698,10 +707,29 @@ export default function AppShell() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const { logout } = await import("~/modules/shared/api/auth");
+      await logout().catch(() => {});
+    } catch {
+      // ignore network/auth errors during sign out
+    }
+    SessionManager.clearAll();
     localStorage.removeItem("user_session");
     localStorage.removeItem("active_company");
-    window.location.href = "/";
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("otp_session");
+    localStorage.removeItem("huntr_cart");
+    sessionStorage.clear();
+
+    try {
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+    } catch {}
+
+    window.location.href = "/login";
   };
 
   const handleSwitchCompany = () => {
