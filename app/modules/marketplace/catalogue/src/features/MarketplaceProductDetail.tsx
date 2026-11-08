@@ -172,7 +172,7 @@ export default function MarketplaceDetail() {
           {item && (
             <div className="border border-[var(--ui-border)] rounded-xl bg-[var(--ui-bg-card)] p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="aspect-square rounded-lg bg-[var(--ui-bg-input)] border border-[var(--ui-border)] flex items-center justify-center overflow-hidden">
-                {imageUrl ? <img src={imageUrl} alt={item.name} className="w-full h-full object-cover" /> : <Package size={48} className="opacity-30" />}
+                {imageUrl ? <img src={imageUrl} alt={item.name} className="w-full h-full object-contain p-3" /> : <Package size={48} className="opacity-30" />}
               </div>
               <div className="space-y-4">
                 <div>

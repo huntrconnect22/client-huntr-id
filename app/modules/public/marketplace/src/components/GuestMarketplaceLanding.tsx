@@ -18,7 +18,17 @@ import { aiSearch, isAiQuery } from "~/lib/api/ai";
 import "./GuestMarketplaceLanding.css";
 
 const categories = ["All", "Hardware", "Software", "Furniture", "Office Supplies", "Services", "Electronics", "Mechanical", "Construction", "Other"];
-type Product = { id: string; name?: string; category?: string; image_url?: string; image_path?: string; company?: { name?: string } };
+type Product = {
+  id: string;
+  name?: string;
+  category?: string;
+  brand?: string;
+  price?: number;
+  uom?: string;
+  item_code?: string;
+  image_url?: string;
+  image_path?: string;
+};
 
 function Brand() { return <Link className="guest-brand" to="/" aria-label="Huntr home"><span>H</span><strong>HUNTR</strong></Link>; }
 
@@ -82,7 +92,75 @@ export function GuestMarketplaceLanding() {
         <Box className="guest-category-row" aria-label="Kategori katalog">{categories.map(item => <Chip key={item} label={item} onClick={() => changeCategory(item)} color={category === item ? "primary" : "default"} variant={category === item ? "filled" : "outlined"} />)}</Box>
         {aiNote && <Box className="guest-ai-note"><Sparkles size={18} /><div><strong>Hasil pencarian cerdas</strong><span>{aiNote}</span></div></Box>}
         <Box className="guest-product-meta"><Typography component="h3">{search ? `Hasil untuk “${search}”` : "Rekomendasi untuk Anda"}</Typography><Typography>{loading ? "Memuat katalog…" : `${items.length} item ditampilkan`}</Typography></Box>
-        <Box className="guest-product-grid">{loading ? Array.from({ length: 8 }, (_, index) => <Card key={index} className="guest-product-card"><Skeleton variant="rectangular" height={180} /><Box sx={{ p: 2 }}><Skeleton width="40%" /><Skeleton /><Skeleton width="70%" /></Box></Card>) : items.map(item => <Card className="guest-product-card" key={item.id} variant="outlined"><CardActionArea onClick={() => navigate(`/marketplace/${item.id}`)}><Box className="guest-product-image">{item.image_url || item.image_path ? <img src={getAssetUrl(item.image_url || item.image_path)} alt="" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}<Package className="guest-product-placeholder" size={34} /></Box><Box className="guest-product-copy"><span>{item.category || "Katalog"}</span><Typography component="h3">{item.name || "Produk tanpa nama"}</Typography><Typography>{item.company?.name || "Vendor Huntr"}</Typography></Box></CardActionArea></Card>)}</Box>
+        <Box className="guest-product-grid">
+          {loading ? (
+            Array.from({ length: 8 }, (_, index) => (
+              <Card key={index} className="guest-product-card guest-product-card--skeleton">
+                <Skeleton variant="rectangular" height={170} />
+                <Box sx={{ p: 2 }}>
+                  <Skeleton width="40%" height={16} />
+                  <Skeleton width="90%" height={20} sx={{ mt: 1 }} />
+                  <Skeleton width="60%" height={20} />
+                  <Skeleton width="50%" height={24} sx={{ mt: 2 }} />
+                </Box>
+              </Card>
+            ))
+          ) : (
+            items.map(item => (
+              <Card className="guest-product-card" key={item.id} variant="outlined">
+                <CardActionArea onClick={() => navigate(`/marketplace/${item.id}`)} className="guest-card-action">
+                  <Box className="guest-product-image">
+                    <span className="guest-product-badge">{item.category || "Katalog"}</span>
+                    {item.image_url || item.image_path ? (
+                      <img
+                        src={getAssetUrl(item.image_url || item.image_path)}
+                        alt={item.name || ""}
+                        loading="lazy"
+                        onError={event => {
+                          event.currentTarget.style.display = "none";
+                          const fallback = event.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = "flex";
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="guest-product-placeholder"
+                      style={{ display: item.image_url || item.image_path ? "none" : "flex" }}
+                    >
+                      <Package size={32} />
+                    </div>
+                  </Box>
+                  <Box className="guest-product-copy">
+                    <div className="guest-product-meta-row">
+                      <span className="guest-product-brand">{item.brand || "\u00A0"}</span>
+                      {item.item_code && <span className="guest-product-sku">{item.item_code}</span>}
+                    </div>
+                    <Typography component="h3" className="guest-product-title" title={item.name}>
+                      {item.name || "Produk tanpa nama"}
+                    </Typography>
+                    <div className="guest-product-footer">
+                      <div className="guest-product-price-wrap">
+                        {item.price && Number(item.price) > 0 ? (
+                          <>
+                            <span className="guest-product-price">
+                              Rp {Number(item.price).toLocaleString("id-ID")}
+                            </span>
+                            {item.uom && <span className="guest-product-uom">/{item.uom}</span>}
+                          </>
+                        ) : (
+                          <span className="guest-product-rfq">Harga via RFQ</span>
+                        )}
+                      </div>
+                      <span className="guest-product-cta">
+                        Lihat <ArrowRight size={13} />
+                      </span>
+                    </div>
+                  </Box>
+                </CardActionArea>
+              </Card>
+            ))
+          )}
+        </Box>
         {!loading && !items.length && <Box className="guest-empty"><Package size={34} /><Typography component="h3">Produk belum ditemukan</Typography><Typography>Ubah kata kunci atau pilih kategori lain.</Typography><Button onClick={() => { setQuery(""); changeCategory("All"); }} variant="outlined">Reset pencarian</Button></Box>}
         {totalPages > 1 && <Stack className="guest-pagination" direction="row" spacing={1} sx={{ justifyContent: "center" }}><Button onClick={() => changePage(page - 1)} disabled={page === 1} startIcon={<ChevronLeft size={17} />}>Sebelumnya</Button><Typography>{page} / {totalPages}</Typography><Button onClick={() => changePage(page + 1)} disabled={page === totalPages} endIcon={<ChevronRight size={17} />}>Berikutnya</Button></Stack>}
       </Container></section>
