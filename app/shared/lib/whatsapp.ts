@@ -9,14 +9,24 @@ export function normalizeWhatsapp(phone: string): string {
     digits = digits.slice(2);
   }
 
-  // Malaysian international format already present: 601xxxxxxxxx
-  if (/^601\d{8,9}$/.test(digits)) {
+  // Malaysian international with redundant leading zero: 6001... -> 601...
+  if (/^6001\d{7,9}$/.test(digits)) {
+    return "601" + digits.slice(4);
+  }
+
+  // Malaysian international format already present: 601xxxxxxx (10-12 digits)
+  if (/^601\d{7,9}$/.test(digits)) {
     return digits;
   }
 
   // Malaysian local mobile prefix: 01x-xxxxxxx -> convert to 601xxxxxxxxx
-  if (/^01\d{8,9}$/.test(digits)) {
+  if (/^01\d{7,9}$/.test(digits)) {
     return "60" + digits.slice(1);
+  }
+
+  // Malaysian mobile without 0 or 60 prefix: 1x-xxxxxxx (8-10 digits)
+  if (/^1[0-9]\d{6,8}$/.test(digits)) {
+    return "60" + digits;
   }
 
   // Common typo: 685xxxxxxxxxx instead of 085xxxxxxxxxx
@@ -35,8 +45,8 @@ export function normalizeWhatsapp(phone: string): string {
 
 export function isValidWhatsapp(phone: string): boolean {
   const normalized = normalizeWhatsapp(phone);
-  // Indonesian: 628xxxxxxxxxx (11-14 digits) | Malaysian: 601xxxxxxxxx (11-12 digits)
-  return /^(628\d{8,11}|601\d{8,9})$/.test(normalized);
+  // Indonesian: 628xxxxxxxxxx (11-14 digits) | Malaysian: 601xxxxxxx (10-12 digits)
+  return /^(628\d{8,11}|601\d{7,9})$/.test(normalized);
 }
 
 export function normalizeOtp(otp: string): string {
